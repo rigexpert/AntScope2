@@ -1,0 +1,13 @@
+INPUT(
+./debug\main.o
+./debug\mainwindow.o
+./debug\qcustomplot.o
+./debug\analyzer.o
+./debug\hidanalyzer.o
+./debug\comanalyzer.o
+./debug\moc_mainwindow.o
+./debug\moc_qcustomplot.o
+./debug\moc_analyzer.o
+./debug\moc_hidanalyzer.o
+./debug\moc_comanalyzer.o
+);

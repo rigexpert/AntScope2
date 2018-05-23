@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FqSettings</class>
+ <widget class="QDialog" name="FqSettings">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>462</width>
+    <height>131</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Measurement speed</string>
+     </property>
+     <widget class="QSlider" name="dotsSlider">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>20</y>
+        <width>321</width>
+        <height>19</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>5</number>
+      </property>
+      <property name="maximum">
+       <number>1000</number>
+      </property>
+      <property name="singleStep">
+       <number>3</number>
+      </property>
+      <property name="pageStep">
+       <number>100</number>
+      </property>
+      <property name="value">
+       <number>100</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>31</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Fast</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>380</x>
+        <y>20</y>
+        <width>51</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Accurately </string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="dotsLine">
+      <property name="geometry">
+       <rect>
+        <x>320</x>
+        <y>50</y>
+        <width>113</width>
+        <height>20</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_3">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>50</y>
+        <width>71</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Dots number:</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="OKBtn">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>80</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>OK</string>
+      </property>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

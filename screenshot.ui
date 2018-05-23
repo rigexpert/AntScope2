@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Screenshot</class>
+ <widget class="QDialog" name="Screenshot">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>320</width>
+    <height>350</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>320</width>
+    <height>350</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>320</width>
+    <height>350</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QPushButton" name="closeBtn">
+   <property name="geometry">
+    <rect>
+     <x>230</x>
+     <y>320</y>
+     <width>81</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="saveAsBtn">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>320</y>
+     <width>81</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Export to BMP</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="exportToPdfBtn">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>320</y>
+     <width>81</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Export to PDF</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>290</y>
+     <width>301</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>270</y>
+     <width>121</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Add comment (for .pdf):</string>
+   </property>
+  </widget>
+  <widget class="QProgressBar" name="progressBar">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>240</y>
+     <width>301</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="value">
+    <number>0</number>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="refreshBtn">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>320</y>
+     <width>31</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>R</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

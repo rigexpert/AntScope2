@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Export</class>
+ <widget class="QDialog" name="Export">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>342</width>
+    <height>198</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QPushButton" name="csvBtn">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>80</y>
+     <width>75</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>CSV</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="nwlBtn">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>120</y>
+     <width>75</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>NWL</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>251</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Touchstone</string>
+   </property>
+   <widget class="QPushButton" name="zRiBtn">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>75</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Z, RI</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="sRiBtn">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>20</y>
+      <width>75</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>S, RI</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="sMaBtn">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>20</y>
+      <width>75</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>S, MA</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
