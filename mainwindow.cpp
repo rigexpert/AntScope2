@@ -89,9 +89,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->presetsDeleteBtn->setStyleSheet(style);
 
+
+    style = "QPushButton:disabled{"
+            "background-color: rgb(59, 59, 59);"
+            "color: rgb(119, 119, 119);}"
+            "QPushButton:checked{"
+            "background-color: rgb(1, 178, 255);}";
     ui->singleStart->setStyleSheet(style);
     ui->continuousStartBtn->setStyleSheet(style);
-
 
     ui->tableWidget_measurments->setColumnCount(1);
     ui->tableWidget_measurments->setSelectionBehavior(QAbstractItemView::SelectRows );
