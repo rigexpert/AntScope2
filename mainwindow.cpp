@@ -380,7 +380,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_1secTimer, SIGNAL(timeout()), this, SLOT(on_1secTimerTick()));
     m_1secTimer->start(100);
 
-    m_qtLanguageTranslator->load("QtLanguage_" + languages_small[m_languageNumber]);
+    m_qtLanguageTranslator->load("QtLanguage_" + languages_small[m_languageNumber], QCoreApplication::applicationDirPath());
     qApp->installTranslator(m_qtLanguageTranslator);
     ui->retranslateUi(this);
 }
@@ -3580,7 +3580,7 @@ void MainWindow::on_translate(int number)
 {
     m_languageNumber = number;
     QString title = windowTitle();
-    m_qtLanguageTranslator->load("QtLanguage_" + languages_small[number]);
+    bool res = m_qtLanguageTranslator->load("QtLanguage_" + languages_small[number], QCoreApplication::applicationDirPath());
     qApp->installTranslator(m_qtLanguageTranslator);
     ui->retranslateUi(this);
     m_settingsDialog->on_translate();
