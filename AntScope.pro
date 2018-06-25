@@ -19,6 +19,7 @@ TARGET = AntScope2
 
 TRANSLATIONS += QtLanguage_ukr.ts
 TRANSLATIONS += QtLanguage_ru.ts
+TRANSLATIONS += QtLanguage_jp.ts
 CODECFORSRC     = UTF-8
 
 SOURCES += main.cpp\
