@@ -137,23 +137,24 @@ void Settings::on_generalTimerTick()
         m_generalTimer->stop();
         return;
     }
+    QString strChecking = tr("Checking");
     switch(state)
     {
     case 0 :
         state++;
-        ui->checkUpdatesBtn->setText(tr("Checking"));
+        ui->checkUpdatesBtn->setText(strChecking);
         break;
     case 1 :
         state++;
-        ui->checkUpdatesBtn->setText(tr("Checking."));
+        ui->checkUpdatesBtn->setText(strChecking + ".");
         break;
     case 2 :
         state++;
-        ui->checkUpdatesBtn->setText(tr("Checking.."));
+        ui->checkUpdatesBtn->setText(strChecking + "..");
         break;
     case 3 :
         state = 0;
-        ui->checkUpdatesBtn->setText(tr("Checking..."));
+        ui->checkUpdatesBtn->setText(strChecking + "...");
         break;
     default:
         state = 0;

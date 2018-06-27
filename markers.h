@@ -71,6 +71,7 @@ public:
     qint32 getMarkersCount();
     marker getMarker( quint32 number);
     void repaint();
+    void on_translate();
 
 private:
     QCustomPlot *m_swrWidget;

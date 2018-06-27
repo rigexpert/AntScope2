@@ -45,5 +45,4 @@ void AnalyzerData::on_buttonBox_accepted()
 
         emit itemDoubleClick(list1.at(0), list2.at(0), list2.at(1));
     }
-    QRgb rgb;
 }

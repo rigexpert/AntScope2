@@ -50,12 +50,12 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 protected:
-     void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event);
+    void changeEvent(QEvent* event);
 
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
 
     void openFile(QString path);
 
@@ -167,6 +167,7 @@ private:
     void setFqTo(double to);
     double getFqFrom(void);
     double getFqTo(void);
+    bool loadLanguage(QString locale); // locale: en, ukr, ru, jp, etc.
 
 signals:
     void measure(int,int,int);
@@ -199,6 +200,7 @@ public slots:
     void on_pressCtrlMinus();
     void on_pressLeft();
     void on_pressRight();
+    void on_pressCtrlC();
     void on_analyzerFound(QString name);
     void on_analyzerDisconnected();
     void on_mouseWheel_swr(QWheelEvent *e);

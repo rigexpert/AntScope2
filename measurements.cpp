@@ -55,7 +55,7 @@ Measurements::Measurements(QObject *parent) : QObject(parent),
         {
             m_graphHint->show();
         }
-        m_graphHint->setName("Hint");
+        m_graphHint->setName(tr("Hint"));
     }
 
     if(m_graphBriefHint == NULL)
@@ -63,7 +63,7 @@ Measurements::Measurements(QObject *parent) : QObject(parent),
         m_graphBriefHint = new PopUp();
         m_graphBriefHint->setHiding(false);
         m_graphBriefHint->setPopupText("0\n0");
-        m_graphBriefHint->setName("BriefHint");
+        m_graphBriefHint->setName(tr("BriefHint"));
     }
 }
 
@@ -710,6 +710,8 @@ ret:
 
 quint32 Measurements::computeSWR(double freq, double Z0, double R, double X, double *VSWR, double *RL)
 {
+    Q_UNUSED(freq);
+
     if (R <= 0)
     {
         R = 0.001;
@@ -1785,7 +1787,7 @@ void Measurements::loadData(QString path)
         QFile loadFile(path);
 
         if (!loadFile.open(QIODevice::ReadOnly)) {
-            QMessageBox::information(NULL, "Error", "Couldn't open save file.");
+            QMessageBox::information(NULL, tr("Error"), tr("Couldn't open save file."));
             qWarning("Couldn't open save file.");
             return;
         }
@@ -2492,11 +2494,11 @@ void Measurements::on_changeMeasureSystemMetric (bool state)
     }
     if(m_measureSystemMetric)
     {
-        m_tdrWidget->xAxis->setLabel("Length, m");
+        m_tdrWidget->xAxis->setLabel(tr("Length, m"));
     }
     else
     {
-        m_tdrWidget->xAxis->setLabel("Length, feet");
+        m_tdrWidget->xAxis->setLabel(tr("Length, feet"));
     }
 }
 
@@ -2780,14 +2782,14 @@ void Measurements::on_redrawGraphs()
                         int y = m_pdTdrImp[i];
                         QCPData data;
                         data.key = x*step;
-                        data.value = m_pdTdrImp[i];
+                        data.value = y;
                         m_farEndMeasurementsSub.last().tdrImpGraph.insert(data.key,data);
                         data.value = m_pdTdrStep[i];
                         m_farEndMeasurementsSub.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
                         dataFeet.key = x*step/3.2808399;
-                        dataFeet.value = m_pdTdrImp[i];
+                        dataFeet.value = y;
                         m_farEndMeasurementsSub.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                         dataFeet.value = m_pdTdrStep[i];
                         m_farEndMeasurementsSub.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
@@ -2817,14 +2819,14 @@ void Measurements::on_redrawGraphs()
                         int y = m_pdTdrImp[i];
                         QCPData data;
                         data.key = x*step;
-                        data.value = m_pdTdrImp[i];
+                        data.value = y;
                         m_farEndMeasurementsAdd.last().tdrImpGraph.insert(data.key,data);
                         data.value = m_pdTdrStep[i];
                         m_farEndMeasurementsAdd.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
                         dataFeet.key = x*step/3.2808399;
-                        dataFeet.value = m_pdTdrImp[i];
+                        dataFeet.value = y;
                         m_farEndMeasurementsAdd.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                         dataFeet.value = m_pdTdrStep[i];
                         m_farEndMeasurementsAdd.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
@@ -2855,14 +2857,14 @@ void Measurements::on_redrawGraphs()
                     int y = m_pdTdrImp[i];
                     QCPData data;
                     data.key = x*step;
-                    data.value = m_pdTdrImp[i];
+                    data.value = y;
                     m_measurements.last().tdrImpGraph.insert(data.key,data);
                     data.value = m_pdTdrStep[i];
                     m_measurements.last().tdrStepGraph.insert(data.key,data);
 
                     QCPData dataFeet;
                     dataFeet.key = x*step/3.2808399;
-                    dataFeet.value = m_pdTdrImp[i];
+                    dataFeet.value = y;
                     m_measurements.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                     dataFeet.value = m_pdTdrStep[i];
                     m_measurements.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
@@ -3172,14 +3174,14 @@ void Measurements::on_redrawGraphs()
                         int y = m_pdTdrImp[i];
                         QCPData data;
                         data.key = x*step;
-                        data.value = m_pdTdrImp[i];
+                        data.value = y;
                         m_farEndMeasurementsSub.last().tdrImpGraph.insert(data.key,data);
                         data.value = m_pdTdrStep[i];
                         m_farEndMeasurementsSub.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
                         dataFeet.key = x*step/3.2808399;
-                        dataFeet.value = m_pdTdrImp[i];
+                        dataFeet.value = y;
                         m_farEndMeasurementsSub.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                         dataFeet.value = m_pdTdrStep[i];
                         m_farEndMeasurementsSub.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
@@ -3209,14 +3211,14 @@ void Measurements::on_redrawGraphs()
                         int y = m_pdTdrImp[i];
                         QCPData data;
                         data.key = x*step;
-                        data.value = m_pdTdrImp[i];
+                        data.value = y;
                         m_farEndMeasurementsAdd.last().tdrImpGraph.insert(data.key,data);
                         data.value = m_pdTdrStep[i];
                         m_farEndMeasurementsAdd.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
                         dataFeet.key = x*step/3.2808399;
-                        dataFeet.value = m_pdTdrImp[i];
+                        dataFeet.value = y;
                         m_farEndMeasurementsAdd.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                         dataFeet.value = m_pdTdrStep[i];
                         m_farEndMeasurementsAdd.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
@@ -4101,3 +4103,32 @@ void  Measurements::FFT2(double *Rdat, double *Idat, int N, int LogN, int Ft_Fla
 
   return;
 }
+
+
+void Measurements::on_translate()
+{
+    if (m_graphHint != nullptr)
+    {
+        m_graphHint->setPopupText(tr("Frequency = \n"
+                                     "SWR = \n"
+                                     "RL = \n"
+                                     "Z = \n"
+                                     "|Z| = \n"
+                                     "|rho| = \n"
+                                     "C = \n"
+                                     "Zpar = \n"
+                                     "Cpar = \n"
+                                     "Cable: "));
+    }
+    if (m_graphBriefHint != nullptr)
+    {
+        m_graphBriefHint->setName(tr("BriefHint"));
+    }
+
+    if (m_tdrWidget->xAxis != nullptr)
+    {
+        m_tdrWidget->xAxis->setLabel(m_measureSystemMetric ? tr("Length, m") : tr("Length, feet"));
+    }
+}
+
+

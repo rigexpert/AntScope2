@@ -27,7 +27,7 @@ void UpdateDialog::setMainText(QString text)
 
 void UpdateDialog::on_updateBtn_clicked()
 {
-    if(ui->updateBtn->text() == "Finish")
+    if(ui->updateBtn->text() == tr("Finish"))
     {
         this->close();
     }else

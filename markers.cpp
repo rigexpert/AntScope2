@@ -28,7 +28,7 @@ Markers::Markers(QObject *parent) : QObject(parent),
         {
             m_markersHint->show();
         }
-        m_markersHint->setName("Markers");
+        m_markersHint->setName(tr("Markers"));
         connect(m_markersHint, SIGNAL(removeMarker(int)), SLOT(on_removeMarker(int)));
         repaint();
     }
@@ -595,4 +595,13 @@ void Markers::on_removeMarker(int number)
     }
     repaint();
     redraw();
+}
+
+void Markers::on_translate()
+{
+    if (m_markersHint != nullptr)
+    {
+        m_markersHint->setName(tr("Markers"));
+        m_markersHint->on_translate();
+    }
 }

@@ -29,13 +29,13 @@ Print::Print(QWidget *parent) :
     ui->widgetGraph->xAxis->setLabelFont(font);
     ui->widgetGraph->yAxis->setLabelFont(font);
 
-    m_markersNumberLabel.setText("Marker");
+    m_markersNumberLabel.setText(tr("Marker"));
     m_measurementsNumberLabel.setText("#");
-    m_fqLabel.setText("Fq");
-    m_swrLabel.setText("SWR");
-    m_rlLabel.setText("RL");
-    m_zLabel.setText("Z");
-    m_phaseLabel.setText("Phase");
+    m_fqLabel.setText(tr("Fq"));
+    m_swrLabel.setText(tr("SWR"));
+    m_rlLabel.setText(tr("RL"));
+    m_zLabel.setText(tr("Z"));
+    m_phaseLabel.setText(tr("Phase"));
     ui->markersLayout->addWidget(&m_markersNumberLabel,0,0);
     ui->markersLayout->addWidget(&m_measurementsNumberLabel,0,1);
     ui->markersLayout->addWidget(&m_fqLabel,0,2);

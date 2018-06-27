@@ -4,9 +4,13 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    m_fqSettings(NULL),
     m_measurements(NULL),
     m_markers(NULL),
     m_settings(NULL),
+    m_settingsDialog(NULL),
+    m_exportDialog(NULL),
+    m_screenshot(NULL),
     m_calibration(NULL),
     m_isContinuos(false),
     m_dotsNumber(50),
@@ -208,6 +212,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QShortcut *shortRight = new QShortcut(QKeySequence(Qt::Key_Right),this);
     connect(shortRight,SIGNAL(activated()),this,SLOT(on_pressRight()));
 
+    QShortcut *shortCtrlC = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_C),this);
+    connect(shortCtrlC,SIGNAL(activated()),this,SLOT(on_pressCtrlC()));
+
     m_presets = new Presets(this);
     connect(this, SIGNAL(isRangeChanged(bool)), m_presets, SLOT(on_isRangeChanged(bool)));
     m_presets->setTable(ui->tableWidget_presets);
@@ -380,9 +387,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_1secTimer, SIGNAL(timeout()), this, SLOT(on_1secTimerTick()));
     m_1secTimer->start(100);
 
-    m_qtLanguageTranslator->load("QtLanguage_" + languages_small[m_languageNumber], QCoreApplication::applicationDirPath());
-    qApp->installTranslator(m_qtLanguageTranslator);
-    ui->retranslateUi(this);
+//    m_qtLanguageTranslator->load("QtLanguage_" + languages_small[m_languageNumber], QCoreApplication::applicationDirPath());
+//    qApp->installTranslator(m_qtLanguageTranslator);
+//    ui->retranslateUi(this);
+    loadLanguage(languages_small[m_languageNumber]);
 }
 
 MainWindow::~MainWindow()
@@ -458,6 +466,28 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::changeEvent(QEvent* event)
+{
+    if(0 != event) {
+        switch(event->type()) {
+        // this event is send if a translator is loaded
+        case QEvent::LanguageChange:
+            ui->retranslateUi(this);
+            break;
+
+            // this event is send, if the system, language changes
+        case QEvent::LocaleChange:
+        {
+            QString locale = QLocale::system().name();
+            locale.truncate(locale.lastIndexOf('_'));
+            loadLanguage(locale);
+        }
+            break;
+        }
+    }
+    QMainWindow::changeEvent(event);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if(m_deferredUpdate)
@@ -505,8 +535,8 @@ void MainWindow::setWidgetsSettings()
     drawBands(m_swrWidget, 1, MAX_SWR);
 
     m_swrWidget->graph(0)->setPen(pen);
-    m_swrWidget->xAxis->setLabel("Frequency, kHz");
-    m_swrWidget->yAxis->setLabel("SWR");
+    m_swrWidget->xAxis->setLabel(tr("Frequency, kHz"));
+    m_swrWidget->yAxis->setLabel(tr("SWR"));
     m_swrWidget->xAxis->setRange(0,1400000);
     m_swrWidget->yAxis->setRangeMin(1);
 
@@ -526,8 +556,8 @@ void MainWindow::setWidgetsSettings()
     drawBands(m_phaseWidget, -180, 180);
     m_phaseWidget->graph(0)->setPen(pen);
     //ui->swr_widget->axisRect()->setBackground(Qt::black);
-    m_phaseWidget->xAxis->setLabel("Frequency, kHz");
-    m_phaseWidget->yAxis->setLabel("Angle");
+    m_phaseWidget->xAxis->setLabel(tr("Frequency, kHz"));
+    m_phaseWidget->yAxis->setLabel(tr("Angle"));
     m_phaseWidget->xAxis->setRange(0,1400000);
     m_phaseWidget->yAxis->setRangeMin(-180);
     m_phaseWidget->yAxis->setRangeMax(180);
@@ -601,7 +631,7 @@ void MainWindow::setWidgetsSettings()
     //-------TDR Widget------------------------------------------------
     m_tdrWidget->addGraph();//graph(0)
     m_tdrWidget->graph(0)->setPen(pen);
-    m_tdrWidget->xAxis->setLabel("Length, m");
+    m_tdrWidget->xAxis->setLabel(tr("Length, m"));
     m_tdrWidget->yAxis->setRangeMin(-1);
     m_tdrWidget->yAxis->setRangeMax(1);
     m_tdrWidget->yAxis->setRange(-1,1);
@@ -1712,6 +1742,39 @@ void MainWindow::on_pressRight()
     }
 }
 
+void MainWindow::on_pressCtrlC ()
+{
+    QCustomPlot* plot = nullptr;
+    QString str = ui->tabWidget->currentWidget()->objectName();
+    if( str == "tab_1")
+    {
+        plot = m_swrWidget;
+    }else if(str == "tab_2")
+    {
+        plot = m_phaseWidget;
+    }else if(str == "tab_3")
+    {
+        plot = m_rsWidget;
+    }else if(str == "tab_4")
+    {
+        plot = m_rpWidget;
+    }else if(str == "tab_5")
+    {
+        plot = m_rlWidget;
+    }else if(str == "tab_6")
+    {
+        plot = m_tdrWidget;
+    }else if(str == "tab_7")
+    {
+        resizeWnd();
+        plot = m_smithWidget;
+    }
+
+    QPixmap pixmap = plot->grab();
+    QClipboard *pClipboard = QApplication::clipboard();
+    pClipboard->setPixmap(pixmap);
+}
+
 void MainWindow::on_analyzerFound(QString name)
 {
     QString name1 = "AntScope2 v." + QString(ANTSCOPE2VER);
@@ -1862,6 +1925,8 @@ void MainWindow::on_mouseRelease_swr(QMouseEvent* e)
 
 void MainWindow::on_mouseWheel_phase(QWheelEvent * e)
 {
+    Q_UNUSED(e);
+
     double from  = m_phaseWidget->xAxis->getRangeLower();
     double to = m_phaseWidget->xAxis->getRangeUpper();
     if(!m_isRange)
@@ -2352,7 +2417,7 @@ void MainWindow::on_mouseRelease_rl(QMouseEvent* e)
     }
 }
 
-void MainWindow::on_mouseWheel_tdr(QWheelEvent *e)
+void MainWindow::on_mouseWheel_tdr(QWheelEvent*)
 {
 }
 
@@ -2542,7 +2607,7 @@ void MainWindow::on_fqSettingsBtn_clicked()
 {
     m_fqSettings = new FqSettings(this);
     m_fqSettings->setAttribute(Qt::WA_DeleteOnClose);
-    m_fqSettings->setWindowTitle("Frequency settings");
+    m_fqSettings->setWindowTitle(tr("Frequency settings"));
     m_fqSettings->setDotsNumber(m_dotsNumber);
     connect(m_fqSettings, SIGNAL(dotsNumber(int)), this, SLOT(on_dotsNumberChanged(int)));
     connect(m_fqSettings, SIGNAL(dotsNumber(int)), m_measurements, SLOT(on_dotsNumberChanged(int)));
@@ -2610,7 +2675,7 @@ void MainWindow::on_exportBtn_clicked()
         QTableWidgetItem * item = list.at(0);
         m_exportDialog = new Export(this);
         m_exportDialog->setAttribute(Qt::WA_DeleteOnClose);
-        m_exportDialog->setWindowTitle("Export");
+        m_exportDialog->setWindowTitle(tr("Export"));
         m_exportDialog->setMeasurements(m_measurements, item->row());
         m_exportDialog->exec();
     }
@@ -2848,7 +2913,7 @@ void MainWindow::on_settingsBtn_clicked()
     m_analyzer->setIsMeasuring(true);
     m_settingsDialog = new Settings(this);
     m_settingsDialog->setAttribute(Qt::WA_DeleteOnClose);
-    m_settingsDialog->setWindowTitle("Settings");
+    m_settingsDialog->setWindowTitle(tr("Settings"));
     m_settingsDialog->setAnalyzer(m_analyzer);
     m_settingsDialog->setCalibration(m_calibration);
     m_settingsDialog->setMeasureSystemMetric(m_measureSystemMetric);
@@ -3576,15 +3641,58 @@ void MainWindow::on_changedSerialPort(QString portName)
     m_analyzer->on_changedSerialPort(portName);
 }
 
+bool MainWindow::loadLanguage(QString locale)
+{ //locale: en, ukr, ru, jp, etc.
+    QString title = windowTitle();
+    bool res = m_qtLanguageTranslator->load("QtLanguage_" + locale, QCoreApplication::applicationDirPath());
+    qApp->installTranslator(m_qtLanguageTranslator);
+    ui->retranslateUi(this);
+
+    m_swrWidget->xAxis->setLabel(tr("Frequency, kHz"));
+    m_swrWidget->yAxis->setLabel(tr("SWR"));
+    m_phaseWidget->xAxis->setLabel(tr("Frequency, kHz"));
+    m_phaseWidget->yAxis->setLabel(tr("Angle"));
+    m_rsWidget->xAxis->setLabel(tr("Frequency, kHz"));
+    m_rsWidget->yAxis->setLabel(tr("Rs, Ohm"));
+    m_rpWidget->xAxis->setLabel(tr("Frequency, kHz"));
+    m_rpWidget->yAxis->setLabel(tr("Rp, Ohm"));
+    m_rlWidget->xAxis->setLabel(tr("Frequency, kHz"));
+    m_rlWidget->yAxis->setLabel(tr("RL, dB"));
+    m_tdrWidget->xAxis->setLabel(tr("Length, m"));
+
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_1), QApplication::translate("MainWindow", "SWR", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_2), QApplication::translate("MainWindow", "Phase", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_3), QApplication::translate("MainWindow", "Z=R+jX", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_4), QApplication::translate("MainWindow", "Z=R||+jX", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_5), QApplication::translate("MainWindow", "RL", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_6), QApplication::translate("MainWindow", "TDR", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_7), QApplication::translate("MainWindow", "Smith", 0));
+
+    if (m_settingsDialog != nullptr)
+        m_settingsDialog->on_translate();
+    if (m_measurements != nullptr)
+        m_measurements->on_translate();
+    if (m_markers != nullptr)
+        m_markers->on_translate();
+    if (m_fqSettings != nullptr)
+        m_fqSettings->setWindowTitle(tr("Frequency settings"));
+    if (m_exportDialog != nullptr)
+        m_exportDialog->setWindowTitle(tr("Export"));
+    if (m_screenshot != nullptr)
+        m_screenshot->setWindowTitle(tr("Screenshot"));
+    if (m_settingsDialog != nullptr)
+        m_settingsDialog->setWindowTitle(tr("Settings"));
+
+    setWindowTitle(title);
+
+    return res;
+}
+
+
 void MainWindow::on_translate(int number)
 {
     m_languageNumber = number;
-    QString title = windowTitle();
-    bool res = m_qtLanguageTranslator->load("QtLanguage_" + languages_small[number], QCoreApplication::applicationDirPath());
-    qApp->installTranslator(m_qtLanguageTranslator);
-    ui->retranslateUi(this);
-    m_settingsDialog->on_translate();
-    setWindowTitle(title);
+    loadLanguage(languages_small[number]);
 }
 
 void MainWindow::on_calibrationChanged()

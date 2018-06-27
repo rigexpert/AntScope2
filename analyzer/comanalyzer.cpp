@@ -688,7 +688,7 @@ bool comAnalyzer::update (QIODevice *fw)
                 break;
             }
         }
-        QMessageBox::information(NULL,"Finish","Successfully updated!");
+        QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
         m_comPort->close();
         openComPort(name,115200);
         m_isMeasuring = false;
@@ -722,7 +722,7 @@ bool comAnalyzer::update (QIODevice *fw)
             {
                 if(!waitAnswer())
                 {
-                    QMessageBox::warning(NULL,"Error","Error while update, please try again.");
+                    QMessageBox::warning(NULL,tr("Error"),tr("Error while update, please try again."));
                     emit updatePercentChanged(100);
                     emit updatePercentChanged(0);
                     m_isMeasuring = false;
@@ -742,7 +742,7 @@ bool comAnalyzer::update (QIODevice *fw)
             arr.append(crc8(&arr));
             unsigned char len = arr.length();
             arr.insert(0,len);
-            arr.insert(0,0xAF);
+            arr.insert(0,(unsigned char)0xAF);
 
             m_comPort->write(arr);
 
@@ -757,15 +757,15 @@ bool comAnalyzer::update (QIODevice *fw)
         }
 
         arr.clear();
-        arr.append(0xAF);
-        arr.append(0x02);
-        arr.append(0x06);
-        arr.append(0x12);
+        arr.append((unsigned char)0xAF);
+        arr.append((unsigned char)0x02);
+        arr.append((unsigned char)0x06);
+        arr.append((unsigned char)0x12);
         m_comPort->write(arr);
 
         emit updatePercentChanged(100);
 
-        QMessageBox::information(NULL,"Finish","Successfully updated!");
+        QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
         m_comPort->close();
         openComPort(name,38400);
         m_isMeasuring = false;

@@ -66,6 +66,7 @@ public:
     void setCableLossAtAnyFq(bool value);
     void setCableLength(double value);
     void setCableFarEndMeasurement(int value);
+    void on_translate();
 
 private:
 //    QVector <rawData> m_rawDataVector;

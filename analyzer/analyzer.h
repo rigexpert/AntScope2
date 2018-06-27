@@ -13,7 +13,9 @@
 #include <updatedialog.h>
 #include <crc32.h>
 
+#ifndef M_PI
 #define M_PI       3.14159265358979323846
+#endif
 
 class Analyzer : public QObject
 {

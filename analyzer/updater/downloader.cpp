@@ -83,7 +83,7 @@ void Downloader::fileDownloaded(QNetworkReply *reply)
         m_info.clear();
         m_link.clear();
     } else if(!m_isInfo && isHTML(arr)) {
-        m_lastError = "Server does not have firmware file.";
+        m_lastError = tr("Server does not have firmware file.");
     } else {
         m_lastError.clear();
         if (m_isInfo) {

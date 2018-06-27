@@ -45,6 +45,7 @@ public:
     void setTextColor(QString color);
 
     void MainWindowPos(int x, int y);
+    void on_translate();
 
 protected:
     void paintEvent(QPaintEvent *event);    // Фон будет отрисовываться через метод перерисовки

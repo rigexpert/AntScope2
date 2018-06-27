@@ -6,6 +6,9 @@
 
 //#define SETTINGS_PATH "AntScope2.ini"
 
+
+#pragma warning (disable : 4068 )
+
 //#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-variable"

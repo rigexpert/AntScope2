@@ -47,33 +47,34 @@ Calibration::~Calibration()
 
 void Calibration::start(void)
 {
+    QString notChoosed = tr("Not choosed");
     if(m_OSLCalibrationPerformed)
     {
         if(m_openCalibFilePath != "")
         {
             if(!m_openData.loadData(m_openCalibFilePath,&m_Z0))
             {
-                m_openCalibFilePath = "Not choosed";
+                m_openCalibFilePath = notChoosed;
             }
         }
         if(m_shortCalibFilePath != "")
         {
             if(!m_shortData.loadData(m_shortCalibFilePath,&m_Z0))
             {
-                m_shortCalibFilePath = "Not choosed";
+                m_shortCalibFilePath = notChoosed;
             }
         }
         if(m_loadCalibFilePath != "")
         {
             if(!m_loadData.loadData(m_loadCalibFilePath,&m_Z0))
             {
-                m_loadCalibFilePath = "Not choosed";
+                m_loadCalibFilePath = notChoosed;
             }
         }
 
-        if( (m_openCalibFilePath != "Not choosed") &&
-            (m_shortCalibFilePath != "Not choosed") &&
-            (m_loadCalibFilePath != "Not choosed"))
+        if( (m_openCalibFilePath != notChoosed) &&
+            (m_shortCalibFilePath != notChoosed) &&
+            (m_loadCalibFilePath != notChoosed))
         {
             m_OSLCalibrationPerformed = true;
         }else
@@ -296,13 +297,15 @@ void Calibration::on_startCalibrationLoad()
 
 void Calibration::on_openOpenFile(QString path)
 {
+    QString notChoosed = tr("Not choosed");
+
     if(m_openData.loadData(path,&m_Z0))
     {
         m_openCalibFilePath = path;
     }
-    if( (m_openCalibFilePath != "Not choosed") &&
-         (m_shortCalibFilePath != "Not choosed") &&
-         (m_loadCalibFilePath != "Not choosed"))
+    if( (m_openCalibFilePath != notChoosed) &&
+         (m_shortCalibFilePath != notChoosed) &&
+         (m_loadCalibFilePath != notChoosed))
     {
         m_OSLCalibrationPerformed = true;
     }
@@ -310,13 +313,15 @@ void Calibration::on_openOpenFile(QString path)
 
 void Calibration::on_shortOpenFile(QString path)
 {
+    QString notChoosed = tr("Not choosed");
+
     if(m_shortData.loadData(path,&m_Z0))
     {
         m_shortCalibFilePath = path;
     }
-    if( (m_openCalibFilePath != "Not choosed") &&
-         (m_shortCalibFilePath != "Not choosed") &&
-         (m_loadCalibFilePath != "Not choosed"))
+    if( (m_openCalibFilePath != notChoosed) &&
+         (m_shortCalibFilePath != notChoosed) &&
+         (m_loadCalibFilePath != notChoosed))
     {
         m_OSLCalibrationPerformed = true;
     }
@@ -324,13 +329,15 @@ void Calibration::on_shortOpenFile(QString path)
 
 void Calibration::on_loadOpenFile(QString path)
 {
+    QString notChoosed = tr("Not choosed");
+
     if(m_loadData.loadData(path,&m_Z0))
     {
         m_loadCalibFilePath = path;
     }
-    if( (m_openCalibFilePath != "Not choosed") &&
-         (m_shortCalibFilePath != "Not choosed") &&
-         (m_loadCalibFilePath != "Not choosed"))
+    if( (m_openCalibFilePath != notChoosed) &&
+         (m_shortCalibFilePath != notChoosed) &&
+         (m_loadCalibFilePath != notChoosed))
     {
         m_OSLCalibrationPerformed = true;
     }

@@ -711,10 +711,10 @@ bool hidAnalyzer::update (QIODevice *fw)
             memset(buff, 0, sizeof(buff));
             buff[1] = BL_CMD_START;
             hid_write(m_hidDevice, buff, sizeof(buff));
-            QMessageBox::information(NULL,"Finish","Successfully updated!");
+            QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
         }else
         {
-            QMessageBox::warning(NULL,"Warning","Unsuccessfully update!");
+            QMessageBox::warning(NULL,tr("Warning"),tr("Update failed!"));
         }
     }
     m_hidReadTimer->start(1);

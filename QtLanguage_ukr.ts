@@ -16,6 +16,11 @@ Please try later.</source>
 Спробуйте пізніше.</translation>
     </message>
     <message>
+        <location filename="analyzer/analyzer.cpp" line="70"/>
+        <source>Updating</source>
+        <translation>Оновлення</translation>
+    </message>
+    <message>
         <location filename="analyzer/analyzer.cpp" line="75"/>
         <source>New version of firmware is available now!</source>
         <translation>Доступна нова версія програмного забеспечення!</translation>
@@ -101,60 +106,76 @@ Please try later.</source>
     <message>
         <location filename="antscopeupdatedialog.ui" line="44"/>
         <source>Do you want to install new version?</source>
-        <translation type="unfinished"></translation>
+        <translation>Ви хочете встановити нову версію?</translation>
     </message>
     <message>
         <location filename="antscopeupdatedialog.ui" line="62"/>
         <source>Download and Install</source>
-        <translation type="unfinished"></translation>
+        <translation>Завантажте та встановіть</translation>
     </message>
     <message>
         <location filename="antscopeupdatedialog.ui" line="80"/>
         <source>Close</source>
-        <translation type="unfinished">Закрити</translation>
+        <translation>Закрити</translation>
     </message>
     <message>
         <location filename="antscopeupdatedialog.ui" line="98"/>
         <source>There are new version of AntScope2 available!</source>
-        <translation type="unfinished"></translation>
+        <translation>Доступна нова версія AntScope2!</translation>
     </message>
     <message>
         <location filename="antscopeupdatedialog.ui" line="116"/>
         <source>Download and Install after closing</source>
-        <translation type="unfinished"></translation>
+        <translation>Завантажте та встановіть після закриття</translation>
     </message>
 </context>
 <context>
     <name>Calibration</name>
     <message>
-        <location filename="calibration.cpp" line="183"/>
+        <location filename="calibration.cpp" line="50"/>
+        <location filename="calibration.cpp" line="300"/>
+        <location filename="calibration.cpp" line="316"/>
+        <location filename="calibration.cpp" line="332"/>
+        <source>Not choosed</source>
+        <translation>Не вибрано</translation>
+    </message>
+    <message>
+        <location filename="calibration.cpp" line="184"/>
         <source>Short</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="calibration.cpp" line="184"/>
+        <location filename="calibration.cpp" line="185"/>
         <source>Please connect SHORT standard and press OK.</source>
         <translation>Будь ласка, підключіть калібровочний стандарт SHORT та натисніть ОК.</translation>
     </message>
     <message>
-        <location filename="calibration.cpp" line="199"/>
+        <location filename="calibration.cpp" line="200"/>
         <source>Load</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="calibration.cpp" line="200"/>
+        <location filename="calibration.cpp" line="201"/>
         <source>Please connect LOAD standard and press OK.</source>
         <translation>Будь ласка, підключіть калібровочний стандарт LOAD та натисніть ОК.</translation>
     </message>
     <message>
-        <location filename="calibration.cpp" line="217"/>
+        <location filename="calibration.cpp" line="218"/>
         <source>Finish</source>
         <translation>Фініш</translation>
     </message>
     <message>
-        <location filename="calibration.cpp" line="218"/>
+        <location filename="calibration.cpp" line="219"/>
         <source>Calibration finished!</source>
         <translation>Калібрування завершено!</translation>
+    </message>
+</context>
+<context>
+    <name>Downloader</name>
+    <message>
+        <location filename="analyzer/updater/downloader.cpp" line="86"/>
+        <source>Server does not have firmware file.</source>
+        <translation>Сервер не має файлу прошивки.</translation>
     </message>
 </context>
 <context>
@@ -236,19 +257,23 @@ Please try later.</source>
     <message>
         <location filename="fqsettings.cpp" line="41"/>
         <source>Dots settings</source>
-        <translation type="unfinished">Gараметри вимірювання</translation>
+        <translation>Параметри вимірювання</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
         <location filename="mainwindow.ui" line="98"/>
+        <location filename="mainwindow.cpp" line="2880"/>
+        <location filename="mainwindow.cpp" line="3648"/>
         <location filename="ui_mainwindow.h" line="507"/>
         <source>Settings</source>
         <translation>Налаштування</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="114"/>
+        <location filename="mainwindow.cpp" line="2642"/>
+        <location filename="mainwindow.cpp" line="3644"/>
         <location filename="ui_mainwindow.h" line="508"/>
         <source>Export</source>
         <translation>Експорт</translation>
@@ -267,6 +292,7 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="159"/>
+        <location filename="mainwindow.cpp" line="3646"/>
         <location filename="ui_mainwindow.h" line="511"/>
         <source>Screenshot</source>
         <translation>Знімок екрану</translation>
@@ -304,7 +330,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="299"/>
         <location filename="mainwindow.ui" line="530"/>
-        <location filename="mainwindow.cpp" line="3301"/>
+        <location filename="mainwindow.cpp" line="3330"/>
         <location filename="ui_mainwindow.h" line="518"/>
         <location filename="ui_mainwindow.h" line="525"/>
         <source>Start</source>
@@ -314,13 +340,13 @@ Please try later.</source>
         <location filename="mainwindow.ui" line="545"/>
         <location filename="ui_mainwindow.h" line="528"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation>Додати</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="559"/>
         <location filename="ui_mainwindow.h" line="530"/>
         <source>Move up</source>
-        <translation type="unfinished"></translation>
+        <translation>Вгору</translation>
     </message>
     <message>
         <source>100</source>
@@ -329,7 +355,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="325"/>
         <location filename="mainwindow.ui" line="535"/>
-        <location filename="mainwindow.cpp" line="3302"/>
+        <location filename="mainwindow.cpp" line="3331"/>
         <location filename="ui_mainwindow.h" line="519"/>
         <location filename="ui_mainwindow.h" line="527"/>
         <source>Stop</source>
@@ -396,84 +422,169 @@ Please try later.</source>
         <translation>Видалити</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="269"/>
+        <location filename="mainwindow.cpp" line="273"/>
         <source>File of AntScope2</source>
         <translation>Файл AntScope2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="316"/>
-        <location filename="mainwindow.cpp" line="3324"/>
+        <location filename="mainwindow.cpp" line="320"/>
+        <location filename="mainwindow.cpp" line="3353"/>
         <source>Center</source>
         <translation>Центр</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="317"/>
-        <location filename="mainwindow.cpp" line="3325"/>
+        <location filename="mainwindow.cpp" line="321"/>
+        <location filename="mainwindow.cpp" line="3354"/>
         <source>Range</source>
         <translation>Діапазон</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="548"/>
-        <location filename="mainwindow.cpp" line="567"/>
-        <location filename="mainwindow.cpp" line="586"/>
+        <location filename="mainwindow.cpp" line="535"/>
+        <location filename="mainwindow.cpp" line="556"/>
+        <location filename="mainwindow.cpp" line="575"/>
+        <location filename="mainwindow.cpp" line="594"/>
+        <location filename="mainwindow.cpp" line="613"/>
+        <location filename="mainwindow.cpp" line="3615"/>
+        <location filename="mainwindow.cpp" line="3617"/>
+        <location filename="mainwindow.cpp" line="3619"/>
+        <location filename="mainwindow.cpp" line="3621"/>
+        <location filename="mainwindow.cpp" line="3623"/>
         <source>Frequency, kHz</source>
         <translation>Частота, кГц</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="549"/>
+        <location filename="mainwindow.cpp" line="576"/>
+        <location filename="mainwindow.cpp" line="3620"/>
         <source>Rs, Ohm</source>
         <translation>Rs, Ом</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="568"/>
+        <location filename="mainwindow.cpp" line="595"/>
+        <location filename="mainwindow.cpp" line="3622"/>
         <source>Rp, Ohm</source>
         <translation>Rp, Ом</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="587"/>
+        <location filename="mainwindow.cpp" line="614"/>
+        <location filename="mainwindow.cpp" line="3624"/>
         <source>RL, dB</source>
         <translation>RL, дБ</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2410"/>
+        <location filename="mainwindow.cpp" line="536"/>
+        <location filename="mainwindow.cpp" line="2439"/>
+        <location filename="mainwindow.cpp" line="3616"/>
+        <location filename="mainwindow.cpp" line="3627"/>
         <source>SWR</source>
         <translation>КСХ</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2430"/>
+        <location filename="mainwindow.cpp" line="557"/>
+        <location filename="mainwindow.cpp" line="3618"/>
+        <source>Angle</source>
+        <translation>Кут</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="631"/>
+        <location filename="mainwindow.cpp" line="3625"/>
+        <source>Length, m</source>
+        <translation>Довжина, м</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2459"/>
+        <location filename="mainwindow.cpp" line="3628"/>
         <source>Phase</source>
         <translation>Фаза</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2450"/>
+        <location filename="mainwindow.cpp" line="2479"/>
+        <location filename="mainwindow.cpp" line="3629"/>
         <source>Z=R+jX</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2470"/>
+        <location filename="mainwindow.cpp" line="2499"/>
+        <location filename="mainwindow.cpp" line="3630"/>
         <source>Z=R||+jX</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2488"/>
+        <location filename="mainwindow.cpp" line="2517"/>
+        <location filename="mainwindow.cpp" line="3631"/>
         <source>RL</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2508"/>
+        <location filename="mainwindow.cpp" line="2537"/>
+        <location filename="mainwindow.cpp" line="3632"/>
         <source>TDR</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2528"/>
+        <location filename="mainwindow.cpp" line="2557"/>
+        <location filename="mainwindow.cpp" line="3633"/>
         <source>Smith</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2574"/>
+        <location filename="mainwindow.cpp" line="3642"/>
+        <source>Frequency settings</source>
+        <translation>Настройки частоти</translation>
+    </message>
+</context>
+<context>
+    <name>Markers</name>
+    <message>
+        <location filename="markers.cpp" line="31"/>
+        <location filename="markers.cpp" line="604"/>
+        <source>Markers</source>
+        <translation>Маркери</translation>
+    </message>
+</context>
+<context>
+    <name>MarkersPopUp</name>
+    <message>
+        <location filename="markerspopup.cpp" line="394"/>
+        <source>Del</source>
+        <translation>Видалити</translation>
+    </message>
+    <message>
+        <location filename="markerspopup.cpp" line="395"/>
+        <source>Marker</source>
+        <translation>Маркер</translation>
+    </message>
+    <message>
+        <location filename="markerspopup.cpp" line="397"/>
+        <source>Fq</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="markerspopup.cpp" line="398"/>
+        <source>SWR</source>
+        <translation>КСХ</translation>
+    </message>
+    <message>
+        <location filename="markerspopup.cpp" line="399"/>
+        <source>RL</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="markerspopup.cpp" line="400"/>
+        <source>Z</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="markerspopup.cpp" line="401"/>
+        <source>Phase</source>
+        <translation>Фаза</translation>
     </message>
 </context>
 <context>
     <name>Measurements</name>
     <message>
         <location filename="measurements.cpp" line="44"/>
+        <location filename="measurements.cpp" line="4112"/>
         <source>Frequency = 
 SWR = 
 RL = 
@@ -496,18 +607,29 @@ Cpar =
 Кабель: </translation>
     </message>
     <message>
+        <location filename="measurements.cpp" line="58"/>
+        <source>Hint</source>
+        <translation>Підказка</translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="66"/>
+        <location filename="measurements.cpp" line="4125"/>
+        <source>BriefHint</source>
+        <translation>Підказка</translation>
+    </message>
+    <message>
         <location filename="measurements.cpp" line="300"/>
         <source>Impulse response</source>
-        <translation type="unfinished"></translation>
+        <translation>Вагова функція</translation>
     </message>
     <message>
         <location filename="measurements.cpp" line="302"/>
         <source>Step response</source>
-        <translation type="unfinished"></translation>
+        <translation>Перехідна функція</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1008"/>
-        <location filename="measurements.cpp" line="1561"/>
+        <location filename="measurements.cpp" line="1010"/>
+        <location filename="measurements.cpp" line="1563"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -518,11 +640,19 @@ L = %8 nH
 Zpar = %9 Ohm
 Lpar = %10 nH
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Частота = %1 кГц
+КСХ = %2
+RL = %3 дБ
+Z = %4 Ом
+|Z| = %5 Ом
+|rho| = %6, фаза = %7 °
+L = %8 нГ
+Zpar = %9 Ом
+Lpar = %10 нГ</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1029"/>
-        <location filename="measurements.cpp" line="1582"/>
+        <location filename="measurements.cpp" line="1031"/>
+        <location filename="measurements.cpp" line="1584"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -533,28 +663,36 @@ C = %8 pF
 Zpar = %9 Ohm
 Cpar = %10 pF
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Частота = %1 кГц
+КСХ = %2
+RL = %3 дБ
+Z = %4 Ом
+|Z| = %5 Ом
+|rho| = %6, фаза = %7 °
+C = %8 пФ
+Zpar = %9 Ом
+Cpar = %10 пФ</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1056"/>
-        <location filename="measurements.cpp" line="1609"/>
+        <location filename="measurements.cpp" line="1058"/>
+        <location filename="measurements.cpp" line="1611"/>
         <source>m</source>
-        <translation type="unfinished"></translation>
+        <translation>м</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1059"/>
-        <location filename="measurements.cpp" line="1612"/>
+        <location filename="measurements.cpp" line="1061"/>
+        <location filename="measurements.cpp" line="1614"/>
         <source>ft</source>
-        <translation type="unfinished"></translation>
+        <translation>фут</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1071"/>
-        <location filename="measurements.cpp" line="1624"/>
+        <location filename="measurements.cpp" line="1073"/>
+        <location filename="measurements.cpp" line="1626"/>
         <source>Cable: length(1/4) = %1 %2, length(1/2) = %3 %4</source>
-        <translation type="unfinished"></translation>
+        <translation>Кабель: довжина (1/4) =%1 %2, довжина (1/2) = %3 %4</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1223"/>
+        <location filename="measurements.cpp" line="1225"/>
         <source>Distance = %1 %2
 (distance in the air = %3 %4)
 Time = %5 ns
@@ -567,6 +705,28 @@ Step response = %7
 Імпульсний відгук= %6
 Крокова реакція = %7
 |Z| = %8 Ом</translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="1790"/>
+        <source>Error</source>
+        <translation>Помилка</translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="1790"/>
+        <source>Couldn&apos;t open save file.</source>
+        <translation>Не вдалося відкрити файл збереження.</translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="2497"/>
+        <location filename="measurements.cpp" line="4130"/>
+        <source>Length, m</source>
+        <translation>Довжина, м</translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="2501"/>
+        <location filename="measurements.cpp" line="4130"/>
+        <source>Length, feet</source>
+        <translation>Довжина, фут</translation>
     </message>
     <message>
         <source>Frequency = %1 kHz
@@ -628,7 +788,7 @@ Cpar = %10 пФ
     <message>
         <location filename="print.ui" line="58"/>
         <source>Markers:</source>
-        <translation type="unfinished"></translation>
+        <translation>Маркеры:</translation>
     </message>
     <message>
         <location filename="print.ui" line="84"/>
@@ -660,6 +820,36 @@ Cpar = %10 пФ
         <location filename="print.ui" line="223"/>
         <source>Print</source>
         <translation>Друкувати</translation>
+    </message>
+    <message>
+        <location filename="print.cpp" line="32"/>
+        <source>Marker</source>
+        <translation>Маркер</translation>
+    </message>
+    <message>
+        <location filename="print.cpp" line="34"/>
+        <source>Fq</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="print.cpp" line="35"/>
+        <source>SWR</source>
+        <translation>КСХ</translation>
+    </message>
+    <message>
+        <location filename="print.cpp" line="36"/>
+        <source>RL</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="print.cpp" line="37"/>
+        <source>Z</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="print.cpp" line="38"/>
+        <source>Phase</source>
+        <translation>Фаза</translation>
     </message>
 </context>
 <context>
@@ -708,12 +898,12 @@ Cpar = %10 пФ
     <message>
         <location filename="screenshot.cpp" line="286"/>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translation>Помилка</translation>
     </message>
     <message>
         <location filename="screenshot.cpp" line="286"/>
         <source>Error while make screenshot. Please try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Помилка під час створення знімка екрана. Будь ласка спробуйте ще раз.</translation>
     </message>
 </context>
 <context>
@@ -809,55 +999,55 @@ Cpar = %10 пФ
         <location filename="settings.ui" line="26"/>
         <location filename="ui_settings.h" line="575"/>
         <source>Settings</source>
-        <translation type="unfinished">Налаштування</translation>
+        <translation>Налаштування</translation>
     </message>
     <message>
         <location filename="settings.ui" line="164"/>
         <location filename="ui_settings.h" line="583"/>
         <source>Show Brief params under cursor</source>
-        <translation type="unfinished">Показати короткі параметри під курсором</translation>
+        <translation>Показати короткі параметри під курсором</translation>
     </message>
     <message>
         <location filename="settings.ui" line="180"/>
         <location filename="ui_settings.h" line="584"/>
         <source>Analyzer detection</source>
-        <translation type="unfinished">Пошук аналізатору</translation>
+        <translation>Пошук аналізатору</translation>
     </message>
     <message>
         <location filename="settings.ui" line="202"/>
         <location filename="ui_settings.h" line="585"/>
         <source>Serial port:</source>
-        <translation type="unfinished">Послідовний порт:</translation>
+        <translation>Послідовний порт:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="215"/>
         <location filename="ui_settings.h" line="586"/>
         <source>Auto</source>
-        <translation type="unfinished">Авто</translation>
+        <translation>Авто</translation>
     </message>
     <message>
         <location filename="settings.ui" line="228"/>
         <location filename="ui_settings.h" line="587"/>
         <source>Manual</source>
-        <translation type="unfinished">Ручний</translation>
+        <translation>Ручний</translation>
     </message>
     <message>
         <location filename="settings.ui" line="242"/>
         <location filename="ui_settings.h" line="588"/>
         <source>Language:</source>
-        <translation type="unfinished">Мова</translation>
+        <translation>Мова</translation>
     </message>
     <message>
         <location filename="settings.ui" line="270"/>
         <location filename="ui_settings.h" line="590"/>
         <source>Analyzer</source>
-        <translation type="unfinished">Аналізатор</translation>
+        <translation>Аналізатор</translation>
     </message>
     <message>
         <location filename="settings.ui" line="280"/>
         <location filename="ui_settings.h" line="591"/>
         <source>Info</source>
-        <translation type="unfinished">Інфо</translation>
+        <translation>Інфо</translation>
     </message>
     <message>
         <location filename="settings.ui" line="332"/>
@@ -881,19 +1071,19 @@ Cpar = %10 пФ
         <location filename="settings.ui" line="390"/>
         <location filename="ui_settings.h" line="597"/>
         <source>Update</source>
-        <translation>оновити</translation>
+        <translation>Оновити</translation>
     </message>
     <message>
         <location filename="settings.ui" line="438"/>
         <location filename="ui_settings.h" line="600"/>
         <source>AntScope2</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="settings.ui" line="448"/>
         <location filename="ui_settings.h" line="601"/>
         <source>Version:</source>
-        <translation type="unfinished">Версія:</translation>
+        <translation>Версія:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="497"/>
@@ -903,8 +1093,8 @@ Cpar = %10 пФ
     </message>
     <message>
         <location filename="settings.ui" line="509"/>
-        <location filename="settings.cpp" line="325"/>
-        <location filename="settings.cpp" line="394"/>
+        <location filename="settings.cpp" line="326"/>
+        <location filename="settings.cpp" line="395"/>
         <location filename="ui_settings.h" line="604"/>
         <source>Open</source>
         <translation></translation>
@@ -937,7 +1127,7 @@ Cpar = %10 пФ
     </message>
     <message>
         <location filename="settings.ui" line="577"/>
-        <location filename="settings.cpp" line="403"/>
+        <location filename="settings.cpp" line="404"/>
         <location filename="ui_settings.h" line="608"/>
         <source>Short</source>
         <translation></translation>
@@ -950,7 +1140,7 @@ Cpar = %10 пФ
     </message>
     <message>
         <location filename="settings.ui" line="642"/>
-        <location filename="settings.cpp" line="412"/>
+        <location filename="settings.cpp" line="413"/>
         <location filename="ui_settings.h" line="612"/>
         <source>Load</source>
         <translation></translation>
@@ -1123,105 +1313,102 @@ Cpar = %10 пФ
     </message>
     <message>
         <location filename="settings.cpp" line="116"/>
-        <location filename="settings.cpp" line="144"/>
+        <location filename="settings.cpp" line="140"/>
         <source>Checking</source>
         <translation>Перевірка</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="148"/>
         <source>Checking.</source>
-        <translation>Перевірка.</translation>
+        <translation type="vanished">Перевірка.</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="152"/>
         <source>Checking..</source>
-        <translation>Перевірка..</translation>
+        <translation type="vanished">Перевірка..</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="156"/>
         <source>Checking...</source>
-        <translation>Перевірка...</translation>
+        <translation type="vanished">Перевірка...</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="326"/>
-        <location filename="settings.cpp" line="395"/>
+        <location filename="settings.cpp" line="327"/>
+        <location filename="settings.cpp" line="396"/>
         <source>Please connect OPEN standard and press OK.</source>
         <translation>Будь ласка, підключіть калібровочний стандарт OPEN та натисніть ОК.</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="404"/>
+        <location filename="settings.cpp" line="405"/>
         <source>Please connect SHORT standard and press OK.</source>
         <translation>Будь ласка, підключіть калібровочний стандарт SHORT та натисніть ОК.</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="413"/>
+        <location filename="settings.cpp" line="414"/>
         <source>Please connect LOAD standard and press OK.</source>
         <translation>Будь ласка, підключіть калібровочний стандарт LOAD та натисніть ОК.</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="435"/>
+        <location filename="settings.cpp" line="436"/>
         <source>Calibration not performed</source>
         <translation>Калібрування не виконано</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="436"/>
+        <location filename="settings.cpp" line="437"/>
         <source>Calibration not performed.</source>
         <translation>Калібрування не виконано.</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="455"/>
+        <location filename="settings.cpp" line="456"/>
         <source>Open &apos;open calibration&apos; file</source>
-        <translation type="unfinished"></translation>
+        <translation>Відкрийте файл &apos;open&apos; калібрування</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="470"/>
+        <location filename="settings.cpp" line="471"/>
         <source>Open &apos;short calibration&apos; file</source>
-        <translation type="unfinished"></translation>
+        <translation>Відкрийте файл &apos;short&apos; калібрування</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="486"/>
+        <location filename="settings.cpp" line="487"/>
         <source>Open &apos;load calibration&apos; file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settings.cpp" line="735"/>
-        <source>Ideal 50-Ohm cable</source>
-        <translation type="unfinished"></translation>
+        <translation>Відкрийте файл &apos;load&apos; калібрування</translation>
     </message>
     <message>
         <location filename="settings.cpp" line="736"/>
-        <source>Ideal 50-Ohm cable, 50, 0.66, 0.0, 0.0, 0, 0</source>
-        <translation type="unfinished"></translation>
+        <source>Ideal 50-Ohm cable</source>
+        <translation>Ідеальний 50-Омовий кабель</translation>
     </message>
     <message>
         <location filename="settings.cpp" line="737"/>
-        <source>Ideal 75-Ohm cable</source>
-        <translation type="unfinished"></translation>
+        <source>Ideal 50-Ohm cable, 50, 0.66, 0.0, 0.0, 0, 0</source>
+        <translation>Ідеальний 50-Омовий кабель, 50, 0.66, 0.0, 0.0, 0, 0</translation>
     </message>
     <message>
         <location filename="settings.cpp" line="738"/>
-        <source>Ideal 75-Ohm cable, 75, 0.66, 0.0, 0.0, 0, 0</source>
-        <translation type="unfinished"></translation>
+        <source>Ideal 75-Ohm cable</source>
+        <translation>Ідеальний 75-Омовий кабель</translation>
     </message>
     <message>
         <location filename="settings.cpp" line="739"/>
-        <source>Ideal 25-Ohm cable</source>
-        <translation type="unfinished"></translation>
+        <source>Ideal 75-Ohm cable, 75, 0.66, 0.0, 0.0, 0, 0</source>
+        <translation>Ідеальний 75-Омовий кабель, 75, 0.66, 0.0, 0.0, 0, 0</translation>
     </message>
     <message>
         <location filename="settings.cpp" line="740"/>
-        <source>Ideal 25-Ohm cable, 25, 0.66, 0.0, 0.0, 0, 0</source>
-        <translation type="unfinished"></translation>
+        <source>Ideal 25-Ohm cable</source>
+        <translation>Ідеальний 25-Омовий кабель</translation>
     </message>
     <message>
         <location filename="settings.cpp" line="741"/>
-        <source>Ideal 37.5-Ohm cable</source>
-        <translation type="unfinished"></translation>
+        <source>Ideal 25-Ohm cable, 25, 0.66, 0.0, 0.0, 0, 0</source>
+        <translation>Ідеальний 25-Омовий кабель, 55, 0.66, 0.0, 0.0, 0, 0</translation>
     </message>
     <message>
         <location filename="settings.cpp" line="742"/>
+        <source>Ideal 37.5-Ohm cable</source>
+        <translation>Ідеальний 37.5-Омовий кабель</translation>
+    </message>
+    <message>
+        <location filename="settings.cpp" line="743"/>
         <source>Ideal 37.5-Ohm cable, 37.5, 0.66, 0.0, 0.0, 0, 0</source>
-        <translation type="unfinished"></translation>
+        <translation>Ідеальний 37.5-Омовий кабель, 37.5, 0.66, 0.0, 0.0, 0, 0</translation>
     </message>
 </context>
 <context>
@@ -1251,6 +1438,11 @@ Cpar = %10 пФ
         <translation>Оновлення, будь ласка, зачекайте...</translation>
     </message>
     <message>
+        <location filename="updatedialog.cpp" line="30"/>
+        <source>Finish</source>
+        <translation>Фініш</translation>
+    </message>
+    <message>
         <location filename="updatedialog.cpp" line="64"/>
         <source>Error while updating.</source>
         <translation>Помилка при оновленні.</translation>
@@ -1277,14 +1469,38 @@ Cpar = %10 пФ
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="365"/>
         <source>Analyzer detected</source>
-        <translation type="unfinished"></translation>
+        <translation>Аналізатор виявлений</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="365"/>
         <source>The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).
 
 If you still want the program to talk to the analyzer, turn it on and enter the PC mode.</source>
-        <translation type="unfinished"></translation>
+        <translation>Програма виявила, що аналізатор підключений до комп'ютера, але не включений або не переведений в режим ПК. Програма зараз буде працювати тільки в оффлайн-режимі (без аналізатора).
+
+Якщо все ж необхідна робота програми з аналізатором, увімкніть його і переведіть в режим ПК.</translation>
+    </message>
+    <message>
+        <location filename="analyzer/comanalyzer.cpp" line="691"/>
+        <location filename="analyzer/comanalyzer.cpp" line="768"/>
+        <source>Finish</source>
+        <translation>Фініш</translation>
+    </message>
+    <message>
+        <location filename="analyzer/comanalyzer.cpp" line="691"/>
+        <location filename="analyzer/comanalyzer.cpp" line="768"/>
+        <source>Successfully updated!</source>
+        <translation>Успішно оновлено!</translation>
+    </message>
+    <message>
+        <location filename="analyzer/comanalyzer.cpp" line="725"/>
+        <source>Error</source>
+        <translation>Помилка</translation>
+    </message>
+    <message>
+        <location filename="analyzer/comanalyzer.cpp" line="725"/>
+        <source>Error while update, please try again.</source>
+        <translation>Помилка під час оновлення, будь ласка, повторіть спробу.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="784"/>
@@ -1300,62 +1516,97 @@ restart %1 and update firmware.</source>
         <source>Can not write data to flash memory.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
-        <translation type="unfinished"></translation>
+        <translation>Не вдається записати дані на флеш-пам'ять.
+Ви повинні знову підключити свій аналізатор,
+перезапустити %1 та оновити прошивку.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="797"/>
         <source>Firmware file has wrong length.
 Try to choose another file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Файл прошивки має неправильну довжину.
+Спробуйте вибрати інший файл.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="802"/>
         <source>Firmware has incorrect CRC.
 Try to choose another file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Прошивка має неправильну CRC.
+Спробуйте вибрати інший файл.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="807"/>
         <source>Serial flash has incorrect CRC.
 Try to choose another file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Флеш-пам'ять має неправильну CRC.
+Спробуйте вибрати інший файл.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="812"/>
         <source>Timeout in the device.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
-        <translation type="unfinished"></translation>
+        <translation>Тайм-аут у пристрої.
+Ви повинні повторно підключити аналізатор,
+перезапустіть %1 і відновите прошивку.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="818"/>
         <source>Firmware file has wrong format.
 Try to choose another file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Файл прошивки має неправильний формат.
+Спробуйте вибрати інший файл.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="823"/>
         <source>Timeout.
 You should restart %1 and update firmware.</source>
-        <translation type="unfinished"></translation>
+        <translation>Тайм-аут.
+Необхідно перезапустити %1 і оновити прошивку.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="828"/>
         <source>Can not open serial port.
 You should close application which uses this port.</source>
-        <translation type="unfinished"></translation>
+        <translation>Неможливо відкрити послідовний порт.
+Ви повинні закрити програму, що використовує цей порт.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="833"/>
         <source>Can not write data to serial port.
 You should restart %1 and update firmware.</source>
-        <translation type="unfinished"></translation>
+        <translation>Неможливо записати дані в послідовний порт.
+Необхідно перезапустити %1 і оновити прошивку.</translation>
     </message>
     <message>
         <location filename="analyzer/comanalyzer.cpp" line="838"/>
         <source>Can not read data from serial port.
 You should restart %1 and update firmware.</source>
-        <translation type="unfinished"></translation>
+        <translation>Неможливо прочитати дані з послідовного порту.
+Необхідно перезапустити %1 і оновити прошивку.</translation>
+    </message>
+</context>
+<context>
+    <name>hidAnalyzer</name>
+    <message>
+        <location filename="analyzer/hidanalyzer.cpp" line="714"/>
+        <source>Finish</source>
+        <translation>Фініш</translation>
+    </message>
+    <message>
+        <location filename="analyzer/hidanalyzer.cpp" line="714"/>
+        <source>Successfully updated!</source>
+        <translation>Успішно оновлено!</translation>
+    </message>
+    <message>
+        <location filename="analyzer/hidanalyzer.cpp" line="717"/>
+        <source>Warning</source>
+        <translation>Увага</translation>
+    </message>
+    <message>
+        <location filename="analyzer/hidanalyzer.cpp" line="717"/>
+        <source>Update failed!</source>
+        <translation>Оновлення не вдалося!</translation>
     </message>
 </context>
 </TS>

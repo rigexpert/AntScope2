@@ -38,14 +38,7 @@ MarkersPopUp::MarkersPopUp(QWidget *parent) : QWidget(parent),
       m_layout.addWidget(&m_phaseLabel,0,7);
       setLayout(&m_layout);
 
-      m_removeLabel.setText("Del");
-      m_numberLabel.setText("Marker");
-      m_measurementLabel.setText("#");
-      m_fqLabel.setText("Fq");
-      m_swrLabel.setText("SWR");
-      m_rlLabel.setText("RL");
-      m_zLabel.setText("Z");
-      m_phaseLabel.setText("Phase");
+      on_translate();
 
       m_timer = new QTimer();
       connect(m_timer, &QTimer::timeout, this, &MarkersPopUp::hideAnimation);
@@ -394,4 +387,16 @@ void MarkersPopUp::setPosition(int x, int y)
 void MarkersPopUp::setTextColor(QString color)
 {
     m_textColor = color;
+}
+
+void MarkersPopUp::on_translate()
+{
+    m_removeLabel.setText(tr("Del"));
+    m_numberLabel.setText(tr("Marker"));
+    m_measurementLabel.setText("#");
+    m_fqLabel.setText(tr("Fq"));
+    m_swrLabel.setText(tr("SWR"));
+    m_rlLabel.setText(tr("RL"));
+    m_zLabel.setText(tr("Z"));
+    m_phaseLabel.setText(tr("Phase"));
 }

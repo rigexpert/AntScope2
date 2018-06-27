@@ -67,7 +67,7 @@ void Analyzer::on_downloadInfoComplete()
         double internetVersion = ver.toDouble();//ver.remove(".").toInt();
         m_updateDialog = new UpdateDialog();
         m_updateDialog->setAttribute(Qt::WA_DeleteOnClose);
-        m_updateDialog->setWindowTitle("Updating");
+        m_updateDialog->setWindowTitle(tr("Updating"));
         connect(m_updateDialog,SIGNAL(update()),this,SLOT(on_internetUpdate()));
         connect(this, SIGNAL(updatePercentChanged(int)),m_updateDialog,SLOT(on_percentChanged(qint32)));
         if(internetVersion > getVersion())
