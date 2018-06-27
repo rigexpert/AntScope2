@@ -3522,8 +3522,8 @@ void MainWindow::on_lineEdit_fqFrom_editingFinished()
         m_rlWidget->xAxis->setRangeLower(lower);
     }
     updateGraph();
-    ui->lineEdit_fqTo->setFocus();
-    ui->lineEdit_fqTo->selectAll();
+    //ui->lineEdit_fqTo->setFocus();
+    //ui->lineEdit_fqTo->selectAll();
 }
 
 void MainWindow::on_lineEdit_fqTo_editingFinished()

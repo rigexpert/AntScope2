@@ -740,6 +740,31 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>lineEdit_fqFrom</tabstop>
+  <tabstop>lineEdit_fqTo</tabstop>
+  <tabstop>limitsBtn</tabstop>
+  <tabstop>rangeBtn</tabstop>
+  <tabstop>fqSettingsBtn</tabstop>
+  <tabstop>continuousStartBtn</tabstop>
+  <tabstop>singleStart</tabstop>
+  <tabstop>tableWidget_presets</tabstop>
+  <tabstop>presetsAddBtn</tabstop>
+  <tabstop>presetsDeleteBtn</tabstop>
+  <tabstop>pressetsUpBtn</tabstop>
+  <tabstop>tableWidget_measurments</tabstop>
+  <tabstop>settingsBtn</tabstop>
+  <tabstop>exportBtn</tabstop>
+  <tabstop>importBtn</tabstop>
+  <tabstop>printBtn</tabstop>
+  <tabstop>screenshot</tabstop>
+  <tabstop>screenshotAA</tabstop>
+  <tabstop>analyzerDataBtn</tabstop>
+  <tabstop>measurementsOpenBtn</tabstop>
+  <tabstop>measurmentsSaveBtn</tabstop>
+  <tabstop>measurmentsDeleteBtn</tabstop>
+  <tabstop>tabWidget</tabstop>
+ </tabstops>
  <resources>
   <include location="res.qrc"/>
  </resources>
