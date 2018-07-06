@@ -58,6 +58,8 @@ public:
     ~MainWindow();
 
     void openFile(QString path);
+    QString lastSavePath() { return m_lastSavePath; }
+    Analyzer* analyzer() { return m_analyzer; }
 
 private:
 
@@ -168,6 +170,7 @@ private:
     double getFqFrom(void);
     double getFqTo(void);
     bool loadLanguage(QString locale); // locale: en, ukr, ru, jp, etc.
+    void saveFile(int row, QString path);
 
 signals:
     void measure(int,int,int);
@@ -248,6 +251,7 @@ private slots:
     void on_printBtn_clicked();
     void on_measurmentsSaveBtn_clicked();
     void on_measurementsOpenBtn_clicked();
+    void on_measurementsClearBtn_clicked();
     void on_importBtn_clicked();
     void on_changeMeasureSystemMetric (bool state);
     void on_Z0Changed(double _Z0);
@@ -265,6 +269,7 @@ private slots:
     void on_changedAutoDetectMode(bool state);
     void on_changedSerialPort(QString portName);
     void on_calibrationChanged();
+    void on_SaveFile(QString path);
 };
 
 

@@ -1,12 +1,17 @@
 #include "analyzerdata.h"
 #include "ui_analyzerdata.h"
+#include <QFileDialog>
+#include "mainwindow.h"
+#include <QCoreApplication>
 
 AnalyzerData::AnalyzerData(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AnalyzerData),
-    m_isSelected(false)
+    m_isSelected(false),
+    progressDialog(nullptr)
 {
     ui->setupUi(this);
+//    setWindowTitle(tr("Read analyzer data"));
 }
 
 AnalyzerData::~AnalyzerData()
@@ -42,7 +47,76 @@ void AnalyzerData::on_buttonBox_accepted()
         QString str = list.at(0)->data(0).toString();
         QStringList list1 = str.split(",");
         QStringList list2 = list1.at(3).split(":");
-
         emit itemDoubleClick(list1.at(0), list2.at(0), list2.at(1));
     }
 }
+
+void AnalyzerData::on_btnReadAll_clicked()
+{
+    QWidget* parent = parentWidget();
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent);
+    strSaveDir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                 mainWindow->lastSavePath(),
+                                                 QFileDialog::ShowDirsOnly
+                                                 | QFileDialog::DontResolveSymlinks);
+    if (strSaveDir.isEmpty())
+        return;
+
+    connect(mainWindow->analyzer(), &Analyzer::measurementComplete, this, &AnalyzerData::on_complete);
+
+    progressDialog = new QProgressDialog("Reading data...", "Abort", 0, ui->listWidget->count(), this);
+    connect(progressDialog, &QProgressDialog::canceled, this, &AnalyzerData::on_finish);
+
+    progressSteps = 0;
+    progressDialog->setValue(progressSteps);
+    progressDialog->show();
+    QCoreApplication::processEvents();
+
+    QListWidgetItem* item = ui->listWidget->item(progressSteps);
+    QString str = item->text();
+    QStringList list = str.split(",");
+    QStringList list2 = list.at(3).split(":");
+    strItemName = QString("%1-%2").arg(progressSteps, 2, 10, QLatin1Char('0')).arg(list2.at(1));
+    emit itemDoubleClick(list.at(0), list2.at(0), strItemName);
+    QCoreApplication::processEvents();
+}
+
+void AnalyzerData::on_complete()
+{
+    QDir dir = strSaveDir;
+    QString path = dir.absoluteFilePath(strItemName+".asd");
+    emit signalSaveFile(path);
+    QCoreApplication::processEvents();
+
+    int end = ui->listWidget->count()-1;
+    if (progressSteps < end)
+    {
+        progressDialog->setValue(++progressSteps);
+        QCoreApplication::processEvents();
+
+        QListWidgetItem* item = ui->listWidget->item(progressSteps);
+        QString str = item->text();
+        QStringList list = str.split(",");
+        QStringList list2 = list.at(3).split(":");
+        strItemName = QString("%1-%2").arg(progressSteps, 2, 10, QLatin1Char('0')).arg(list2.at(1));
+
+        emit itemDoubleClick(list.at(0), list2.at(0), strItemName);
+        QCoreApplication::processEvents();
+    }
+    else
+    {
+        progressDialog->setValue(++progressSteps);
+        QCoreApplication::processEvents();
+        on_finish();
+    }
+}
+
+void AnalyzerData::on_finish()
+{
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parentWidget());
+    disconnect(mainWindow->analyzer(), &Analyzer::measurementComplete, this, &AnalyzerData::on_complete);
+    delete progressDialog;
+    progressDialog = nullptr;
+    this->close();
+}
+

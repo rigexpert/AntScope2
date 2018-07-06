@@ -705,7 +705,7 @@ Step response = %7
     <message>
         <location filename="measurements.cpp" line="1790"/>
         <source>Couldn&apos;t open save file.</source>
-        <translation>Couldn&apos;t open save file.</translation>
+        <translation>保存ファイルを開けません。</translation>
     </message>
     <message>
         <location filename="measurements.cpp" line="2497"/>

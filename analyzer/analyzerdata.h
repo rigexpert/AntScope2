@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <qdebug.h>
 #include <QListWidgetItem>
+#include <QProgressDialog>
 
 namespace Ui {
 class AnalyzerData;
@@ -21,9 +22,15 @@ private:
     Ui::AnalyzerData *ui;
 
     bool m_isSelected;
+    QProgressDialog* progressDialog;
+    int progressSteps;
+    QString strSaveDir;
+    QString strItemName;
+
 signals:
     void itemDoubleClick(QString, QString, QString);
     void dialogClosed(void);
+    void signalSaveFile(QString path);
 
 public slots:
     void on_analyzerDataStringArrived(QString str);
@@ -31,6 +38,9 @@ public slots:
 private slots:
     void on_listWidget_itemDoubleClicked(QListWidgetItem *item);
     void on_buttonBox_accepted();
+    void on_btnReadAll_clicked();
+    void on_complete();
+    void on_finish();
 };
 
 #endif // ANALYZERDATA_H

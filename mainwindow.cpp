@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->screenshotAA->setEnabled(false);
     ui->measurmentsSaveBtn->setEnabled(false);    
     ui->measurmentsDeleteBtn->setEnabled(false);
+    ui->measurmentsClearBtn->setEnabled(false);
     ui->exportBtn->setEnabled(false);
 
 
@@ -92,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->measurmentsDeleteBtn->setStyleSheet(style);
 
     ui->presetsDeleteBtn->setStyleSheet(style);
+    ui->measurmentsClearBtn->setStyleSheet(style);
 
 
     style = "QPushButton:disabled{"
@@ -270,6 +272,7 @@ MainWindow::MainWindow(QWidget *parent) :
             m_measurements,SLOT(setCalibrationMode(bool)));
     m_measurements->setCalibration(m_calibration);
 
+    connect(ui->measurmentsClearBtn, &QPushButton::clicked, this, &MainWindow::on_measurementsClearBtn_clicked);
 
     QSettings settings1 ("HKEY_CLASSES_ROOT", QSettings::NativeFormat);
     settings1.setValue (".asd/.", "AntScope2.file");
@@ -2688,6 +2691,7 @@ void MainWindow::on_analyzerDataBtn_clicked()
     m_analyzer->getAnalyzerData();
     connect(m_analyzer,SIGNAL(analyzerDataStringArrived(QString)),m_analyzerData,SLOT(on_analyzerDataStringArrived(QString)));
     connect(m_analyzerData,SIGNAL(itemDoubleClick(QString,QString,QString)),m_analyzer,SLOT(on_itemDoubleClick(QString,QString,QString)));
+    connect(m_analyzerData,SIGNAL(signalSaveFile(QString)),this,SLOT(on_SaveFile(QString)));
     connect(m_analyzerData,SIGNAL(dialogClosed()),m_analyzer,SLOT(on_dialogClosed()));
     m_analyzerData->exec();
 }
@@ -2772,6 +2776,7 @@ void MainWindow::on_singleStart_clicked()
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);
     ui->measurmentsDeleteBtn->setEnabled(!m_analyzer->getIsMeasuring());
+    ui->measurmentsClearBtn->setEnabled(!m_analyzer->getIsMeasuring());
 }
 
 void MainWindow::on_continuousStartBtn_clicked(bool checked)
@@ -2819,6 +2824,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         ui->measurmentsSaveBtn->setEnabled(true);
         ui->exportBtn->setEnabled(true);
         ui->measurmentsDeleteBtn->setEnabled(false);
+        ui->measurmentsClearBtn->setEnabled(false);
     }else
     {
         m_analyzer->setContinuos(false);
@@ -2874,6 +2880,7 @@ void MainWindow::on_measurementComplete()
     }else
     {
         ui->measurmentsDeleteBtn->setEnabled(true);
+        ui->measurmentsClearBtn->setEnabled(true);
         m_analyzer->setContinuos(false);
     }
 }
@@ -3039,6 +3046,36 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
     {
         ui->measurmentsSaveBtn->setEnabled(false);
         ui->measurmentsDeleteBtn->setEnabled(false);
+        ui->measurmentsClearBtn->setEnabled(false);
+        ui->exportBtn->setEnabled(false);
+    }
+    if(m_markers)
+    {
+        m_markers->repaint();
+        m_markers->redraw();
+    }
+}
+
+
+void MainWindow::on_measurementsClearBtn_clicked()
+{
+    if(m_analyzer->getIsMeasuring())
+    {
+        return;
+    }
+
+    while(ui->tableWidget_measurments->rowCount() != 0)
+    {
+        QTableWidgetItem * item = ui->tableWidget_measurments->item(0, 0);
+        int rowNumber = item->row();
+        m_measurements->deleteRow(rowNumber);
+    }
+
+    if(ui->tableWidget_measurments->rowCount() == 0)
+    {
+        ui->measurmentsSaveBtn->setEnabled(false);
+        ui->measurmentsDeleteBtn->setEnabled(false);
+        ui->measurmentsClearBtn->setEnabled(false);
         ui->exportBtn->setEnabled(false);
     }
     if(m_markers)
@@ -3257,6 +3294,7 @@ void MainWindow::on_measurementsOpenBtn_clicked()
         ui->measurmentsSaveBtn->setEnabled(true);
         ui->exportBtn->setEnabled(true);
         ui->measurmentsDeleteBtn->setEnabled(true);
+        ui->measurmentsClearBtn->setEnabled(true);
     }
 }
 
@@ -3266,6 +3304,7 @@ void MainWindow::openFile(QString path)
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);
     ui->measurmentsDeleteBtn->setEnabled(true);
+    ui->measurmentsClearBtn->setEnabled(true);
 }
 
 void MainWindow::on_importBtn_clicked()
@@ -3278,6 +3317,7 @@ void MainWindow::on_importBtn_clicked()
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);
     ui->measurmentsDeleteBtn->setEnabled(true);
+    ui->measurmentsClearBtn->setEnabled(true);
 }
 
 void MainWindow::on_changeMeasureSystemMetric (bool state)
@@ -3702,4 +3742,16 @@ void MainWindow::on_calibrationChanged()
         m_markers->repaint();
         m_markers->redraw();
     }
+}
+
+void MainWindow::on_SaveFile(QString path)
+{
+    //int row = ui->tableWidget_measurments->rowCount() - 1;
+    saveFile(0, path);
+    ui->measurmentsSaveBtn->setEnabled(true);
+}
+
+void MainWindow::saveFile(int row, QString path)
+{
+    m_measurements->saveData(row, path);
 }
