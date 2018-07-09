@@ -91,9 +91,18 @@ Please try later.</source>
     <name>AnalyzerData</name>
     <message>
         <location filename="analyzer/analyzerdata.ui" line="14"/>
-        <location filename="ui_analyzerdata.h" line="67"/>
-        <source>Dialog</source>
-        <translation></translation>
+        <source>Read analyzer data</source>
+        <translation>Чтение данных анализатора</translation>
+    </message>
+    <message>
+        <location filename="analyzer/analyzerdata.ui" line="32"/>
+        <source>Read and Save all</source>
+        <translation>Сохранить все</translation>
+    </message>
+    <message>
+        <location filename="analyzer/analyzerdata.cpp" line="58"/>
+        <source>Open Directory</source>
+        <translation>Открыть каталог</translation>
     </message>
 </context>
 <context>
@@ -220,37 +229,31 @@ Please try later.</source>
     <name>FqSettings</name>
     <message>
         <location filename="fqsettings.ui" line="14"/>
-        <location filename="ui_fqsettings.h" line="83"/>
         <source>Dialog</source>
         <translation></translation>
     </message>
     <message>
         <location filename="fqsettings.ui" line="20"/>
-        <location filename="ui_fqsettings.h" line="84"/>
         <source>Measurement speed</source>
         <translation>Скорость измерения</translation>
     </message>
     <message>
         <location filename="fqsettings.ui" line="60"/>
-        <location filename="ui_fqsettings.h" line="85"/>
         <source>Fast</source>
         <translation>Быстро</translation>
     </message>
     <message>
         <location filename="fqsettings.ui" line="73"/>
-        <location filename="ui_fqsettings.h" line="86"/>
         <source>Accurately </source>
         <translation>Точно</translation>
     </message>
     <message>
         <location filename="fqsettings.ui" line="96"/>
-        <location filename="ui_fqsettings.h" line="87"/>
         <source>Dots number:</source>
         <translation>Количество точек:</translation>
     </message>
     <message>
         <location filename="fqsettings.ui" line="109"/>
-        <location filename="ui_fqsettings.h" line="88"/>
         <source>OK</source>
         <translation>ОК</translation>
     </message>
@@ -264,89 +267,80 @@ Please try later.</source>
     <name>MainWindow</name>
     <message>
         <location filename="mainwindow.ui" line="98"/>
-        <location filename="mainwindow.cpp" line="2880"/>
-        <location filename="mainwindow.cpp" line="3648"/>
-        <location filename="ui_mainwindow.h" line="507"/>
+        <location filename="mainwindow.cpp" line="2923"/>
+        <location filename="mainwindow.cpp" line="3724"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="114"/>
-        <location filename="mainwindow.cpp" line="2642"/>
-        <location filename="mainwindow.cpp" line="3644"/>
-        <location filename="ui_mainwindow.h" line="508"/>
+        <location filename="mainwindow.cpp" line="2681"/>
+        <location filename="mainwindow.cpp" line="3720"/>
         <source>Export</source>
         <translation>Експорт</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="127"/>
-        <location filename="ui_mainwindow.h" line="509"/>
         <source>Import</source>
         <translation>Импорт</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="143"/>
-        <location filename="ui_mainwindow.h" line="510"/>
         <source>Print</source>
         <translation>Печать</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="159"/>
-        <location filename="mainwindow.cpp" line="3646"/>
-        <location filename="ui_mainwindow.h" line="511"/>
+        <location filename="mainwindow.cpp" line="3722"/>
         <source>Screenshot</source>
         <translation>Снимок экрана</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="175"/>
-        <location filename="ui_mainwindow.h" line="512"/>
         <source>Screenshot from AA</source>
         <translation>Снимок экрана анализатора</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="191"/>
-        <location filename="ui_mainwindow.h" line="513"/>
         <source>Data from AA</source>
         <translation>Данные с анализатора</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="256"/>
-        <location filename="ui_mainwindow.h" line="515"/>
         <source>Frequency(kHz)</source>
         <translation>Частота(кГц)</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="272"/>
-        <location filename="ui_mainwindow.h" line="516"/>
         <source>Limits</source>
         <translation>Границы</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="285"/>
-        <location filename="ui_mainwindow.h" line="517"/>
         <source>Center, Range</source>
         <translation>Центр, Диапазон</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="299"/>
-        <location filename="mainwindow.ui" line="530"/>
-        <location filename="mainwindow.cpp" line="3330"/>
-        <location filename="ui_mainwindow.h" line="518"/>
-        <location filename="ui_mainwindow.h" line="525"/>
+        <location filename="mainwindow.ui" line="533"/>
+        <location filename="mainwindow.cpp" line="3406"/>
         <source>Start</source>
         <translation>Старт</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="545"/>
-        <location filename="ui_mainwindow.h" line="528"/>
+        <location filename="mainwindow.ui" line="548"/>
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="559"/>
-        <location filename="ui_mainwindow.h" line="530"/>
+        <location filename="mainwindow.ui" line="562"/>
         <source>Move up</source>
         <translation>Вверх</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="733"/>
+        <source>Clear</source>
+        <translation>Очистить</translation>
     </message>
     <message>
         <source>100</source>
@@ -354,10 +348,8 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="325"/>
-        <location filename="mainwindow.ui" line="535"/>
-        <location filename="mainwindow.cpp" line="3331"/>
-        <location filename="ui_mainwindow.h" line="519"/>
-        <location filename="ui_mainwindow.h" line="527"/>
+        <location filename="mainwindow.ui" line="538"/>
+        <location filename="mainwindow.cpp" line="3407"/>
         <source>Stop</source>
         <translation>Стоп</translation>
     </message>
@@ -367,168 +359,158 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="369"/>
-        <location filename="ui_mainwindow.h" line="520"/>
         <source>S</source>
         <translation></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="410"/>
-        <location filename="ui_mainwindow.h" line="521"/>
         <source>Continuous</source>
         <translation>Непрерывно</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="432"/>
-        <location filename="ui_mainwindow.h" line="522"/>
         <source>Single</source>
         <translation>Одиночно</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="464"/>
-        <location filename="ui_mainwindow.h" line="523"/>
+        <location filename="mainwindow.ui" line="467"/>
         <source>Presets(kHz)</source>
         <translation>Пресети(кГц)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="591"/>
-        <location filename="ui_mainwindow.h" line="531"/>
+        <location filename="mainwindow.ui" line="594"/>
         <source>Measurements</source>
         <translation>Измерения</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="681"/>
-        <location filename="ui_mainwindow.h" line="533"/>
+        <location filename="mainwindow.ui" line="684"/>
         <source>Name</source>
         <translation>Имя</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="697"/>
-        <location filename="ui_mainwindow.h" line="534"/>
+        <location filename="mainwindow.ui" line="700"/>
         <source>Open</source>
         <translation>Открыть</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="710"/>
-        <location filename="ui_mainwindow.h" line="535"/>
+        <location filename="mainwindow.ui" line="713"/>
         <source>Save</source>
         <translation>Сохранить</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="552"/>
-        <location filename="mainwindow.ui" line="723"/>
-        <location filename="ui_mainwindow.h" line="529"/>
-        <location filename="ui_mainwindow.h" line="536"/>
+        <location filename="mainwindow.ui" line="555"/>
+        <location filename="mainwindow.ui" line="726"/>
         <source>Delete</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="273"/>
+        <location filename="mainwindow.cpp" line="279"/>
         <source>File of AntScope2</source>
         <translation>Файл AntScope2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="320"/>
-        <location filename="mainwindow.cpp" line="3353"/>
+        <location filename="mainwindow.cpp" line="326"/>
+        <location filename="mainwindow.cpp" line="3429"/>
         <source>Center</source>
         <translation>Центр</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="321"/>
-        <location filename="mainwindow.cpp" line="3354"/>
+        <location filename="mainwindow.cpp" line="327"/>
+        <location filename="mainwindow.cpp" line="3430"/>
         <source>Range</source>
         <translation>Диапазон</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="535"/>
-        <location filename="mainwindow.cpp" line="556"/>
-        <location filename="mainwindow.cpp" line="575"/>
-        <location filename="mainwindow.cpp" line="594"/>
-        <location filename="mainwindow.cpp" line="613"/>
-        <location filename="mainwindow.cpp" line="3615"/>
-        <location filename="mainwindow.cpp" line="3617"/>
-        <location filename="mainwindow.cpp" line="3619"/>
-        <location filename="mainwindow.cpp" line="3621"/>
-        <location filename="mainwindow.cpp" line="3623"/>
+        <location filename="mainwindow.cpp" line="541"/>
+        <location filename="mainwindow.cpp" line="562"/>
+        <location filename="mainwindow.cpp" line="581"/>
+        <location filename="mainwindow.cpp" line="600"/>
+        <location filename="mainwindow.cpp" line="619"/>
+        <location filename="mainwindow.cpp" line="3691"/>
+        <location filename="mainwindow.cpp" line="3693"/>
+        <location filename="mainwindow.cpp" line="3695"/>
+        <location filename="mainwindow.cpp" line="3697"/>
+        <location filename="mainwindow.cpp" line="3699"/>
         <source>Frequency, kHz</source>
         <translation>Частота, кГц</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="576"/>
-        <location filename="mainwindow.cpp" line="3620"/>
+        <location filename="mainwindow.cpp" line="582"/>
+        <location filename="mainwindow.cpp" line="3696"/>
         <source>Rs, Ohm</source>
         <translation>Rs, Ом</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="595"/>
-        <location filename="mainwindow.cpp" line="3622"/>
+        <location filename="mainwindow.cpp" line="601"/>
+        <location filename="mainwindow.cpp" line="3698"/>
         <source>Rp, Ohm</source>
         <translation>Rp, Ом</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="614"/>
-        <location filename="mainwindow.cpp" line="3624"/>
+        <location filename="mainwindow.cpp" line="620"/>
+        <location filename="mainwindow.cpp" line="3700"/>
         <source>RL, dB</source>
         <translation>RL, дБ</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="536"/>
-        <location filename="mainwindow.cpp" line="2439"/>
-        <location filename="mainwindow.cpp" line="3616"/>
-        <location filename="mainwindow.cpp" line="3627"/>
+        <location filename="mainwindow.cpp" line="542"/>
+        <location filename="mainwindow.cpp" line="2478"/>
+        <location filename="mainwindow.cpp" line="3692"/>
+        <location filename="mainwindow.cpp" line="3703"/>
         <source>SWR</source>
         <translation>КСВ</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="557"/>
-        <location filename="mainwindow.cpp" line="3618"/>
+        <location filename="mainwindow.cpp" line="563"/>
+        <location filename="mainwindow.cpp" line="3694"/>
         <source>Angle</source>
         <translation>Угол</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="631"/>
-        <location filename="mainwindow.cpp" line="3625"/>
+        <location filename="mainwindow.cpp" line="637"/>
+        <location filename="mainwindow.cpp" line="3701"/>
         <source>Length, m</source>
         <translation>Длина, м</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2459"/>
-        <location filename="mainwindow.cpp" line="3628"/>
+        <location filename="mainwindow.cpp" line="2498"/>
+        <location filename="mainwindow.cpp" line="3704"/>
         <source>Phase</source>
         <translation>Фаза</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2479"/>
-        <location filename="mainwindow.cpp" line="3629"/>
+        <location filename="mainwindow.cpp" line="2518"/>
+        <location filename="mainwindow.cpp" line="3705"/>
         <source>Z=R+jX</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2499"/>
-        <location filename="mainwindow.cpp" line="3630"/>
+        <location filename="mainwindow.cpp" line="2538"/>
+        <location filename="mainwindow.cpp" line="3706"/>
         <source>Z=R||+jX</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2517"/>
-        <location filename="mainwindow.cpp" line="3631"/>
+        <location filename="mainwindow.cpp" line="2556"/>
+        <location filename="mainwindow.cpp" line="3707"/>
         <source>RL</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2537"/>
-        <location filename="mainwindow.cpp" line="3632"/>
+        <location filename="mainwindow.cpp" line="2576"/>
+        <location filename="mainwindow.cpp" line="3708"/>
         <source>TDR</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2557"/>
-        <location filename="mainwindow.cpp" line="3633"/>
+        <location filename="mainwindow.cpp" line="2596"/>
+        <location filename="mainwindow.cpp" line="3709"/>
         <source>Smith</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2574"/>
-        <location filename="mainwindow.cpp" line="3642"/>
+        <location filename="mainwindow.cpp" line="2613"/>
+        <location filename="mainwindow.cpp" line="3718"/>
         <source>Frequency settings</source>
         <translation>Настройки частоты</translation>
     </message>
@@ -856,37 +838,31 @@ Cpar = %10 пФ
     <name>Screenshot</name>
     <message>
         <location filename="screenshot.ui" line="26"/>
-        <location filename="ui_screenshot.h" line="73"/>
         <source>Dialog</source>
         <translation>Снимок экрана</translation>
     </message>
     <message>
         <location filename="screenshot.ui" line="38"/>
-        <location filename="ui_screenshot.h" line="74"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
     <message>
         <location filename="screenshot.ui" line="51"/>
-        <location filename="ui_screenshot.h" line="75"/>
         <source>Export to BMP</source>
         <translation>Экспорт в BMP</translation>
     </message>
     <message>
         <location filename="screenshot.ui" line="64"/>
-        <location filename="ui_screenshot.h" line="76"/>
         <source>Export to PDF</source>
         <translation>Экспорт в PDF</translation>
     </message>
     <message>
         <location filename="screenshot.ui" line="87"/>
-        <location filename="ui_screenshot.h" line="77"/>
         <source>Add comment (for .pdf):</source>
         <translation>Добавить комментарий (для .pdf):</translation>
     </message>
     <message>
         <location filename="screenshot.ui" line="113"/>
-        <location filename="ui_screenshot.h" line="78"/>
         <source>R</source>
         <translation></translation>
     </message>
@@ -910,72 +886,59 @@ Cpar = %10 пФ
     <name>Settings</name>
     <message>
         <location filename="settings.ui" line="42"/>
-        <location filename="ui_settings.h" line="589"/>
         <source>General</source>
         <translation>Основные</translation>
     </message>
     <message>
         <location filename="settings.ui" line="54"/>
-        <location filename="ui_settings.h" line="576"/>
         <source>Show Graph Hint</source>
         <translation>Показать окно с параметрами</translation>
     </message>
     <message>
         <location filename="settings.ui" line="70"/>
-        <location filename="ui_settings.h" line="577"/>
         <source>Show Markers Hint</source>
         <translation>Показать окно с маркерами</translation>
     </message>
     <message>
         <location filename="settings.ui" line="86"/>
-        <location filename="ui_settings.h" line="578"/>
         <source>Measure system</source>
         <translation>Система измерения</translation>
     </message>
     <message>
         <location filename="settings.ui" line="98"/>
-        <location filename="ui_settings.h" line="579"/>
         <source>Metric</source>
         <translation>Метрическая</translation>
     </message>
     <message>
         <location filename="settings.ui" line="111"/>
-        <location filename="ui_settings.h" line="580"/>
         <source>American</source>
         <translation>Американская</translation>
     </message>
     <message>
         <location filename="settings.ui" line="138"/>
-        <location filename="ui_settings.h" line="581"/>
         <source>System impedance:</source>
         <translation>Импеданс системы:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="151"/>
         <location filename="settings.ui" line="829"/>
-        <location filename="ui_settings.h" line="582"/>
-        <location filename="ui_settings.h" line="624"/>
         <source>Ohm</source>
         <translation>Ом</translation>
     </message>
     <message>
         <location filename="settings.ui" line="258"/>
-        <location filename="ui_settings.h" line="603"/>
         <source>Updates</source>
         <translation>Обновление</translation>
     </message>
     <message>
         <location filename="settings.ui" line="418"/>
         <location filename="settings.cpp" line="135"/>
-        <location filename="ui_settings.h" line="599"/>
         <source>Check Updates</source>
         <translation>Проверить обновления</translation>
     </message>
     <message>
         <location filename="settings.ui" line="411"/>
         <location filename="settings.ui" line="482"/>
-        <location filename="ui_settings.h" line="598"/>
-        <location filename="ui_settings.h" line="602"/>
         <source>Auto check updates</source>
         <translation>Автоматическая проверка обновлений</translation>
     </message>
@@ -985,109 +948,91 @@ Cpar = %10 пФ
     </message>
     <message>
         <location filename="settings.ui" line="290"/>
-        <location filename="ui_settings.h" line="592"/>
         <source>Analyzer model:</source>
         <translation>Модель анализатора:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="311"/>
-        <location filename="ui_settings.h" line="593"/>
         <source>Version of firmware:</source>
         <translation>Версия ПО:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="164"/>
-        <location filename="ui_settings.h" line="583"/>
         <source>Show Brief params under cursor</source>
         <translation>Показать короткие параметры под курсором</translation>
     </message>
     <message>
         <location filename="settings.ui" line="180"/>
-        <location filename="ui_settings.h" line="584"/>
         <source>Analyzer detection</source>
         <translation>Обнаружение анализатора</translation>
     </message>
     <message>
         <location filename="settings.ui" line="202"/>
-        <location filename="ui_settings.h" line="585"/>
         <source>Serial port:</source>
         <translation>Последовательный порт:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="215"/>
-        <location filename="ui_settings.h" line="586"/>
         <source>Auto</source>
         <translation>Авто</translation>
     </message>
     <message>
         <location filename="settings.ui" line="228"/>
-        <location filename="ui_settings.h" line="587"/>
         <source>Manual</source>
         <translation>Ручной</translation>
     </message>
     <message>
         <location filename="settings.ui" line="242"/>
-        <location filename="ui_settings.h" line="588"/>
         <source>Language:</source>
         <translation>Язык</translation>
     </message>
     <message>
         <location filename="settings.ui" line="270"/>
-        <location filename="ui_settings.h" line="590"/>
         <source>Analyzer</source>
         <translation>Анализатор</translation>
     </message>
     <message>
         <location filename="settings.ui" line="280"/>
-        <location filename="ui_settings.h" line="591"/>
         <source>Info</source>
         <translation>Инфо</translation>
     </message>
     <message>
         <location filename="settings.ui" line="26"/>
-        <location filename="ui_settings.h" line="575"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
         <location filename="settings.ui" line="332"/>
-        <location filename="ui_settings.h" line="594"/>
         <source>Serial number:</source>
         <translation>Серийный номер:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="356"/>
-        <location filename="ui_settings.h" line="595"/>
         <source>Update from file</source>
         <translation>Обновить из файла</translation>
     </message>
     <message>
         <location filename="settings.ui" line="369"/>
-        <location filename="ui_settings.h" line="596"/>
         <source>Browse</source>
         <translation>Обзор</translation>
     </message>
     <message>
         <location filename="settings.ui" line="390"/>
-        <location filename="ui_settings.h" line="597"/>
         <source>Update</source>
         <translation>Обновить</translation>
     </message>
     <message>
         <location filename="settings.ui" line="438"/>
-        <location filename="ui_settings.h" line="600"/>
         <source>AntScope2</source>
         <translation></translation>
     </message>
     <message>
         <location filename="settings.ui" line="448"/>
-        <location filename="ui_settings.h" line="601"/>
         <source>Version:</source>
         <translation>Версия:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="497"/>
-        <location filename="ui_settings.h" line="621"/>
         <source>OSL Calibration</source>
         <translation>OSL калибровка</translation>
     </message>
@@ -1095,13 +1040,11 @@ Cpar = %10 пФ
         <location filename="settings.ui" line="509"/>
         <location filename="settings.cpp" line="326"/>
         <location filename="settings.cpp" line="395"/>
-        <location filename="ui_settings.h" line="604"/>
         <source>Open</source>
         <translation>Открыть</translation>
     </message>
     <message>
         <location filename="settings.ui" line="521"/>
-        <location filename="ui_settings.h" line="605"/>
         <source>Start Open Calibration</source>
         <translation>Начать калибровку Open</translation>
     </message>
@@ -1109,9 +1052,6 @@ Cpar = %10 пФ
         <location filename="settings.ui" line="534"/>
         <location filename="settings.ui" line="615"/>
         <location filename="settings.ui" line="680"/>
-        <location filename="ui_settings.h" line="606"/>
-        <location filename="ui_settings.h" line="611"/>
-        <location filename="ui_settings.h" line="615"/>
         <source>Not choosed</source>
         <translation>Не выбрано</translation>
     </message>
@@ -1119,179 +1059,148 @@ Cpar = %10 пФ
         <location filename="settings.ui" line="547"/>
         <location filename="settings.ui" line="602"/>
         <location filename="settings.ui" line="667"/>
-        <location filename="ui_settings.h" line="607"/>
-        <location filename="ui_settings.h" line="610"/>
-        <location filename="ui_settings.h" line="614"/>
         <source>Open file</source>
         <translation>Открыть</translation>
     </message>
     <message>
         <location filename="settings.ui" line="577"/>
         <location filename="settings.cpp" line="404"/>
-        <location filename="ui_settings.h" line="608"/>
         <source>Short</source>
         <translation></translation>
     </message>
     <message>
         <location filename="settings.ui" line="589"/>
-        <location filename="ui_settings.h" line="609"/>
         <source>Start Short Calibration</source>
         <translation>Начать калибровку Short</translation>
     </message>
     <message>
         <location filename="settings.ui" line="642"/>
         <location filename="settings.cpp" line="413"/>
-        <location filename="ui_settings.h" line="612"/>
         <source>Load</source>
         <translation></translation>
     </message>
     <message>
         <location filename="settings.ui" line="654"/>
-        <location filename="ui_settings.h" line="613"/>
         <source>Start Load Calibration</source>
         <translation>Начать калибровку Load</translation>
     </message>
     <message>
         <location filename="settings.ui" line="707"/>
-        <location filename="ui_settings.h" line="616"/>
         <source>Calibration Wizard</source>
         <translation>Мастер калибровки</translation>
     </message>
     <message>
         <location filename="settings.ui" line="719"/>
-        <location filename="ui_settings.h" line="617"/>
         <source>Start</source>
         <translation>Начать</translation>
     </message>
     <message>
         <location filename="settings.ui" line="732"/>
-        <location filename="ui_settings.h" line="618"/>
         <source>Calibration is off</source>
         <translation>Калибровка выключена</translation>
     </message>
     <message>
         <location filename="settings.ui" line="745"/>
-        <location filename="ui_settings.h" line="619"/>
         <source>Status:</source>
         <translation>Статус:</translation>
     </message>
     <message>
         <location filename="settings.ui" line="758"/>
-        <location filename="ui_settings.h" line="620"/>
         <source>Turn On</source>
         <translation>Включить</translation>
     </message>
     <message>
         <location filename="settings.ui" line="765"/>
-        <location filename="ui_settings.h" line="645"/>
         <source>Cable</source>
         <translation>Кабель</translation>
     </message>
     <message>
         <location filename="settings.ui" line="777"/>
-        <location filename="ui_settings.h" line="622"/>
         <source>Velocity factor</source>
         <translation>Коэффициент укорочения</translation>
     </message>
     <message>
         <location filename="settings.ui" line="803"/>
-        <location filename="ui_settings.h" line="623"/>
         <source>Cable R0</source>
         <translation>Активная часть импеданса, R0</translation>
     </message>
     <message>
         <location filename="settings.ui" line="842"/>
-        <location filename="ui_settings.h" line="625"/>
         <source>Cable loss</source>
         <translation>Потери в кабеле</translation>
     </message>
     <message>
         <location filename="settings.ui" line="854"/>
-        <location filename="ui_settings.h" line="626"/>
         <source>Conductive loss</source>
         <translation>Потери проводника</translation>
     </message>
     <message>
         <location filename="settings.ui" line="880"/>
-        <location filename="ui_settings.h" line="627"/>
         <source>Dielectric loss</source>
         <translation>Потери изоляции</translation>
     </message>
     <message>
         <location filename="settings.ui" line="907"/>
-        <location filename="ui_settings.h" line="630"/>
         <source>dB/100feet</source>
         <translation>дБ/100фт</translation>
     </message>
     <message>
         <location filename="settings.ui" line="912"/>
-        <location filename="ui_settings.h" line="631"/>
         <source>dB/feet</source>
         <translation>дБ/фт</translation>
     </message>
     <message>
         <location filename="settings.ui" line="917"/>
-        <location filename="ui_settings.h" line="632"/>
         <source>dB/100m</source>
         <translation>дБ/100м</translation>
     </message>
     <message>
         <location filename="settings.ui" line="922"/>
-        <location filename="ui_settings.h" line="633"/>
         <source>dB/m</source>
         <translation>дБ/м</translation>
     </message>
     <message>
         <location filename="settings.ui" line="936"/>
-        <location filename="ui_settings.h" line="635"/>
         <source>at</source>
         <translation>на</translation>
     </message>
     <message>
         <location filename="settings.ui" line="949"/>
-        <location filename="ui_settings.h" line="636"/>
         <source>any frequency</source>
         <translation>любой частоте</translation>
     </message>
     <message>
         <location filename="settings.ui" line="994"/>
-        <location filename="ui_settings.h" line="638"/>
         <source>MHz</source>
         <translation>МГц</translation>
     </message>
     <message>
         <location filename="settings.ui" line="1018"/>
-        <location filename="ui_settings.h" line="639"/>
         <source>Cable length</source>
         <translation>Длинна кабеля</translation>
     </message>
     <message>
         <location filename="settings.ui" line="1044"/>
-        <location filename="ui_settings.h" line="640"/>
         <source>Transmission line options</source>
         <translation>Операции с кабелем</translation>
     </message>
     <message>
         <location filename="settings.ui" line="1056"/>
-        <location filename="ui_settings.h" line="641"/>
         <source>Do nothing</source>
         <translation>Не добавлять и не вычитать</translation>
     </message>
     <message>
         <location filename="settings.ui" line="1072"/>
-        <location filename="ui_settings.h" line="642"/>
         <source>Subtract cable</source>
         <translation>Вычесть кабель</translation>
     </message>
     <message>
         <location filename="settings.ui" line="1088"/>
-        <location filename="ui_settings.h" line="643"/>
         <source>Add cable</source>
         <translation>Добавить кабель</translation>
     </message>
     <message>
         <location filename="settings.ui" line="1105"/>
-        <location filename="ui_settings.h" line="644"/>
         <source>Update graphs</source>
         <translation>Обновить графики</translation>
     </message>
@@ -1415,25 +1324,21 @@ Cpar = %10 пФ
     <name>UpdateDialog</name>
     <message>
         <location filename="updatedialog.ui" line="17"/>
-        <location filename="ui_updatedialog.h" line="68"/>
         <source>Dialog</source>
         <translation></translation>
     </message>
     <message>
         <location filename="updatedialog.ui" line="50"/>
-        <location filename="ui_updatedialog.h" line="70"/>
         <source>Update</source>
         <translation>Обновить</translation>
     </message>
     <message>
         <location filename="updatedialog.ui" line="63"/>
-        <location filename="ui_updatedialog.h" line="71"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
     <message>
         <location filename="updatedialog.ui" line="92"/>
-        <location filename="ui_updatedialog.h" line="72"/>
         <source>Updating, please wait...</source>
         <translation>Обновление, пожалуйста, подождите ...</translation>
     </message>
