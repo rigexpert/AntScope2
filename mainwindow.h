@@ -251,7 +251,7 @@ private slots:
     void on_printBtn_clicked();
     void on_measurmentsSaveBtn_clicked();
     void on_measurementsOpenBtn_clicked();
-    void on_measurementsClearBtn_clicked();
+    void on_measurementsClearBtn_clicked(bool);
     void on_importBtn_clicked();
     void on_changeMeasureSystemMetric (bool state);
     void on_Z0Changed(double _Z0);

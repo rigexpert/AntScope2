@@ -3057,7 +3057,7 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
 }
 
 
-void MainWindow::on_measurementsClearBtn_clicked()
+void MainWindow::on_measurementsClearBtn_clicked(bool)
 {
     if(m_analyzer->getIsMeasuring())
     {

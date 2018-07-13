@@ -41,6 +41,7 @@ private slots:
     void on_btnReadAll_clicked();
     void on_complete();
     void on_finish();
+    void nextStep();
 };
 
 #endif // ANALYZERDATA_H

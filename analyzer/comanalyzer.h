@@ -54,7 +54,6 @@ private:
     volatile bool m_isMeasuring;
     volatile bool m_isContinuos;
 
-
     volatile bool m_ok;
     volatile bool m_updateOK;
     volatile qint32 m_updateErr;

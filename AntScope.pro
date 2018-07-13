@@ -13,7 +13,7 @@ QT       += quick
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.7\\"'
+DEFINES += ANTSCOPE2VER='\\"1.0.8\\"'
 
 TARGET = AntScope2
 
@@ -22,9 +22,12 @@ TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_jp.ts
 CODECFORSRC     = UTF-8
 
+CONFIG -= debug
+CONFIG += release
+
 CONFIG(release) {
     DESTDIR = $${PWD}/build/release
-    DEFINES += QT_NO_DEBUG_OUTPUT
+    #DEFINES += QT_NO_DEBUG_OUTPUT
 }
 else {
     DESTDIR = $${PWD}/build/debug

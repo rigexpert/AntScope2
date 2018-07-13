@@ -3,6 +3,8 @@
 #include <QFileDialog>
 #include "mainwindow.h"
 #include <QCoreApplication>
+#include <iostream>
+
 
 AnalyzerData::AnalyzerData(QWidget *parent) :
     QDialog(parent),
@@ -77,6 +79,9 @@ void AnalyzerData::on_btnReadAll_clicked()
     QStringList list = str.split(",");
     QStringList list2 = list.at(3).split(":");
     strItemName = QString("%1-%2").arg(progressSteps, 2, 10, QLatin1Char('0')).arg(list2.at(1));
+
+    //qDebug() << QString("AnalyzerData::on_btnReadAll_clicked(): emit itemDoubleClick(%1, %2, %3)").arg(list.at(0), list2.at(0), strItemName);
+
     emit itemDoubleClick(list.at(0), list2.at(0), strItemName);
     QCoreApplication::processEvents();
 }
@@ -88,17 +93,30 @@ void AnalyzerData::on_complete()
     emit signalSaveFile(path);
     QCoreApplication::processEvents();
 
+    //QTimer::singleShot(5000, this, SLOT(nextStep()));
+    nextStep();
+}
+
+void AnalyzerData::nextStep()
+{
     int end = ui->listWidget->count()-1;
     if (progressSteps < end)
     {
-        progressDialog->setValue(++progressSteps);
+        progressDialog->setValue(progressSteps+1);
         QCoreApplication::processEvents();
 
-        QListWidgetItem* item = ui->listWidget->item(progressSteps);
+        QListWidgetItem* item = ui->listWidget->item(++progressSteps);
         QString str = item->text();
         QStringList list = str.split(",");
+        if (list.size() < 3)
+        {
+            on_finish();
+            return;
+        }
         QStringList list2 = list.at(3).split(":");
         strItemName = QString("%1-%2").arg(progressSteps, 2, 10, QLatin1Char('0')).arg(list2.at(1));
+
+        //qDebug() << QString("\nAnalyzerData::on_complete(): emit itemDoubleClick(%1, %2, %3)").arg(list.at(0), list2.at(0), strItemName);
 
         emit itemDoubleClick(list.at(0), list2.at(0), strItemName);
         QCoreApplication::processEvents();

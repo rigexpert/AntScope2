@@ -82,7 +82,7 @@ Please try later.</source>
         <translation>Файл має неправильну контрольну суму.</translation>
     </message>
     <message>
-        <location filename="analyzer/analyzer.cpp" line="510"/>
+        <location filename="analyzer/analyzer.cpp" line="515"/>
         <source>Updating, please wait...</source>
         <translation>Оновлення, будь ласка, зачекайте...</translation>
     </message>
@@ -100,7 +100,7 @@ Please try later.</source>
         <translation>Зберегти все</translation>
     </message>
     <message>
-        <location filename="analyzer/analyzerdata.cpp" line="58"/>
+        <location filename="analyzer/analyzerdata.cpp" line="60"/>
         <source>Open Directory</source>
         <translation>Відкрити каталог</translation>
     </message>
@@ -566,7 +566,7 @@ Please try later.</source>
     <name>Measurements</name>
     <message>
         <location filename="measurements.cpp" line="44"/>
-        <location filename="measurements.cpp" line="4112"/>
+        <location filename="measurements.cpp" line="4116"/>
         <source>Frequency = 
 SWR = 
 RL = 
@@ -595,23 +595,23 @@ Cpar =
     </message>
     <message>
         <location filename="measurements.cpp" line="66"/>
-        <location filename="measurements.cpp" line="4125"/>
+        <location filename="measurements.cpp" line="4129"/>
         <source>BriefHint</source>
         <translation>Підказка</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="300"/>
+        <location filename="measurements.cpp" line="302"/>
         <source>Impulse response</source>
         <translation>Вагова функція</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="302"/>
+        <location filename="measurements.cpp" line="304"/>
         <source>Step response</source>
         <translation>Перехідна функція</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1010"/>
-        <location filename="measurements.cpp" line="1563"/>
+        <location filename="measurements.cpp" line="1014"/>
+        <location filename="measurements.cpp" line="1567"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -633,8 +633,8 @@ Zpar = %9 Ом
 Lpar = %10 нГ</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1031"/>
-        <location filename="measurements.cpp" line="1584"/>
+        <location filename="measurements.cpp" line="1035"/>
+        <location filename="measurements.cpp" line="1588"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -656,25 +656,25 @@ Zpar = %9 Ом
 Cpar = %10 пФ</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1058"/>
-        <location filename="measurements.cpp" line="1611"/>
+        <location filename="measurements.cpp" line="1062"/>
+        <location filename="measurements.cpp" line="1615"/>
         <source>m</source>
         <translation>м</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1061"/>
-        <location filename="measurements.cpp" line="1614"/>
+        <location filename="measurements.cpp" line="1065"/>
+        <location filename="measurements.cpp" line="1618"/>
         <source>ft</source>
         <translation>фут</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1073"/>
-        <location filename="measurements.cpp" line="1626"/>
+        <location filename="measurements.cpp" line="1077"/>
+        <location filename="measurements.cpp" line="1630"/>
         <source>Cable: length(1/4) = %1 %2, length(1/2) = %3 %4</source>
         <translation>Кабель: довжина (1/4) =%1 %2, довжина (1/2) = %3 %4</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1225"/>
+        <location filename="measurements.cpp" line="1229"/>
         <source>Distance = %1 %2
 (distance in the air = %3 %4)
 Time = %5 ns
@@ -689,24 +689,24 @@ Step response = %7
 |Z| = %8 Ом</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1790"/>
+        <location filename="measurements.cpp" line="1794"/>
         <source>Error</source>
         <translation>Помилка</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1790"/>
+        <location filename="measurements.cpp" line="1794"/>
         <source>Couldn&apos;t open save file.</source>
         <translation>Не вдалося відкрити файл збереження.</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2497"/>
-        <location filename="measurements.cpp" line="4130"/>
+        <location filename="measurements.cpp" line="2501"/>
+        <location filename="measurements.cpp" line="4134"/>
         <source>Length, m</source>
         <translation>Довжина, м</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2501"/>
-        <location filename="measurements.cpp" line="4130"/>
+        <location filename="measurements.cpp" line="2505"/>
+        <location filename="measurements.cpp" line="4134"/>
         <source>Length, feet</source>
         <translation>Довжина, фут</translation>
     </message>
@@ -1356,28 +1356,28 @@ Cpar = %10 пФ
 <context>
     <name>comAnalyzer</name>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="162"/>
+        <location filename="analyzer/comanalyzer.cpp" line="186"/>
         <source> can not update firmware.
 </source>
         <translation>не вдалося оновити.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="168"/>
+        <location filename="analyzer/comanalyzer.cpp" line="192"/>
         <source>Error: </source>
         <translation>Помилка: </translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="169"/>
+        <location filename="analyzer/comanalyzer.cpp" line="193"/>
         <source>Warning</source>
         <translation>Увага</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="365"/>
+        <location filename="analyzer/comanalyzer.cpp" line="388"/>
         <source>Analyzer detected</source>
         <translation>Аналізатор виявлений</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="365"/>
+        <location filename="analyzer/comanalyzer.cpp" line="388"/>
         <source>The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).
 
 If you still want the program to talk to the analyzer, turn it on and enter the PC mode.</source>
@@ -1386,29 +1386,29 @@ If you still want the program to talk to the analyzer, turn it on and enter the 
 Якщо все ж необхідна робота програми з аналізатором, увімкніть його і переведіть в режим ПК.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="691"/>
-        <location filename="analyzer/comanalyzer.cpp" line="768"/>
+        <location filename="analyzer/comanalyzer.cpp" line="763"/>
+        <location filename="analyzer/comanalyzer.cpp" line="840"/>
         <source>Finish</source>
         <translation>Фініш</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="691"/>
-        <location filename="analyzer/comanalyzer.cpp" line="768"/>
+        <location filename="analyzer/comanalyzer.cpp" line="763"/>
+        <location filename="analyzer/comanalyzer.cpp" line="840"/>
         <source>Successfully updated!</source>
         <translation>Успішно оновлено!</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="725"/>
+        <location filename="analyzer/comanalyzer.cpp" line="797"/>
         <source>Error</source>
         <translation>Помилка</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="725"/>
+        <location filename="analyzer/comanalyzer.cpp" line="797"/>
         <source>Error while update, please try again.</source>
         <translation>Помилка під час оновлення, будь ласка, повторіть спробу.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="784"/>
+        <location filename="analyzer/comanalyzer.cpp" line="856"/>
         <source>Can not erase flash memory.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
@@ -1417,7 +1417,7 @@ restart %1 and update firmware.</source>
 перезавантажити %1 і оновити ПЗ.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="791"/>
+        <location filename="analyzer/comanalyzer.cpp" line="863"/>
         <source>Can not write data to flash memory.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
@@ -1426,28 +1426,28 @@ restart %1 and update firmware.</source>
 перезапустити %1 та оновити прошивку.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="797"/>
+        <location filename="analyzer/comanalyzer.cpp" line="869"/>
         <source>Firmware file has wrong length.
 Try to choose another file.</source>
         <translation>Файл прошивки має неправильну довжину.
 Спробуйте вибрати інший файл.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="802"/>
+        <location filename="analyzer/comanalyzer.cpp" line="874"/>
         <source>Firmware has incorrect CRC.
 Try to choose another file.</source>
         <translation>Прошивка має неправильну CRC.
 Спробуйте вибрати інший файл.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="807"/>
+        <location filename="analyzer/comanalyzer.cpp" line="879"/>
         <source>Serial flash has incorrect CRC.
 Try to choose another file.</source>
         <translation>Флеш-пам&apos;ять має неправильну CRC.
 Спробуйте вибрати інший файл.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="812"/>
+        <location filename="analyzer/comanalyzer.cpp" line="884"/>
         <source>Timeout in the device.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
@@ -1456,35 +1456,35 @@ restart %1 and update firmware.</source>
 перезапустіть %1 і відновите прошивку.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="818"/>
+        <location filename="analyzer/comanalyzer.cpp" line="890"/>
         <source>Firmware file has wrong format.
 Try to choose another file.</source>
         <translation>Файл прошивки має неправильний формат.
 Спробуйте вибрати інший файл.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="823"/>
+        <location filename="analyzer/comanalyzer.cpp" line="895"/>
         <source>Timeout.
 You should restart %1 and update firmware.</source>
         <translation>Тайм-аут.
 Необхідно перезапустити %1 і оновити прошивку.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="828"/>
+        <location filename="analyzer/comanalyzer.cpp" line="900"/>
         <source>Can not open serial port.
 You should close application which uses this port.</source>
         <translation>Неможливо відкрити послідовний порт.
 Ви повинні закрити програму, що використовує цей порт.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="833"/>
+        <location filename="analyzer/comanalyzer.cpp" line="905"/>
         <source>Can not write data to serial port.
 You should restart %1 and update firmware.</source>
         <translation>Неможливо записати дані в послідовний порт.
 Необхідно перезапустити %1 і оновити прошивку.</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="838"/>
+        <location filename="analyzer/comanalyzer.cpp" line="910"/>
         <source>Can not read data from serial port.
 You should restart %1 and update firmware.</source>
         <translation>Неможливо прочитати дані з послідовного порту.

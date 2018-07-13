@@ -49,7 +49,7 @@ comAnalyzer::comAnalyzer(QObject *parent) : QObject(parent),
 
     m_sendTimer = new QTimer(this);
     connect(m_sendTimer, SIGNAL(timeout()), this, SLOT(continueMeasurement()));
-    QTimer::singleShot(1000, this, SLOT(searchAnalyzer()));
+    QTimer::singleShot(10000, this, SLOT(searchAnalyzer()));
 }
 
 comAnalyzer::~comAnalyzer()
@@ -118,8 +118,11 @@ void comAnalyzer::closeComPort()
 
 void comAnalyzer::dataArrived()
 {
-    m_incomingBuffer += m_comPort->readAll();
-    m_incomingBuffer.remove(0,parse(m_incomingBuffer));
+    QByteArray ar = m_comPort->readAll();
+    m_incomingBuffer += ar;
+
+    int count = parse(m_incomingBuffer);
+    m_incomingBuffer.remove(0, count);
 }
 
 qint32 comAnalyzer::parse (QByteArray arr)
@@ -321,8 +324,6 @@ void comAnalyzer::searchAnalyzer()
     static bool messageWasShown = false;
     static int state = 0;
 
-    QTimer::singleShot(2000, this, SLOT(searchAnalyzer()));
-
     if(!m_autoDetectMode)
     {
         if(!m_isMeasuring)
@@ -357,6 +358,7 @@ void comAnalyzer::searchAnalyzer()
         {
             if( m_analyzerModel != 0)
             {
+                QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
                 return;
             }
             if(analyzerDetected && !messageWasShown)
@@ -370,6 +372,7 @@ void comAnalyzer::searchAnalyzer()
             list = ReDeviceInfo::availableDevices(ReDeviceInfo::Serial);
             if(list.isEmpty())
             {
+                QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
                 return;
             }else
             {
@@ -388,6 +391,10 @@ void comAnalyzer::searchAnalyzer()
                         analyzerDetected = true;
                         sendData("\r\nVER\r\n");
                         return;
+                    }
+                    else
+                    {
+                        QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
                     }
                 }
             }
@@ -434,13 +441,13 @@ void comAnalyzer::checkAnalyzer()
     }else
     {
         state = 0;
-        QTimer::singleShot(3000, this, SLOT(checkAnalyzer()));
     }
 }
 
 qint64 comAnalyzer::sendData(QString data)
 {
-    return m_comPort->write(data.toLocal8Bit());
+    qint64 res = m_comPort->write(data.toLocal8Bit());
+    return res;
 }
 
 void comAnalyzer::startMeasure(int fqFrom, int fqTo, int dotsNumber)
@@ -456,7 +463,7 @@ void comAnalyzer::startMeasure(int fqFrom, int fqTo, int dotsNumber)
     switch(state)
     {
     case 1:
-        m_isMeasuring = true;
+        setIsMeasuring(true);
         m_parseState = WAIT_DATA;
         if(dotsNumber != 0)
         {
@@ -509,10 +516,10 @@ void comAnalyzer::timeoutChart()
     QString str;
 
     len = m_stringList.length();
-
     if(len >=1)
     {
         str = m_stringList.takeFirst();
+/*
         QString tempString;
         for(qint32 i = 0; i < str.length(); ++i)
         {
@@ -530,6 +537,11 @@ void comAnalyzer::timeoutChart()
                 tempString.clear();
             }
         }
+*/
+        stringList = str.split(',');
+
+
+/*
         while(stringList.length() >= 3)
         {
             rawData data;
@@ -542,6 +554,17 @@ void comAnalyzer::timeoutChart()
             str = stringList.takeFirst();
             data.x = str.toDouble(0);
 
+            qDebug() << QString("  comAnalyzer::timeoutChart() emit newData(data)") ;
+            emit newData(data);
+        }
+*/
+        int count = (stringList.size() / 3) * 3;
+        for (int idx=0; idx<count; idx+=3)
+        {
+            rawData data;
+            data.fq = stringList[idx+0].toDouble(0);
+            data.r  = stringList[idx+1].toDouble(0);
+            data.x  = stringList[idx+2].toDouble(0);
             emit newData(data);
         }
     }
@@ -554,7 +577,7 @@ void comAnalyzer::continueMeasurement()
 
 void comAnalyzer::getAnalyzerData()
 {
-    m_isMeasuring = true;
+    setIsMeasuring(true);
     m_parseState = WAIT_ANALYZER_DATA;
     m_incomingBuffer.clear();
     sendData("FLASHH\r");
@@ -570,7 +593,7 @@ void comAnalyzer::getAnalyzerData(QString number)
 
 void comAnalyzer::makeScreenshot()
 {
-    m_isMeasuring = true;
+    setIsMeasuring(true);
     m_parseState = WAIT_SCREENSHOT_DATA;
     m_incomingBuffer.clear();
     if(names[m_analyzerModel] == "AA-230 ZOOM")
@@ -582,14 +605,14 @@ void comAnalyzer::makeScreenshot()
 
 void comAnalyzer::on_screenshotComplete()
 {
-    m_isMeasuring = false;
+    setIsMeasuring(false);
 }
 
 void comAnalyzer::on_measurementComplete()
 {
     if(!m_isContinuos)
     {
-        m_isMeasuring = false;
+        setIsMeasuring(false);
     }
 }
 
@@ -643,7 +666,7 @@ bool comAnalyzer::update (QIODevice *fw)
 {
     if(names[m_analyzerModel] == "AA-230 ZOOM")
     {
-        m_isMeasuring = true;
+        setIsMeasuring(true);
         m_parseState = WAIT_ANALYZER_UPDATE;
         m_incomingBuffer.clear();
 
@@ -670,7 +693,7 @@ bool comAnalyzer::update (QIODevice *fw)
             if(!waitAnswer())
             {
                 emit updatePercentChanged(100);
-                m_isMeasuring = false;
+                setIsMeasuring(false);
                 return false;
             }
 
@@ -691,12 +714,12 @@ bool comAnalyzer::update (QIODevice *fw)
         QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
         m_comPort->close();
         openComPort(name,115200);
-        m_isMeasuring = false;
+        setIsMeasuring(false);
     }else if(names[m_analyzerModel] == "AA-30 ZERO")
     {
         QByteArray arr;
         QString name;
-        m_isMeasuring = true;
+        setIsMeasuring(true);
         m_parseState = WAIT_ANALYZER_UPDATE;
         m_incomingBuffer.clear();
 
@@ -725,7 +748,7 @@ bool comAnalyzer::update (QIODevice *fw)
                     QMessageBox::warning(NULL,tr("Error"),tr("Error while update, please try again."));
                     emit updatePercentChanged(100);
                     emit updatePercentChanged(0);
-                    m_isMeasuring = false;
+                    setIsMeasuring(false);
                     return false;
                 }
             }
@@ -752,7 +775,7 @@ bool comAnalyzer::update (QIODevice *fw)
         if(!waitAnswer())
         {
             emit updatePercentChanged(100);
-            m_isMeasuring = false;
+            setIsMeasuring(false);
             return false;
         }
 
@@ -768,7 +791,7 @@ bool comAnalyzer::update (QIODevice *fw)
         QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
         m_comPort->close();
         openComPort(name,38400);
-        m_isMeasuring = false;
+        setIsMeasuring(false);
         emit aa30updateComplete();
     }
     return false;
