@@ -81,7 +81,7 @@ Please try later.</source>
         <translation>ファームウェア ファイルのCRCが違います。</translation>
     </message>
     <message>
-        <location filename="analyzer/analyzer.cpp" line="515"/>
+        <location filename="analyzer/analyzer.cpp" line="510"/>
         <source>Updating, please wait...</source>
         <translation>更新中、お待ちください・・・</translation>
     </message>
@@ -95,7 +95,7 @@ Please try later.</source>
     <message>
         <location filename="analyzer/analyzerdata.ui" line="14"/>
         <source>Read analyzer data</source>
-        <translation type="unfinished"></translation>
+        <translation>未完了</translation>
     </message>
     <message>
         <location filename="analyzer/analyzerdata.ui" line="32"/>
@@ -105,7 +105,7 @@ Please try later.</source>
     <message>
         <location filename="analyzer/analyzerdata.cpp" line="60"/>
         <source>Open Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>未完了</translation>
     </message>
 </context>
 <context>
@@ -321,7 +321,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="285"/>
         <source>Center, Range</source>
-        <translation>中心、範囲/2</translation>
+        <translation>中心、範囲</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="299"/>
@@ -412,8 +412,9 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.cpp" line="327"/>
         <location filename="mainwindow.cpp" line="3430"/>
-        <source>Range</source>
-        <translation>範囲</translation>
+        <source>Range (+/-)</source>
+        <oldsource>Range</oldsource>
+        <translation>範囲 (+/-)</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="541"/>
@@ -561,7 +562,7 @@ Please try later.</source>
     <name>Measurements</name>
     <message>
         <location filename="measurements.cpp" line="44"/>
-        <location filename="measurements.cpp" line="4116"/>
+        <location filename="measurements.cpp" line="4112"/>
         <source>Frequency = 
 SWR = 
 RL = 
@@ -590,23 +591,23 @@ C並列 =
     </message>
     <message>
         <location filename="measurements.cpp" line="66"/>
-        <location filename="measurements.cpp" line="4129"/>
+        <location filename="measurements.cpp" line="4125"/>
         <source>BriefHint</source>
         <translation>簡潔なヒント</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="302"/>
+        <location filename="measurements.cpp" line="300"/>
         <source>Impulse response</source>
         <translation>インパルス応答</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="304"/>
+        <location filename="measurements.cpp" line="302"/>
         <source>Step response</source>
         <translation>ステップ応答</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1014"/>
-        <location filename="measurements.cpp" line="1567"/>
+        <location filename="measurements.cpp" line="1010"/>
+        <location filename="measurements.cpp" line="1563"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -628,8 +629,8 @@ Z並列 = %9 Ω
 L並列 = %10 nH</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1035"/>
-        <location filename="measurements.cpp" line="1588"/>
+        <location filename="measurements.cpp" line="1031"/>
+        <location filename="measurements.cpp" line="1584"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -651,25 +652,25 @@ Z並列 = %9 Ω
 C並列 = %10 pF</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1062"/>
-        <location filename="measurements.cpp" line="1615"/>
+        <location filename="measurements.cpp" line="1058"/>
+        <location filename="measurements.cpp" line="1611"/>
         <source>m</source>
         <translation>m</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1065"/>
-        <location filename="measurements.cpp" line="1618"/>
+        <location filename="measurements.cpp" line="1061"/>
+        <location filename="measurements.cpp" line="1614"/>
         <source>ft</source>
         <translation>ft</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1077"/>
-        <location filename="measurements.cpp" line="1630"/>
+        <location filename="measurements.cpp" line="1073"/>
+        <location filename="measurements.cpp" line="1626"/>
         <source>Cable: length(1/4) = %1 %2, length(1/2) = %3 %4</source>
         <translation>ケーブル: 1/4波長 = %1 %2, 1/2波長 = %3 %4</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1229"/>
+        <location filename="measurements.cpp" line="1225"/>
         <source>Distance = %1 %2
 (distance in the air = %3 %4)
 Time = %5 ns
@@ -684,24 +685,24 @@ Step response = %7
 |Z| = %8 Ω</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1794"/>
+        <location filename="measurements.cpp" line="1790"/>
         <source>Error</source>
         <translation>エラー</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1794"/>
+        <location filename="measurements.cpp" line="1790"/>
         <source>Couldn&apos;t open save file.</source>
         <translation>保存ファイルを開けません。</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2501"/>
-        <location filename="measurements.cpp" line="4134"/>
+        <location filename="measurements.cpp" line="2497"/>
+        <location filename="measurements.cpp" line="4130"/>
         <source>Length, m</source>
         <translation>長さ、m</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2505"/>
-        <location filename="measurements.cpp" line="4134"/>
+        <location filename="measurements.cpp" line="2501"/>
+        <location filename="measurements.cpp" line="4130"/>
         <source>Length, feet</source>
         <translation>長さ、フィート</translation>
     </message>
@@ -1303,28 +1304,28 @@ Step response = %7
 <context>
     <name>comAnalyzer</name>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="186"/>
+        <location filename="analyzer/comanalyzer.cpp" line="165"/>
         <source> can not update firmware.
 </source>
         <translation>ファームウェアを更新できません。</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="192"/>
+        <location filename="analyzer/comanalyzer.cpp" line="171"/>
         <source>Error: </source>
         <translation>エラー</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="193"/>
+        <location filename="analyzer/comanalyzer.cpp" line="172"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="388"/>
+        <location filename="analyzer/comanalyzer.cpp" line="367"/>
         <source>Analyzer detected</source>
         <translation>アナライザーを検出</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="388"/>
+        <location filename="analyzer/comanalyzer.cpp" line="367"/>
         <source>The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).
 
 If you still want the program to talk to the analyzer, turn it on and enter the PC mode.</source>
@@ -1333,29 +1334,29 @@ If you still want the program to talk to the analyzer, turn it on and enter the 
 AntScope2上でアナライザーを使うには、電源を入れてPCモードにしてください。</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="763"/>
-        <location filename="analyzer/comanalyzer.cpp" line="840"/>
+        <location filename="analyzer/comanalyzer.cpp" line="714"/>
+        <location filename="analyzer/comanalyzer.cpp" line="791"/>
         <source>Finish</source>
         <translation>完了</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="763"/>
-        <location filename="analyzer/comanalyzer.cpp" line="840"/>
+        <location filename="analyzer/comanalyzer.cpp" line="714"/>
+        <location filename="analyzer/comanalyzer.cpp" line="791"/>
         <source>Successfully updated!</source>
         <translation>更新完了！</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="797"/>
+        <location filename="analyzer/comanalyzer.cpp" line="748"/>
         <source>Error</source>
         <translation>エラー</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="797"/>
+        <location filename="analyzer/comanalyzer.cpp" line="748"/>
         <source>Error while update, please try again.</source>
         <translation>更新中にエラー、やり直して下さい。</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="856"/>
+        <location filename="analyzer/comanalyzer.cpp" line="807"/>
         <source>Can not erase flash memory.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
@@ -1364,7 +1365,7 @@ restart %1 and update firmware.</source>
         %1 を再起動しファームウェアを更新してください。</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="863"/>
+        <location filename="analyzer/comanalyzer.cpp" line="814"/>
         <source>Can not write data to flash memory.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
@@ -1373,28 +1374,28 @@ restart %1 and update firmware.</source>
         %1 を再起動しファームウェアを更新してください。</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="869"/>
+        <location filename="analyzer/comanalyzer.cpp" line="820"/>
         <source>Firmware file has wrong length.
 Try to choose another file.</source>
         <translation>ファームウェアをファイル長が正しくありません。
 他のファイルを選んでください。</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="874"/>
+        <location filename="analyzer/comanalyzer.cpp" line="825"/>
         <source>Firmware has incorrect CRC.
 Try to choose another file.</source>
         <translation>ファームウェアのCRCが正しくありません。
 他のファイルを選んでください。  </translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="879"/>
+        <location filename="analyzer/comanalyzer.cpp" line="830"/>
         <source>Serial flash has incorrect CRC.
 Try to choose another file.</source>
         <translation>シリアルのフラッシュのCRCが正しくありません。
 他のファイルを選んでください。 </translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="884"/>
+        <location filename="analyzer/comanalyzer.cpp" line="835"/>
         <source>Timeout in the device.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
@@ -1403,35 +1404,35 @@ restart %1 and update firmware.</source>
 %1 を再起動しファームウェアを更新してください。 </translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="890"/>
+        <location filename="analyzer/comanalyzer.cpp" line="841"/>
         <source>Firmware file has wrong format.
 Try to choose another file.</source>
         <translation>ファームウェア ファイルのフォーマットが正しくありません。
 他のファイルを選んでください。 </translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="895"/>
+        <location filename="analyzer/comanalyzer.cpp" line="846"/>
         <source>Timeout.
 You should restart %1 and update firmware.</source>
         <translation>タイムアウト
 %1 を再起動しファームウェアを更新してください。 </translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="900"/>
+        <location filename="analyzer/comanalyzer.cpp" line="851"/>
         <source>Can not open serial port.
 You should close application which uses this port.</source>
         <translation>シリアルポートを開けません。
 このポートを使用中のアプリを終了して下さい。</translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="905"/>
+        <location filename="analyzer/comanalyzer.cpp" line="856"/>
         <source>Can not write data to serial port.
 You should restart %1 and update firmware.</source>
         <translation>データをシリアルポートに書けません。
 %1 を再起動しファームウェアを更新してください。  </translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="910"/>
+        <location filename="analyzer/comanalyzer.cpp" line="861"/>
         <source>Can not read data from serial port.
 You should restart %1 and update firmware.</source>
         <translation>データをシリアルポートから読取れません。

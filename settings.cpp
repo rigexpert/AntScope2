@@ -18,6 +18,19 @@ Settings::Settings(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QString style = "QPushButton:disabled{"
+                        "background-color: rgb(59, 59, 59);"
+                        "color: rgb(119, 119, 119);}";
+
+    ui->openOpenFileBtn->setStyleSheet(style);
+    ui->openCalibBtn->setStyleSheet(style);
+    ui->shortOpenFileBtn->setStyleSheet(style);
+    ui->shortCalibBtn->setStyleSheet(style);
+    ui->loadOpenFileBtn->setStyleSheet(style);
+    ui->loadCalibBtn->setStyleSheet(style);
+    ui->turnOnOffBtn->setStyleSheet(style);
+    ui->calibWizard->setStyleSheet(style);
+
     ui->browseLine->setText(tr("Choose file"));
     ui->updateProgressBar->hide();
     ui->checkUpdatesBtn->setEnabled(false);

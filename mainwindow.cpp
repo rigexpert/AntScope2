@@ -316,15 +316,12 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         ui->rangeBtn->setChecked(false);
         ui->limitsBtn->setChecked(true);
-
         setFqFrom(range.lower);
         setFqTo(range.upper);
     }else
     {
         ui->rangeBtn->setChecked(true);
         ui->limitsBtn->setChecked(false);
-        ui->startLabel->setText(tr("Center"));
-        ui->stopLabel->setText(tr("Range"));
         setFqFrom((range.upper + range.lower)/2);
         setFqTo((range.upper - range.lower)/2);
     }
@@ -390,10 +387,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_1secTimer, SIGNAL(timeout()), this, SLOT(on_1secTimerTick()));
     m_1secTimer->start(100);
 
-//    m_qtLanguageTranslator->load("QtLanguage_" + languages_small[m_languageNumber], QCoreApplication::applicationDirPath());
-//    qApp->installTranslator(m_qtLanguageTranslator);
-//    ui->retranslateUi(this);
     loadLanguage(languages_small[m_languageNumber]);
+    if(!m_isRange)
+    {
+        ui->startLabel->setText(tr("Start"));
+        ui->stopLabel->setText(tr("Stop"));
+    }else
+    {
+        ui->startLabel->setText(tr("Center"));
+        ui->stopLabel->setText(tr("Range (+/-)"));
+    }
 }
 
 MainWindow::~MainWindow()
@@ -3427,7 +3430,7 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
         m_isRange = true;
         ui->limitsBtn->setChecked(false);
         ui->startLabel->setText(tr("Center"));
-        ui->stopLabel->setText(tr("Range"));
+        ui->stopLabel->setText(tr("Range (+/-)"));
         double from = getFqFrom();
         double to = getFqTo();
         setFqFrom((to + from)/2);
