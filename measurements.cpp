@@ -1206,7 +1206,7 @@ void Measurements::updatePopUp(double xPos, int number, int mouseX, int mouseY)
                         QString timeNs;
                         distance = QString::number(place,'f',3);
                         double airLen = place/m_cableVelFactor;
-                        QString distanceInAir = QString::number(airLen,'f',3);//3.2808399
+                        QString distanceInAir = QString::number(airLen,'f',3);//FEETINMETER
                         if(m_measureSystemMetric)
                         {
                             lenUnits = "m";
@@ -1214,7 +1214,7 @@ void Measurements::updatePopUp(double xPos, int number, int mouseX, int mouseY)
                         }else
                         {
                             lenUnits = "ft";
-                            timeNs = QString::number(airLen*3.2808399/0.299792458,'f',2);
+                            timeNs = QString::number(airLen*FEETINMETER/0.299792458,'f',2);
                         }
 
 
@@ -2788,7 +2788,8 @@ void Measurements::on_redrawGraphs()
                         m_farEndMeasurementsSub.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
-                        dataFeet.key = x*step/3.2808399;
+                        //dataFeet.key = x*step/FEETINMETER;
+                        dataFeet.key = x*step*FEETINMETER;
                         dataFeet.value = y;
                         m_farEndMeasurementsSub.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                         dataFeet.value = m_pdTdrStep[i];
@@ -2825,7 +2826,8 @@ void Measurements::on_redrawGraphs()
                         m_farEndMeasurementsAdd.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
-                        dataFeet.key = x*step/3.2808399;
+                        //dataFeet.key = x*step/FEETINMETER;
+                        dataFeet.key = x*step*FEETINMETER;
                         dataFeet.value = y;
                         m_farEndMeasurementsAdd.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                         dataFeet.value = m_pdTdrStep[i];
@@ -2863,7 +2865,8 @@ void Measurements::on_redrawGraphs()
                     m_measurements.last().tdrStepGraph.insert(data.key,data);
 
                     QCPData dataFeet;
-                    dataFeet.key = x*step/3.2808399;
+                    //dataFeet.key = x*step/FEETINMETER;
+                    dataFeet.key = x*step*FEETINMETER;
                     dataFeet.value = y;
                     m_measurements.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                     dataFeet.value = m_pdTdrStep[i];
@@ -3180,7 +3183,8 @@ void Measurements::on_redrawGraphs()
                         m_farEndMeasurementsSub.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
-                        dataFeet.key = x*step/3.2808399;
+                        //dataFeet.key = x*step/FEETINMETER;
+                        dataFeet.key = x*step*FEETINMETER;
                         dataFeet.value = y;
                         m_farEndMeasurementsSub.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                         dataFeet.value = m_pdTdrStep[i];
@@ -3217,7 +3221,8 @@ void Measurements::on_redrawGraphs()
                         m_farEndMeasurementsAdd.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
-                        dataFeet.key = x*step/3.2808399;
+                        //dataFeet.key = x*step/FEETINMETER;
+                        dataFeet.key = x*step*FEETINMETER;
                         dataFeet.value = y;
                         m_farEndMeasurementsAdd.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                         dataFeet.value = m_pdTdrStep[i];
@@ -3254,7 +3259,8 @@ void Measurements::on_redrawGraphs()
                     m_measurements.last().tdrStepGraph.insert(data.key,data);
 
                     QCPData dataFeet;
-                    dataFeet.key = x*step/3.2808399;
+                    //dataFeet.key = x*step/FEETINMETER;
+                    dataFeet.key = x*step*FEETINMETER;
                     dataFeet.value = m_pdTdrImp[i];
                     m_measurements.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
                     dataFeet.value = m_pdTdrStep[i];

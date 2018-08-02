@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "popupindicator.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -142,6 +143,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_tdrWidget->setMouseTracking(true);
     connect(m_tdrWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_tdr(QMouseEvent*)));
+    //connect(m_tdrWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_tdr(QWheelEvent*)));
 
     m_smithWidget->setMouseTracking(true);
     connect(m_smithWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_smith(QMouseEvent*)));
@@ -397,6 +399,8 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->startLabel->setText(tr("Center"));
         ui->stopLabel->setText(tr("Range (+/-)"));
     }
+    //PopUpIndicator::hideIndicator(ui->tabWidget);
+    PopUpIndicator::hideIndicator(m_swrWidget);
 }
 
 MainWindow::~MainWindow()
@@ -2423,8 +2427,43 @@ void MainWindow::on_mouseRelease_rl(QMouseEvent* e)
     }
 }
 
-void MainWindow::on_mouseWheel_tdr(QWheelEvent*)
+void MainWindow::on_mouseWheel_tdr(QWheelEvent* e)
 {
+    static int state = 10;
+    if (e->modifiers() == Qt::ControlModifier)
+    {
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        }
+        double up = m_tdrWidget->yAxis->getRangeUpper();
+        double lo = m_tdrWidget->yAxis->getRangeLower();
+
+        double diff = (up - lo)*0.1;
+        if(e->delta() < 0)
+        {
+            //if(state <= 9)
+            {
+                diff *= -1;
+                ++state;
+//                m_tdrWidget->yAxis->setRangeUpper(up + up*0.1 );
+//                m_tdrWidget->yAxis->setRangeLower(lo - lo*0.1);
+//                m_tdrWidget->replot();
+            }
+        } else {
+            //if(state > 1)
+            {
+                --state;
+//                m_tdrWidget->yAxis->setRangeUpper(up - up*0.1 );
+//                m_tdrWidget->yAxis->setRangeLower(lo + lo*0.1);
+//                m_tdrWidget->replot();
+            }
+        }
+        m_tdrWidget->yAxis->moveRange(diff);
+        m_tdrWidget->replot();
+        QTimer::singleShot(5, m_markers, SLOT(redraw()));
+    }
+    emit rescale();
 }
 
 void MainWindow::on_mouseMove_tdr(QMouseEvent * e)
@@ -2885,6 +2924,7 @@ void MainWindow::on_measurementComplete()
         ui->measurmentsDeleteBtn->setEnabled(true);
         ui->measurmentsClearBtn->setEnabled(true);
         m_analyzer->setContinuos(false);
+        PopUpIndicator::setVisible(false);
     }
 }
 
@@ -3337,28 +3377,36 @@ void MainWindow::on_Z0Changed(double _Z0)
 
 void MainWindow::updateGraph ()
 {
+    QCustomPlot* plot = nullptr;
     QString str = ui->tabWidget->currentWidget()->objectName();
     if( str == "tab_1")
     {
+        plot = m_swrWidget;
         m_swrWidget->replot();
     }else if(str == "tab_2")
     {
+        plot = m_phaseWidget;
         m_phaseWidget->replot();
     }else if(str == "tab_3")
     {
+        plot = m_rsWidget;
         m_rsWidget->replot();
     }else if(str == "tab_4")
     {
+        plot = m_rpWidget;
         m_rpWidget->replot();
     }else if(str == "tab_5")
     {
+        plot = m_rlWidget;
         m_rlWidget->replot();
     }else if(str == "tab_6")
     {
+        plot = m_tdrWidget;
         m_tdrWidget->replot();
     }else if(str == "tab_7")
     {
         resizeWnd();
+        plot = m_smithWidget;
         m_smithWidget->replot();
     }
 }
@@ -3758,3 +3806,4 @@ void MainWindow::saveFile(int row, QString path)
 {
     m_measurements->saveData(row, path);
 }
+

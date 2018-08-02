@@ -22,12 +22,11 @@ TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_jp.ts
 CODECFORSRC     = UTF-8
 
-CONFIG += debug
-CONFIG -= release
+CONFIG -= debug
+CONFIG += release
 
 CONFIG(release) {
     DESTDIR = $${PWD}/build/release
-    #DEFINES += QT_NO_DEBUG_OUTPUT
 }
 else {
     DESTDIR = $${PWD}/build/debug
@@ -70,7 +69,8 @@ SOURCES += main.cpp\
         export.cpp \
         markerspopup.cpp \
         updater.cpp \
-        antscopeupdatedialog.cpp
+        antscopeupdatedialog.cpp \
+    popupindicator.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -104,7 +104,8 @@ HEADERS  += mainwindow.h \
         export.h \
         markerspopup.h \
         updater.h \
-        antscopeupdatedialog.h
+        antscopeupdatedialog.h \
+    popupindicator.h
 
 FORMS    += mainwindow.ui \
         analyzer/analyzerdata.ui \
@@ -121,7 +122,7 @@ win32{
     LIBS += -lsetupapi
     RC_ICONS += AntScope2.ico
 
-    INCLUDEPATH += $$PWD/ftdi/windows
+    INCLUDEPATH +=  $$PWD/ftdi/windows
     DEPENDPATH += $$PWD/ftdi/windows
     LIBS += -L$$PWD/ftdi/windows/win32/ -lftd2xx
 }
@@ -131,7 +132,7 @@ win64{
     LIBS += -lsetupapi
     RC_ICONS += AntScope2.ico
 
-    INCLUDEPATH += $$PWD/ftdi/windows
+    INCLUDEPATH +=  $$PWD/ftdi/windows
     DEPENDPATH += $$PWD/ftdi/windows
     LIBS += -L$$PWD/ftdi/windows/win64/ -lftd2xx
     QMAKE_POST_LINK = COPY .\ftdi\windows\win64\ftd2xx.dll $$APPDIR\ftd2xx.dll &&

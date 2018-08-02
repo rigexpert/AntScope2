@@ -33,14 +33,8 @@ public:
     bool openComPort(const QString& portName, quint32 portSpeed);
     void closeComPort();
 
-    void setIsMeasuring (bool isMeasuring)
-    {
-        m_isMeasuring = isMeasuring;
-        if(m_comAnalyzer != NULL)
-        {
-            m_comAnalyzer->setIsMeasuring(isMeasuring);
-        }
-    }
+    void setIsMeasuring (bool isMeasuring);
+
     void setContinuos(bool isContinuos)
     {
         m_isContinuos = isContinuos;

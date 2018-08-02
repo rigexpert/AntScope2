@@ -1,5 +1,6 @@
 #include "settings.h"
 #include "ui_settings.h"
+#include "popupindicator.h"
 
 QString Settings::iniFilePath;
 Settings::Settings(QWidget *parent) :
@@ -17,6 +18,7 @@ Settings::Settings(QWidget *parent) :
     m_farEndMeasurement(0)
 {
     ui->setupUi(this);
+    PopUpIndicator::setVisible(false);
 
     QString style = "QPushButton:disabled{"
                         "background-color: rgb(59, 59, 59);"

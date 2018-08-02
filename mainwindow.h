@@ -154,7 +154,6 @@ private:
     bool m_addingMarker;
     bool m_isMouseClick;
 
-
     void setWidgetsSettings();
     void drawBands(QCustomPlot * widget, double y1, double y2);
     void addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2);

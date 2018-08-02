@@ -1,4 +1,5 @@
 #include "analyzer.h"
+#include "popupindicator.h"
 
 Analyzer::Analyzer(QObject *parent) : QObject(parent),
     m_hidAnalyzer(NULL),
@@ -247,14 +248,15 @@ void Analyzer::on_measure (qint32 fqFrom, qint32 fqTo, qint32 dotsNumber)
         {
             m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }
-    }else
-    {
+        PopUpIndicator::setVisible(true);
+    } else {
         on_stopMeasure();
     }
 }
 
 void Analyzer::on_stopMeasure()
 {
+    PopUpIndicator::setVisible(false);
     if(m_comAnalyzerFound)
     {
         m_comAnalyzer->stopMeasure();
@@ -395,6 +397,7 @@ void Analyzer::on_newData(rawData _rawData)
         emit newData (_rawData);
         m_isMeasuring = false;
         m_chartCounter = 0;
+        PopUpIndicator::setVisible(false);
         if(!m_calibrationMode)
         {
             emit measurementComplete();
@@ -423,6 +426,7 @@ void Analyzer::getAnalyzerData()
             m_isMeasuring = true;
             QTimer::singleShot(100, m_hidAnalyzer, SLOT(getAnalyzerData()));
         }
+        PopUpIndicator::setVisible(true);
     }
 }
 
@@ -445,6 +449,7 @@ void Analyzer::on_itemDoubleClick(QString number, QString dotsNumber, QString na
 
 void Analyzer::on_dialogClosed()
 {
+    PopUpIndicator::setVisible(false);
     m_isMeasuring = false;
     if(m_comAnalyzerFound)
     {
@@ -454,6 +459,7 @@ void Analyzer::on_dialogClosed()
 
 void Analyzer::on_stopMeasuring()
 {
+    PopUpIndicator::setVisible(false);
     m_isMeasuring = false;
 }
 
@@ -607,4 +613,14 @@ void Analyzer::on_changedSerialPort(QString portName)
     {
         m_comAnalyzer->on_changedSerialPort(portName);
     }
+}
+
+void Analyzer::setIsMeasuring (bool isMeasuring)
+{
+    m_isMeasuring = isMeasuring;
+    if(m_comAnalyzer != NULL)
+    {
+        m_comAnalyzer->setIsMeasuring(isMeasuring);
+    }
+    PopUpIndicator::setVisible(m_isMeasuring);
 }

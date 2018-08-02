@@ -52,6 +52,8 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event);    // Фон будет отрисовываться через метод перерисовки
+    void mousePressEvent(QMouseEvent * event);
+    void mouseMoveEvent(QMouseEvent *);
 
 public slots:
     void setPopupText(const QString& text); // Установка текста в уведомление
@@ -59,15 +61,20 @@ public slots:
     void show();                            /* Собственный метод показа виджета
                                              * Необходимо для преварительной настройки анимации
                                              * */
+    void hide();                            /* По окончании анимации, в данном слоте делается проверка,
+                                             * виден ли виджет, или его необходимо скрыть
+                                             * */
     void focusShow();
     void focusHide();
 
 private slots:
     void hideAnimation();                   // Слот для запуска анимации скрытия
-    void hide();                            /* По окончании анимации, в данном слоте делается проверка,
-                                             * виден ли виджет, или его необходимо скрыть
-                                             * */
 
+
+protected:
+    QColor m_bgColor;
+    QColor m_penColor;
+    QString m_textColor;
 
 private:
     QLabel label;           // Label с сообщением
@@ -90,16 +97,12 @@ private:
     int m_parentX;
     int m_parentY;
 
-    QColor m_bgColor;
-    QColor m_penColor;
-    QString m_textColor;
 
     QString m_name;
 
     QSettings *m_settings;
 
-    void mousePressEvent(QMouseEvent * event);
-    void mouseMoveEvent(QMouseEvent *);
 };
+
 
 #endif // POPUP_H
