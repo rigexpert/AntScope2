@@ -38,5 +38,5 @@ void FqSettings::setDotsNumber(int dotsNumber)
 
 void FqSettings::setTitle()
 {
-    this->setWindowTitle(tr("Dots settings"));
+    this->setWindowTitle(tr("Measurement points"));
 }

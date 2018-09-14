@@ -73,6 +73,14 @@ void Screenshot::saveBMP(QString path)
     //this->close();
 }
 
+void Screenshot::on_clipboardBtn_clicked()
+{
+    QApplication::clipboard()->setImage(*m_image,QClipboard::Clipboard);
+    m_popUp->setPopupText(tr("Image added to clipboard"));
+    m_popUp->setPosition(this->geometry().x()+this->width(),this->geometry().y()+this->height());
+    m_popUp->show();
+}
+
 void Screenshot::savePDF(QString path, QString comment)
 {
     QPrinter printer(QPrinter::ScreenResolution);
@@ -205,15 +213,13 @@ void Screenshot::on_newData(QByteArray data)
             m_imageVector.clear();
             repaint();
         }
-    }else
-    {
-        if((m_imageVector.length() >= m_lcdHeight*m_lcdWidth) || ( (names[m_analyzerModel] == "AA-230 ZOOM")&&(m_imageVector.length() >= 63604) ))
-        {
+    } else if((m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
+              || ( (names[m_analyzerModel] == "AA-230 ZOOM")&&(m_imageVector.length() >= 63604) )) {
             ui->progressBar->setValue(100);
             QApplication::clipboard()->setImage(*m_image,QClipboard::Clipboard);
             m_popUp->setPopupText(tr("Image added to clipboard"));
             m_popUp->setPosition(this->geometry().x()+this->width(),this->geometry().y()+this->height());
-            m_popUp->show();
+            //m_popUp->show();
             int x,y;
             int i = 0;
             for (x = 0; x < m_lcdHeight; ++x)
@@ -236,7 +242,7 @@ void Screenshot::on_newData(QByteArray data)
             m_imageVector.clear();
             repaint();
         }
-    }
+
 }
 
 void Screenshot::on_saveAsBtn_clicked()

@@ -27,7 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_smithZoomState(10),
     m_autoDetectMode(true),
     m_languageNumber(0),
-    m_addingMarker(false)
+    m_addingMarker(false),
+    m_bInterrupted(false)
 {
     ui->setupUi(this);
     m_qtLanguageTranslator = new QTranslator();
@@ -111,41 +112,32 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWidgetsSettings();
 
-    m_swrWidget->setMouseTracking(true);
+    foreach (QCustomPlot *plot, m_mapWidgets) {
+        plot->setMouseTracking(true);
+        plot->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(plot,
+                SIGNAL(customContextMenuRequested(const QPoint&)),
+                SLOT(onCustomContextMenuRequested(const QPoint&)));
+        connect(plot,SIGNAL(mouseDoubleClick(QMouseEvent*)),this, SLOT(on_mouseDoubleClick(QMouseEvent*)));
+    }
     connect(m_swrWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_swr(QWheelEvent*)));
     connect(m_swrWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_swr(QMouseEvent*)));
-    connect(m_swrWidget,SIGNAL(mousePress(QMouseEvent*)),this, SLOT(on_mousePress_swr(QMouseEvent*)));
-    connect(m_swrWidget,SIGNAL(mouseRelease(QMouseEvent*)),this, SLOT(on_mouseRelease_swr(QMouseEvent*)));
 
-    m_phaseWidget->setMouseTracking(true);
     connect(m_phaseWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_phase(QWheelEvent*)));
     connect(m_phaseWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_phase(QMouseEvent*)));
-    connect(m_phaseWidget,SIGNAL(mousePress(QMouseEvent*)),this, SLOT(on_mousePress_swr(QMouseEvent*)));
-    connect(m_phaseWidget,SIGNAL(mouseRelease(QMouseEvent*)),this, SLOT(on_mouseRelease_phase(QMouseEvent*)));
 
-    m_rsWidget->setMouseTracking(true);
     connect(m_rsWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_rs(QWheelEvent*)));
     connect(m_rsWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_rs(QMouseEvent*)));
-    connect(m_rsWidget,SIGNAL(mousePress(QMouseEvent*)),this, SLOT(on_mousePress_swr(QMouseEvent*)));
-    connect(m_rsWidget,SIGNAL(mouseRelease(QMouseEvent*)),this, SLOT(on_mouseRelease_rs(QMouseEvent*)));
 
-    m_rpWidget->setMouseTracking(true);
     connect(m_rpWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_rp(QWheelEvent*)));
     connect(m_rpWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_rp(QMouseEvent*)));
-    connect(m_rpWidget,SIGNAL(mousePress(QMouseEvent*)),this, SLOT(on_mousePress_swr(QMouseEvent*)));
-    connect(m_rpWidget,SIGNAL(mouseRelease(QMouseEvent*)),this, SLOT(on_mouseRelease_rp(QMouseEvent*)));
 
-    m_rlWidget->setMouseTracking(true);
     connect(m_rlWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_rl(QWheelEvent*)));
     connect(m_rlWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_rl(QMouseEvent*)));
-    connect(m_rlWidget,SIGNAL(mousePress(QMouseEvent*)),this, SLOT(on_mousePress_swr(QMouseEvent*)));
-    connect(m_rlWidget,SIGNAL(mouseRelease(QMouseEvent*)),this, SLOT(on_mouseRelease_rl(QMouseEvent*)));
 
-    m_tdrWidget->setMouseTracking(true);
     connect(m_tdrWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_tdr(QMouseEvent*)));
     //connect(m_tdrWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_tdr(QWheelEvent*)));
 
-    m_smithWidget->setMouseTracking(true);
     connect(m_smithWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_smith(QMouseEvent*)));
 
     m_analyzer = new Analyzer(this);
@@ -242,6 +234,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_measurements, SIGNAL(calibrationChanged()), this,SLOT(on_calibrationChanged()));
 
     QString name = "AntScope2 v." + QString(ANTSCOPE2VER);
+    name += tr(" - Analyzer not connected");
     setWindowTitle(name);
 
 
@@ -394,10 +387,12 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         ui->startLabel->setText(tr("Start"));
         ui->stopLabel->setText(tr("Stop"));
+        ui->groupBox_2->setTitle(tr("Presets (limits), kHz"));
     }else
     {
         ui->startLabel->setText(tr("Center"));
         ui->stopLabel->setText(tr("Range (+/-)"));
+        ui->groupBox_2->setTitle(tr("Presets (center, range), kHz"));
     }
     //PopUpIndicator::hideIndicator(ui->tabWidget);
     PopUpIndicator::hideIndicator(m_swrWidget);
@@ -533,7 +528,7 @@ void MainWindow::setWidgetsSettings()
 {
     QPen pen;
     pen.setColor(QColor(0, 0, 0, 150));
-    pen.setWidthF(3);
+    pen.setWidthF(INACTIVE_GRAPH_PEN_WIDTH);
 
     QFont fontTickLabel = m_swrWidget->xAxis->tickLabelFont();
     QFont fontLabel = fontTickLabel;
@@ -542,7 +537,7 @@ void MainWindow::setWidgetsSettings()
 
     //-------SWR Widget---------------------------------------------
     m_swrWidget->addGraph();//graph(0) - SWR
-    drawBands(m_swrWidget, 1, MAX_SWR);
+    setBands(m_swrWidget, 1, MAX_SWR);
 
     m_swrWidget->graph(0)->setPen(pen);
     m_swrWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -563,7 +558,7 @@ void MainWindow::setWidgetsSettings()
 
     //-------Phase Widget---------------------------------------------
     m_phaseWidget->addGraph();//graph(0)
-    drawBands(m_phaseWidget, -180, 180);
+    setBands(m_phaseWidget, -180, 180);
     m_phaseWidget->graph(0)->setPen(pen);
     //ui->swr_widget->axisRect()->setBackground(Qt::black);
     m_phaseWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -582,8 +577,9 @@ void MainWindow::setWidgetsSettings()
     m_phaseWidget->replot();
 
     //-------RSeries Widget------------------------------------------------
+    m_rsWidget->setAutoAddPlottableToLegend(false);
     m_rsWidget->addGraph();//graph(0)
-    drawBands(m_rsWidget, -2000, 2000);
+    setBands(m_rsWidget, -2000, 2000);
     m_rsWidget->graph(0)->setPen(pen);
     m_rsWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_rsWidget->yAxis->setLabel(tr("Rs, Ohm"));
@@ -601,8 +597,9 @@ void MainWindow::setWidgetsSettings()
     m_rsWidget->replot();
 
     //-------RParallel Widget------------------------------------------------
+    m_rpWidget->setAutoAddPlottableToLegend(false);
     m_rpWidget->addGraph();//graph(0)
-    drawBands(m_rpWidget, -2000, 2000);
+    setBands(m_rpWidget, -2000, 2000);
     m_rpWidget->graph(0)->setPen(pen);
     m_rpWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_rpWidget->yAxis->setLabel(tr("Rp, Ohm"));
@@ -621,7 +618,7 @@ void MainWindow::setWidgetsSettings()
 
     //-------RL Widget---------------------------------------------
     m_rlWidget->addGraph();//graph(0)
-    drawBands(m_rlWidget, 0, 50);
+    setBands(m_rlWidget, 0, 50);
     m_rlWidget->graph(0)->setPen(pen);
     m_rlWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_rlWidget->yAxis->setLabel(tr("RL, dB"));
@@ -639,6 +636,7 @@ void MainWindow::setWidgetsSettings()
     m_rlWidget->replot();
 
     //-------TDR Widget------------------------------------------------
+    m_tdrWidget->setAutoAddPlottableToLegend(false);
     m_tdrWidget->addGraph();//graph(0)
     m_tdrWidget->graph(0)->setPen(pen);
     m_tdrWidget->xAxis->setLabel(tr("Length, m"));
@@ -666,7 +664,7 @@ void MainWindow::setWidgetsSettings()
     m_smithWidget->replot();
 }
 
-void MainWindow::drawBands(QCustomPlot * widget, double y1, double y2)
+void MainWindow::setBands(QCustomPlot * widget, double y1, double y2)
 {
     addBand(widget,135.7, 137.8, y1, y2);
     addBand(widget,472, 479, y1, y2);
@@ -691,7 +689,7 @@ void MainWindow::drawBands(QCustomPlot * widget, double y1, double y2)
 void MainWindow::addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2)
 {
     QCPItemRect * xRectItem = new QCPItemRect( widget );
-    m_itemRectList.append(xRectItem);
+    //m_itemRectList.append(xRectItem);
 
     xRectItem->setVisible          (true);
     xRectItem->setPen              (QPen(Qt::transparent));
@@ -743,6 +741,7 @@ void MainWindow::on_pressF7 ()
 
 void MainWindow::on_pressEsc ()
 {
+    m_bInterrupted = true;
     emit stopMeasure();
 }
 
@@ -1800,6 +1799,7 @@ void MainWindow::on_analyzerFound(QString name)
 void MainWindow::on_analyzerDisconnected()
 {
     QString name = "AntScope2 v." + QString(ANTSCOPE2VER);
+    name += tr(" - Analyzer not connected");
     setWindowTitle(name);
     ui->singleStart->setEnabled(false);
     ui->continuousStartBtn->setEnabled(false);
@@ -1878,15 +1878,8 @@ void MainWindow::on_mouseMove_swr(QMouseEvent *e)
             QList <QTableWidgetItem *> list = ui->tableWidget_measurments->selectedItems();
             if(!list.isEmpty())
             {
-                if(m_addingMarker)
-                {
-                    m_markers->setFq(x);
-                    updateGraph();
-                }else
-                {
-                    QTableWidgetItem * item = list.at(0);
-                    emit newCursorFq(x, item->row(), QCursor::pos().x(), QCursor::pos().y());
-                }
+                QTableWidgetItem * item = list.at(0);
+                emit newCursorFq(x, item->row(), QCursor::pos().x(), QCursor::pos().y());
             }
         }
     }
@@ -1906,30 +1899,6 @@ void MainWindow::on_mouseMove_swr(QMouseEvent *e)
         m_rsWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
-    }
-}
-
-void MainWindow::on_mousePress_swr(QMouseEvent*)
-{
-    m_isMouseClick = true;
-}
-
-void MainWindow::on_mouseRelease_swr(QMouseEvent* e)
-{
-    if(m_isMouseClick)
-    {
-        double x = m_swrWidget->xAxis->pixelToCoord(e->pos().x());
-        if(m_addingMarker)
-        {
-            m_addingMarker = false;
-            m_markers->setFq(x);
-            m_markers->add();
-        }else
-        {
-            m_addingMarker = true;
-            m_markers->create(x);
-            m_markers->setFq(x);
-        }
     }
 }
 
@@ -1979,15 +1948,8 @@ void MainWindow::on_mouseMove_phase(QMouseEvent *e)
             QList <QTableWidgetItem *> list = ui->tableWidget_measurments->selectedItems();
             if(!list.isEmpty())
             {
-                if(m_addingMarker)
-                {
-                    m_markers->setFq(x);
-                    updateGraph();
-                }else
-                {
-                    QTableWidgetItem * item = list.at(0);
-                    emit newCursorFq(x, item->row(), QCursor::pos().x(), QCursor::pos().y());
-                }
+                QTableWidgetItem * item = list.at(0);
+                emit newCursorFq(x, item->row(), QCursor::pos().x(), QCursor::pos().y());
             }
         }
     }
@@ -2006,30 +1968,6 @@ void MainWindow::on_mouseMove_phase(QMouseEvent *e)
         m_rsWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
-    }
-}
-
-void MainWindow::on_mousePress_phase(QMouseEvent*)
-{
-    m_isMouseClick = true;
-}
-
-void MainWindow::on_mouseRelease_phase(QMouseEvent* e)
-{
-    if(m_isMouseClick)
-    {
-        double x = m_phaseWidget->xAxis->pixelToCoord(e->pos().x());
-        if(m_addingMarker)
-        {
-            m_addingMarker = false;
-            m_markers->setFq(x);
-            m_markers->add();
-        }else
-        {
-            m_addingMarker = true;
-            m_markers->create(x);
-            m_markers->setFq(x);
-        }
     }
 }
 
@@ -2120,15 +2058,8 @@ void MainWindow::on_mouseMove_rs(QMouseEvent *e)
             QList <QTableWidgetItem *> list = ui->tableWidget_measurments->selectedItems();
             if(!list.isEmpty())
             {
-                if(m_addingMarker)
-                {
-                    m_markers->setFq(x);
-                    updateGraph();
-                }else
-                {
-                    QTableWidgetItem * item = list.at(0);
-                    emit newCursorFq(x, item->row(), QCursor::pos().x(), QCursor::pos().y());
-                }
+                QTableWidgetItem * item = list.at(0);
+                emit newCursorFq(x, item->row(), QCursor::pos().x(), QCursor::pos().y());
             }
         }
     }
@@ -2147,30 +2078,6 @@ void MainWindow::on_mouseMove_rs(QMouseEvent *e)
         m_phaseWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rsWidget->xAxis->range());
-    }
-}
-
-void MainWindow::on_mousePress_rs(QMouseEvent*)
-{
-    m_isMouseClick = true;
-}
-
-void MainWindow::on_mouseRelease_rs(QMouseEvent* e)
-{
-    if(m_isMouseClick)
-    {
-        double x = m_rsWidget->xAxis->pixelToCoord(e->pos().x());
-        if(m_addingMarker)
-        {
-            m_addingMarker = false;
-            m_markers->setFq(x);
-            m_markers->add();
-        }else
-        {
-            m_addingMarker = true;
-            m_markers->create(x);
-            m_markers->setFq(x);
-        }
     }
 }
 
@@ -2283,30 +2190,6 @@ void MainWindow::on_mouseMove_rp(QMouseEvent *e)
     }
 }
 
-void MainWindow::on_mousePress_rp(QMouseEvent*)
-{
-    m_isMouseClick = true;
-}
-
-void MainWindow::on_mouseRelease_rp(QMouseEvent* e)
-{
-    if(m_isMouseClick)
-    {
-        double x = m_rpWidget->xAxis->pixelToCoord(e->pos().x());
-        if(m_addingMarker)
-        {
-            m_addingMarker = false;
-            m_markers->setFq(x);
-            m_markers->add();
-        }else
-        {
-            m_addingMarker = true;
-            m_markers->create(x);
-            m_markers->setFq(x);
-        }
-    }
-}
-
 void MainWindow::on_mouseWheel_rl(QWheelEvent *e)
 {
     static int state = 10;
@@ -2403,30 +2286,6 @@ void MainWindow::on_mouseMove_rl(QMouseEvent *e)
     }
 }
 
-void MainWindow::on_mousePress_rl(QMouseEvent*)
-{
-    m_isMouseClick = true;
-}
-
-void MainWindow::on_mouseRelease_rl(QMouseEvent* e)
-{
-    if(m_isMouseClick)
-    {
-        double x = m_rlWidget->xAxis->pixelToCoord(e->pos().x());
-        if(m_addingMarker)
-        {
-            m_addingMarker = false;
-            m_markers->setFq(x);
-            m_markers->add();
-        }else
-        {
-            m_addingMarker = true;
-            m_markers->create(x);
-            m_markers->setFq(x);
-        }
-    }
-}
-
 void MainWindow::on_mouseWheel_tdr(QWheelEvent* e)
 {
     static int state = 10;
@@ -2518,6 +2377,7 @@ void MainWindow::createTabs (QString sequence)
             m_horizontalLayout_1->addWidget(m_swrWidget);
             ui->tabWidget->addTab(m_tab_1, QString());
             ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_1), QApplication::translate("MainWindow", "SWR", 0));
+            m_mapWidgets.insert(QStringLiteral("swr_widget"), m_swrWidget);
             break;
         case 1:
             m_tab_2 = new QWidget();
@@ -2538,6 +2398,7 @@ void MainWindow::createTabs (QString sequence)
 
             ui->tabWidget->addTab(m_tab_2, QString());
             ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_2), QApplication::translate("MainWindow", "Phase", 0));
+            m_mapWidgets.insert(QStringLiteral("phase_widget"), m_phaseWidget);
             break;
         case 2:
             m_tab_3 = new QWidget();
@@ -2558,6 +2419,7 @@ void MainWindow::createTabs (QString sequence)
 
             ui->tabWidget->addTab(m_tab_3, QString());
             ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_3), QApplication::translate("MainWindow", "Z=R+jX", 0));
+            m_mapWidgets.insert(QStringLiteral("rs_widget"), m_rsWidget);
             break;
         case 3:
             m_tab_4 = new QWidget();
@@ -2578,6 +2440,7 @@ void MainWindow::createTabs (QString sequence)
 
             ui->tabWidget->addTab(m_tab_4, QString());
             ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_4), QApplication::translate("MainWindow", "Z=R||+jX", 0));
+            m_mapWidgets.insert(QStringLiteral("rp_widget"), m_rpWidget);
             break;
         case 4:
             m_tab_5 = new QWidget();
@@ -2596,6 +2459,7 @@ void MainWindow::createTabs (QString sequence)
             m_horizontalLayout_5->addWidget(m_rlWidget);
             ui->tabWidget->addTab(m_tab_5, QString());
             ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_5), QApplication::translate("MainWindow", "RL", 0));
+            m_mapWidgets.insert(QStringLiteral("rl_widget"), m_rlWidget);
             break;
         case 5:
             m_tab_6 = new QWidget();
@@ -2616,6 +2480,7 @@ void MainWindow::createTabs (QString sequence)
 
             ui->tabWidget->addTab(m_tab_6, QString());
             ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_6), QApplication::translate("MainWindow", "TDR", 0));
+            m_mapWidgets.insert(QStringLiteral("tdr_widget"), m_tdrWidget);
             break;
         case 6:
             m_tab_7 = new QWidget();
@@ -2641,6 +2506,7 @@ void MainWindow::createTabs (QString sequence)
             m_smithWidget->yAxis->setTicks(false);
             m_smithWidget->xAxis->setVisible(false);
             m_smithWidget->yAxis->setVisible(false);
+            m_mapWidgets.insert(QStringLiteral("smith_widget"), m_smithWidget);
             break;
         default:
             break;
@@ -2827,6 +2693,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
     m_analyzer->setContinuos(m_isContinuos);
     if(m_isContinuos)
     {
+        m_bInterrupted = false;
         double start;
         double stop;
 
@@ -2869,6 +2736,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         ui->measurmentsClearBtn->setEnabled(false);
     }else
     {
+        m_bInterrupted = true;
         m_analyzer->setContinuos(false);
     }
 }
@@ -2913,14 +2781,18 @@ void MainWindow::on_measurementComplete()
         m_rsWidget->xAxis->setRange(range);
         m_rpWidget->xAxis->setRange(range);
         m_rlWidget->xAxis->setRange(range);
-        emit measure(start*1000, stop*1000, m_dotsNumber);
-//        qint32 a = start*1000;
-//        qint32 b = stop*1000;
-//        qint32 c = m_dotsNumber;
-
-//        QTimer::singleShot(100, m_analyzer, SLOT(on_measure(a,b,c)));
-    }else
-    {
+        if (!m_bInterrupted)
+        {
+            emit measure(start*1000, stop*1000, m_dotsNumber);
+        } else {
+            m_bInterrupted = true;
+            ui->measurmentsDeleteBtn->setEnabled(true);
+            ui->measurmentsClearBtn->setEnabled(true);
+            m_analyzer->setContinuos(false);
+            PopUpIndicator::setVisible(false);
+        }
+    } else {
+        m_bInterrupted = true;
         ui->measurmentsDeleteBtn->setEnabled(true);
         ui->measurmentsClearBtn->setEnabled(true);
         m_analyzer->setContinuos(false);
@@ -3063,6 +2935,8 @@ void MainWindow::on_settingsBtn_clicked()
 
     connect(m_settingsDialog, SIGNAL(languageChanged(int)), this, SLOT(on_translate(int)));
 
+    connect(m_settingsDialog, SIGNAL(bandChanged(int)), this, SLOT(on_bandChanged(int)));
+
     m_settingsDialog->exec();
 }
 
@@ -3132,34 +3006,84 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
 {
     Q_UNUSED(column)
     int count = m_swrWidget->graphCount();
+    int count1 = m_rpWidget->graphCount();
     if(count > 0)
     {
         for(int i = 1; i < count; ++i)
         {
+            int j = (i-1)*3 + 1;
             if(i == (count - 1 - row))
             {
-//                m_swrWidget->graph(i)->setBrush(QBrush(QPixmap("gr.png")));
                 QPen pen = m_swrWidget->graph(i)->pen();
-                pen.setWidth(5);
+                pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+                m_swrWidget->graph(i)->setPen(pen);
+                m_phaseWidget->graph(i)->setPen(pen);                
+                m_rlWidget->graph(i)->setPen(pen);
+                m_measurements->getMeasurement(count - 2 - (i-1))->smithCurve->setPen(pen);
+
+                pen = m_rpWidget->graph(j+0)->pen();
+                pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+0)->setPen(pen);
+
+                pen = m_rpWidget->graph(j+1)->pen();
+                pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+1)->setPen(pen);
+
+                pen = m_rpWidget->graph(j+2)->pen();
+                pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+2)->setPen(pen);
+
+
+                pen = m_rsWidget->graph(j+0)->pen();
+                pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+0)->setPen(pen);
+
+                pen = m_rsWidget->graph(j+1)->pen();
+                pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+1)->setPen(pen);
+
+                pen = m_rsWidget->graph(j+2)->pen();
+                pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+2)->setPen(pen);
+            } else {
+                QPen pen = m_swrWidget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
                 m_swrWidget->graph(i)->setPen(pen);
                 m_phaseWidget->graph(i)->setPen(pen);
                 m_rlWidget->graph(i)->setPen(pen);
                 m_measurements->getMeasurement(count - 2 - (i-1))->smithCurve->setPen(pen);
-            }else
-            {
-//                m_swrWidget->graph(i)->setBrush(Qt::NoBrush);
-                QPen pen = m_swrWidget->graph(i)->pen();
-                pen.setWidth(3);
-                m_swrWidget->graph(i)->setPen(pen);
-                m_phaseWidget->graph(i)->setPen(pen);
-                m_rlWidget->graph(i)->setPen(pen);
-                m_measurements->getMeasurement(count - 2 - (i-1))->smithCurve->setPen(pen);
+
+                pen = m_rpWidget->graph(j+0)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+0)->setPen(pen);
+
+                pen = m_rpWidget->graph(j+1)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+1)->setPen(pen);
+
+                pen = m_rpWidget->graph(j+2)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+2)->setPen(pen);
+
+
+                pen = m_rsWidget->graph(j+0)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+0)->setPen(pen);
+
+                pen = m_rsWidget->graph(j+1)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+1)->setPen(pen);
+
+                pen = m_rsWidget->graph(j+2)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+2)->setPen(pen);
             }
         }
         updateGraph();
     }
 }
 
+/*
 void MainWindow::on_screenshot_clicked()
 {
     QDateTime datetime = QDateTime::currentDateTime();
@@ -3187,6 +3111,27 @@ void MainWindow::on_screenshot_clicked()
     QPixmap pix = originalPixmap.scaled(5000,3000,Qt::KeepAspectRatio,Qt::SmoothTransformation);
     pix.save(str,"BMP",100);
     QApplication::clipboard()->setImage(pix.toImage(),QClipboard::Clipboard);
+}
+*/
+void MainWindow::on_screenshot_clicked()
+{
+    QDateTime datetime = QDateTime::currentDateTime();
+    QString path = "Images/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
+    QString str = QFileDialog::getSaveFileName(this, "Export PNG", path, "*.png");
+    if(str.isEmpty())
+    {
+        return;
+    }
+    if(str.indexOf(".png") == -1)
+    {
+        str += ".png";
+    }
+
+    on_pressCtrlC();
+    QPixmap pixmap = QApplication::clipboard()->pixmap();
+    if (!pixmap.isNull()) {
+        pixmap.save(str, "PNG", 80);
+    }
 }
 
 void MainWindow::on_printBtn_clicked()
@@ -3390,6 +3335,13 @@ void MainWindow::updateGraph ()
     }else if(str == "tab_3")
     {
         plot = m_rsWidget;
+
+//        int count = m_rsWidget->legend->itemCount();
+//        for (int i=4; i<count; i++) {
+//            m_rsWidget->legend->removeItem(m_rsWidget->legend->itemCount()-1);
+//        }
+//        qDebug() << "Legend: " << count;
+
         m_rsWidget->replot();
     }else if(str == "tab_4")
     {
@@ -3456,6 +3408,7 @@ void MainWindow::on_limitsBtn_clicked(bool checked)
         ui->rangeBtn->setChecked(false);
         ui->startLabel->setText(tr("Start"));
         ui->stopLabel->setText(tr("Stop"));
+        ui->groupBox_2->setTitle(tr("Presets (limits), kHz"));
         double center = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
         double range = ui->lineEdit_fqTo->text().remove(' ').toDouble();
 
@@ -3479,6 +3432,7 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
         ui->limitsBtn->setChecked(false);
         ui->startLabel->setText(tr("Center"));
         ui->stopLabel->setText(tr("Range (+/-)"));
+        ui->groupBox_2->setTitle(tr("Presets (center, range), kHz"));
         double from = getFqFrom();
         double to = getFqTo();
         setFqFrom((to + from)/2);
@@ -3805,5 +3759,55 @@ void MainWindow::on_SaveFile(QString path)
 void MainWindow::saveFile(int row, QString path)
 {
     m_measurements->saveData(row, path);
+}
+
+void MainWindow::on_mouseDoubleClick(QMouseEvent* e)
+{
+    onCreateMarker(e->pos());
+}
+
+void MainWindow::onCreateMarker(QAction* action)
+{
+    onCreateMarker(action->data().toPoint());
+}
+
+void MainWindow::onCreateMarker(const QPoint& pos)
+{
+    QCustomPlot* plot = getCurrentPlot();
+    if (plot->objectName().contains("smith") || plot->objectName().contains("tdr"))
+        return;
+    double x = plot->xAxis->pixelToCoord(pos.x());
+    m_addingMarker = true;
+    m_markers->create(x);
+    m_markers->setFq(x);
+    m_markers->add();
+}
+
+void MainWindow::onCustomContextMenuRequested(const QPoint& pos)
+{
+    QMenu *menu=new QMenu(this);
+
+    QCustomPlot* plot = getCurrentPlot();
+    if (!plot->objectName().contains("smith") && !plot->objectName().contains("tdr"))
+    {
+        QAction* action = menu->addAction(QString("Create marker"));
+        action->setData(pos);
+        connect(menu, SIGNAL(triggered(QAction*)), this, SLOT(onCreateMarker(QAction*)));
+    }
+    menu->popup(plot->mapToGlobal(pos));
+}
+
+QCustomPlot* MainWindow::getCurrentPlot()
+{
+    QWidget* w = ui->tabWidget->currentWidget();
+    QList<QCustomPlot*> children = w->findChildren<QCustomPlot*>();
+    if (children.isEmpty())
+        return nullptr;
+    return children[0];
+}
+
+void MainWindow::on_bandChanged(int index)
+{
+
 }
 

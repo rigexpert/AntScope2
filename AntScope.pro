@@ -13,7 +13,7 @@ QT       += quick
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.8\\"'
+DEFINES += ANTSCOPE2VER='\\"1.0.9\\"'
 
 TARGET = AntScope2
 
@@ -22,8 +22,8 @@ TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_jp.ts
 CODECFORSRC     = UTF-8
 
-CONFIG -= debug
-CONFIG += release
+CONFIG += debug
+CONFIG -= release
 
 CONFIG(release) {
     DESTDIR = $${PWD}/build/release
@@ -143,9 +143,6 @@ unix {
 }
 
 DISTFILES += \
-    gradient.jpg \
-    gr.png \
-    smith.png \
     rig_logo.png
 
 RESOURCES += \

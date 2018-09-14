@@ -24,10 +24,8 @@ Markers::Markers(QObject *parent) : QObject(parent),
     {
         m_markersHint = new MarkersPopUp();
         m_markersHint->setHiding(false);
-        if(m_markersHintEnabled)
-        {
-            m_markersHint->show();
-        }
+        if(m_markersHintEnabled && !m_markersList.isEmpty())
+            m_markersHint->focusShow();
         m_markersHint->setName(tr("Markers"));
         connect(m_markersHint, SIGNAL(removeMarker(int)), SLOT(on_removeMarker(int)));
         repaint();
@@ -169,27 +167,27 @@ void Markers::rescale()
         {
             offsetX = (m_swrWidget->xAxis->range().upper - m_swrWidget->xAxis->range().lower)/40;
             offsetY = (m_swrWidget->yAxis->range().upper - m_swrWidget->yAxis->range().lower)/10;
-            m_markersList.at(i)->swrLineText->position->setCoords(fq + offsetX, m_swrWidget->yAxis->range().center()-offsetY);
+            m_markersList.at(i)->swrLineText->position->setCoords(fq + offsetX/2, m_swrWidget->yAxis->range().center()-offsetY);
         }else if(m_currentTab == "tab_2")
         {
             offsetX = (m_phaseWidget->xAxis->range().upper - m_phaseWidget->xAxis->range().lower)/40;
             offsetY = (m_phaseWidget->yAxis->range().upper - m_phaseWidget->yAxis->range().lower)/10;
-            m_markersList.at(i)->phaseLineText->position->setCoords(fq + offsetX, m_phaseWidget->yAxis->range().center()-offsetY);
+            m_markersList.at(i)->phaseLineText->position->setCoords(fq + offsetX/2, m_phaseWidget->yAxis->range().center()-offsetY);
         }else if(m_currentTab == "tab_3")
         {
             offsetX = (m_rsWidget->xAxis->range().upper - m_rsWidget->xAxis->range().lower)/40;
             offsetY = (m_rsWidget->yAxis->range().upper - m_rsWidget->yAxis->range().lower)/10;
-            m_markersList.at(i)->rsLineText->position->setCoords(fq + offsetX, m_rsWidget->yAxis->range().center()-offsetY);
+            m_markersList.at(i)->rsLineText->position->setCoords(fq + offsetX/2, m_rsWidget->yAxis->range().center()-offsetY);
         }else if(m_currentTab == "tab_4")
         {
             offsetX = (m_rpWidget->xAxis->range().upper - m_rpWidget->xAxis->range().lower)/40;
             offsetY = (m_rpWidget->yAxis->range().upper - m_rpWidget->yAxis->range().lower)/10;
-            m_markersList.at(i)->rpLineText->position->setCoords(fq + offsetX, m_rpWidget->yAxis->range().center()-offsetY);
+            m_markersList.at(i)->rpLineText->position->setCoords(fq + offsetX/2, m_rpWidget->yAxis->range().center()-offsetY);
         }else if(m_currentTab == "tab_5")
         {
             offsetX = (m_rlWidget->xAxis->range().upper - m_rlWidget->xAxis->range().lower)/40;
             offsetY = (m_rlWidget->yAxis->range().upper - m_rlWidget->yAxis->range().lower)/10;
-            m_markersList.at(i)->rlLineText->position->setCoords(fq + offsetX, m_rlWidget->yAxis->range().center()-offsetY);
+            m_markersList.at(i)->rlLineText->position->setCoords(fq + offsetX/2, m_rlWidget->yAxis->range().center()-offsetY);
         }else if(m_currentTab == "tab_6")
         {
         }else if(m_currentTab == "tab_7")
@@ -214,6 +212,9 @@ void Markers::add()
     }
     repaint();
     redraw();
+    if(m_markersHintEnabled && !m_markersList.isEmpty()) {
+       m_markersHint->focusShow();
+    }
 }
 
 void Markers::on_focus(bool focus)
@@ -222,7 +223,7 @@ void Markers::on_focus(bool focus)
 
     if(m_markersHint)
     {
-        if(m_markersHintEnabled && m_focus)
+        if(m_markersHintEnabled && m_focus && !m_markersList.isEmpty())
         {
             m_markersHint->focusShow();
         }else
@@ -502,7 +503,7 @@ void Markers::setMarkersHintEnabled(bool enabled)
     m_markersHintEnabled = enabled;
     if(m_markersHint)
     {
-        if(enabled)
+        if(m_markersHintEnabled && !m_markersList.isEmpty())
         {
             m_markersHint->focusShow();
         }else
@@ -595,6 +596,9 @@ void Markers::on_removeMarker(int number)
     }
     repaint();
     redraw();
+    if (m_markersList.isEmpty()) {
+       m_markersHint->focusHide();
+    }
 }
 
 void Markers::on_translate()

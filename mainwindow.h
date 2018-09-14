@@ -45,6 +45,9 @@ static QString languages_small[LANGUAGES_QUANTITY]={
     "jp"
 };
 
+#define ACTIVE_GRAPH_PEN_WIDTH 5
+#define INACTIVE_GRAPH_PEN_WIDTH 2
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -91,6 +94,7 @@ private:
     QCustomPlot *m_rlWidget;
     QCustomPlot *m_tdrWidget;
     QCustomPlot *m_smithWidget;
+    QMap<QString, QCustomPlot *> m_mapWidgets;
 
     Measurements *m_measurements;
     QVector <QCPItemRect*> m_itemRectList;
@@ -153,9 +157,10 @@ private:
 
     bool m_addingMarker;
     bool m_isMouseClick;
+    bool m_bInterrupted;
 
     void setWidgetsSettings();
-    void drawBands(QCustomPlot * widget, double y1, double y2);
+    void setBands(QCustomPlot * widget, double y1, double y2);
     void addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2);
     void createTabs (QString sequence);
     void moveEvent(QMoveEvent *);
@@ -170,6 +175,7 @@ private:
     double getFqTo(void);
     bool loadLanguage(QString locale); // locale: en, ukr, ru, jp, etc.
     void saveFile(int row, QString path);
+    QCustomPlot* getCurrentPlot();
 
 signals:
     void measure(int,int,int);
@@ -207,24 +213,14 @@ public slots:
     void on_analyzerDisconnected();
     void on_mouseWheel_swr(QWheelEvent *e);
     void on_mouseMove_swr(QMouseEvent *);
-    void on_mousePress_swr(QMouseEvent*);
-    void on_mouseRelease_swr(QMouseEvent*e);
     void on_mouseWheel_phase(QWheelEvent *e);
     void on_mouseMove_phase(QMouseEvent *);
-    void on_mousePress_phase(QMouseEvent*);
-    void on_mouseRelease_phase(QMouseEvent*e);
     void on_mouseWheel_rs(QWheelEvent * e);
     void on_mouseMove_rs(QMouseEvent *);
-    void on_mousePress_rs(QMouseEvent*);
-    void on_mouseRelease_rs(QMouseEvent*e);
     void on_mouseWheel_rp(QWheelEvent *e);
     void on_mouseMove_rp(QMouseEvent *);
-    void on_mousePress_rp(QMouseEvent*);
-    void on_mouseRelease_rp(QMouseEvent*e);
     void on_mouseWheel_rl(QWheelEvent *e);
     void on_mouseMove_rl(QMouseEvent *);
-    void on_mousePress_rl(QMouseEvent*);
-    void on_mouseRelease_rl(QMouseEvent*e);
     void on_mouseWheel_tdr(QWheelEvent *e);
     void on_mouseMove_tdr(QMouseEvent *e);
     void on_mouseMove_smith(QMouseEvent *e);
@@ -269,6 +265,11 @@ private slots:
     void on_changedSerialPort(QString portName);
     void on_calibrationChanged();
     void on_SaveFile(QString path);
+    void on_mouseDoubleClick(QMouseEvent* e);
+    void onCustomContextMenuRequested(const QPoint&);
+    void onCreateMarker(const QPoint& pos);
+    void onCreateMarker(QAction*);
+    void on_bandChanged(int);
 };
 
 

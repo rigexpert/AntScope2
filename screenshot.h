@@ -59,6 +59,7 @@ private slots:
     void on_saveAsBtn_clicked();
     void on_exportToPdfBtn_clicked();
     void on_refreshBtn_clicked();
+    void on_clipboardBtn_clicked();
     void on_errorTimerTick();
 };
 

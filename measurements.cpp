@@ -62,7 +62,7 @@ Measurements::Measurements(QObject *parent) : QObject(parent),
     {
         m_graphBriefHint = new PopUp();
         m_graphBriefHint->setHiding(false);
-        m_graphBriefHint->setPopupText("0\n0");
+        //m_graphBriefHint->setPopupText("0\n0");
         m_graphBriefHint->setName(tr("BriefHint"));
     }
 }
@@ -279,16 +279,19 @@ void Measurements::on_newMeasurement(QString name)
         m_rlWidget->graph()->setPen(pen);
         m_smithWidget->graph()->setPen(pen);
         m_measurements.at(m_measurements.length()-2).smithCurve->setPen(pen);
-    }
+    }    
     m_swrWidget->addGraph();
     m_swrWidget->graph()->setAntialiasedFill(false);
     m_phaseWidget->addGraph();
+
+    m_rsWidget->setAutoAddPlottableToLegend(m_rsWidget->legend->itemCount() < 3);
     m_rsWidget->addGraph();
     m_rsWidget->graph()->setName("R");
     m_rsWidget->addGraph();
     m_rsWidget->graph()->setName("X");
     m_rsWidget->addGraph();
     m_rsWidget->graph()->setName("|Z|");
+    m_rpWidget->setAutoAddPlottableToLegend(m_rpWidget->legend->itemCount() < 3);
     m_rpWidget->addGraph();
     m_rpWidget->graph()->setName("Rp");
     m_rpWidget->addGraph();
@@ -296,6 +299,7 @@ void Measurements::on_newMeasurement(QString name)
     m_rpWidget->addGraph();
     m_rpWidget->graph()->setName("|Zp|");
     m_rlWidget->addGraph();
+    m_tdrWidget->setAutoAddPlottableToLegend(m_tdrWidget->legend->itemCount() < 2);
     m_tdrWidget->addGraph();
     m_tdrWidget->graph()->setName(tr("Impulse response"));
     m_tdrWidget->addGraph();
@@ -572,7 +576,8 @@ void Measurements::on_newData(rawData _rawData)
             if (!res)
             {
                 qDebug() << "Interpolation Error";
-                goto ret;
+                on_redrawGraphs();
+                return;
             }
             m_calibration->applyCalibration(Gre,Gim,  // Measured
                                             CRO,CIO,CRS,CIS,CRL,CIL, // Measured parameters of cal standards
@@ -704,7 +709,6 @@ void Measurements::on_newData(rawData _rawData)
             //----------------------calc smith end---------------------------
         }
     }
-ret:
     on_redrawGraphs();
 }
 
@@ -1432,22 +1436,22 @@ void Measurements::updatePopUp(double xPos, int number, int mouseX, int mouseY)
                                     str.insert(str.length()-len-3," ");
                                 }
                             }
-                            str += "\n";
+                            str += " kHz\n";
                             if(m_currentTab == "tab_1")
                             {
                                 str += QString::number(swr,'f',2);
                             }else if(m_currentTab == "tab_2")
                             {
-                                str += QString::number(phase,'f',2);
+                                str += QString::number(phase,'f',2) + "°";
                             }else if(m_currentTab == "tab_3")
                             {
-                                str += QString::number(computeZ(r,x),'f',2);
+                                //str += QString::number(computeZ(r,x),'f',2);
                             }else if(m_currentTab == "tab_4")
                             {
-                                str += QString::number(computeZ(r,x),'f',2);
+                                //str += QString::number(computeZ(r,x),'f',2);
                             }else if(m_currentTab == "tab_5")
                             {
-                                str += QString::number(rl,'f',2);
+                                str += QString::number(rl,'f',2) + " dB";
                             }
                             m_graphBriefHint->setPopupText(str);
                         }
@@ -3052,6 +3056,13 @@ void Measurements::on_redrawGraphs()
                 m_rsWidget->graph(i*3+3)->setData(&m_viewMeasurements[i].rszGraph, true);
                 m_rsWidget->graph(i*3+2)->setData(&m_viewMeasurements[i].rsxGraph, true);
                 m_rsWidget->graph(i*3+1)->setData(&m_viewMeasurements[i].rsrGraph, true);
+//                int count = m_rsWidget->legend->itemCount();
+//                if (count > 3) {
+//                    for (int i=3; i<count; i++ ) {
+//                        m_rsWidget->legend->removeItem(m_rsWidget->legend->itemCount()-1);
+//                    }
+//                }
+
             }
         }else if(m_currentTab == "tab_4")//RXpar
         {

@@ -253,7 +253,7 @@
          </size>
         </property>
         <property name="title">
-         <string>Frequency(kHz)</string>
+         <string>Frequency, kHz</string>
         </property>
         <layout class="QFormLayout" name="formLayout">
          <item row="0" column="0">
@@ -281,8 +281,17 @@
              </item>
              <item>
               <widget class="QPushButton" name="rangeBtn">
+               <property name="toolTip">
+                <string>Range toolTip</string>
+               </property>
+               <property name="statusTip">
+                <string>Range statusTip</string>
+               </property>
+               <property name="whatsThis">
+                <string>Range whatThis</string>
+               </property>
                <property name="text">
-                <string>Center, Range</string>
+                <string>Center, range</string>
                </property>
                <property name="checkable">
                 <bool>true</bool>
@@ -468,7 +477,7 @@
          </size>
         </property>
         <property name="title">
-         <string>Presets(kHz)</string>
+         <string>Presets,kHz</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_6">
          <item>

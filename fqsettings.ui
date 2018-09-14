@@ -73,29 +73,6 @@
        <string>Accurately </string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="dotsLine">
-      <property name="geometry">
-       <rect>
-        <x>320</x>
-        <y>50</y>
-        <width>113</width>
-        <height>20</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_3">
-      <property name="geometry">
-       <rect>
-        <x>240</x>
-        <y>50</y>
-        <width>71</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Dots number:</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="OKBtn">
       <property name="geometry">
        <rect>
@@ -108,6 +85,28 @@
       <property name="text">
        <string>OK</string>
       </property>
+     </widget>
+     <widget class="QWidget" name="">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>50</y>
+        <width>223</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Number of points</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="dotsLine"/>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

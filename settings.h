@@ -128,6 +128,7 @@ signals:
     void changedSerialPort(QString);
 
     void languageChanged(int);
+    void bandChanged(int);
 
 private slots:
     void on_browseBtn_clicked();
@@ -163,7 +164,9 @@ private slots:
     void on_autoDetect_clicked(bool checked);
     void on_manualDetect_clicked(bool checked);
     void on_serialPortComboBox_activated(const QString &arg1);
-    void on_languageComboBox_currentIndexChanged(int index);
+    void on_languageComboBox_currentIndexChanged(int index);    
+    void on_closeButton_clicked();
+    void on_bandsComboBox_currentIndexChanged(int index);
 };
 
 #endif // SETTINGS_H

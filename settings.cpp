@@ -54,7 +54,14 @@ Settings::Settings(QWidget *parent) :
     ui->graphHintCheckBox->setChecked(m_graphHintEnabled);
     ui->graphBriefHintCheckBox->setChecked(m_graphBriefHintEnabled);
 
+    int current_band = m_settings->value("current_band", 0).toInt();
     m_settings->endGroup();
+
+    ui->bandsCombobox->addItem(tr("Reg.1 (Europe, Africa)"), QVariant::fromValue(0));
+    ui->bandsCombobox->addItem(tr("Reg.2 (Americas)"), QVariant::fromValue(1));
+    ui->bandsCombobox->addItem(tr("Reg.3 (Asia, Oceania)"), QVariant::fromValue(2));
+    connect(ui->bandsCombobox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_bandsComboBox_currentIndexChanged(int)));
+    ui->bandsCombobox->setCurrentIndex(current_band);
 
     ui->cableComboBox->addItem(tr("Change parameters or choose from list..."));
     QString cablesPath = Settings::appPath();
@@ -65,6 +72,7 @@ Settings::Settings(QWidget *parent) :
     {
         ui->serialPortComboBox->addItem(info.portName());
     }
+
 }
 
 Settings::~Settings()
@@ -942,4 +950,18 @@ void Settings::on_translate()
 void Settings::on_languageComboBox_currentIndexChanged(int index)
 {
     emit languageChanged(index);
+}
+
+void Settings::on_closeButton_clicked()
+{
+    accept();
+}
+
+void Settings::on_bandsComboBox_currentIndexChanged(int index)
+{
+    m_settings->beginGroup("Settings");
+    m_settings->setValue("current_band", index);
+    m_settings->endGroup();
+
+    emit bandChanged(index);
 }

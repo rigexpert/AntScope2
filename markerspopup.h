@@ -53,9 +53,10 @@ protected:
 public slots:
     QString getPopupText();
     QList <QStringList> getPopupList();
-    void show();                            /* Собственный метод показа виджета
-                                             * Необходимо для преварительной настройки анимации
-                                             * */
+
+//    void show();                            /* Собственный метод показа виджета
+//                                             * Необходимо для преварительной настройки анимации
+//                                             * */
     void focusShow();
     void focusHide();
 
@@ -64,6 +65,7 @@ public slots:
     void on_remove();
 
 private slots:
+    void show();
     void hideAnimation();                   // Слот для запуска анимации скрытия
     void hide();                            /* По окончании анимации, в данном слоте делается проверка,
                                              * виден ли виджет, или его необходимо скрыть
