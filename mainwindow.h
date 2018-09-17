@@ -270,6 +270,7 @@ private slots:
     void onCreateMarker(const QPoint& pos);
     void onCreateMarker(QAction*);
     void on_bandChanged(int);
+    void onSpinChanged(int value);
 };
 
 

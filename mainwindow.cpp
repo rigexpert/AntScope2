@@ -109,6 +109,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableWidget_measurments->setColumnCount(1);
     ui->tableWidget_measurments->setSelectionBehavior(QAbstractItemView::SelectRows );
 
+    style = "QGroupBox {border: 2px solid rgb(1, 178, 255); margin-top: 1ex;}"
+            "QGroupBox::title {"
+            "subcontrol-origin: margin;"
+            "subcontrol-position: top center;" /* position at the top center */
+            "padding: 0 3px;}"
+            "QGroupBox::title {color: white;}";
+
+    ui->groupBox_4->setStyleSheet(style);
 
     setWidgetsSettings();
 
@@ -320,6 +328,8 @@ MainWindow::MainWindow(QWidget *parent) :
         setFqFrom((range.upper + range.lower)/2);
         setFqTo((range.upper - range.lower)/2);
     }
+    ui->spinBoxPoints->setValue(m_dotsNumber);
+    connect(ui->spinBoxPoints, SIGNAL(valueChanged(int)), this, SLOT(onSpinChanged(int)));
 
     m_autoUpdateEnabled = m_settings->value("autoUpdate", true).toBool();
     m_autoDetectMode = m_settings->value("autoDetectMode",true).toBool();
@@ -3811,3 +3821,8 @@ void MainWindow::on_bandChanged(int index)
 
 }
 
+void MainWindow::onSpinChanged(int value)
+{
+    m_dotsNumber = value;
+    m_measurements->on_dotsNumberChanged(value);
+}
