@@ -16,7 +16,7 @@ public:
 
     void setTable (QTableWidget * table);
     QStringList getRow(int row);
-    void addNewRow (QString fqFrom, QString fqTo);
+    void addNewRow (QString fqFrom, QString fqTo, QString fqPoints);
     void deleteRow (int number);
     void moveRowUp (int number);
 
@@ -24,6 +24,7 @@ private:
     QTableWidget * m_tableWidget;
     QStringList m_fqFromList;
     QStringList m_fqToList;
+    QStringList m_fqPointsList;
 
     QSettings *m_settings;
 

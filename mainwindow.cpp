@@ -398,11 +398,15 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->startLabel->setText(tr("Start"));
         ui->stopLabel->setText(tr("Stop"));
         ui->groupBox_2->setTitle(tr("Presets (limits), kHz"));
+        ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Start"));
+        ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
     }else
     {
         ui->startLabel->setText(tr("Center"));
         ui->stopLabel->setText(tr("Range (+/-)"));
         ui->groupBox_2->setTitle(tr("Presets (center, range), kHz"));
+        ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Center"));
+        ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
     }
     //PopUpIndicator::hideIndicator(ui->tabWidget);
     PopUpIndicator::hideIndicator(m_swrWidget);
@@ -2539,7 +2543,7 @@ void MainWindow::on_presetsAddBtn_clicked()
 {
     QString from = QString::number(getFqFrom(),'f',0);
     QString to = QString::number(getFqTo(),'f',0);
-    m_presets->addNewRow(from, to);
+    m_presets->addNewRow(from, to, QString::number(m_dotsNumber));
 }
 
 void MainWindow::on_tableWidget_presets_cellDoubleClicked(int row, int column)
@@ -2549,6 +2553,9 @@ void MainWindow::on_tableWidget_presets_cellDoubleClicked(int row, int column)
     QCPRange range;
     range.lower = list.at(0).toDouble();
     range.upper = list.at(1).toDouble();
+    m_dotsNumber = list.at(2).toInt();
+    ui->spinBoxPoints->setValue(m_dotsNumber);
+
     if(!m_isRange)
     {
         setFqFrom(list.at(0));
@@ -3419,6 +3426,8 @@ void MainWindow::on_limitsBtn_clicked(bool checked)
         ui->startLabel->setText(tr("Start"));
         ui->stopLabel->setText(tr("Stop"));
         ui->groupBox_2->setTitle(tr("Presets (limits), kHz"));
+        ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Start"));
+        ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
         double center = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
         double range = ui->lineEdit_fqTo->text().remove(' ').toDouble();
 
@@ -3443,6 +3452,8 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
         ui->startLabel->setText(tr("Center"));
         ui->stopLabel->setText(tr("Range (+/-)"));
         ui->groupBox_2->setTitle(tr("Presets (center, range), kHz"));
+        ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Center"));
+        ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
         double from = getFqFrom();
         double to = getFqTo();
         setFqFrom((to + from)/2);
