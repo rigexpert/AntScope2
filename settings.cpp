@@ -33,6 +33,11 @@ Settings::Settings(QWidget *parent) :
     ui->turnOnOffBtn->setStyleSheet(style);
     ui->calibWizard->setStyleSheet(style);
 
+    style = "QGroupBox {border: 2px solid rgb(100,100,100); margin-top: 1ex;}";
+    style += "QGroupBox::title {color: rgb(1, 178, 255);}";
+    ui->groupBox_10->setStyleSheet(style);
+    ui->groupBox_11->setStyleSheet(style);
+
     ui->browseLine->setText(tr("Choose file"));
     ui->updateProgressBar->hide();
     ui->checkUpdatesBtn->setEnabled(false);
@@ -54,25 +59,22 @@ Settings::Settings(QWidget *parent) :
     ui->graphHintCheckBox->setChecked(m_graphHintEnabled);
     ui->graphBriefHintCheckBox->setChecked(m_graphBriefHintEnabled);
 
-    int current_band = m_settings->value("current_band", 0).toInt();
     m_settings->endGroup();
 
-    ui->bandsCombobox->addItem(tr("Reg.1 (Europe, Africa)"), QVariant::fromValue(0));
-    ui->bandsCombobox->addItem(tr("Reg.2 (Americas)"), QVariant::fromValue(1));
-    ui->bandsCombobox->addItem(tr("Reg.3 (Asia, Oceania)"), QVariant::fromValue(2));
-    connect(ui->bandsCombobox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_bandsComboBox_currentIndexChanged(int)));
-    ui->bandsCombobox->setCurrentIndex(current_band);
-
     ui->cableComboBox->addItem(tr("Change parameters or choose from list..."));
+    ui->cableComboBox->setStyleSheet("QComboBox { combobox-popup: 0; }");
+    ui->cableComboBox->setMaxVisibleItems(20);
+    //ui->cableComboBox->view()->setMaximumWidth(400);
+
     QString cablesPath = Settings::appPath();
     cablesPath += "cables.txt";
-    openFile(cablesPath);
+    openCablesFile(cablesPath);
 
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
         ui->serialPortComboBox->addItem(info.portName());
     }
-
+    connect(ui->closeBtn, SIGNAL(pressed()), this, SLOT(close()));
 }
 
 Settings::~Settings()
@@ -109,6 +111,7 @@ void Settings::setZ0(double _Z0)
 {
     ui->lineEdit_systemImpedance->setText(QString::number(_Z0));
 }
+
 
 void Settings::on_browseBtn_clicked()
 {
@@ -746,7 +749,7 @@ int Settings::getCableIndex(void)const
 //------------------------------------------------------------------------------
 
 
-void Settings::openFile(QString path)
+void Settings::openCablesFile(QString path)
 {
     QFile file(path);
     bool res = file.open(QFile::ReadOnly);
@@ -959,9 +962,24 @@ void Settings::on_closeButton_clicked()
 
 void Settings::on_bandsComboBox_currentIndexChanged(int index)
 {
+    QString band = ui->bandsCombobox->itemText(index);
+
     m_settings->beginGroup("Settings");
-    m_settings->setValue("current_band", index);
+    m_settings->setValue("current_band", band);
     m_settings->endGroup();
 
-    emit bandChanged(index);
+    emit bandChanged(band);
+}
+
+void Settings::setBands(QList<QString> list)
+{
+    foreach (QString band, list) {
+        ui->bandsCombobox->addItem(band);
+    }
+
+    m_settings->beginGroup("Settings");
+    QString current_band = m_settings->value("current_band", "").toString();
+    m_settings->endGroup();
+    connect(ui->bandsCombobox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_bandsComboBox_currentIndexChanged(int)));
+    ui->bandsCombobox->setCurrentText(current_band);
 }

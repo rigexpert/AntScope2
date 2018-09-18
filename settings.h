@@ -52,6 +52,7 @@ public:
     int getCableFarEndMeasurement(void)const;
     void setCableIndex(int value);
     int getCableIndex(void)const;
+    void setBands(QList<QString> list);
 
     static QString appPath();
     static QString setIniFile();
@@ -95,7 +96,7 @@ private:
 
     void enableButtons(bool enabled);
     void cableActionEnableButtons(bool enabled);
-    void openFile(QString path);
+    void openCablesFile(QString path);
 
 signals:
     void paramsChanged();
@@ -128,7 +129,7 @@ signals:
     void changedSerialPort(QString);
 
     void languageChanged(int);
-    void bandChanged(int);
+    void bandChanged(QString);
 
 private slots:
     void on_browseBtn_clicked();

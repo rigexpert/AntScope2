@@ -165,13 +165,12 @@ void Screenshot::on_newData(QByteArray data)
             data += (int)m_inputData.takeFirst();
             int quantity = (int)m_inputData.takeFirst();
 
-            int blue;
-            int green;
-            int red;
+            if (quantity == 0)
+                continue;
 
-            red = data&0x1F;
-            green = (data>>5)&0x3F;
-            blue = (data>>11)&0x1F;
+            int red = data&0x1F;
+            int green = (data>>5)&0x3F;
+            int blue = (data>>11)&0x1F;
 
             red = (red<<3) + ( (red&0x10) ? 0x07 : 0 );
             green = (green<<2) + ( (green&0x20) ? 0x03 : 0 );

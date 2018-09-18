@@ -414,6 +414,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    QList<QStringList*> values = m_BandsMap.values();
+    while (!values.isEmpty()) {
+        QStringList* lst = values.takeLast();
+        delete lst;
+    }
+    m_BandsMap.clear();
+
     if(m_calibration)
     {
         delete m_calibration;
@@ -549,9 +556,22 @@ void MainWindow::setWidgetsSettings()
     fontTickLabel.setPointSize(11);
     fontLabel.setPointSize(12);
 
+    bool bands_loaded = loadBands();
+    QStringList* bands = nullptr;
+    if (bands_loaded)
+    {
+        m_settings->beginGroup("Settings");
+        QString band = m_settings->value("current_band", "ITU Region 1 - Europe, Africa").toString();
+        m_settings->endGroup();
+        if (m_BandsMap.contains(band))
+        {
+            bands = m_BandsMap[band];
+        }
+    }
+
     //-------SWR Widget---------------------------------------------
     m_swrWidget->addGraph();//graph(0) - SWR
-    setBands(m_swrWidget, 1, MAX_SWR);
+    setBands(m_swrWidget, bands, 1, MAX_SWR);
 
     m_swrWidget->graph(0)->setPen(pen);
     m_swrWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -572,7 +592,7 @@ void MainWindow::setWidgetsSettings()
 
     //-------Phase Widget---------------------------------------------
     m_phaseWidget->addGraph();//graph(0)
-    setBands(m_phaseWidget, -180, 180);
+    setBands(m_phaseWidget, bands, -180, 180);
     m_phaseWidget->graph(0)->setPen(pen);
     //ui->swr_widget->axisRect()->setBackground(Qt::black);
     m_phaseWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -593,7 +613,7 @@ void MainWindow::setWidgetsSettings()
     //-------RSeries Widget------------------------------------------------
     m_rsWidget->setAutoAddPlottableToLegend(false);
     m_rsWidget->addGraph();//graph(0)
-    setBands(m_rsWidget, -2000, 2000);
+    setBands(m_rsWidget, bands, -2000, 2000);
     m_rsWidget->graph(0)->setPen(pen);
     m_rsWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_rsWidget->yAxis->setLabel(tr("Rs, Ohm"));
@@ -613,7 +633,7 @@ void MainWindow::setWidgetsSettings()
     //-------RParallel Widget------------------------------------------------
     m_rpWidget->setAutoAddPlottableToLegend(false);
     m_rpWidget->addGraph();//graph(0)
-    setBands(m_rpWidget, -2000, 2000);
+    setBands(m_rpWidget, bands, -2000, 2000);
     m_rpWidget->graph(0)->setPen(pen);
     m_rpWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_rpWidget->yAxis->setLabel(tr("Rp, Ohm"));
@@ -632,7 +652,7 @@ void MainWindow::setWidgetsSettings()
 
     //-------RL Widget---------------------------------------------
     m_rlWidget->addGraph();//graph(0)
-    setBands(m_rlWidget, 0, 50);
+    setBands(m_rlWidget, bands, 0, 50);
     m_rlWidget->graph(0)->setPen(pen);
     m_rlWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_rlWidget->yAxis->setLabel(tr("RL, dB"));
@@ -700,10 +720,27 @@ void MainWindow::setBands(QCustomPlot * widget, double y1, double y2)
     addBand(widget,1240000, 1300000, y1, y2);
 }
 
+void MainWindow::setBands(QCustomPlot * widget, QStringList* bands, double y1, double y2)
+{
+    if (bands == nullptr)
+    {
+        setBands(widget, y1, y2);
+        return;
+    }
+    foreach (QString str, *bands)
+    {
+        QStringList list = str.split(',');
+        if (list.size() == 2)
+        {
+            addBand(widget, list[0].toDouble(), list[1].toDouble(), y1, y2);
+        }
+    }
+}
+
 void MainWindow::addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2)
 {
     QCPItemRect * xRectItem = new QCPItemRect( widget );
-    //m_itemRectList.append(xRectItem);
+    m_itemRectList.append(xRectItem);
 
     xRectItem->setVisible          (true);
     xRectItem->setPen              (QPen(Qt::transparent));
@@ -2879,6 +2916,7 @@ void MainWindow::on_settingsBtn_clicked()
     }
     m_settingsDialog->setLanguages(list, m_languageNumber);
 
+    m_settingsDialog->setBands(m_BandsMap.keys());
 
     if(m_measurements)
     {
@@ -2952,7 +2990,7 @@ void MainWindow::on_settingsBtn_clicked()
 
     connect(m_settingsDialog, SIGNAL(languageChanged(int)), this, SLOT(on_translate(int)));
 
-    connect(m_settingsDialog, SIGNAL(bandChanged(int)), this, SLOT(on_bandChanged(int)));
+    connect(m_settingsDialog, SIGNAL(bandChanged(QString)), this, SLOT(on_bandChanged(QString)));
 
     m_settingsDialog->exec();
 }
@@ -3827,10 +3865,53 @@ QCustomPlot* MainWindow::getCurrentPlot()
     return children[0];
 }
 
-void MainWindow::on_bandChanged(int index)
+bool MainWindow::loadBands()
 {
-
+    QString ituPath = Settings::appPath();
+    ituPath += "itu-regions.txt";
+    QFile file(ituPath);
+    bool res = file.open(QFile::ReadOnly);
+    if(!res)
+        return false;
+    QTextStream stream(&file);
+    QString str;
+    QStringList* list = nullptr;
+    while(!stream.atEnd())
+    {
+        str = stream.readLine().trimmed();
+        if (str.isEmpty())
+            continue;
+        if (str.indexOf('[') != -1)
+        {
+            int pos = str.indexOf(']');
+            QString title = str.mid(1, pos-1);
+            list = new QStringList();
+            m_BandsMap.insert(title, list);
+        } else {
+            list->append(str);
+        }
+    }
+    file.close();
+    return true;
 }
+
+void MainWindow::on_bandChanged(QString band)
+{
+    if (m_BandsMap.contains(band))
+    {
+        while (!m_itemRectList.isEmpty()) {
+            delete m_itemRectList.takeFirst();
+        }
+
+        QStringList* bands = m_BandsMap[band];
+        setBands(m_swrWidget, bands, 1, MAX_SWR);
+        setBands(m_phaseWidget, bands, -180, 180);
+        setBands(m_rsWidget, bands, -2000, 2000);
+        setBands(m_rpWidget, bands, -2000, 2000);
+        setBands(m_rlWidget, bands, 0, 50);
+    }
+}
+
 
 void MainWindow::onSpinChanged(int value)
 {

@@ -158,8 +158,11 @@ private:
     bool m_addingMarker;
     bool m_isMouseClick;
     bool m_bInterrupted;
+    QMap<QString, QStringList*> m_BandsMap;
 
     void setWidgetsSettings();
+    bool loadBands();
+    void setBands(QCustomPlot * widget, QStringList* bands, double y1, double y2);
     void setBands(QCustomPlot * widget, double y1, double y2);
     void addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2);
     void createTabs (QString sequence);
@@ -269,7 +272,7 @@ private slots:
     void onCustomContextMenuRequested(const QPoint&);
     void onCreateMarker(const QPoint& pos);
     void onCreateMarker(QAction*);
-    void on_bandChanged(int);
+    void on_bandChanged(QString);
     void onSpinChanged(int value);
 };
 
