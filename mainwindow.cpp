@@ -116,7 +116,7 @@ MainWindow::MainWindow(QWidget *parent) :
             "padding: 0 3px;}"
             "QGroupBox::title {color: white;}";
 
-    ui->groupBox_4->setStyleSheet(style);
+    ui->groupBox_Run->setStyleSheet(style);
 
     setWidgetsSettings();
 
@@ -397,14 +397,14 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         ui->startLabel->setText(tr("Start"));
         ui->stopLabel->setText(tr("Stop"));
-        ui->groupBox_2->setTitle(tr("Presets (limits), kHz"));
+        ui->groupBox_Presets->setTitle(tr("Presets (limits), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Start"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
     }else
     {
         ui->startLabel->setText(tr("Center"));
         ui->stopLabel->setText(tr("Range (+/-)"));
-        ui->groupBox_2->setTitle(tr("Presets (center, range), kHz"));
+        ui->groupBox_Presets->setTitle(tr("Presets (center, range), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Center"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
     }
@@ -3061,7 +3061,6 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
 {
     Q_UNUSED(column)
     int count = m_swrWidget->graphCount();
-    int count1 = m_rpWidget->graphCount();
     if(count > 0)
     {
         for(int i = 1; i < count; ++i)
@@ -3463,7 +3462,7 @@ void MainWindow::on_limitsBtn_clicked(bool checked)
         ui->rangeBtn->setChecked(false);
         ui->startLabel->setText(tr("Start"));
         ui->stopLabel->setText(tr("Stop"));
-        ui->groupBox_2->setTitle(tr("Presets (limits), kHz"));
+        ui->groupBox_Presets->setTitle(tr("Presets (limits), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Start"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
         double center = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
@@ -3489,7 +3488,7 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
         ui->limitsBtn->setChecked(false);
         ui->startLabel->setText(tr("Center"));
         ui->stopLabel->setText(tr("Range (+/-)"));
-        ui->groupBox_2->setTitle(tr("Presets (center, range), kHz"));
+        ui->groupBox_Presets->setTitle(tr("Presets (center, range), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Center"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
         double from = getFqFrom();

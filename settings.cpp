@@ -64,7 +64,6 @@ Settings::Settings(QWidget *parent) :
     ui->cableComboBox->addItem(tr("Change parameters or choose from list..."));
     ui->cableComboBox->setStyleSheet("QComboBox { combobox-popup: 0; }");
     ui->cableComboBox->setMaxVisibleItems(20);
-    //ui->cableComboBox->view()->setMaximumWidth(400);
 
     QString cablesPath = Settings::appPath();
     cablesPath += "cables.txt";
@@ -751,45 +750,49 @@ int Settings::getCableIndex(void)const
 
 void Settings::openCablesFile(QString path)
 {
+    m_cablesList.clear();
+
+    ui->cableComboBox->addItem(tr("Ideal 50-Ohm cable"));
+    m_cablesList.append(tr("Ideal 50-Ohm cable, 50, 0.66, 0.0, 0.0, 0, 0"));
+    ui->cableComboBox->addItem(tr("Ideal 75-Ohm cable"));
+    m_cablesList.append(tr("Ideal 75-Ohm cable, 75, 0.66, 0.0, 0.0, 0, 0"));
+    ui->cableComboBox->addItem(tr("Ideal 25-Ohm cable"));
+    m_cablesList.append(tr("Ideal 25-Ohm cable, 25, 0.66, 0.0, 0.0, 0, 0"));
+    ui->cableComboBox->addItem(tr("Ideal 37.5-Ohm cable"));
+    m_cablesList.append(tr("Ideal 37.5-Ohm cable, 37.5, 0.66, 0.0, 0.0, 0, 0"));
+
     QFile file(path);
     bool res = file.open(QFile::ReadOnly);
-    if(res)
+    if(!res)
     {
-        m_cablesList.clear();
-        QTextStream in(&file);
-        QString line;
+        QMessageBox::information(this, "Can't open file", path, QMessageBox::Close);
+        return;
+    }
 
-        ui->cableComboBox->addItem(tr("Ideal 50-Ohm cable"));
-        m_cablesList.append(tr("Ideal 50-Ohm cable, 50, 0.66, 0.0, 0.0, 0, 0"));
-        ui->cableComboBox->addItem(tr("Ideal 75-Ohm cable"));
-        m_cablesList.append(tr("Ideal 75-Ohm cable, 75, 0.66, 0.0, 0.0, 0, 0"));
-        ui->cableComboBox->addItem(tr("Ideal 25-Ohm cable"));
-        m_cablesList.append(tr("Ideal 25-Ohm cable, 25, 0.66, 0.0, 0.0, 0, 0"));
-        ui->cableComboBox->addItem(tr("Ideal 37.5-Ohm cable"));
-        m_cablesList.append(tr("Ideal 37.5-Ohm cable, 37.5, 0.66, 0.0, 0.0, 0, 0"));
+    QTextStream in(&file);
+    QString line;
 
-        do
+    do
+    {
+        line = in.readLine();
+
+        if( (line == "") || (line.at(0) == ';'))
         {
-            line = in.readLine();
-
-            if( (line == "") || (line.at(0) == ';'))
+            continue;
+        }else
+        {
+            QList <QString> list;
+            list = line.split(',');
+            if(list.length() == 7)
             {
-                continue;
+                ui->cableComboBox->addItem(list.at(0));
+                m_cablesList.append(line);
             }else
             {
-                QList <QString> list;
-                list = line.split(',');
-                if(list.length() == 7)
-                {
-                    ui->cableComboBox->addItem(list.at(0));
-                    m_cablesList.append(line);
-                }else
-                {
-                    qDebug() << "Error: Len != 7";
-                }
+                qDebug() << "Error: Len != 7";
             }
-        }while (!line.isNull());
-    }
+        }
+    } while (!line.isNull());
 }
 
 
