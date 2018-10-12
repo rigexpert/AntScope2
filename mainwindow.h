@@ -41,7 +41,7 @@ static QString languages[LANGUAGES_QUANTITY]={
 static QString languages_small[LANGUAGES_QUANTITY]={
     "en",
     "ru",
-    "ukr",
+    "uk",
     "jp"
 };
 
@@ -63,6 +63,7 @@ public:
     void openFile(QString path);
     QString lastSavePath() { return m_lastSavePath; }
     Analyzer* analyzer() { return m_analyzer; }
+    bool isMeasuring() { return analyzer()->isMeasuring(); }
 
 private:
 
@@ -274,6 +275,7 @@ private slots:
     void onCreateMarker(QAction*);
     void on_bandChanged(QString);
     void onSpinChanged(int value);
+    void calibrationToggled(bool checked);
 };
 
 

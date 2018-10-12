@@ -1,4 +1,5 @@
 #include "calibration.h"
+#include "settings.h"
 
 Calibration::Calibration(QObject *parent) : QObject(parent),
     m_state(CALIB_NONE),
@@ -11,11 +12,15 @@ Calibration::Calibration(QObject *parent) : QObject(parent),
     m_settings(NULL)
 {
 
-    WCHAR path[MAX_PATH];
-    SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
-    QDir dir(QString::fromWCharArray(path));
-    QString iniFilePath = dir.absoluteFilePath("RigExpert/AntScope2/") + "AntScope2.ini";
-    m_calibrationPath = dir.absoluteFilePath("RigExpert/AntScope2/Calibration/");
+    //WCHAR path[MAX_PATH];
+    //SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
+    //QDir dir(QString::fromWCharArray(path));
+    //QString iniFilePath = dir.absoluteFilePath("RigExpert/AntScope2/") + "AntScope2.ini";
+
+    QString iniFilePath = Settings::localDataPath("AntScope2.ini");
+
+    //m_calibrationPath = dir.absoluteFilePath("RigExpert/AntScope2/Calibration/");
+    m_calibrationPath = Settings::localDataPath("Calibration");
     QDir().mkdir(m_calibrationPath);
 
     m_settings = new QSettings(iniFilePath, QSettings::IniFormat);
@@ -173,17 +178,17 @@ void Calibration::on_newData(rawData _rawData)
 //        m_measurements->setCalibrationMode(false);//TODO
         emit setCalibrationMode(false);
 //        m_analyzer->setCalibrationMode(false);
-
+        QDir dir = m_calibrationPath;
         switch (m_state)
         {
         case CALIB_OPEN:
-            m_openData.saveData("Calibration/cal_open.s1p",m_Z0);
-            m_openCalibFilePath = "Calibration/cal_open.s1p";
+            m_openData.saveData(dir.absoluteFilePath("cal_open.s1p"),m_Z0);
+            m_openCalibFilePath = dir.absoluteFilePath("cal_open.s1p");
             if(!m_onlyOneCalib)
             {
-                QMessageBox::information(NULL, tr("Short"),
-                                     tr("Please connect SHORT standard and press OK."));
-                on_startCalibration();
+                if (QMessageBox::information(NULL, tr("Short"),
+                                     tr("Please connect SHORT standard and press OK.")) == QMessageBox::Ok)
+                    on_startCalibration();
             }else
             {
                 m_state = CALIB_NONE;
@@ -193,13 +198,13 @@ void Calibration::on_newData(rawData _rawData)
             }
             break;
         case CALIB_SHORT:
-            m_shortData.saveData("Calibration/cal_short.s1p",m_Z0);
-            m_shortCalibFilePath = "Calibration/cal_short.s1p";
+            m_shortData.saveData(dir.absoluteFilePath("cal_short.s1p"),m_Z0);
+            m_shortCalibFilePath = dir.absoluteFilePath("cal_short.s1p");
             if(!m_onlyOneCalib)
             {
-                QMessageBox::information(NULL, tr("Load"),
-                                     tr("Please connect LOAD standard and press OK."));
-                on_startCalibration();
+                if (QMessageBox::information(NULL, tr("Load"),
+                                     tr("Please connect LOAD standard and press OK.")) == QMessageBox::Ok)
+                    on_startCalibration();
             }else
             {
                 m_state = CALIB_NONE;
@@ -209,8 +214,8 @@ void Calibration::on_newData(rawData _rawData)
             }
             break;
         case CALIB_LOAD:
-            m_loadData.saveData("Calibration/cal_load.s1p",m_Z0);
-            m_loadCalibFilePath = "Calibration/cal_load.s1p";
+            m_loadData.saveData(dir.absoluteFilePath("cal_load.s1p"),m_Z0);
+            m_loadCalibFilePath = dir.absoluteFilePath("cal_load.s1p");
             m_state = CALIB_NONE;
             if(!m_onlyOneCalib)
             {
@@ -349,23 +354,36 @@ bool Calibration::interpolateS(double fq, double &reO, double &imO, double &reS,
     {
         return false;
     }
+    if (m_openData.getSize() != m_shortData.getSize() || m_openData.getSize() != m_loadData.getSize())
+    {
+        return false;
+    }
+
     double alf = 0;
     int i;
     for(i = 0; i < m_openData.getSize()-1; ++i)
     {
-        double fq1 = m_openData.getFq(i), fq2 = m_openData.getFq(i+1);
+        double fq1 = m_openData.getFq(i);
+        double fq2 = m_openData.getFq(i+1);
         if((fq >= fq1) && (fq <= fq2))
         {
             alf = (fq-fq1)/(fq2-fq1);
             break;
         }
+        if (fq < fq1)
+        {
+            alf = 0;
+            break;
+        }
     }
 
-    if(i == m_openData.getSize()-1)
+    if(i == m_openData.getSize()-2)
     {
         return false;
     }
 
+#if 1
+    alf = alf < 0.5 ? 1 : 0;
     double rO = m_openData.getR(i)*(1-alf) + m_openData.getR(i+1)*alf;
     double xO = m_openData.getX(i)*(1-alf) + m_openData.getX(i+1)*alf;
 
@@ -374,7 +392,7 @@ bool Calibration::interpolateS(double fq, double &reO, double &imO, double &reS,
 
     double rL = m_loadData.getR(i)*(1-alf) + m_loadData.getR(i+1)*alf;
     double xL = m_loadData.getX(i)*(1-alf) + m_loadData.getX(i+1)*alf;
-
+/*
     reO = (rO*rO-m_Z0*m_Z0+xO*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
     imO = (2*m_Z0*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
 
@@ -383,6 +401,45 @@ bool Calibration::interpolateS(double fq, double &reO, double &imO, double &reS,
 
     reL = (rL*rL-m_Z0*m_Z0+xL*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
     imL = (2*m_Z0*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
+*/
+    reO = rO;
+    imO = xO;
+
+    reS = rS;
+    imS = xS;
+
+    reL = rL;
+    imL = xL;
+
+#else
+    double rO = m_openData.getR(i);
+    double xO = m_openData.getX(i);
+
+    double rS = m_shortData.getR(i);
+    double xS = m_shortData.getX(i);
+
+    double rL = m_loadData.getR(i);
+    double xL = m_loadData.getX(i);
+
+    reO = rO;
+    imO = xO;
+
+    reS = rS;
+    imS = xS;
+
+    reL = rL;
+    imL = xL;
+/*
+    reO = (rO*rO-m_Z0*m_Z0+xO*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
+    imO = (2*m_Z0*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
+
+    reS = (rS*rS-m_Z0*m_Z0+xS*xS)/((rS+m_Z0)*(rS+m_Z0)+xS*xS);
+    imS = (2*m_Z0*xS)/((rS+m_Z0)*(rS+m_Z0)+xS*xS);
+
+    reL = (rL*rL-m_Z0*m_Z0+xL*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
+    imL = (2*m_Z0*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
+*/
+#endif
 
     return true;
 }

@@ -19,6 +19,8 @@
 
 class Analyzer : public QObject
 {
+    QMap<QString, QString> m_mapFullInfo;
+
     Q_OBJECT
 public:
     explicit Analyzer(QObject *parent = 0);
@@ -33,7 +35,7 @@ public:
     bool openComPort(const QString& portName, quint32 portSpeed);
     void closeComPort();
 
-    void setIsMeasuring (bool isMeasuring);
+    void setIsMeasuring (bool _isMeasuring);
 
     void setContinuos(bool isContinuos)
     {
@@ -43,7 +45,7 @@ public:
             m_comAnalyzer->setContinuos(isContinuos);
         }
     }
-    bool getIsMeasuring (void) const { return m_isMeasuring;}
+    bool isMeasuring (void) const { return m_isMeasuring;}
 
     void setAnalyzerModel (int model);
     quint32 getAnalyzerModel (void) const { return m_analyzerModel;}
@@ -124,6 +126,7 @@ public slots:
     void on_stopMeasure();
     void on_changedAutoDetectMode(bool state);
     void on_changedSerialPort(QString portName);
+    void slotFullInfo(QString str);
 };
 
 #endif // ANALYZER_H

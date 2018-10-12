@@ -48,6 +48,8 @@ public:
     int getModel(void) const;
     void nonblocking (int nonblock);
     bool update(QIODevice *fw);
+    void setIsMeasuring (bool isMeasuring) {m_isMeasuring = isMeasuring;}
+    bool getIsMeasuring (void) const { return m_isMeasuring;}
 
 
 private:
@@ -88,6 +90,7 @@ signals:
     void analyzerDataStringArrived(QString);
     void analyzerScreenshotDataArrived(QByteArray);
     void updatePercentChanged(int);
+    void signalFullInfo(QString str);
 
 public slots:
     bool searchAnalyzer(bool arrival);

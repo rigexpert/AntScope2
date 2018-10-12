@@ -10,7 +10,7 @@
 #include <QSettings>
 #include <calibration.h>
 
-#include <shlobj.h>
+//#include <shlobj.h>
 
 namespace Ui {
 class Settings;
@@ -54,7 +54,8 @@ public:
     int getCableIndex(void)const;
     void setBands(QList<QString> list);
 
-    static QString appPath();
+    static QString programDataPath(QString _fileName);
+    static QString localDataPath(QString _fileName);
     static QString setIniFile();
 
     void setAntScopeAutoUpdate(bool checked);

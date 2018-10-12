@@ -238,17 +238,26 @@ qint32 comAnalyzer::parse (QByteArray arr)
             }
             if(m_parseState == VER)
             {
-                for(quint32 i = QUANTITY-1; i > 0; i--)
+                if (str.indexOf("MAC\t") == 0) {
+                    qDebug() << "FULLINFO: " << str;
+                    emit signalFullInfo(str);
+                    continue;
+                } else if (str.indexOf("SN\t") == 0) {
+                    qDebug() << "FULLINFO: " << str;
+                    emit signalFullInfo(str);
+                    continue;
+                }
+                for(quint32 idx = QUANTITY-1; idx > 0; idx--)
                 {
-                    if(str.indexOf(names[i]) >= 0 )
+                    if(str.indexOf(names[idx]) >= 0 )
                     {
                         if(m_analyzerModel != 0)
                         {
                             m_analyzerPresent = true;
                         }else
                         {
-                            m_analyzerModel = i;
-                            int pos = names[i].length() + 1;
+                            m_analyzerModel = idx;
+                            int pos = names[idx].length() + 1;
                             if(str.length() >= pos+3)
                             {
                                 m_version.clear();
@@ -412,6 +421,7 @@ void comAnalyzer::checkAnalyzer()
             m_analyzerPresent = false;
             m_parseState = VER;
             sendData("\r\nVER\r\n");
+            //sendData("FULLINFO\r\n");
             state++;
             QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
         }else if(state == 1)
@@ -420,6 +430,7 @@ void comAnalyzer::checkAnalyzer()
             {
                 m_parseState = VER;
                 sendData("\r\nVER\r\n");
+                //sendData("FULLINFO\r\n");
                 state++;
             }else
             {
@@ -459,6 +470,11 @@ void comAnalyzer::startMeasure(int fqFrom, int fqTo, int dotsNumber)
 
     quint32 center;
     quint32 band;
+
+    if(dotsNumber > 0)
+    {
+        state = 1;
+    }
 
     switch(state)
     {
@@ -507,6 +523,7 @@ void comAnalyzer::startMeasure(int fqFrom, int fqTo, int dotsNumber)
 void comAnalyzer::stopMeasure()
 {
     sendData("off\r");
+    m_isMeasuring = false;
 }
 
 void comAnalyzer::timeoutChart()
@@ -514,6 +531,12 @@ void comAnalyzer::timeoutChart()
     quint32 len;
     QStringList stringList;
     QString str;
+
+    if (!m_isMeasuring)
+    {
+        m_stringList.clear();
+        return;
+    }
 
     len = m_stringList.length();
     if(len >=1)

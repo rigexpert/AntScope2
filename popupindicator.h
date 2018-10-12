@@ -9,7 +9,7 @@ class PopUpIndicator : public PopUp {
 public:
     static void showIndicator(QWidget* parent=0);
     static void hideIndicator(QWidget* parent=0);
-    static void setVisible(bool visible);
+    static void setIndicatorVisible(bool visible);
 
 protected:
     explicit PopUpIndicator(QWidget *parent = 0);

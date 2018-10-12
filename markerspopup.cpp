@@ -118,7 +118,10 @@ void MarkersPopUp::addRowText( int markerNumber,
                                QVector<double> *phase)
 {
     QPushButton* button = new QPushButton();
-    m_layout.addWidget(button, fq->length()*(m_buttonsObjList.length()) + 1, 0);
+    int row = fq->length() == 0 ? 1 : fq->length();
+    m_layout.addWidget(button, row * m_buttonsObjList.length() + 1, 0);
+    //m_layout.addWidget(button, fq->length()*(m_buttonsObjList.length()) + 1, 0);
+    //m_layout.addWidget(button, markerNumber + 1, 0);
     QString str = "RM" + QString::number(markerNumber);
     button->setObjectName(str);
     button->setText("X");
@@ -128,7 +131,9 @@ void MarkersPopUp::addRowText( int markerNumber,
 
     QLabel* label = new QLabel();
     label->setText(QString::number(markerNumber+1));
-    m_layout.addWidget(label, fq->length()*(m_markersObjList.length()) + 1, 1);
+    m_layout.addWidget(label, row * m_markersObjList.length() + 1, 1);
+    //m_layout.addWidget(label, fq->length()*(m_markersObjList.length()) + 1, 1);
+    //m_layout.addWidget(label, markerNumber + 1, 1);
     m_markersObjList.append(label);
 
     for(int i = 0; i < measurement->length(); ++i)

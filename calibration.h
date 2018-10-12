@@ -5,7 +5,7 @@
 #include <analyzer/analyzerparameters.h>
 #include <analyzer/analyzer.h>
 #include <QSettings>
-#include <shlobj.h>
+//#include <shlobj.h>
 
 #define DOTS_NUMBER 500
 
@@ -223,9 +223,9 @@ public:
                     x = param2;
             }
 
-            if ( _isnan(r) || (r<0) )
+            if ( qIsNaN(r) || (r<0) )
                 r = 0;
-            if ( _isnan(x) )
+            if ( qIsNaN(x) )
                 x = 0;
 
             double Gre = (r*r-1+x*x)/((r+1)*(r+1)+x*x);
@@ -287,13 +287,13 @@ public:
             double Gre = m_re.at(i);
             double Gim = m_im.at(i);
 
-            if (!_isnan(Gre))
+            if (!qIsNaN(Gre))
                 s = QString("%1").arg(Gre);		// Real
             else
                 s = "0";
             out << s << " ";
 
-            if (!_isnan(Gim))
+            if (!qIsNaN(Gim))
                 s = QString("%1").arg(Gim);		// Imaginary
             else
                 s = "0";

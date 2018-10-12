@@ -256,6 +256,7 @@ bool hidAnalyzer::connect(quint32 vid, quint32 pid)
         hid_set_nonblocking(m_hidDevice, 1);
         m_parseState = VER;
         sendData("VER\r\n");
+        sendData("FULLINFO\r\n");
         return true;
     }
     else
@@ -387,6 +388,11 @@ void hidAnalyzer::timeoutChart()
     QStringList stringList;
     QString str;
 
+    if (!m_isMeasuring)
+    {
+        m_stringList.clear();
+        return;
+    }
     len = m_stringList.length();
 
     if(len >=1)
@@ -487,6 +493,7 @@ qint32 hidAnalyzer::parse (QByteArray arr)
         {
             return 0;
         }
+
         for(int i = 0; i < stringList.length(); ++i)
         {
             QString str = stringList.at(i);
@@ -511,6 +518,15 @@ qint32 hidAnalyzer::parse (QByteArray arr)
             }
             if(m_parseState == VER)
             {
+                if (str.indexOf("MAC\t") == 0) {
+                    qDebug() << "FULLINFO: " << str;
+                    emit signalFullInfo(str);
+                    continue;
+                } else if (str.indexOf("SN\t") == 0) {
+                    qDebug() << "FULLINFO: " << str;
+                    emit signalFullInfo(str);
+                    continue;
+                }
                 for(quint32 i = QUANTITY-1; i > 0; i--)
                 {
                     if(str.indexOf(names[i]) >= 0 )
@@ -724,4 +740,5 @@ bool hidAnalyzer::update (QIODevice *fw)
 void hidAnalyzer::stopMeasure()
 {
     sendData("off\r");
+    m_isMeasuring = false;
 }

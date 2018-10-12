@@ -18,7 +18,7 @@ Settings::Settings(QWidget *parent) :
     m_farEndMeasurement(0)
 {
     ui->setupUi(this);
-    PopUpIndicator::setVisible(false);
+    PopUpIndicator::setIndicatorVisible(false);
 
     QString style = "QPushButton:disabled{"
                         "background-color: rgb(59, 59, 59);"
@@ -65,8 +65,9 @@ Settings::Settings(QWidget *parent) :
     ui->cableComboBox->setStyleSheet("QComboBox { combobox-popup: 0; }");
     ui->cableComboBox->setMaxVisibleItems(20);
 
-    QString cablesPath = Settings::appPath();
-    cablesPath += "cables.txt";
+//    QString cablesPath = Settings::localDataPath();
+//    cablesPath += "cables.txt";
+    QString cablesPath = Settings::programDataPath("cables.txt");
     openCablesFile(cablesPath);
 
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
@@ -74,6 +75,11 @@ Settings::Settings(QWidget *parent) :
         ui->serialPortComboBox->addItem(info.portName());
     }
     connect(ui->closeBtn, SIGNAL(pressed()), this, SLOT(close()));
+
+    // calibration turn-on/off moved to the main window
+    ui->label_3->hide();
+    ui->labelWizardStatus->hide();
+    ui->turnOnOffBtn->hide();
 }
 
 Settings::~Settings()
@@ -417,9 +423,9 @@ void Settings::on_openCalibBtn_clicked()
 {
     enableButtons(false);
     m_onlyOneCalib = true;
-    QMessageBox::information(NULL, tr("Open"),
-                         tr("Please connect OPEN standard and press OK."));
-    emit startCalibrationOpen();
+    if (QMessageBox::information(NULL, tr("Open"),
+                         tr("Please connect OPEN standard and press OK.")) == QMessageBox::Ok)
+        emit startCalibrationOpen();
 }
 
 void Settings::on_shortCalibBtn_clicked()
@@ -478,8 +484,9 @@ void Settings::enableButtons(bool enabled)
 
 void Settings::on_openOpenFileBtn_clicked()
 {
+    QString dir = localDataPath("Calibration");
     QString path = QFileDialog::getOpenFileName(this, tr("Open 'open calibration' file"),
-                                                "Calibration/","*.s1p");
+                                                dir,"*.s1p");
     QStringList list;
     list = path.split("/");
     if(list.length() == 1)
@@ -493,8 +500,9 @@ void Settings::on_openOpenFileBtn_clicked()
 
 void Settings::on_shortOpenFileBtn_clicked()
 {
+    QString dir = localDataPath("Calibration");
     QString path = QFileDialog::getOpenFileName(this, tr("Open 'short calibration' file"),
-                                             "Calibration/","*.s1p");
+                                             dir,"*.s1p");
     QStringList list;
     list = path.split("/");
     if(list.length() == 1)
@@ -509,8 +517,9 @@ void Settings::on_shortOpenFileBtn_clicked()
 
 void Settings::on_loadOpenFileBtn_clicked()
 {
+    QString dir = localDataPath("Calibration");
     QString path = QFileDialog::getOpenFileName(this, tr("Open 'load calibration' file"),
-                                                "Calibration/","*.s1p");
+                                                dir,"*.s1p");
     QStringList list;
     list = path.split("/");
     if(list.length() == 1)
@@ -789,7 +798,7 @@ void Settings::openCablesFile(QString path)
                 m_cablesList.append(line);
             }else
             {
-                qDebug() << "Error: Len != 7";
+                qDebug() << "Settings::openCablesFile: Error: Len != 7";
             }
         }
     } while (!line.isNull());
@@ -798,7 +807,7 @@ void Settings::openCablesFile(QString path)
 
 void Settings::on_cableComboBox_currentIndexChanged(int index)
 {
-    if(index != 0)
+    if(index > 0)
     {
         QString str = m_cablesList.at(index-1);
         QList <QString> paramsList = str.split(',');
@@ -826,16 +835,33 @@ void Settings::on_updateGraphsBtn_clicked()
 
 QString Settings::setIniFile()
 {
-    iniFilePath = Settings::appPath() + "AntScope2.ini";
+    //iniFilePath = Settings::localDataPath() + "AntScope2.ini";
+    iniFilePath = Settings::localDataPath("AntScope2.ini");
     return iniFilePath;
 }
 
-QString Settings::appPath()
+QString Settings::localDataPath(QString _fileName)
 {
-    WCHAR path[MAX_PATH];
-    SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
-    QDir dir(QString::fromWCharArray(path));
-    return dir.absoluteFilePath("RigExpert/AntScope2/");
+//    WCHAR path[MAX_PATH];
+//    SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
+//    QDir dir_old(QString::fromWCharArray(path));
+//    QString old = dir_old.absoluteFilePath("RigExpert/AntScope2/");
+//    return dir.absoluteFilePath("RigExpert/AntScope2/");
+    QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+    return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+}
+
+QString Settings::programDataPath(QString _fileName)
+{
+    QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
+    for (int idx=0; idx<list.size(); idx++)
+    {
+        QDir dir = list[idx];
+        QString path = dir.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+        if (QFile::exists(path))
+            return path;
+    }
+    return QString();
 }
 
 void Settings::on_aa30bootFound()

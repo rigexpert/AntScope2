@@ -257,7 +257,8 @@ void Print::on_printBtn_clicked()
 
         painter.drawImage(QRect(10,50,700,400),map.toImage());
 
-        painter.drawImage(QRect(70, 460, 700, 300),markersMap.toImage());
+        //painter.drawImage(QRect(70, 460, 700, 300),markersMap.toImage());
+        painter.drawImage(QRect(70, 460, 700, qMin(markersMap.height(), 300)),markersMap.toImage());
 
         painter.drawText(70, 760, 700, 300, Qt::TextExpandTabs , ui->textEditComment->toPlainText());
 

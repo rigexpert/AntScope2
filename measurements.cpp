@@ -468,11 +468,11 @@ void Measurements::on_newData(rawData _rawData)
 //------------------------------------------------------------------------------
 //------------------RXZ par-----------------------------------------------------
 //------------------------------------------------------------------------------
-    if (_isnan(R) || (R<0.001) )
+    if (qIsNaN(R) || (R<0.001) )
     {
         R = 0.01;
     }
-    if (_isnan(X))
+    if (qIsNaN(X))
     {
         X = 0;
     }
@@ -520,11 +520,11 @@ void Measurements::on_newData(rawData _rawData)
 //----------------------calc phase----------------------------------------------
 //------------------------------------------------------------------------------
 
-    if (_isnan(_rawData.r) || (_rawData.r<0.001) )
+    if (qIsNaN(_rawData.r) || (_rawData.r<0.001) )
     {
         _rawData.r = 0.01;
     }
-    if (_isnan(_rawData.x))
+    if (qIsNaN(_rawData.x))
     {
         _rawData.x = 0;
     }
@@ -564,23 +564,26 @@ void Measurements::on_newData(rawData _rawData)
             double GreOut;
             double GimOut;
 
-            double SOR = 1; double SOI = 0; // Ideal model
+            double SOR =  1; double SOI = 0; // Ideal model
             double SSR = -1; double SSI = 0;
-            double SLR = 0; double SLI = 0;
+            double SLR =  0; double SLI = 0;
 
-            double CRO, CIO; // CalibrationReOpen, CalibrationImOpen
-            double CRS, CIS; // CalibrationReShort, CalibrationImShort
-            double CRL, CIL; // CalibrationReLoad, CalibrationImLoad
-            bool res = m_calibration->interpolateS(_rawData.fq/1000, CRO, CIO, CRS, CIS, CRL, CIL);
+            double COR, COI; // CalibrationReOpen, CalibrationImOpen
+            double CSR, CSI; // CalibrationReShort, CalibrationImShort
+            double CLR, CLI; // CalibrationReLoad, CalibrationImLoad
+            bool res = m_calibration->interpolateS(_rawData.fq/1000, COR, COI, CSR, CSI, CLR, CLI);
 
             if (!res)
             {
                 qDebug() << "Interpolation Error";
-                on_redrawGraphs();
-                return;
+                //on_redrawGraphs();
+                //return;
+                SOR =  1; SOI = 0; // Ideal model
+                SSR = -1; SSI = 0;
+                SLR =  0; SLI = 0;
             }
             m_calibration->applyCalibration(Gre,Gim,  // Measured
-                                            CRO,CIO,CRS,CIS,CRL,CIL, // Measured parameters of cal standards
+                                            COR,COI,CSR,CSI,CLR,CLI, // Measured parameters of cal standards
                                             SOR,SOI,SSR,SSI,SLR,SLI, // Actual (Ideal) parameters of cal standards
                                             GreOut,GimOut); // Actual
 
@@ -677,11 +680,11 @@ void Measurements::on_newData(rawData _rawData)
             m_measurements.last().rlGraphCalib.insert(data.key,data);
 
             //----------------------calc phase---------------------------
-            if (_isnan(calR) || (calR<0.001) )
+            if (qIsNaN(calR) || (calR<0.001) )
             {
                 calR = 0.01;
             }
-            if (_isnan(calX))
+            if (qIsNaN(calX))
             {
                 calX = 0;
             }
@@ -1678,6 +1681,7 @@ void Measurements::on_calibrationEnabled(bool enabled)
         QCPDataMap rprmap;
         QCPDataMap rlmap;
         QCPDataMap phasemap;
+        QCPCurveDataMap smithmap;
         if(enabled)
         {
             swrmap = m_measurements.at(measurementsCount-(i-1)).swrGraphCalib;
@@ -1692,6 +1696,7 @@ void Measurements::on_calibrationEnabled(bool enabled)
             rprmap = m_measurements.at(measurementsCount-(i-1)).rprGraphCalib;
 
             rlmap = m_measurements.at(measurementsCount-(i-1)).rlGraphCalib;
+            smithmap = m_measurements.at(measurementsCount-(i-1)).smithGraphCalib;
         }else
         {
             swrmap = m_measurements.at(measurementsCount-(i-1)).swrGraph;
@@ -1706,6 +1711,7 @@ void Measurements::on_calibrationEnabled(bool enabled)
             rprmap = m_measurements.at(measurementsCount-(i-1)).rprGraph;
 
             rlmap = m_measurements.at(measurementsCount-(i-1)).rlGraph;
+            smithmap = m_measurements.at(measurementsCount-(i-1)).smithGraph;
         }
 
         m_swrWidget->graph(i)->setData(&swrmap, true);
@@ -1720,6 +1726,7 @@ void Measurements::on_calibrationEnabled(bool enabled)
         m_rpWidget->graph((i*3)-2)->setData(&rprmap, true);
 
         m_rlWidget->graph(i)->setData(&rlmap, true);
+        //??? <can't cast QCPCurveDataMap to QCPDataMap> m_smithWidget->graph(i)->setData(&smithmap, true);
     }
     replot();
     emit calibrationChanged();
@@ -1875,12 +1882,12 @@ void Measurements::exportData(QString _name, int _type, int _number)
 
             if (_type == 0) // Z, RI
             {
-                if (!_isnan(R))
+                if (!qIsNaN(R))
                     s = QString::number(R/Rswr,'g',4);           // R
                 else
                     s = "0";
                 out << s << " ";
-                if (!_isnan(X))
+                if (!qIsNaN(X))
                     s = QString::number(X/Rswr,'g',4);           // X
                 else
                     s = "0";
@@ -1892,13 +1899,13 @@ void Measurements::exportData(QString _name, int _type, int _number)
                 double Gre = (R*R-Rswr*Rswr+X*X)/((R+Rswr)*(R+Rswr)+X*X);
                 double Gim = (2*Rswr*X)/((R+Rswr)*(R+Rswr)+X*X);
 
-                if (!_isnan(Gre))
+                if (!qIsNaN(Gre))
                     s = QString::number(Gre,'g',4);              // Real
                 else
                     s = "0";
                 out << s << " ";
 
-                if (!_isnan(Gim))
+                if (!qIsNaN(Gim))
                     s = QString::number(Gim,'g',4);              // Imaginary
                 else
                     s = "0";
@@ -1911,13 +1918,13 @@ void Measurements::exportData(QString _name, int _type, int _number)
                 double Gre = (R*R-Rswr*Rswr+X*X)/((R+Rswr)*(R+Rswr)+X*X);
                 double Gim = (2*Rswr*X)/((R+Rswr)*(R+Rswr)+X*X);
 
-                if (!_isnan(Gre))
+                if (!qIsNaN(Gre))
                     s = QString::number(sqrt(Gre*Gre+Gim*Gim),'g',4);		// Magnitude
                 else
                     s = "0";
                 out << s << " ";
 
-                if (!_isnan(Gim))
+                if (!qIsNaN(Gim))
                     s = QString::number(atan2(Gim,Gre)/3.1415926*180.0,'g',4);		// Angle
                 else
                     s = "0";
@@ -2181,11 +2188,11 @@ void Measurements::importData(QString _name)
                 // Bug
             }
 
-            if ( _isnan(r) || (r<0) )
+            if ( qIsNaN(r) || (r<0) )
             {
                 r = 0;
             }
-            if ( _isnan(x) )
+            if ( qIsNaN(x) )
             {
                 x = 0;
             }
@@ -3742,8 +3749,8 @@ void Measurements::calcFarEnd(void)
                         Rpar = R*(1+X*X/R/R);
                         Xpar = X*(1+R*R/X/X);
 
-                        if (_isnan(R) || (R<0.001) ) {R = 0.01;}
-                        if (_isnan(X)) {X = 0;}
+                        if (qIsNaN(R) || (R<0.001) ) {R = 0.01;}
+                        if (qIsNaN(X)) {X = 0;}
 
                         double Rnorm = R/m_Z0;
                         double Xnorm = X/m_Z0;
@@ -3806,8 +3813,8 @@ void Measurements::calcFarEnd(void)
                         Rpar = R*(1+X*X/R/R);
                         Xpar = X*(1+R*R/X/X);
 
-                        if (_isnan(R) || (R<0.001) ) {R = 0.01;}
-                        if (_isnan(X)) {X = 0;}
+                        if (qIsNaN(R) || (R<0.001) ) {R = 0.01;}
+                        if (qIsNaN(X)) {X = 0;}
 
                         double Rnorm = R/m_Z0;
                         double Xnorm = X/m_Z0;

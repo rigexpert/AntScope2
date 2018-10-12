@@ -248,7 +248,7 @@ void Analyzer::on_measure (qint32 fqFrom, qint32 fqTo, qint32 dotsNumber)
         {
             m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }
-        PopUpIndicator::setVisible(true);
+        PopUpIndicator::setIndicatorVisible(true);
     } else {
         on_stopMeasure();
     }
@@ -256,7 +256,9 @@ void Analyzer::on_measure (qint32 fqFrom, qint32 fqTo, qint32 dotsNumber)
 
 void Analyzer::on_stopMeasure()
 {
-    PopUpIndicator::setVisible(false);
+    PopUpIndicator::setIndicatorVisible(false);
+    m_isMeasuring = false;
+    m_chartCounter = 0;
     if(m_comAnalyzerFound)
     {
         m_comAnalyzer->stopMeasure();
@@ -264,8 +266,6 @@ void Analyzer::on_stopMeasure()
     {
         m_hidAnalyzer->stopMeasure();
     }
-    m_isMeasuring = false;
-    m_chartCounter = 0;
     emit measurementComplete();
 }
 
@@ -338,6 +338,7 @@ void Analyzer::on_hidAnalyzerDisconnected ()
         connect(this, SIGNAL(measurementComplete()), m_comAnalyzer, SLOT(on_measurementComplete()), Qt::QueuedConnection);
         connect(m_comAnalyzer,SIGNAL(aa30bootFound()),this,SIGNAL(aa30bootFound()));
         connect(m_comAnalyzer, SIGNAL(aa30updateComplete()), this, SIGNAL(aa30updateComplete()));
+        connect(m_comAnalyzer, &comAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
     }
     m_hidAnalyzerFound = false;
     m_analyzerModel = 0;
@@ -380,6 +381,7 @@ void Analyzer::on_comAnalyzerDisconnected ()
         connect(m_hidAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
         connect(this, SIGNAL(screenshotComplete()),m_hidAnalyzer,SLOT(on_screenshotComplete()));
         connect(this, SIGNAL(measurementComplete()), m_hidAnalyzer, SLOT(on_measurementComplete()), Qt::QueuedConnection);
+        connect(m_hidAnalyzer, &hidAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
     }
     m_comAnalyzerFound = false;
     m_analyzerModel = 0;
@@ -392,12 +394,12 @@ void Analyzer::on_comAnalyzerDisconnected ()
 
 void Analyzer::on_newData(rawData _rawData)
 {
-    if(++m_chartCounter == m_dotsNumber+1)
+    if(++m_chartCounter == m_dotsNumber+1 || !m_isMeasuring)
     {
         emit newData (_rawData);
         m_isMeasuring = false;
         m_chartCounter = 0;
-        PopUpIndicator::setVisible(false);
+        PopUpIndicator::setIndicatorVisible(false);
         if(!m_calibrationMode)
         {
             emit measurementComplete();
@@ -426,7 +428,7 @@ void Analyzer::getAnalyzerData()
             m_isMeasuring = true;
             QTimer::singleShot(100, m_hidAnalyzer, SLOT(getAnalyzerData()));
         }
-        PopUpIndicator::setVisible(true);
+        PopUpIndicator::setIndicatorVisible(true);
     }
 }
 
@@ -449,17 +451,21 @@ void Analyzer::on_itemDoubleClick(QString number, QString dotsNumber, QString na
 
 void Analyzer::on_dialogClosed()
 {
-    PopUpIndicator::setVisible(false);
+    PopUpIndicator::setIndicatorVisible(false);
     m_isMeasuring = false;
     if(m_comAnalyzerFound)
     {
-        m_comAnalyzer->setIsMeasuring(false);
+        if (m_comAnalyzer != nullptr)
+            m_comAnalyzer->setIsMeasuring(false);
+    } else {
+        if (m_hidAnalyzer != nullptr)
+            m_hidAnalyzer->setIsMeasuring(false);
     }
 }
 
 void Analyzer::on_stopMeasuring()
 {
-    PopUpIndicator::setVisible(false);
+    PopUpIndicator::setIndicatorVisible(false);
     m_isMeasuring = false;
 }
 
@@ -503,6 +509,14 @@ void Analyzer::on_checkUpdatesBtn_clicked()
         url += m_comAnalyzer->getSerial();
         url += "&revision=";
         url += m_comAnalyzer->getRevision();
+    }
+    if (m_mapFullInfo.contains("MAC"))
+    {
+        url += "&mac=" + m_mapFullInfo["MAC"];
+    }
+    if (m_mapFullInfo.contains("SN"))
+    {
+        url += "&s_n=" + m_mapFullInfo["SN"];
     }
     m_downloader->startDownloadInfo(QUrl(url));
 }
@@ -549,13 +563,13 @@ void Analyzer::on_measureCalib(int dotsNumber)
     m_dotsNumber = dotsNumber;
     if(m_comAnalyzerFound)
     {
-        m_comAnalyzer->startMeasure(minFq[m_analyzerModel].toInt(),
-                                    maxFq[m_analyzerModel].toInt(),
+        m_comAnalyzer->startMeasure(minFq[m_analyzerModel].toInt()*1000,
+                                    maxFq[m_analyzerModel].toInt()*1000,
                                     dotsNumber);
     }else if (m_hidAnalyzerFound)
     {
-        m_hidAnalyzer->startMeasure(minFq[m_analyzerModel].toInt(),
-                                    maxFq[m_analyzerModel].toInt(),
+        m_hidAnalyzer->startMeasure(minFq[m_analyzerModel].toInt()*1000,
+                                    maxFq[m_analyzerModel].toInt()*1000,
                                     dotsNumber);
     }
 }
@@ -578,6 +592,7 @@ void Analyzer::on_changedAutoDetectMode(bool state)
             connect(m_hidAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));
             connect(m_hidAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
             connect(m_hidAnalyzer,SIGNAL(updatePercentChanged(int)),this,SLOT(on_updatePercentChanged(int)));
+            connect(m_hidAnalyzer, &hidAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
         }
     }else
     {
@@ -601,6 +616,8 @@ void Analyzer::on_changedAutoDetectMode(bool state)
         connect(this, SIGNAL(measurementComplete()), m_comAnalyzer, SLOT(on_measurementComplete()), Qt::QueuedConnection);
         connect(m_comAnalyzer, SIGNAL(aa30bootFound()), this, SIGNAL(aa30bootFound()));
         connect(m_comAnalyzer, SIGNAL(aa30updateComplete()), this, SIGNAL(aa30updateComplete()));
+        connect(m_comAnalyzer, &comAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
+
         QTimer::singleShot(1000, m_comAnalyzer, SLOT(searchAnalyzer()));
     }
 
@@ -615,12 +632,26 @@ void Analyzer::on_changedSerialPort(QString portName)
     }
 }
 
-void Analyzer::setIsMeasuring (bool isMeasuring)
+void Analyzer::setIsMeasuring (bool _isMeasuring)
 {
-    m_isMeasuring = isMeasuring;
+    m_isMeasuring = _isMeasuring;
     if(m_comAnalyzer != NULL)
     {
-        m_comAnalyzer->setIsMeasuring(isMeasuring);
+        m_comAnalyzer->setIsMeasuring(_isMeasuring);
     }
-    PopUpIndicator::setVisible(m_isMeasuring);
+    if(m_hidAnalyzer != NULL)
+    {
+        m_hidAnalyzer->setIsMeasuring(_isMeasuring);
+    }
+    PopUpIndicator::setIndicatorVisible(m_isMeasuring);
 }
+
+void Analyzer::slotFullInfo(QString str)
+{
+    QStringList list = str.split("\t");
+    if (list.size() < 2)
+        return;
+    m_mapFullInfo.insert(list[0], list[1]);
+}
+
+

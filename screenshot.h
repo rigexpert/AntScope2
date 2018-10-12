@@ -46,6 +46,10 @@ private:
     void saveBMP(QString path);
     void savePDF(QString path, QString comment);
 
+    //{ debug
+    QVector <unsigned char> m_inputDataDebug;
+    //} debug
+
 signals:
     void screenshotComplete();
     void newScreenshot();

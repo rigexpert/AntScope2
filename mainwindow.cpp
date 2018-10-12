@@ -275,6 +275,22 @@ MainWindow::MainWindow(QWidget *parent) :
             m_measurements,SLOT(setCalibrationMode(bool)));
     m_measurements->setCalibration(m_calibration);
 
+    style = "QCheckBox:disabled{"
+            "color: rgb(119, 119, 119);}";
+
+    ui->checkBoxCalibration->blockSignals(true);
+    ui->checkBoxCalibration->setStyleSheet(style);
+    ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
+    ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
+    connect(ui->checkBoxCalibration, &QCheckBox::toggled, this, &MainWindow::calibrationToggled);
+
+    QWidget* w = ui->checkBoxCalibration;
+    QTimer::singleShot(1000, [w]() {
+        // to avoid calibration message due to ui->checkBoxCalibration->setChecked
+        // at load time
+        w->blockSignals(false);
+    });
+
     connect(ui->measurmentsClearBtn, &QPushButton::clicked, this, &MainWindow::on_measurementsClearBtn_clicked);
 
     QSettings settings1 ("HKEY_CLASSES_ROOT", QSettings::NativeFormat);
@@ -792,6 +808,8 @@ void MainWindow::on_pressF7 ()
 
 void MainWindow::on_pressEsc ()
 {
+    ui->singleStart->setChecked(false);
+    ui->continuousStartBtn->setChecked(false);
     m_bInterrupted = true;
     emit stopMeasure();
 }
@@ -2684,13 +2702,35 @@ void MainWindow::on_screenshotAA_clicked()
 
 void MainWindow::on_singleStart_clicked()
 {
+    bool use_min_max = isMeasuring();
+    if (isMeasuring())
+    {
+        m_bInterrupted = true;
+        emit stopMeasure();
+        //ui->singleStart->setChecked(false);
+        ui->singleStart->setChecked(false);
+        ui->continuousStartBtn->setChecked(false);
+        return;
+    }
+
+    ui->continuousStartBtn->setChecked(false);
+
     double start;
     double stop;
 
-    start = getFqFrom();
-    stop = getFqTo();
-
     int maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toInt();
+    int minFreq = minFq[m_analyzer->getAnalyzerModel()].toInt();
+    if (use_min_max)
+    {
+        start = minFreq;
+        stop = maxFreq;
+    }
+    else
+    {
+        start = getFqFrom();
+        stop = getFqTo();
+    }
+
     if(stop > static_cast<double>(maxFreq))
     {
         stop = maxFreq;
@@ -2704,9 +2744,9 @@ void MainWindow::on_singleStart_clicked()
             setFqFrom((stop+start)/2);
         }
     }
-    if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFq[m_analyzer->getAnalyzerModel()].toInt())))
+    if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
     {
-        start = minFq[m_analyzer->getAnalyzerModel()].toInt();
+        start = minFreq;
         if(!m_isRange)
         {
             setFqFrom(start);
@@ -2724,25 +2764,31 @@ void MainWindow::on_singleStart_clicked()
     m_rlWidget->xAxis->setRange(range);
     if(ui->tabWidget->currentWidget()->objectName() == "tab_6")
     {
-        if(m_dotsNumber < 200)
-        {
-            emit measure(minFq[m_analyzer->getAnalyzerModel()].toInt()*1000, maxFq[m_analyzer->getAnalyzerModel()].toInt()*1000, 200);
-        }else
-        {
-            emit measure(minFq[m_analyzer->getAnalyzerModel()].toInt()*1000, maxFq[m_analyzer->getAnalyzerModel()].toInt()*1000, m_dotsNumber);
-        }
-    }else
+        emit measure(minFq[m_analyzer->getAnalyzerModel()].toInt()*1000,
+                    maxFq[m_analyzer->getAnalyzerModel()].toInt()*1000,
+                    qMax(m_dotsNumber, 200));
+    }
+    else
     {
         emit measure(start*1000, stop*1000, m_dotsNumber);
     }
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);
-    ui->measurmentsDeleteBtn->setEnabled(!m_analyzer->getIsMeasuring());
-    ui->measurmentsClearBtn->setEnabled(!m_analyzer->getIsMeasuring());
+    ui->measurmentsDeleteBtn->setEnabled(!m_analyzer->isMeasuring());
+    ui->measurmentsClearBtn->setEnabled(!m_analyzer->isMeasuring());
 }
 
 void MainWindow::on_continuousStartBtn_clicked(bool checked)
 {
+    if (isMeasuring())
+    {
+        m_bInterrupted = true;
+        emit stopMeasure();
+        ui->singleStart->setChecked(false);
+        ui->continuousStartBtn->setChecked(false);
+        return;
+    }
+    ui->singleStart->setChecked(false);
     m_isContinuos = checked;
     m_analyzer->setContinuos(m_isContinuos);
     if(m_isContinuos)
@@ -2843,14 +2889,15 @@ void MainWindow::on_measurementComplete()
             ui->measurmentsDeleteBtn->setEnabled(true);
             ui->measurmentsClearBtn->setEnabled(true);
             m_analyzer->setContinuos(false);
-            PopUpIndicator::setVisible(false);
+            PopUpIndicator::setIndicatorVisible(false);
         }
     } else {
         m_bInterrupted = true;
+        ui->singleStart->setChecked(false);
         ui->measurmentsDeleteBtn->setEnabled(true);
         ui->measurmentsClearBtn->setEnabled(true);
         m_analyzer->setContinuos(false);
-        PopUpIndicator::setVisible(false);
+        PopUpIndicator::setIndicatorVisible(false);
     }
 }
 
@@ -2993,6 +3040,9 @@ void MainWindow::on_settingsBtn_clicked()
     connect(m_settingsDialog, SIGNAL(bandChanged(QString)), this, SLOT(on_bandChanged(QString)));
 
     m_settingsDialog->exec();
+
+    ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
+    ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
 }
 
 void MainWindow::on_dotsNumberChanged(int number)
@@ -3002,7 +3052,7 @@ void MainWindow::on_dotsNumberChanged(int number)
 
 void MainWindow::on_measurmentsDeleteBtn_clicked()
 {
-    if(m_analyzer->getIsMeasuring())
+    if(m_analyzer->isMeasuring())
     {
         return;
     }
@@ -3031,7 +3081,7 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
 
 void MainWindow::on_measurementsClearBtn_clicked(bool)
 {
-    if(m_analyzer->getIsMeasuring())
+    if(m_analyzer->isMeasuring())
     {
         return;
     }
@@ -3831,6 +3881,8 @@ void MainWindow::onCreateMarker(QAction* action)
 
 void MainWindow::onCreateMarker(const QPoint& pos)
 {
+    //if (m_measurements->isEmpty())
+      //  return;
     QCustomPlot* plot = getCurrentPlot();
     if (plot->objectName().contains("smith") || plot->objectName().contains("tdr"))
         return;
@@ -3866,8 +3918,8 @@ QCustomPlot* MainWindow::getCurrentPlot()
 
 bool MainWindow::loadBands()
 {
-    QString ituPath = Settings::appPath();
-    ituPath += "itu-regions.txt";
+    QString ituPath = Settings::programDataPath("itu-regions.txt");
+
     QFile file(ituPath);
     bool res = file.open(QFile::ReadOnly);
     if(!res)
@@ -3916,4 +3968,19 @@ void MainWindow::onSpinChanged(int value)
 {
     m_dotsNumber = value;
     m_measurements->on_dotsNumberChanged(value);
+}
+
+void MainWindow::calibrationToggled(bool checked)
+{
+    if(!m_calibration->getCalibrationPerformed())
+    {
+        QMessageBox::information(NULL, tr("!!!!Calibration not performed"),
+                              tr("Calibration not performed."));
+
+    }
+    else
+    {
+        m_calibration->on_enableOSLCalibration(checked);
+        m_measurements->on_calibrationEnabled(checked);
+    }
 }

@@ -24,6 +24,7 @@ enum {
     AANONE = 0,
     AA30ZERO,
     AA30,
+    AA30_ZERO,
     AA35ZOOM,
     AA54,
     AA55ZOOM,
@@ -44,6 +45,7 @@ static QString names[QUANTITY]={
     "NONE",
     "AA-30",
     "AA-30 ZERO",
+    "AA-30.ZERO",
     "AA-35 ZOOM",
     "AA-54",
     "AA-55 ZOOM",
@@ -63,6 +65,7 @@ static QString minFq[QUANTITY]={//in kHz
     "NONE",
     "100",  //AA-30
     "60",  //AA-30 ZERO
+    "60",  //AA-30.ZERO
     "60",   //AA-35ZOOM
     "100",  //AA-54
     "60",   //AA-55ZOOM
@@ -82,6 +85,7 @@ static QString maxFq[QUANTITY]={//in kHz
     "NONE",
     "30000",    //AA-30
     "30000",    //AA-30 ZERO
+    "170000",   //AA-30.ZERO
     "35000",    //AA-35ZOOM
     "54000",    //AA-54
     "55000",    //AA-55ZOOM
@@ -102,6 +106,7 @@ static int lcdHeight[QUANTITY]={//in kHz
     0,
     64,    //AA-30
     0,  //AA-30 ZERO
+    0,  //AA-30.ZERO
     240,    //AA-35ZOOM
     64,    //AA-54
     240,    //AA-55ZOOM
@@ -122,6 +127,7 @@ static int lcdWidth[QUANTITY]={//in kHz
     0,
     133,    //AA-30
     0,  //AA-30 ZERO
+    0,  //AA-30.ZERO
     320,    //AA-35ZOOM
     133,    //AA-54
     320,    //AA-55ZOOM
@@ -143,7 +149,8 @@ enum parse{
     WAIT_DATA,
     WAIT_ANALYZER_DATA,
     WAIT_SCREENSHOT_DATA,
-    WAIT_ANALYZER_UPDATE
+    WAIT_ANALYZER_UPDATE,
+    FULLINFO
 };
 
 struct rawData{

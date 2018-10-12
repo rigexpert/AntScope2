@@ -47,7 +47,7 @@ void PopUpIndicator::hideIndicator(QWidget* parent)
     m_popUpIndicator->hide();
 }
 
-void PopUpIndicator::setVisible(bool visible)
+void PopUpIndicator::setIndicatorVisible(bool visible)
 {
     if (visible)
         showIndicator();

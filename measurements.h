@@ -39,7 +39,7 @@ public:
     measurement* getMeasurementSub(int number) {return &m_farEndMeasurementsSub[m_farEndMeasurementsSub.length()-1 - number];}
     measurement* getMeasurementAdd(int number) {return &m_farEndMeasurementsAdd[m_farEndMeasurementsAdd.length()-1 - number];}
     qint32 getMeasurementLength(void) {return m_measurements.length();}
-
+    bool isEmpty() { return getMeasurementLength() == 0; }
     bool getGraphHintEnabled(void);
     void saveData(quint32 number, QString path);
     void loadData(QString path);

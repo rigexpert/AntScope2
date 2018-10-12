@@ -80,6 +80,7 @@ signals:
     void updatePercentChanged(int);
     void aa30bootFound();
     void aa30updateComplete();
+    void signalFullInfo(QString str);
 
 public slots:
     void dataArrived();

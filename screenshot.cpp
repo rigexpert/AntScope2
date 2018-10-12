@@ -122,6 +122,7 @@ void Screenshot::on_newData(QByteArray data)
     for(int i = 0; i < data.length(); ++i)
     {
         m_inputData.append((unsigned char)data.at(i));
+        //m_inputDataDebug.append((unsigned char)data.at(i));
     }
 
     if(     (names[m_analyzerModel] == "AA-30") ||
@@ -278,6 +279,40 @@ void Screenshot::on_exportToPdfBtn_clicked()
 
 void Screenshot::on_refreshBtn_clicked()
 {
+    /*
+    //{ debug
+    QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
+    QDir dir = list[1];
+    QString binFileName = dir.absoluteFilePath("Rigexpert/Antscope2/antscope-screen.bin");
+    QFile binFile(binFileName);
+    if (binFile.open(QIODevice::WriteOnly|QIODevice::Truncate))
+    {
+        QDataStream stream(&binFile);
+        for (int idx=0; idx<m_inputDataDebug.size(); idx++)
+        {
+            stream << m_inputDataDebug[idx];
+        }
+        binFile.close();
+    }
+
+    QString textFileName = dir.absoluteFilePath("Rigexpert/Antscope2/antscope-screen.txt");
+    QFile textFile(textFileName);
+    if (textFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text))
+    {
+        QTextStream  stream(&textFile);
+        for (int idx=0; idx<m_inputDataDebug.size(); idx++)
+        {
+            if (idx > 0 && (idx % 16) == 0)
+                stream << endl;
+            QString str = QString("%1 ").arg(m_inputDataDebug[idx], 2, 16, QLatin1Char('0')).toUpper();
+            stream << str;
+        }
+        stream.flush();
+        textFile.close();
+    }
+    m_inputDataDebug.clear();
+    //} debug
+*/
     m_inputData.clear();
     m_imageVector.clear();
     repaint();

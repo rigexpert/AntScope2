@@ -97,6 +97,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Entering the AntScope2 program settings menu</string>
+          </property>
           <property name="styleSheet">
            <string notr="true"/>
           </property>
@@ -112,6 +115,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Export measurement results to PC</string>
           </property>
           <property name="styleSheet">
            <string notr="true"/>
@@ -129,6 +135,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Import measurement results from PC hard disk</string>
+          </property>
           <property name="text">
            <string>Import</string>
           </property>
@@ -141,6 +150,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Printing (or saving to PDF) measurement results</string>
           </property>
           <property name="styleSheet">
            <string notr="true"/>
@@ -158,6 +170,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Saving a program window with a chart on a PC</string>
+          </property>
           <property name="styleSheet">
            <string notr="true"/>
           </property>
@@ -174,6 +189,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Screenshot of the current screen of  analyzer (not for all models)</string>
+          </property>
           <property name="styleSheet">
            <string notr="true"/>
           </property>
@@ -189,6 +207,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Loading saved measurement results from analyzer memory</string>
           </property>
           <property name="styleSheet">
            <string notr="true"/>
@@ -249,7 +270,7 @@
         <property name="minimumSize">
          <size>
           <width>230</width>
-          <height>165</height>
+          <height>100</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -264,6 +285,9 @@
         <layout class="QFormLayout" name="formLayout">
          <item row="0" column="0">
           <widget class="QPushButton" name="limitsBtn">
+           <property name="toolTip">
+            <string>Entering the initial and final measurement frequency</string>
+           </property>
            <property name="styleSheet">
             <string notr="true">limitsBtn:pressed
 {
@@ -284,13 +308,13 @@
          <item row="0" column="1">
           <widget class="QPushButton" name="rangeBtn">
            <property name="toolTip">
-            <string>Range toolTip</string>
+            <string>Setting the central measurement frequency and range</string>
            </property>
            <property name="statusTip">
-            <string>Range statusTip</string>
+            <string/>
            </property>
            <property name="whatsThis">
-            <string>Range whatThis</string>
+            <string/>
            </property>
            <property name="text">
             <string>Center, range</string>
@@ -376,6 +400,18 @@
            </property>
           </widget>
          </item>
+         <item row="4" column="0">
+          <widget class="QCheckBox" name="checkBoxCalibration">
+           <property name="toolTip">
+            <string>Enable calibration OSL. Attention!
+You must perform the calibration 
+process in the settings menu!</string>
+           </property>
+           <property name="text">
+            <string>Calibration</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
@@ -390,13 +426,13 @@
         <property name="minimumSize">
          <size>
           <width>230</width>
-          <height>100</height>
+          <height>80</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>270</width>
-          <height>130</height>
+          <height>100</height>
          </size>
         </property>
         <property name="font">
@@ -439,6 +475,9 @@
                <bold>true</bold>
               </font>
              </property>
+             <property name="toolTip">
+              <string>Run single measurement</string>
+             </property>
              <property name="text">
               <string>Single</string>
              </property>
@@ -474,6 +513,9 @@
                <bold>true</bold>
               </font>
              </property>
+             <property name="toolTip">
+              <string>Run cyclic measurement</string>
+             </property>
              <property name="text">
               <string>Continuous</string>
              </property>
@@ -498,7 +540,7 @@
         <property name="minimumSize">
          <size>
           <width>230</width>
-          <height>201</height>
+          <height>100</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -558,7 +600,7 @@
               <number>3</number>
              </property>
              <attribute name="horizontalHeaderVisible">
-              <bool>true</bool>
+              <bool>false</bool>
              </attribute>
              <attribute name="horizontalHeaderCascadingSectionResizes">
               <bool>false</bool>
@@ -602,6 +644,9 @@
             <layout class="QHBoxLayout" name="horizontalLayout_6">
              <item>
               <widget class="QPushButton" name="presetsAddBtn">
+               <property name="toolTip">
+                <string>Add a new preset</string>
+               </property>
                <property name="text">
                 <string>Add</string>
                </property>
@@ -609,6 +654,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="presetsDeleteBtn">
+               <property name="toolTip">
+                <string>Delete selected preset</string>
+               </property>
                <property name="text">
                 <string>Delete</string>
                </property>
@@ -616,6 +664,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="pressetsUpBtn">
+               <property name="toolTip">
+                <string>Move up selected preset</string>
+               </property>
                <property name="text">
                 <string>Move up</string>
                </property>
@@ -639,7 +690,7 @@
         <property name="minimumSize">
          <size>
           <width>230</width>
-          <height>250</height>
+          <height>100</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -754,6 +805,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Open saved measurement file</string>
+               </property>
                <property name="text">
                 <string>Open</string>
                </property>
@@ -766,6 +820,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Save measurement results to PC hard disk</string>
                </property>
                <property name="text">
                 <string>Save</string>
@@ -780,6 +837,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Delete selected measurement</string>
+               </property>
                <property name="text">
                 <string>Delete</string>
                </property>
@@ -787,6 +847,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="measurmentsClearBtn">
+               <property name="toolTip">
+                <string>Clear window (delete all measurement results)</string>
+               </property>
                <property name="text">
                 <string>Clear</string>
                </property>
