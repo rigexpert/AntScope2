@@ -651,7 +651,7 @@ bool hidAnalyzer::update (QIODevice *fw)
         }
         if(!m_bootMode)
         {
-            QMessageBox::warning(NULL,"Warning","Can't enter to boot mode!");
+            QMessageBox::warning(NULL,tr("Warning"),tr("Can't enter to boot mode!"));
             return false;
         }
     }

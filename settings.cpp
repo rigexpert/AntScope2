@@ -774,7 +774,7 @@ void Settings::openCablesFile(QString path)
     bool res = file.open(QFile::ReadOnly);
     if(!res)
     {
-        QMessageBox::information(this, "Can't open file", path, QMessageBox::Close);
+        QMessageBox::information(this, tr("Can't open file"), path, QMessageBox::Close);
         return;
     }
 
