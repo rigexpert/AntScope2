@@ -395,6 +395,9 @@
              <height>20</height>
             </size>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
            <property name="accelerated">
             <bool>true</bool>
            </property>
