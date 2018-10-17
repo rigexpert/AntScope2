@@ -391,8 +391,8 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>20</width>
-             <height>0</height>
+             <width>0</width>
+             <height>20</height>
             </size>
            </property>
            <property name="accelerated">
