@@ -770,6 +770,9 @@ void Settings::openCablesFile(QString path)
     ui->cableComboBox->addItem(tr("Ideal 37.5-Ohm cable"));
     m_cablesList.append(tr("Ideal 37.5-Ohm cable, 37.5, 0.66, 0.0, 0.0, 0, 0"));
 
+    if (path.isEmpty())
+        return;
+
     QFile file(path);
     bool res = file.open(QFile::ReadOnly);
     if(!res)

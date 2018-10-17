@@ -41,13 +41,13 @@
     </sizepolicy>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>3</number>
    </property>
    <widget class="QWidget" name="General">
     <attribute name="title">
      <string>General</string>
     </attribute>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>18</x>
@@ -511,7 +511,7 @@
        <x>10</x>
        <y>0</y>
        <width>404</width>
-       <height>244</height>
+       <height>248</height>
       </rect>
      </property>
      <layout class="QFormLayout" name="formLayout">
@@ -537,6 +537,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="turnOnOffBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="text">
             <string>Turn On</string>
            </property>
@@ -544,6 +550,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="calibWizard">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="text">
             <string>Start</string>
            </property>
@@ -570,6 +582,12 @@
            <property name="enabled">
             <bool>true</bool>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="value">
             <number>0</number>
            </property>
@@ -577,6 +595,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="openOpenFileBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="text">
             <string>Open file</string>
            </property>
@@ -584,6 +608,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="openCalibBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="text">
             <string>Start Open Calibration</string>
            </property>
@@ -607,6 +637,12 @@
          </item>
          <item>
           <widget class="QProgressBar" name="shortProgressBar">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="value">
             <number>0</number>
            </property>
@@ -614,6 +650,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="shortOpenFileBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="text">
             <string>Open file</string>
            </property>
@@ -621,6 +663,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="shortCalibBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="text">
             <string>Start Short Calibration</string>
            </property>
@@ -644,6 +692,12 @@
          </item>
          <item>
           <widget class="QProgressBar" name="loadProgressBar">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="value">
             <number>0</number>
            </property>
@@ -651,6 +705,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="loadOpenFileBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="text">
             <string>Open file</string>
            </property>
@@ -658,6 +718,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="loadCalibBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="text">
             <string>Start Load Calibration</string>
            </property>
@@ -757,6 +823,12 @@
                </item>
                <item>
                 <widget class="QLineEdit" name="conductiveLoss">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>20</height>
+                  </size>
+                 </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                  </property>
@@ -775,6 +847,12 @@
                </item>
                <item>
                 <widget class="QLineEdit" name="dielectricLoss">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>20</height>
+                  </size>
+                 </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                  </property>
@@ -788,6 +866,12 @@
             <layout class="QHBoxLayout" name="horizontalLayout_20">
              <item>
               <widget class="QComboBox" name="cableLossComboBox">
+               <property name="minimumSize">
+                <size>
+                 <width>20</width>
+                 <height>0</height>
+                </size>
+               </property>
                <item>
                 <property name="text">
                  <string>dB/100feet</string>
@@ -845,6 +929,12 @@
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>20</height>
+                  </size>
+                 </property>
                  <property name="alignment">
                   <set>Qt::AlignCenter</set>
                  </property>
@@ -874,6 +964,12 @@
         <layout class="QHBoxLayout" name="horizontalLayout_23">
          <item>
           <widget class="QPushButton" name="doNothingBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="text">
             <string>Do nothing</string>
            </property>
@@ -884,6 +980,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="subtractCableBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="text">
             <string>Subtract cable</string>
            </property>
@@ -894,6 +996,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="addCableBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="text">
             <string>Add cable</string>
            </property>
