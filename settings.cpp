@@ -980,7 +980,6 @@ void Settings::setLanguages(QStringList list, int number)
 void Settings::on_translate()
 {
     ui->retranslateUi(this);
-    //ui->cableComboBox->setItemText(0, QApplication::translate("Settings", strChange.toLatin1().data()));
     ui->cableComboBox->setItemText(0, tr("Change parameters or choose from list..."));
 }
 

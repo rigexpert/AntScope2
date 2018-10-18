@@ -144,6 +144,20 @@ unix {
     DEFINES += _NO_WINDOWS_
 }
 
+macx {
+    RuntimeFiles.path = Contents/Resources
+    RuntimeFiles.files = \
+        $$PWD/Setup/AntScope2-Install/Install/Resources/AntScope2/RuntimeFiles/AntScope2.ini \
+        $$PWD/Setup/AntScope2-Install/Install/Resources/AntScope2/RuntimeFiles/cables.txt \
+        $$PWD/Setup/AntScope2-Install/Install/Resources/AntScope2/RuntimeFiles/itu-regions.txt
+
+    QMAKE_BUNDLE_DATA += RuntimeFiles
+
+    BUNDLEIDENTIFIER = com.rigexpert.AntScope2
+    PRODUCT_BUNDLE_IDENTIFIER = com.rigexpert.AntScope2
+}
+
+
 DISTFILES += \
     rig_logo.png
 
