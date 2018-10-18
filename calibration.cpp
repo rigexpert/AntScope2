@@ -29,9 +29,9 @@ Calibration::Calibration(QObject *parent) : QObject(parent),
     m_Z0 = m_settings->value("Z0", m_Z0).toDouble();
     m_OSLCalibrationPerformed = m_settings->value("Performed", false).toBool();
     m_OSLCalibrationEnabled = m_settings->value("Enabled", false).toBool();
-    m_openCalibFilePath = m_settings->value("OpenPath", "Not choosed").toString();
-    m_shortCalibFilePath = m_settings->value("ShortPath", "Not choosed").toString();
-    m_loadCalibFilePath = m_settings->value("LoadPath", "Not choosed").toString();
+    m_openCalibFilePath = m_settings->value("OpenPath", "Not chosen").toString();
+    m_shortCalibFilePath = m_settings->value("ShortPath", "Not chosen").toString();
+    m_loadCalibFilePath = m_settings->value("LoadPath", "Not chosen").toString();
 
     m_settings->endGroup();
 }
@@ -52,7 +52,7 @@ Calibration::~Calibration()
 
 void Calibration::start(void)
 {
-    QString notChoosed = tr("Not choosed");
+    QString notChoosed = tr("Not chosen");
     if(m_OSLCalibrationPerformed)
     {
         if(m_openCalibFilePath != "")
@@ -302,7 +302,7 @@ void Calibration::on_startCalibrationLoad()
 
 void Calibration::on_openOpenFile(QString path)
 {
-    QString notChoosed = tr("Not choosed");
+    QString notChoosed = tr("Not chosen");
 
     if(m_openData.loadData(path,&m_Z0))
     {
@@ -318,7 +318,7 @@ void Calibration::on_openOpenFile(QString path)
 
 void Calibration::on_shortOpenFile(QString path)
 {
-    QString notChoosed = tr("Not choosed");
+    QString notChoosed = tr("Not chosen");
 
     if(m_shortData.loadData(path,&m_Z0))
     {
@@ -334,7 +334,7 @@ void Calibration::on_shortOpenFile(QString path)
 
 void Calibration::on_loadOpenFile(QString path)
 {
-    QString notChoosed = tr("Not choosed");
+    QString notChoosed = tr("Not chosen");
 
     if(m_loadData.loadData(path,&m_Z0))
     {

@@ -144,7 +144,7 @@ Please try later.</source>
         <location filename="calibration.cpp" line="305"/>
         <location filename="calibration.cpp" line="321"/>
         <location filename="calibration.cpp" line="337"/>
-        <source>Not choosed</source>
+        <source>Not chosen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -267,7 +267,6 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="101"/>
         <source>Entering the AntScope2 program settings menu</source>
-        <oldsource>Entering the AntScop2 program settings menu</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -312,7 +311,6 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="174"/>
         <source>Saving a program window with a chart on a PC</source>
-        <oldsource>Saving a program window on a PC with a chart</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -359,7 +357,6 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="289"/>
         <source>Entering the initial and final measurement frequency</source>
-        <oldsource>Enter the start and end measurement frequency</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -370,7 +367,6 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="311"/>
         <source>Setting the central measurement frequency and range</source>
-        <oldsource>Enter the center frequency of measurement and the bounds</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -396,54 +392,54 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="380"/>
-        <location filename="mainwindow.ui" line="638"/>
+        <location filename="mainwindow.ui" line="653"/>
         <source>Points</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="406"/>
+        <location filename="mainwindow.ui" line="421"/>
         <source>Enable calibration OSL. Attention!
 You must perform the calibration 
 process in the settings menu!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="411"/>
+        <location filename="mainwindow.ui" line="426"/>
         <source>Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="446"/>
+        <location filename="mainwindow.ui" line="461"/>
         <source>Run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="479"/>
+        <location filename="mainwindow.ui" line="494"/>
         <source>Run single measurement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="482"/>
+        <location filename="mainwindow.ui" line="497"/>
         <source>Single</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="517"/>
+        <location filename="mainwindow.ui" line="532"/>
         <source>Run cyclic measurement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="520"/>
+        <location filename="mainwindow.ui" line="535"/>
         <source>Continuous</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="553"/>
+        <location filename="mainwindow.ui" line="568"/>
         <source>Presets,kHz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="628"/>
+        <location filename="mainwindow.ui" line="643"/>
         <location filename="mainwindow.cpp" line="414"/>
         <location filename="mainwindow.cpp" line="417"/>
         <location filename="mainwindow.cpp" line="3513"/>
@@ -452,7 +448,7 @@ process in the settings menu!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="633"/>
+        <location filename="mainwindow.ui" line="648"/>
         <location filename="mainwindow.cpp" line="415"/>
         <location filename="mainwindow.cpp" line="418"/>
         <location filename="mainwindow.cpp" line="3514"/>
@@ -461,78 +457,78 @@ process in the settings menu!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="648"/>
+        <location filename="mainwindow.ui" line="663"/>
         <source>Add a new preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="651"/>
+        <location filename="mainwindow.ui" line="666"/>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="658"/>
+        <location filename="mainwindow.ui" line="673"/>
         <source>Delete selected preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="661"/>
-        <location filename="mainwindow.ui" line="844"/>
+        <location filename="mainwindow.ui" line="676"/>
+        <location filename="mainwindow.ui" line="859"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="668"/>
+        <location filename="mainwindow.ui" line="683"/>
         <source>Move up selected preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="671"/>
+        <location filename="mainwindow.ui" line="686"/>
         <source>Move up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="703"/>
+        <location filename="mainwindow.ui" line="718"/>
         <source>Measurements</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="793"/>
+        <location filename="mainwindow.ui" line="808"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="809"/>
+        <location filename="mainwindow.ui" line="824"/>
         <source>Open saved measurement file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="812"/>
+        <location filename="mainwindow.ui" line="827"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="825"/>
+        <location filename="mainwindow.ui" line="840"/>
         <source>Save measurement results to PC hard disk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="828"/>
+        <location filename="mainwindow.ui" line="843"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="841"/>
+        <location filename="mainwindow.ui" line="856"/>
         <source>Delete selected measurement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="851"/>
+        <location filename="mainwindow.ui" line="866"/>
         <source>Clear window (delete all measurement results)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="854"/>
+        <location filename="mainwindow.ui" line="869"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
@@ -826,7 +822,7 @@ Step response = %7
     <name>Print</name>
     <message>
         <location filename="print.ui" line="14"/>
-        <location filename="print.ui" line="223"/>
+        <location filename="print.ui" line="225"/>
         <source>Print</source>
         <translation type="unfinished"></translation>
     </message>
@@ -857,12 +853,14 @@ Step response = %7
     </message>
     <message>
         <location filename="print.ui" line="185"/>
-        <source>Save as .png</source>
+        <source>Save as
+.png</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="print.ui" line="204"/>
-        <source>Save as .pdf</source>
+        <location filename="print.ui" line="205"/>
+        <source>Save as
+.pdf</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -964,7 +962,7 @@ Step response = %7
     </message>
     <message>
         <location filename="settings.ui" line="65"/>
-        <source>Measure system</source>
+        <source>Measurement system</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -998,283 +996,283 @@ Step response = %7
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="138"/>
-        <source>Show Graph Hint</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settings.ui" line="148"/>
-        <source>Show Markers Hint</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settings.ui" line="158"/>
-        <source>Show Brief params under cursor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settings.ui" line="168"/>
+        <location filename="settings.ui" line="192"/>
         <source>System impedance:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="184"/>
-        <location filename="settings.ui" line="696"/>
+        <location filename="settings.ui" line="208"/>
+        <location filename="settings.ui" line="799"/>
         <source>Ohm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="193"/>
+        <location filename="settings.ui" line="230"/>
         <source>Bands highlighting:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="205"/>
+        <location filename="settings.ui" line="242"/>
         <source>Language:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="221"/>
+        <location filename="settings.ui" line="258"/>
         <source>Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="233"/>
+        <location filename="settings.ui" line="270"/>
         <source>Analyzer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="249"/>
+        <location filename="settings.ui" line="286"/>
         <source>Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="259"/>
+        <location filename="settings.ui" line="296"/>
         <source>Analyzer model:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="280"/>
-        <source>Version of firmware:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settings.ui" line="301"/>
+        <location filename="settings.ui" line="338"/>
         <source>Serial number:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="325"/>
+        <location filename="settings.ui" line="362"/>
         <source>Update from file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="338"/>
+        <location filename="settings.ui" line="375"/>
         <source>Browse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="359"/>
+        <location filename="settings.ui" line="396"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="380"/>
-        <location filename="settings.ui" line="454"/>
+        <location filename="settings.ui" line="417"/>
+        <location filename="settings.ui" line="491"/>
         <source>Auto check updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="387"/>
+        <location filename="settings.ui" line="424"/>
         <location filename="settings.cpp" line="166"/>
         <source>Check Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="407"/>
+        <location filename="settings.ui" line="444"/>
         <source>AntScope2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="420"/>
+        <location filename="settings.ui" line="457"/>
         <source>Version:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="469"/>
+        <location filename="settings.ui" line="506"/>
         <source>OSL Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="484"/>
+        <location filename="settings.ui" line="521"/>
         <source>Calibration Wizard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="490"/>
+        <location filename="settings.ui" line="527"/>
         <source>Status:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="497"/>
+        <location filename="settings.ui" line="534"/>
         <source>Calibration is off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="504"/>
+        <location filename="settings.ui" line="547"/>
         <source>Turn On</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="511"/>
+        <location filename="settings.ui" line="560"/>
         <source>Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="521"/>
+        <location filename="settings.ui" line="570"/>
         <location filename="settings.cpp" line="357"/>
         <location filename="settings.cpp" line="426"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="527"/>
-        <location filename="settings.ui" line="567"/>
-        <location filename="settings.ui" line="604"/>
-        <source>Not choosed</source>
+        <location filename="settings.ui" line="144"/>
+        <source>Show graph hint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="544"/>
-        <location filename="settings.ui" line="581"/>
-        <location filename="settings.ui" line="618"/>
+        <location filename="settings.ui" line="160"/>
+        <source>Show markers hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.ui" line="182"/>
+        <source>Show brief params under cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.ui" line="317"/>
+        <source>Firmware version:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.ui" line="576"/>
+        <location filename="settings.ui" line="634"/>
+        <location filename="settings.ui" line="689"/>
+        <source>Not chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.ui" line="605"/>
+        <location filename="settings.ui" line="660"/>
+        <location filename="settings.ui" line="715"/>
         <source>Open file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="551"/>
+        <location filename="settings.ui" line="618"/>
         <source>Start Open Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="561"/>
+        <location filename="settings.ui" line="628"/>
         <location filename="settings.cpp" line="435"/>
         <source>Short</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="588"/>
+        <location filename="settings.ui" line="673"/>
         <source>Start Short Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="598"/>
+        <location filename="settings.ui" line="683"/>
         <location filename="settings.cpp" line="444"/>
         <source>Load</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="625"/>
+        <location filename="settings.ui" line="728"/>
         <source>Start Load Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="637"/>
+        <location filename="settings.ui" line="740"/>
         <source>Cable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="654"/>
+        <location filename="settings.ui" line="757"/>
         <source>Velocity factor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="668"/>
+        <location filename="settings.ui" line="771"/>
         <source>Cable length</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="682"/>
+        <location filename="settings.ui" line="785"/>
         <source>Cable R0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="705"/>
+        <location filename="settings.ui" line="808"/>
         <source>Cable loss</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="717"/>
+        <location filename="settings.ui" line="820"/>
         <source>Conductive loss</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="735"/>
+        <location filename="settings.ui" line="844"/>
         <source>Dielectric loss</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="756"/>
+        <location filename="settings.ui" line="877"/>
         <source>dB/100feet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="761"/>
+        <location filename="settings.ui" line="882"/>
         <source>dB/feet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="766"/>
+        <location filename="settings.ui" line="887"/>
         <source>dB/100m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="771"/>
+        <location filename="settings.ui" line="892"/>
         <source>dB/m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="779"/>
+        <location filename="settings.ui" line="900"/>
         <source>at</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="790"/>
+        <location filename="settings.ui" line="911"/>
         <source>any frequency</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="819"/>
+        <location filename="settings.ui" line="946"/>
         <source>MHz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="835"/>
+        <location filename="settings.ui" line="962"/>
         <source>Transmission line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="841"/>
+        <location filename="settings.ui" line="974"/>
         <source>Do nothing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="851"/>
+        <location filename="settings.ui" line="990"/>
         <source>Subtract cable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="861"/>
+        <location filename="settings.ui" line="1006"/>
         <source>Add cable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="892"/>
+        <location filename="settings.ui" line="1037"/>
         <source>Update graphs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="928"/>
+        <location filename="settings.ui" line="1073"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1379,6 +1377,11 @@ Step response = %7
     <message>
         <location filename="settings.cpp" line="771"/>
         <source>Ideal 37.5-Ohm cable, 37.5, 0.66, 0.0, 0.0, 0, 0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.cpp" line="780"/>
+        <source>Can&apos;t open file</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1550,8 +1553,14 @@ You should restart %1 and update firmware.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="analyzer/hidanalyzer.cpp" line="654"/>
         <location filename="analyzer/hidanalyzer.cpp" line="733"/>
         <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="analyzer/hidanalyzer.cpp" line="654"/>
+        <source>Can&apos;t enter to boot mode!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

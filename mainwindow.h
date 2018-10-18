@@ -42,7 +42,7 @@ static QString languages_small[LANGUAGES_QUANTITY]={
     "en",
     "ru",
     "uk",
-    "jp"
+    "ja"
 };
 
 #define ACTIVE_GRAPH_PEN_WIDTH 5

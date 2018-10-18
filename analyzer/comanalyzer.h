@@ -8,9 +8,11 @@
 #include <QTimer>
 #include <qdebug.h>
 #include <math.h>
-#ifdef _WINDOWS_
+
+#ifndef _NO_WINDOWS_
 #include <windows.h>
 #endif
+
 #include <analyzer/analyzerparameters.h>
 #include <devinfo/redeviceinfo.h>
 

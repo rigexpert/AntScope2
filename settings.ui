@@ -41,7 +41,7 @@
     </sizepolicy>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="General">
     <attribute name="title">
@@ -52,7 +52,7 @@
       <rect>
        <x>18</x>
        <y>26</y>
-       <width>421</width>
+       <width>436</width>
        <height>205</height>
       </rect>
      </property>
@@ -62,7 +62,7 @@
         <item>
          <widget class="QGroupBox" name="groupBox_7">
           <property name="title">
-           <string>Measure system</string>
+           <string>Measurement system</string>
           </property>
           <layout class="QFormLayout" name="formLayout_3">
            <item row="0" column="0">
@@ -141,7 +141,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>Show Graph Hint</string>
+           <string>Show graph hint</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -157,7 +157,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>Show Markers Hint</string>
+           <string>Show markers hint</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -179,7 +179,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Show Brief params under cursor</string>
+           <string>Show brief params under cursor</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -314,7 +314,7 @@
                    <item>
                     <widget class="QLabel" name="label_2">
                      <property name="text">
-                      <string>Version of firmware:</string>
+                      <string>Firmware version:</string>
                      </property>
                     </widget>
                    </item>
@@ -573,7 +573,7 @@
          <item>
           <widget class="QLabel" name="labelOpenState">
            <property name="text">
-            <string>Not choosed</string>
+            <string>Not chosen</string>
            </property>
           </widget>
          </item>
@@ -631,7 +631,7 @@
          <item>
           <widget class="QLabel" name="labelShortState">
            <property name="text">
-            <string>Not choosed</string>
+            <string>Not chosen</string>
            </property>
           </widget>
          </item>
@@ -686,7 +686,7 @@
          <item>
           <widget class="QLabel" name="labelLoadState">
            <property name="text">
-            <string>Not choosed</string>
+            <string>Not chosen</string>
            </property>
           </widget>
          </item>

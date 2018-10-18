@@ -125,43 +125,43 @@
        <property name="title">
         <string>Settings</string>
        </property>
-       <widget class="QLabel" name="label_3">
+       <widget class="QWidget" name="">
         <property name="geometry">
          <rect>
           <x>10</x>
           <y>20</y>
-          <width>71</width>
-          <height>16</height>
+          <width>211</width>
+          <height>24</height>
          </rect>
         </property>
-        <property name="text">
-         <string>Line width</string>
-        </property>
-       </widget>
-       <widget class="QSlider" name="lineSlider">
-        <property name="geometry">
-         <rect>
-          <x>69</x>
-          <y>20</y>
-          <width>151</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>10</number>
-        </property>
-        <property name="pageStep">
-         <number>1</number>
-        </property>
-        <property name="sliderPosition">
-         <number>3</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Line width</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="lineSlider">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>10</number>
+           </property>
+           <property name="pageStep">
+            <number>1</number>
+           </property>
+           <property name="sliderPosition">
+            <number>3</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>

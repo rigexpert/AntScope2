@@ -20,7 +20,7 @@ TARGET = AntScope2
 TRANSLATIONS += QtLanguage.ts
 TRANSLATIONS += QtLanguage_uk.ts
 TRANSLATIONS += QtLanguage_ru.ts
-TRANSLATIONS += QtLanguage_jp.ts
+TRANSLATIONS += QtLanguage_ja.ts
 CODECFORSRC     = UTF-8
 
 CONFIG -= debug
@@ -126,7 +126,6 @@ win32{
     INCLUDEPATH +=  $$PWD/ftdi/windows
     DEPENDPATH += $$PWD/ftdi/windows
     LIBS += -L$$PWD/ftdi/windows/win32/ -lftd2xx
-    DEFINES += _WINDOWS_
 }
 
 win64{
@@ -138,11 +137,11 @@ win64{
     DEPENDPATH += $$PWD/ftdi/windows
     LIBS += -L$$PWD/ftdi/windows/win64/ -lftd2xx
     QMAKE_POST_LINK = COPY .\ftdi\windows\win64\ftd2xx.dll $$APPDIR\ftd2xx.dll &&
-    DEFINES += _WINDOWS_
 }
 unix {
     SOURCES += analyzer/usbhid/hidapi/mac/hid.c
     LIBS += -framework CoreFoundation
+    DEFINES += _NO_WINDOWS_
 }
 
 DISTFILES += \

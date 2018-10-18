@@ -3795,7 +3795,7 @@ void MainWindow::on_changedSerialPort(QString portName)
 }
 
 bool MainWindow::loadLanguage(QString locale)
-{ //locale: en, ukr, ru, jp, etc.
+{ //locale: en, ukr, ru, ja, etc.
     QString title = windowTitle();
     bool res = m_qtLanguageTranslator->load("QtLanguage_" + locale, QCoreApplication::applicationDirPath());
     qApp->installTranslator(m_qtLanguageTranslator);
