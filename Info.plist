@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>AntScope2</string>
 	<key>CFBundleIconFile</key>
-	<string>iStodo.icns</string>
+	<string>AntScope2.png</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.rigexpert.AntScope2</string>
 	<key>CFBundleInfoDictionaryVersion</key>
