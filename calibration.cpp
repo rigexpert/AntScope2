@@ -392,6 +392,15 @@ bool Calibration::interpolateS(double fq, double &reO, double &imO, double &reS,
 
     double rL = m_loadData.getR(i)*(1-alf) + m_loadData.getR(i+1)*alf;
     double xL = m_loadData.getX(i)*(1-alf) + m_loadData.getX(i+1)*alf;
+
+    reO = rO;
+    imO = xO;
+
+    reS = rS;
+    imS = xS;
+
+    reL = rL;
+    imL = xL;
 /*
     reO = (rO*rO-m_Z0*m_Z0+xO*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
     imO = (2*m_Z0*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
@@ -402,15 +411,6 @@ bool Calibration::interpolateS(double fq, double &reO, double &imO, double &reS,
     reL = (rL*rL-m_Z0*m_Z0+xL*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
     imL = (2*m_Z0*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
 */
-    reO = rO;
-    imO = xO;
-
-    reS = rS;
-    imS = xS;
-
-    reL = rL;
-    imL = xL;
-
 #else
     double rO = m_openData.getR(i);
     double xO = m_openData.getX(i);

@@ -145,17 +145,18 @@ unix {
 }
 
 macx {
-    RuntimeFiles.path = Contents/Resources
-    RuntimeFiles.files = \
-        $$PWD/Setup/AntScope2-Install/Install/Resources/AntScope2/RuntimeFiles/AntScope2.ini \
-        $$PWD/Setup/AntScope2-Install/Install/Resources/AntScope2/RuntimeFiles/cables.txt \
-        $$PWD/Setup/AntScope2-Install/Install/Resources/AntScope2/RuntimeFiles/itu-regions.txt
+    SOURCES += analyzer/usbhid/hidapi/mac/hid.c
+    LIBS += -framework CoreFoundation
+    DEFINES += _NO_WINDOWS_
 
-    QMAKE_BUNDLE_DATA += RuntimeFiles
-
-    BUNDLEIDENTIFIER = com.rigexpert.AntScope2
-    PRODUCT_BUNDLE_IDENTIFIER = com.rigexpert.AntScope2
+    RUNTIME_FILES.path = Contents/Resources
+    RUNTIME_FILES.files = \
+        $$PWD/cables.txt \
+        $$PWD/itu-regions.txt
+    QMAKE_BUNDLE_DATA += RUNTIME_FILES
+    QMAKE_INFO_PLIST= $${PWD}/Info.plist
 }
+
 
 
 DISTFILES += \

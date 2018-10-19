@@ -856,6 +856,14 @@ QString Settings::localDataPath(QString _fileName)
 
 QString Settings::programDataPath(QString _fileName)
 {
+// Mac OS X and iOS
+#ifdef Q_OS_DARWIN
+    QDir dir = QCoreApplication::applicationDirPath();
+    return dir.absoluteFilePath("Resources/" + _fileName);
+#endif
+
+// win32 and win64
+#ifdef Q_OS_WIN
     QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
     for (int idx=0; idx<list.size(); idx++)
     {
@@ -865,6 +873,7 @@ QString Settings::programDataPath(QString _fileName)
             return path;
     }
     return QString();
+#endif
 }
 
 void Settings::on_aa30bootFound()
