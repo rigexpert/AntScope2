@@ -379,68 +379,18 @@ bool Calibration::interpolateS(double fq, double &reO, double &imO, double &reS,
 
     if(i == m_openData.getSize()-2)
     {
-        return false;
+        //return false;
+        i--;
     }
 
-#if 1
-    alf = alf < 0.5 ? 1 : 0;
-    double rO = m_openData.getR(i)*(1-alf) + m_openData.getR(i+1)*alf;
-    double xO = m_openData.getX(i)*(1-alf) + m_openData.getX(i+1)*alf;
+    reO = m_openData.getRe(i)*(1-alf) + m_openData.getRe(i+1)*alf;
+    imO = m_openData.getIm(i)*(1-alf) + m_openData.getIm(i+1)*alf;
 
-    double rS = m_shortData.getR(i)*(1-alf) + m_shortData.getR(i+1)*alf;
-    double xS = m_shortData.getX(i)*(1-alf) + m_shortData.getX(i+1)*alf;
+    reS = m_shortData.getRe(i)*(1-alf) + m_shortData.getRe(i+1)*alf;
+    imS = m_shortData.getIm(i)*(1-alf) + m_shortData.getIm(i+1)*alf;
 
-    double rL = m_loadData.getR(i)*(1-alf) + m_loadData.getR(i+1)*alf;
-    double xL = m_loadData.getX(i)*(1-alf) + m_loadData.getX(i+1)*alf;
-
-    reO = rO;
-    imO = xO;
-
-    reS = rS;
-    imS = xS;
-
-    reL = rL;
-    imL = xL;
-/*
-    reO = (rO*rO-m_Z0*m_Z0+xO*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
-    imO = (2*m_Z0*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
-
-    reS = (rS*rS-m_Z0*m_Z0+xS*xS)/((rS+m_Z0)*(rS+m_Z0)+xS*xS);
-    imS = (2*m_Z0*xS)/((rS+m_Z0)*(rS+m_Z0)+xS*xS);
-
-    reL = (rL*rL-m_Z0*m_Z0+xL*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
-    imL = (2*m_Z0*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
-*/
-#else
-    double rO = m_openData.getR(i);
-    double xO = m_openData.getX(i);
-
-    double rS = m_shortData.getR(i);
-    double xS = m_shortData.getX(i);
-
-    double rL = m_loadData.getR(i);
-    double xL = m_loadData.getX(i);
-
-    reO = rO;
-    imO = xO;
-
-    reS = rS;
-    imS = xS;
-
-    reL = rL;
-    imL = xL;
-/*
-    reO = (rO*rO-m_Z0*m_Z0+xO*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
-    imO = (2*m_Z0*xO)/((rO+m_Z0)*(rO+m_Z0)+xO*xO);
-
-    reS = (rS*rS-m_Z0*m_Z0+xS*xS)/((rS+m_Z0)*(rS+m_Z0)+xS*xS);
-    imS = (2*m_Z0*xS)/((rS+m_Z0)*(rS+m_Z0)+xS*xS);
-
-    reL = (rL*rL-m_Z0*m_Z0+xL*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
-    imL = (2*m_Z0*xL)/((rL+m_Z0)*(rL+m_Z0)+xL*xL);
-*/
-#endif
-
+    reL = m_loadData.getRe(i)*(1-alf) + m_loadData.getRe(i+1)*alf;
+    imL = m_loadData.getIm(i)*(1-alf) + m_loadData.getIm(i+1)*alf;
     return true;
 }
 

@@ -86,7 +86,7 @@ Settings::~Settings()
 {
     emit paramsChanged();
     double Z0 = ui->lineEdit_systemImpedance->text().toDouble();
-    if((Z0 > 0) && (Z0 <= 100))
+    if((Z0 > 0) && (Z0 <= 1000))
     {
         emit Z0Changed(Z0);
     }

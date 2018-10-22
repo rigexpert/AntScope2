@@ -389,6 +389,12 @@ MainWindow::MainWindow(QWidget *parent) :
     m_measurements->setCableLength(m_cableLength);
     m_measurements->setCableFarEndMeasurement(m_farEndMeasurement);
 
+    for (int i=0; i<ui->tabWidget->count(); i++)
+    {
+        QString tooltip = QString(tr("Press(F%1)")).arg(i+1);
+        ui->tabWidget->setTabToolTip(i, tooltip);
+    }
+
     QString str = ui->tabWidget->currentWidget()->objectName();
     emit currentTab (str);
     QTimer::singleShot(100, this, SLOT(updateGraph()));
@@ -3401,10 +3407,10 @@ void MainWindow::openFile(QString path)
 
 void MainWindow::on_importBtn_clicked()
 {
-    QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastOpenPath, "AntScope2 (*.asd );;"
-                                                                                    "S1p (*.s1p);;"
+    QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastOpenPath,  "S1p (*.s1p);;"
                                                                                     "Csv (*.csv);;"
-                                                                                    "Nwl (*.nwl)");
+                                                                                    "Nwl (*.nwl);;"
+                                                                                    "AntScope2 (*.asd )");
     m_measurements->loadData(path);
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);

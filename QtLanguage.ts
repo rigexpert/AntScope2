@@ -271,8 +271,8 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="107"/>
-        <location filename="mainwindow.cpp" line="2939"/>
-        <location filename="mainwindow.cpp" line="3837"/>
+        <location filename="mainwindow.cpp" line="2945"/>
+        <location filename="mainwindow.cpp" line="3843"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -283,8 +283,8 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="126"/>
-        <location filename="mainwindow.cpp" line="2661"/>
-        <location filename="mainwindow.cpp" line="3833"/>
+        <location filename="mainwindow.cpp" line="2667"/>
+        <location filename="mainwindow.cpp" line="3839"/>
         <source>Export</source>
         <translation type="unfinished"></translation>
     </message>
@@ -315,7 +315,7 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="180"/>
-        <location filename="mainwindow.cpp" line="3835"/>
+        <location filename="mainwindow.cpp" line="3841"/>
         <source>Screenshot</source>
         <translation type="unfinished"></translation>
     </message>
@@ -341,16 +341,16 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="283"/>
-        <location filename="mainwindow.cpp" line="593"/>
-        <location filename="mainwindow.cpp" line="614"/>
-        <location filename="mainwindow.cpp" line="634"/>
-        <location filename="mainwindow.cpp" line="654"/>
-        <location filename="mainwindow.cpp" line="673"/>
-        <location filename="mainwindow.cpp" line="3804"/>
-        <location filename="mainwindow.cpp" line="3806"/>
-        <location filename="mainwindow.cpp" line="3808"/>
+        <location filename="mainwindow.cpp" line="599"/>
+        <location filename="mainwindow.cpp" line="620"/>
+        <location filename="mainwindow.cpp" line="640"/>
+        <location filename="mainwindow.cpp" line="660"/>
+        <location filename="mainwindow.cpp" line="679"/>
         <location filename="mainwindow.cpp" line="3810"/>
         <location filename="mainwindow.cpp" line="3812"/>
+        <location filename="mainwindow.cpp" line="3814"/>
+        <location filename="mainwindow.cpp" line="3816"/>
+        <location filename="mainwindow.cpp" line="3818"/>
         <source>Frequency, kHz</source>
         <translation type="unfinished"></translation>
     </message>
@@ -376,17 +376,17 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="330"/>
-        <location filename="mainwindow.cpp" line="421"/>
-        <location filename="mainwindow.cpp" line="424"/>
-        <location filename="mainwindow.cpp" line="3539"/>
-        <location filename="mainwindow.cpp" line="3542"/>
+        <location filename="mainwindow.cpp" line="427"/>
+        <location filename="mainwindow.cpp" line="430"/>
+        <location filename="mainwindow.cpp" line="3545"/>
+        <location filename="mainwindow.cpp" line="3548"/>
         <source>Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="352"/>
-        <location filename="mainwindow.cpp" line="422"/>
-        <location filename="mainwindow.cpp" line="3540"/>
+        <location filename="mainwindow.cpp" line="428"/>
+        <location filename="mainwindow.cpp" line="3546"/>
         <source>Range (+/-)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -415,7 +415,8 @@ process in the settings menu!</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="494"/>
-        <source>Run single measurement</source>
+        <source>Run single measurement(F9)</source>
+        <oldsource>Run single measurement</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -425,7 +426,8 @@ process in the settings menu!</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="532"/>
-        <source>Run cyclic measurement</source>
+        <source>Run cyclic measurement(F10)</source>
+        <oldsource>Run cyclic measurement</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -440,19 +442,19 @@ process in the settings menu!</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="643"/>
-        <location filename="mainwindow.cpp" line="414"/>
-        <location filename="mainwindow.cpp" line="417"/>
-        <location filename="mainwindow.cpp" line="3513"/>
-        <location filename="mainwindow.cpp" line="3516"/>
+        <location filename="mainwindow.cpp" line="420"/>
+        <location filename="mainwindow.cpp" line="423"/>
+        <location filename="mainwindow.cpp" line="3519"/>
+        <location filename="mainwindow.cpp" line="3522"/>
         <source>Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="648"/>
-        <location filename="mainwindow.cpp" line="415"/>
-        <location filename="mainwindow.cpp" line="418"/>
-        <location filename="mainwindow.cpp" line="3514"/>
-        <location filename="mainwindow.cpp" line="3517"/>
+        <location filename="mainwindow.cpp" line="421"/>
+        <location filename="mainwindow.cpp" line="424"/>
+        <location filename="mainwindow.cpp" line="3520"/>
+        <location filename="mainwindow.cpp" line="3523"/>
         <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>
@@ -534,7 +536,7 @@ process in the settings menu!</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="245"/>
-        <location filename="mainwindow.cpp" line="1871"/>
+        <location filename="mainwindow.cpp" line="1877"/>
         <source> - Analyzer not connected</source>
         <translation type="unfinished"></translation>
     </message>
@@ -544,110 +546,115 @@ process in the settings menu!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="416"/>
-        <location filename="mainwindow.cpp" line="3515"/>
+        <location filename="mainwindow.cpp" line="394"/>
+        <source>Press(F%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="422"/>
+        <location filename="mainwindow.cpp" line="3521"/>
         <source>Presets (limits), kHz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="423"/>
-        <location filename="mainwindow.cpp" line="3541"/>
+        <location filename="mainwindow.cpp" line="429"/>
+        <location filename="mainwindow.cpp" line="3547"/>
         <source>Presets (center, range), kHz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="425"/>
-        <location filename="mainwindow.cpp" line="3543"/>
+        <location filename="mainwindow.cpp" line="431"/>
+        <location filename="mainwindow.cpp" line="3549"/>
         <source>Range(+/-)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="594"/>
-        <location filename="mainwindow.cpp" line="2448"/>
-        <location filename="mainwindow.cpp" line="3805"/>
-        <location filename="mainwindow.cpp" line="3816"/>
+        <location filename="mainwindow.cpp" line="600"/>
+        <location filename="mainwindow.cpp" line="2454"/>
+        <location filename="mainwindow.cpp" line="3811"/>
+        <location filename="mainwindow.cpp" line="3822"/>
         <source>SWR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="615"/>
-        <location filename="mainwindow.cpp" line="3807"/>
+        <location filename="mainwindow.cpp" line="621"/>
+        <location filename="mainwindow.cpp" line="3813"/>
         <source>Angle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="635"/>
-        <location filename="mainwindow.cpp" line="3809"/>
+        <location filename="mainwindow.cpp" line="641"/>
+        <location filename="mainwindow.cpp" line="3815"/>
         <source>Rs, Ohm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="655"/>
-        <location filename="mainwindow.cpp" line="3811"/>
+        <location filename="mainwindow.cpp" line="661"/>
+        <location filename="mainwindow.cpp" line="3817"/>
         <source>Rp, Ohm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="674"/>
-        <location filename="mainwindow.cpp" line="3813"/>
+        <location filename="mainwindow.cpp" line="680"/>
+        <location filename="mainwindow.cpp" line="3819"/>
         <source>RL, dB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="692"/>
-        <location filename="mainwindow.cpp" line="3814"/>
+        <location filename="mainwindow.cpp" line="698"/>
+        <location filename="mainwindow.cpp" line="3820"/>
         <source>Length, m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2469"/>
-        <location filename="mainwindow.cpp" line="3817"/>
+        <location filename="mainwindow.cpp" line="2475"/>
+        <location filename="mainwindow.cpp" line="3823"/>
         <source>Phase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2490"/>
-        <location filename="mainwindow.cpp" line="3818"/>
+        <location filename="mainwindow.cpp" line="2496"/>
+        <location filename="mainwindow.cpp" line="3824"/>
         <source>Z=R+jX</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2511"/>
-        <location filename="mainwindow.cpp" line="3819"/>
+        <location filename="mainwindow.cpp" line="2517"/>
+        <location filename="mainwindow.cpp" line="3825"/>
         <source>Z=R||+jX</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2530"/>
-        <location filename="mainwindow.cpp" line="3820"/>
+        <location filename="mainwindow.cpp" line="2536"/>
+        <location filename="mainwindow.cpp" line="3826"/>
         <source>RL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2551"/>
-        <location filename="mainwindow.cpp" line="3821"/>
+        <location filename="mainwindow.cpp" line="2557"/>
+        <location filename="mainwindow.cpp" line="3827"/>
         <source>TDR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2572"/>
-        <location filename="mainwindow.cpp" line="3822"/>
+        <location filename="mainwindow.cpp" line="2578"/>
+        <location filename="mainwindow.cpp" line="3828"/>
         <source>Smith</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2590"/>
-        <location filename="mainwindow.cpp" line="3831"/>
+        <location filename="mainwindow.cpp" line="2596"/>
+        <location filename="mainwindow.cpp" line="3837"/>
         <source>Frequency settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3977"/>
+        <location filename="mainwindow.cpp" line="3983"/>
         <source>!!!!Calibration not performed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3978"/>
+        <location filename="mainwindow.cpp" line="3984"/>
         <source>Calibration not performed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -703,7 +710,7 @@ process in the settings menu!</source>
     <name>Measurements</name>
     <message>
         <location filename="measurements.cpp" line="44"/>
-        <location filename="measurements.cpp" line="4136"/>
+        <location filename="measurements.cpp" line="4142"/>
         <source>Frequency = 
 SWR = 
 RL = 
@@ -723,7 +730,7 @@ Cable: </source>
     </message>
     <message>
         <location filename="measurements.cpp" line="66"/>
-        <location filename="measurements.cpp" line="4149"/>
+        <location filename="measurements.cpp" line="4155"/>
         <source>BriefHint</source>
         <translation type="unfinished"></translation>
     </message>
@@ -738,8 +745,8 @@ Cable: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1017"/>
-        <location filename="measurements.cpp" line="1570"/>
+        <location filename="measurements.cpp" line="1023"/>
+        <location filename="measurements.cpp" line="1576"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -753,8 +760,8 @@ Lpar = %10 nH
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1038"/>
-        <location filename="measurements.cpp" line="1591"/>
+        <location filename="measurements.cpp" line="1044"/>
+        <location filename="measurements.cpp" line="1597"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -768,25 +775,25 @@ Cpar = %10 pF
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1065"/>
-        <location filename="measurements.cpp" line="1618"/>
+        <location filename="measurements.cpp" line="1071"/>
+        <location filename="measurements.cpp" line="1624"/>
         <source>m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1068"/>
-        <location filename="measurements.cpp" line="1621"/>
+        <location filename="measurements.cpp" line="1074"/>
+        <location filename="measurements.cpp" line="1627"/>
         <source>ft</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1080"/>
-        <location filename="measurements.cpp" line="1633"/>
+        <location filename="measurements.cpp" line="1086"/>
+        <location filename="measurements.cpp" line="1639"/>
         <source>Cable: length(1/4) = %1 %2, length(1/2) = %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1232"/>
+        <location filename="measurements.cpp" line="1238"/>
         <source>Distance = %1 %2
 (distance in the air = %3 %4)
 Time = %5 ns
@@ -796,24 +803,24 @@ Step response = %7
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1801"/>
+        <location filename="measurements.cpp" line="1807"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1801"/>
+        <location filename="measurements.cpp" line="1807"/>
         <source>Couldn&apos;t open save file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2508"/>
-        <location filename="measurements.cpp" line="4154"/>
+        <location filename="measurements.cpp" line="2514"/>
+        <location filename="measurements.cpp" line="4160"/>
         <source>Length, m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2512"/>
-        <location filename="measurements.cpp" line="4154"/>
+        <location filename="measurements.cpp" line="2518"/>
+        <location filename="measurements.cpp" line="4160"/>
         <source>Length, feet</source>
         <translation type="unfinished"></translation>
     </message>
@@ -847,7 +854,7 @@ Step response = %7
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="print.ui" line="138"/>
+        <location filename="print.ui" line="141"/>
         <source>Line width</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1284,6 +1291,7 @@ Step response = %7
     </message>
     <message>
         <location filename="settings.cpp" line="64"/>
+        <location filename="settings.cpp" line="992"/>
         <source>Change parameters or choose from list...</source>
         <translation type="unfinished"></translation>
     </message>

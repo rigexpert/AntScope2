@@ -491,7 +491,7 @@ process in the settings menu!</string>
               </font>
              </property>
              <property name="toolTip">
-              <string>Run single measurement</string>
+              <string>Run single measurement(F9)</string>
              </property>
              <property name="text">
               <string>Single</string>
@@ -529,7 +529,7 @@ process in the settings menu!</string>
               </font>
              </property>
              <property name="toolTip">
-              <string>Run cyclic measurement</string>
+              <string>Run cyclic measurement(F10)</string>
              </property>
              <property name="text">
               <string>Continuous</string>

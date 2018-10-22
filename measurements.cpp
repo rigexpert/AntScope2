@@ -571,7 +571,13 @@ void Measurements::on_newData(rawData _rawData)
             double COR, COI; // CalibrationReOpen, CalibrationImOpen
             double CSR, CSI; // CalibrationReShort, CalibrationImShort
             double CLR, CLI; // CalibrationReLoad, CalibrationImLoad
-            bool res = m_calibration->interpolateS(_rawData.fq/1000, COR, COI, CSR, CSI, CLR, CLI);
+            bool res = m_calibration->interpolateS(_rawData.fq, COR, COI, CSR, CSI, CLR, CLI);
+//            COR = 1;
+//            COI = 0;
+//            CSR = -1;
+//            CSI = 0;
+//            CLR = 0;
+//            CLI = 0;
 
             if (!res)
             {
@@ -928,9 +934,9 @@ void Measurements::on_newCursorSmithPos (double x, double y, int number)
         }
         swr = m_measurements.at(len - number).swrGraphCalib.value(frequency).value;
         rl = m_measurements.at(len - number).rlGraphCalib.value(frequency).value;
-        z = m_viewMeasurements.at(len - number).rszGraph.value(frequency).value;
-        rpar = m_viewMeasurements.at(len - number).rprGraph.value(frequency).value;
-        xpar = m_viewMeasurements.at(len - number).rpxGraph.value(frequency).value;
+        z = m_viewMeasurements.at(len - number).rszGraphCalib.value(frequency).value;
+        rpar = m_viewMeasurements.at(len - number).rprGraphCalib.value(frequency).value;
+        xpar = m_viewMeasurements.at(len - number).rpxGraphCalib.value(frequency).value;
     }else
     {
         if(m_farEndMeasurement == 1)
