@@ -145,14 +145,11 @@ unix {
 }
 
 macx {
-    SOURCES += analyzer/usbhid/hidapi/mac/hid.c
-    LIBS += -framework CoreFoundation
-    DEFINES += _NO_WINDOWS_
-
     RUNTIME_FILES.path = Contents/Resources
     RUNTIME_FILES.files = \
         $$PWD/cables.txt \
-        $$PWD/itu-regions.txt
+        $$PWD/itu-regions.txt \
+        $$PWD/AntScope2.png
     QMAKE_BUNDLE_DATA += RUNTIME_FILES
     QMAKE_INFO_PLIST= $${PWD}/Info.plist
 }
