@@ -391,7 +391,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     for (int i=0; i<ui->tabWidget->count(); i++)
     {
-        QString tooltip = QString(tr("Press(F%1)")).arg(i+1);
+        QString tooltip = QString(tr("Press F%1")).arg(i+1);
         ui->tabWidget->setTabToolTip(i, tooltip);
     }
 
@@ -3826,6 +3826,12 @@ bool MainWindow::loadLanguage(QString locale)
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_5), QApplication::translate("MainWindow", "RL", 0));
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_6), QApplication::translate("MainWindow", "TDR", 0));
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_7), QApplication::translate("MainWindow", "Smith", 0));
+
+    for (int i=0; i<ui->tabWidget->count(); i++)
+    {
+        QString tooltip = QString(tr("Press F%1")).arg(i+1);
+        ui->tabWidget->setTabToolTip(i, tooltip);
+    }
 
     if (m_settingsDialog != nullptr)
         m_settingsDialog->on_translate();

@@ -844,14 +844,15 @@ QString Settings::setIniFile()
 }
 
 QString Settings::localDataPath(QString _fileName)
-{
-//    WCHAR path[MAX_PATH];
-//    SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
-//    QDir dir_old(QString::fromWCharArray(path));
-//    QString old = dir_old.absoluteFilePath("RigExpert/AntScope2/");
-//    return dir.absoluteFilePath("RigExpert/AntScope2/");
+{    
+// Mac OS X and iOS
+#ifdef Q_OS_DARWIN
+    QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+#else
     QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
     return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+#endif
 }
 
 QString Settings::programDataPath(QString _fileName)

@@ -547,7 +547,8 @@ process in the settings menu!</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="394"/>
-        <source>Press(F%1)</source>
+        <source>Press F%1</source>
+        <oldsource>Press(F%1)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>

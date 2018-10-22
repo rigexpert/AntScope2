@@ -23,8 +23,8 @@ TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_ja.ts
 CODECFORSRC     = UTF-8
 
-CONFIG += debug
-CONFIG -= release
+CONFIG -= debug
+CONFIG += release
 
 CONFIG(release) {
     DESTDIR = $${PWD}/build/release
@@ -145,12 +145,22 @@ unix {
 }
 
 macx {
-    RUNTIME_FILES.path = Contents/Resources
+    RUNTIME_FILES.path = Contents/MacOS/Resources
     RUNTIME_FILES.files = \
         $$PWD/cables.txt \
-        $$PWD/itu-regions.txt \
-        $$PWD/AntScope2.png
-    QMAKE_BUNDLE_DATA += RUNTIME_FILES
+        $$PWD/itu-regions.txt
+
+    TRANSLATION_FILES.path = Contents/MacOS
+    TRANSLATION_FILES.files = \
+        $$PWD/QtLanguage_ja.qm \
+        $$PWD/QtLanguage_uk.qm \
+        $$PWD/QtLanguage_ru.qm
+
+    ICON_FILES.path = Contents
+    ICON_FILES.files = \
+        $$PWD/AntScope2.icns
+
+    QMAKE_BUNDLE_DATA += RUNTIME_FILES TRANSLATION_FILES ICON_FILES
     QMAKE_INFO_PLIST= $${PWD}/Info.plist
 }
 
