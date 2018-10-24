@@ -272,7 +272,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="107"/>
         <location filename="mainwindow.cpp" line="2945"/>
-        <location filename="mainwindow.cpp" line="3843"/>
+        <location filename="mainwindow.cpp" line="3849"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -284,7 +284,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="126"/>
         <location filename="mainwindow.cpp" line="2667"/>
-        <location filename="mainwindow.cpp" line="3839"/>
+        <location filename="mainwindow.cpp" line="3845"/>
         <source>Export</source>
         <translation type="unfinished"></translation>
     </message>
@@ -315,7 +315,7 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="180"/>
-        <location filename="mainwindow.cpp" line="3841"/>
+        <location filename="mainwindow.cpp" line="3847"/>
         <source>Screenshot</source>
         <translation type="unfinished"></translation>
     </message>
@@ -547,6 +547,7 @@ process in the settings menu!</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="394"/>
+        <location filename="mainwindow.cpp" line="3832"/>
         <source>Press F%1</source>
         <oldsource>Press(F%1)</oldsource>
         <translation type="unfinished"></translation>
@@ -645,17 +646,17 @@ process in the settings menu!</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="2596"/>
-        <location filename="mainwindow.cpp" line="3837"/>
+        <location filename="mainwindow.cpp" line="3843"/>
         <source>Frequency settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3983"/>
+        <location filename="mainwindow.cpp" line="3989"/>
         <source>!!!!Calibration not performed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3984"/>
+        <location filename="mainwindow.cpp" line="3990"/>
         <source>Calibration not performed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1292,7 +1293,7 @@ Step response = %7
     </message>
     <message>
         <location filename="settings.cpp" line="64"/>
-        <location filename="settings.cpp" line="992"/>
+        <location filename="settings.cpp" line="993"/>
         <source>Change parameters or choose from list...</source>
         <translation type="unfinished"></translation>
     </message>
