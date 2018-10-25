@@ -377,7 +377,7 @@ bool Calibration::interpolateS(double fq, double &reO, double &imO, double &reS,
         }
     }
 
-    if(i == m_openData.getSize()-2)
+    if(i >= m_openData.getSize()-2)
     {
         //return false;
         i--;
