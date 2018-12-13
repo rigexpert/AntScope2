@@ -94,7 +94,7 @@ signals:
 
 public slots:
     bool searchAnalyzer(bool arrival);
-    void startMeasure(int fqFrom, int fqTo, int dotsNumber);
+    void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber);
     void getAnalyzerData();
     void getAnalyzerData(QString number);
     void makeScreenshot();

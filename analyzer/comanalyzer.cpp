@@ -1,4 +1,6 @@
 #include "comanalyzer.h"
+#include "customanalyzer.h"
+
 
 static const unsigned char crc8_table[256] = {
     0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F,
@@ -128,7 +130,7 @@ void comAnalyzer::dataArrived()
 qint32 comAnalyzer::parse (QByteArray arr)
 {
     quint32 retVal = 0;
-
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
     if(m_parseState == WAIT_SCREENSHOT_DATA)
     {
         int pos = arr.indexOf("screencomp: ");
@@ -150,7 +152,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
         }
     }else if(m_parseState == WAIT_ANALYZER_UPDATE)
     {
-        if(names[m_analyzerModel] == "AA-230 ZOOM")
+        if(model == "AA-230 ZOOM")
         {
             if(arr.length() >= 1)
             {
@@ -176,7 +178,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
                     }
                 }
             }
-        }else if(names[m_analyzerModel] == "AA-30 ZERO")
+        }else if(model == "AA-30 ZERO")
         {
             if(arr.length() >= 4)
             {
@@ -461,15 +463,15 @@ qint64 comAnalyzer::sendData(QString data)
     return res;
 }
 
-void comAnalyzer::startMeasure(int fqFrom, int fqTo, int dotsNumber)
+void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
 {
     static qint32 state = 1;
     static QString FQ;
     static QString SW;
     static QString FRX;
 
-    quint32 center;
-    quint32 band;
+    qint64 center;
+    qint64 band;
 
     if(dotsNumber > 0)
     {
@@ -619,7 +621,8 @@ void comAnalyzer::makeScreenshot()
     setIsMeasuring(true);
     m_parseState = WAIT_SCREENSHOT_DATA;
     m_incomingBuffer.clear();
-    if(names[m_analyzerModel] == "AA-230 ZOOM")
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+    if(model == "AA-230 ZOOM")
     {
         QString str = "screenshot\r";
         sendData(str);
@@ -642,7 +645,8 @@ void comAnalyzer::on_measurementComplete()
 bool comAnalyzer::waitAnswer()
 {
     int times = 1;
-    if(names[m_analyzerModel] == "AA-230 ZOOM")
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+    if(model == "AA-230 ZOOM")
     {
         while (times < 100)
         {
@@ -662,7 +666,7 @@ bool comAnalyzer::waitAnswer()
 
             ++ times;
         }
-    }else if(names[m_analyzerModel] == "AA-30 ZERO")
+    }else if(model == "AA-30 ZERO")
     {
         while (times < 100)
         {
@@ -687,7 +691,8 @@ bool comAnalyzer::waitAnswer()
 
 bool comAnalyzer::update (QIODevice *fw)
 {
-    if(names[m_analyzerModel] == "AA-230 ZOOM")
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+    if(model == "AA-230 ZOOM")
     {
         setIsMeasuring(true);
         m_parseState = WAIT_ANALYZER_UPDATE;
@@ -738,7 +743,7 @@ bool comAnalyzer::update (QIODevice *fw)
         m_comPort->close();
         openComPort(name,115200);
         setIsMeasuring(false);
-    }else if(names[m_analyzerModel] == "AA-30 ZERO")
+    }else if(model == "AA-30 ZERO")
     {
         QByteArray arr;
         QString name;

@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "popupindicator.h"
+#include "analyzer/customanalyzer.h"
+
+extern QString appendSpaces(const QString& number);
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -151,7 +154,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_analyzer = new Analyzer(this);
     connect(m_analyzer,SIGNAL(analyzerFound(QString)),this,SLOT(on_analyzerFound(QString)));
     connect(m_analyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_analyzerDisconnected()));
-    connect(this,SIGNAL(measure(int,int,int)),m_analyzer,SLOT(on_measure(int,int,int)));
+    connect(this,SIGNAL(measure(qint64,qint64,int)),m_analyzer,SLOT(on_measure(qint64,qint64,int)));
     connect(m_analyzer,SIGNAL(measurementComplete()),this,SLOT(on_measurementComplete()), Qt::QueuedConnection);
     connect(this,SIGNAL(stopMeasure()), m_analyzer, SLOT(on_stopMeasure()));
 
@@ -209,6 +212,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(shortCtrlMinus,SIGNAL(activated()),this,SLOT(on_pressCtrlMinus()));
     QShortcut *shortCtrlDoun = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Down),this);
     connect(shortCtrlDoun,SIGNAL(activated()),this,SLOT(on_pressCtrlMinus()));
+    QShortcut *shortCtrlZero = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Insert),this);
+    connect(shortCtrlZero,SIGNAL(activated()),this,SLOT(on_pressCtrlZero()));
 
     QShortcut *shortLeft = new QShortcut(QKeySequence(Qt::Key_Left),this);
     connect(shortLeft,SIGNAL(activated()),this,SLOT(on_pressLeft()));
@@ -284,12 +289,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
     connect(ui->checkBoxCalibration, &QCheckBox::toggled, this, &MainWindow::calibrationToggled);
 
-    QWidget* w = ui->checkBoxCalibration;
-    QTimer::singleShot(1000, [w]() {
-        // to avoid calibration message due to ui->checkBoxCalibration->setChecked
-        // at load time
-        w->blockSignals(false);
-    });
+//    QWidget* w = ui->checkBoxCalibration;
+//    QTimer::singleShot(1000, [w]() {
+//        // to avoid calibration message due to ui->checkBoxCalibration->setChecked
+//        // at load time
+//        w->blockSignals(false);
+//    });
 
     connect(ui->measurmentsClearBtn, &QPushButton::clicked, this, &MainWindow::on_measurementsClearBtn_clicked);
 
@@ -333,19 +338,23 @@ MainWindow::MainWindow(QWidget *parent) :
     m_isRange = m_settings->value("isRange", false).toBool();
     if(!m_isRange)
     {
-        ui->rangeBtn->setChecked(false);
         ui->limitsBtn->setChecked(true);
+        on_limitsBtn_clicked(true);
+//        ui->rangeBtn->setChecked(false);
         setFqFrom(range.lower);
         setFqTo(range.upper);
     }else
     {
         ui->rangeBtn->setChecked(true);
-        ui->limitsBtn->setChecked(false);
+        on_rangeBtn_clicked(true);
+//        ui->rangeBtn->setChecked(true);
+//        ui->limitsBtn->setChecked(false);
         setFqFrom((range.upper + range.lower)/2);
         setFqTo((range.upper - range.lower)/2);
     }
     ui->spinBoxPoints->setValue(m_dotsNumber);
     connect(ui->spinBoxPoints, SIGNAL(valueChanged(int)), this, SLOT(onSpinChanged(int)));
+    connect(ui->fullBtn, &QPushButton::clicked, this, &MainWindow::onFullRange);
 
     m_autoUpdateEnabled = m_settings->value("autoUpdate", true).toBool();
     m_autoDetectMode = m_settings->value("autoDetectMode",true).toBool();
@@ -415,23 +424,55 @@ MainWindow::MainWindow(QWidget *parent) :
     m_1secTimer->start(100);
 
     loadLanguage(languages_small[m_languageNumber]);
+    ui->tableWidget_presets->horizontalHeader()->show();
     if(!m_isRange)
     {
-        ui->startLabel->setText(tr("Start"));
-        ui->stopLabel->setText(tr("Stop"));
         ui->groupBox_Presets->setTitle(tr("Presets (limits), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Start"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
+//        ui->startLabel->setText(tr("Start"));
+//        ui->stopLabel->setText(tr("Stop"));
+//        ui->startLabel->update();
+//        ui->stopLabel->update();
     }else
     {
-        ui->startLabel->setText(tr("Center"));
-        ui->stopLabel->setText(tr("Range (+/-)"));
         ui->groupBox_Presets->setTitle(tr("Presets (center, range), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Center"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
+//        ui->startLabel->setText(tr("Center"));
+//        ui->stopLabel->setText(tr("Range (+/-)"));
+//        ui->startLabel->update();
+//        ui->stopLabel->update();
     }
     //PopUpIndicator::hideIndicator(ui->tabWidget);
     PopUpIndicator::hideIndicator(m_swrWidget);
+
+    QWidget* w = ui->checkBoxCalibration;
+    QTimer::singleShot(1000, [w]() {
+        // to avoid calibration message due to ui->checkBoxCalibration->setChecked
+        // at load time
+        w->blockSignals(false);
+    });
+
+    QTimer::singleShot(100, [this]() {
+        // force labels' text changing
+        if(this->m_isRange) {
+            this->ui->limitsBtn->setChecked(false);
+            this->ui->startLabel->setText(tr("Center"));
+            this->ui->stopLabel->setText(tr("Range (+/-)"));
+            this->ui->groupBox_Presets->setTitle(tr("Presets (center, range), kHz"));
+            this->ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Center"));
+            this->ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
+        } else {
+            this->ui->rangeBtn->setChecked(false);
+            this->ui->startLabel->setText(tr("Start"));
+            this->ui->stopLabel->setText(tr("Stop"));
+            this->ui->groupBox_Presets->setTitle(tr("Presets (limits), kHz"));
+            this->ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Start"));
+            this->ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
+        }
+    });
+
 }
 
 MainWindow::~MainWindow()
@@ -603,9 +644,10 @@ void MainWindow::setWidgetsSettings()
 
     m_swrWidget->yAxis->setRange(1, m_swrZoomState+0.2);
 
+     //| Qt::Vertical | Qt::Horizontal
     m_swrWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     m_swrWidget->axisRect()->setRangeZoom(Qt::Horizontal);// | Qt::Vertical);
-    m_swrWidget->axisRect()->setRangeDrag(Qt::Horizontal);
+    m_swrWidget->axisRect()->setRangeDrag(Qt::Horizontal | Qt::Vertical);
     m_swrWidget->xAxis->setTickLabelFont(fontTickLabel);
     m_swrWidget->yAxis->setTickLabelFont(fontTickLabel);
     m_swrWidget->xAxis->setLabelFont(fontLabel);
@@ -625,7 +667,7 @@ void MainWindow::setWidgetsSettings()
     m_phaseWidget->yAxis->setRange(-180, 180);
     m_phaseWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     m_phaseWidget->axisRect()->setRangeZoom(Qt::Horizontal);
-    m_phaseWidget->axisRect()->setRangeDrag(Qt::Horizontal);
+    m_phaseWidget->axisRect()->setRangeDrag(Qt::Horizontal | Qt::Vertical);
     m_phaseWidget->xAxis->setTickLabelFont(fontTickLabel);
     m_phaseWidget->yAxis->setTickLabelFont(fontTickLabel);
     m_phaseWidget->xAxis->setLabelFont(fontLabel);
@@ -645,7 +687,7 @@ void MainWindow::setWidgetsSettings()
     m_rsWidget->yAxis->setRange(-m_rsZoomState*80,m_rsZoomState*80);
     m_rsWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     m_rsWidget->axisRect()->setRangeZoom(Qt::Horizontal);
-    m_rsWidget->axisRect()->setRangeDrag(Qt::Horizontal);
+    m_rsWidget->axisRect()->setRangeDrag(Qt::Horizontal | Qt::Vertical);
     m_rsWidget->xAxis->setTickLabelFont(fontTickLabel);
     m_rsWidget->yAxis->setTickLabelFont(fontTickLabel);
     m_rsWidget->xAxis->setLabelFont(fontLabel);
@@ -665,7 +707,7 @@ void MainWindow::setWidgetsSettings()
     m_rpWidget->yAxis->setRange(-m_rpZoomState*80,m_rpZoomState*80);
     m_rpWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     m_rpWidget->axisRect()->setRangeZoom(Qt::Horizontal);
-    m_rpWidget->axisRect()->setRangeDrag(Qt::Horizontal);
+    m_rpWidget->axisRect()->setRangeDrag(Qt::Horizontal | Qt::Vertical);
     m_rpWidget->xAxis->setTickLabelFont(fontTickLabel);
     m_rpWidget->yAxis->setTickLabelFont(fontTickLabel);
     m_rpWidget->xAxis->setLabelFont(fontLabel);
@@ -684,7 +726,7 @@ void MainWindow::setWidgetsSettings()
     m_rlWidget->yAxis->setRange(0,m_rlZoomState*5);
     m_rlWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     m_rlWidget->axisRect()->setRangeZoom(Qt::Horizontal);
-    m_rlWidget->axisRect()->setRangeDrag(Qt::Horizontal);
+    m_rlWidget->axisRect()->setRangeDrag(Qt::Horizontal | Qt::Vertical);
     m_rlWidget->xAxis->setTickLabelFont(fontTickLabel);
     m_rlWidget->yAxis->setTickLabelFont(fontTickLabel);
     m_rlWidget->xAxis->setLabelFont(fontLabel);
@@ -1447,6 +1489,73 @@ void MainWindow::on_pressCtrlMinus ()
             {
                 QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
+        }
+    }else if(str == "tab_6")
+    {
+        m_tdrWidget->replot();
+    }
+}
+
+void MainWindow::on_pressCtrlZero()
+{
+    m_swrZoomState = 1;
+    QString str = ui->tabWidget->currentWidget()->objectName();
+    if( str == "tab_1")
+    {
+        m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
+        m_swrWidget->yAxis->setRangeLower(1);
+        m_swrWidget->replot();
+        if(m_markers)
+        {
+            QTimer::singleShot(5, m_markers, SLOT(redraw()));
+        }
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        }
+    }else if(str == "tab_2")
+    {
+//        m_phaseWidget->replot();
+    }else if(str == "tab_3")
+    {
+        int val = m_rsZoomState*80;
+        m_rsWidget->yAxis->setRangeLower(-val);
+        m_rsWidget->yAxis->setRangeUpper(val);
+        m_rsWidget->replot();
+        if(m_markers)
+        {
+            QTimer::singleShot(5, m_markers, SLOT(redraw()));
+        }
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        }
+    }else if(str == "tab_4")
+    {
+        int val = m_rpZoomState*80;
+        m_rpWidget->yAxis->setRangeLower(-val);
+        m_rpWidget->yAxis->setRangeUpper(val);
+        m_rpWidget->replot();
+        if(m_markers)
+        {
+            QTimer::singleShot(5, m_markers, SLOT(redraw()));
+        }
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        }
+    }else if(str == "tab_5")
+    {
+        m_rlWidget->yAxis->setRangeUpper(m_rlZoomState*5);
+        m_rlWidget->yAxis->setRangeLower(0);
+        m_rlWidget->replot();
+        if(m_markers)
+        {
+            QTimer::singleShot(5, m_markers, SLOT(redraw()));
+        }
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
     }else if(str == "tab_6")
     {
@@ -2678,7 +2787,8 @@ void MainWindow::on_analyzerDataBtn_clicked()
     connect(m_analyzer,SIGNAL(analyzerDataStringArrived(QString)),m_analyzerData,SLOT(on_analyzerDataStringArrived(QString)));
     connect(m_analyzerData,SIGNAL(itemDoubleClick(QString,QString,QString)),m_analyzer,SLOT(on_itemDoubleClick(QString,QString,QString)));
     connect(m_analyzerData,SIGNAL(signalSaveFile(QString)),this,SLOT(on_SaveFile(QString)));
-    connect(m_analyzerData,SIGNAL(dialogClosed()),m_analyzer,SLOT(on_dialogClosed()));
+    connect(m_analyzerData, &AnalyzerData::dataChanged, this, &MainWindow::on_dataChanged);
+    //connect(m_analyzerData,SIGNAL(dialogClosed()),m_analyzer,SLOT(on_dialogClosed()));
     m_analyzerData->exec();
 }
 
@@ -2693,7 +2803,17 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 
 void MainWindow::on_screenshotAA_clicked()
 {
-    m_screenshot = new Screenshot(this, m_analyzer->getModel(), lcdHeight[m_analyzer->getModel()],lcdWidth[m_analyzer->getModel()]);
+    int wd = lcdWidth[m_analyzer->getModel()];
+    int ht = lcdHeight[m_analyzer->getModel()];
+    if (CustomAnalyzer::customized()) {
+        CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+        if (ca != nullptr) {
+            wd = ca->width();
+            ht = ca->height();
+        }
+    }
+
+    m_screenshot = new Screenshot(this, m_analyzer->getModel(), ht, wd);
     m_screenshot->setAttribute(Qt::WA_DeleteOnClose);
     m_screenshot->setWindowTitle("Screenshot");
 
@@ -2724,8 +2844,17 @@ void MainWindow::on_singleStart_clicked()
     double start;
     double stop;
 
-    int maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toInt();
-    int minFreq = minFq[m_analyzer->getAnalyzerModel()].toInt();
+    qint64 minFreq = minFq[m_analyzer->getAnalyzerModel()].toULongLong();
+    qint64 maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toULongLong();
+
+    if (CustomAnalyzer::customized()) {
+        CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+        if (ca != nullptr) {
+            minFreq = ca->minFq().toULongLong();
+            maxFreq = ca->maxFq().toULongLong();
+        }
+    }
+
     if (use_min_max)
     {
         start = minFreq;
@@ -2768,11 +2897,31 @@ void MainWindow::on_singleStart_clicked()
     m_rsWidget->xAxis->setRange(range);
     m_rpWidget->xAxis->setRange(range);
     m_rlWidget->xAxis->setRange(range);
+
+    m_settings->beginGroup("MainWindow");
+    if (!m_isRange) {
+        m_settings->setValue("rangeLower", start);
+        m_settings->setValue("rangeUpper", stop);
+    } else {
+        m_settings->setValue("rangeLower", (stop-start)/2);
+        m_settings->setValue("rangeUpper", (stop+start)/2);
+    }
+    m_settings->setValue("dotsNumber", m_dotsNumber);
+    m_settings->endGroup();
+
     if(ui->tabWidget->currentWidget()->objectName() == "tab_6")
     {
-        emit measure(minFq[m_analyzer->getAnalyzerModel()].toInt()*1000,
-                    maxFq[m_analyzer->getAnalyzerModel()].toInt()*1000,
-                    qMax(m_dotsNumber, 200));
+        qint64 minFq_ = minFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
+        qint64 maxFq_ = maxFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
+        if (CustomAnalyzer::customized()) {
+            CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+            if (ca != nullptr) {
+                minFq_ = ca->minFq().toULongLong();
+                maxFq_ = ca->maxFq().toULongLong();
+            }
+        }
+
+        emit measure(minFq_, maxFq_, qMax(m_dotsNumber, 200));
     }
     else
     {
@@ -2806,8 +2955,17 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         start = getFqFrom();
         stop = getFqTo();
 
-        int maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toInt();
-        if(stop > static_cast<quint32>(maxFreq))
+        qint64 minFreq = minFq[m_analyzer->getAnalyzerModel()].toULongLong();
+        qint64 maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toULongLong();
+        if (CustomAnalyzer::customized()) {
+            CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+            if (ca != nullptr) {
+                minFreq = ca->minFq().toULongLong();
+                maxFreq = ca->maxFq().toULongLong();
+            }
+        }
+
+        if(stop > static_cast<double>(maxFreq))
         {
             stop = maxFreq;
             if(!m_isRange)
@@ -2818,9 +2976,9 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
                 setFqTo((stop-start)/2);
             }
         }
-        if((start > static_cast<quint32>(maxFreq)) || (start < static_cast<quint32>(minFq[m_analyzer->getAnalyzerModel()].toInt())))
+        if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
         {
-            start = minFq[m_analyzer->getAnalyzerModel()].toInt();
+            start = minFreq;
             if(!m_isRange)
             {
                 setFqFrom(start);
@@ -2835,6 +2993,18 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         m_rsWidget->xAxis->setRange(range);
         m_rpWidget->xAxis->setRange(range);
         m_rlWidget->xAxis->setRange(range);
+
+        m_settings->beginGroup("MainWindow");
+        if (!m_isRange) {
+            m_settings->setValue("rangeLower", start);
+            m_settings->setValue("rangeUpper", stop);
+        } else {
+            m_settings->setValue("rangeLower", (stop-start)/2);
+            m_settings->setValue("rangeUpper", (stop+start)/2);
+        }
+        m_settings->setValue("dotsNumber", m_dotsNumber);
+        m_settings->endGroup();
+
         emit measure(start*1000, stop*1000, m_dotsNumber);
         ui->measurmentsSaveBtn->setEnabled(true);
         ui->exportBtn->setEnabled(true);
@@ -2858,8 +3028,16 @@ void MainWindow::on_measurementComplete()
         start = getFqFrom();
         stop = getFqTo();
 
-        int maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toInt();
-        if(stop > static_cast<quint32>(maxFreq))
+        qint64 minFreq = minFq[m_analyzer->getAnalyzerModel()].toULongLong();
+        qint64 maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toULongLong();
+        if (CustomAnalyzer::customized()) {
+            CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+            if (ca != nullptr) {
+                minFreq = ca->minFq().toULongLong();
+                maxFreq = ca->maxFq().toULongLong();
+            }
+        }
+        if(stop > static_cast<double>(maxFreq))
         {
             stop = maxFreq;
             if(!m_isRange)
@@ -2870,9 +3048,9 @@ void MainWindow::on_measurementComplete()
                 setFqTo((stop-start)/2);
             }
         }
-        if((start > static_cast<quint32>(maxFreq)) || (start < static_cast<quint32>(minFq[m_analyzer->getAnalyzerModel()].toInt())))
+        if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
         {
-            start = minFq[m_analyzer->getAnalyzerModel()].toInt();
+            start = minFreq;
             if(!m_isRange)
             {
                 setFqFrom(start);
@@ -3072,6 +3250,15 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
 
     if(ui->tableWidget_measurments->rowCount() == 0)
     {
+        m_settings->beginGroup("MainWindow");
+        qint64 from = m_settings->value("rangeLower",0).toULongLong();
+        qint64 to =  m_settings->value("rangeUpper",1400000).toULongLong();
+        qint32 dots = m_settings->value("dotsNumber", 50).toInt();
+        m_settings->endGroup();
+
+        qint64 range = (to - from);
+        on_dataChanged(from + range/2, range, dots);
+
         ui->measurmentsSaveBtn->setEnabled(false);
         ui->measurmentsDeleteBtn->setEnabled(false);
         ui->measurmentsClearBtn->setEnabled(false);
@@ -3098,6 +3285,15 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
         int rowNumber = item->row();
         m_measurements->deleteRow(rowNumber);
     }
+
+    m_settings->beginGroup("MainWindow");
+    qint64 from = m_settings->value("rangeLower",0).toULongLong();
+    qint64 to =  m_settings->value("rangeUpper",1400000).toULongLong();
+    qint32 dots = m_settings->value("dotsNumber", 50).toInt();
+    m_settings->endGroup();
+
+    qint64 range = (to - from);
+    on_dataChanged(from + range/2, range, dots);
 
     if(ui->tableWidget_measurments->rowCount() == 0)
     {
@@ -3254,9 +3450,11 @@ void MainWindow::on_printBtn_clicked()
         m_print->addRowText(lst.at(i));
     }
 
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : names[m_analyzer->getModel()];
     QString name = ui->tabWidget->currentWidget()->objectName();
     QString string;
-    string += names[m_analyzer->getModel()] + ", ";
+    string += model + ", ";
     QDateTime datetime = QDateTime::currentDateTime();
     string += datetime.toString("dd.MM.yyyy-hh:mm, ");
 
@@ -3410,6 +3608,7 @@ void MainWindow::on_importBtn_clicked()
     QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastOpenPath,  "S1p (*.s1p);;"
                                                                                     "Csv (*.csv);;"
                                                                                     "Nwl (*.nwl);;"
+                                                                                    "AntScope1 (*.antdata);;"
                                                                                     "AntScope2 (*.asd )");
     m_measurements->loadData(path);
     ui->measurmentsSaveBtn->setEnabled(true);
@@ -3555,58 +3754,64 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
     }
 }
 
+
 void MainWindow::setFqFrom(QString from)
 {
     from.remove(' ');
-    if(from.length() > 6)
-    {
-        from.insert(from.length()-6,' ');
-    }
-    if(from.length() > 3)
-    {
-        from.insert(from.length()-3,' ');
-    }
+//    if(from.length() > 6)
+//    {
+//        from.insert(from.length()-6,' ');
+//    }
+//    if(from.length() > 3)
+//    {
+//        from.insert(from.length()-3,' ');
+//    }
+    from = appendSpaces(from);
     ui->lineEdit_fqFrom->setText(from);
 }
 
 void MainWindow::setFqFrom(double from)
 {
     QString sFrom = QString::number(from,'f', 0);
-    if(sFrom.length() > 6)
-    {
-        sFrom.insert(sFrom.length()-6,' ');
-    }
-    if(sFrom.length() > 3)
-    {
-        sFrom.insert(sFrom.length()-3,' ');
-    }
+//    if(sFrom.length() > 6)
+//    {
+//        sFrom.insert(sFrom.length()-6,' ');
+//    }
+//    if(sFrom.length() > 3)
+//    {
+//        sFrom.insert(sFrom.length()-3,' ');
+//    }
+    sFrom = appendSpaces(sFrom);
     ui->lineEdit_fqFrom->setText(sFrom);
 }
+
 void MainWindow::setFqTo(QString to)
 {
     to.remove(' ');
-    if(to.length() > 6)
-    {
-        to.insert(to.length()-6,' ');
-    }
-    if(to.length() > 3)
-    {
-        to.insert(to.length()-3,' ');
-    }
+//    if(to.length() > 6)
+//    {
+//        to.insert(to.length()-6,' ');
+//    }
+//    if(to.length() > 3)
+//    {
+//        to.insert(to.length()-3,' ');
+//    }
+    to = appendSpaces(to);
     ui->lineEdit_fqTo->setText(to);
 }
 
 void MainWindow::setFqTo(double to)
 {
     QString sTo = QString::number(to,'f', 0);
-    if(sTo.length() > 6)
-    {
-        sTo.insert(sTo.length()-6,' ');
-    }
-    if(sTo.length() > 3)
-    {
-        sTo.insert(sTo.length()-3,' ');
-    }
+//    if(sTo.length() > 6)
+//    {
+//        sTo.insert(sTo.length()-6,' ');
+//    }
+//    if(sTo.length() > 3)
+//    {
+//        sTo.insert(sTo.length()-3,' ');
+//    }
+    sTo = appendSpaces(sTo);
     ui->lineEdit_fqTo->setText(sTo);
 }
 
@@ -3650,8 +3855,10 @@ void MainWindow::on_lineEdit_fqFrom_editingFinished()
         m_rlWidget->xAxis->setRangeLower(lower);
     }else
     {
-        lower = ui->lineEdit_fqFrom->text().remove(' ').toDouble() - ui->lineEdit_fqTo->text().remove(' ').toDouble();
-        upper = ui->lineEdit_fqFrom->text().remove(' ').toDouble() + ui->lineEdit_fqTo->text().remove(' ').toDouble();
+        double from = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
+        double to = ui->lineEdit_fqTo->text().remove(' ').toDouble();
+        lower = from - to;
+        upper = from + to;
         if(lower >= upper)
         {
             upper = lower + 1;
@@ -3996,3 +4203,41 @@ void MainWindow::calibrationToggled(bool checked)
         m_measurements->on_calibrationEnabled(checked);
     }
 }
+
+void MainWindow::on_dataChanged(qint64 _center, qint64 _range, qint32 _dots)
+{
+    ui->spinBoxPoints->setValue(_dots);
+    if (m_isRange) {
+        ui->lineEdit_fqFrom->setText(QString::number(_center));
+        ui->lineEdit_fqTo->setText(QString::number(_range/2));
+    } else {
+        ui->lineEdit_fqFrom->setText(QString::number(_center - _range/2));
+        ui->lineEdit_fqTo->setText(QString::number(_center + _range/2));
+    }
+    on_lineEdit_fqTo_editingFinished();
+    on_lineEdit_fqFrom_editingFinished();
+}
+
+
+QString appendSpaces(const QString& str) {
+    QString tmp;
+    int len = str.length();
+    for (int idx=0; idx<len; idx++) {
+        if (idx != 0 && (idx % 3) == 0)
+            tmp.insert(0, ' ');
+        tmp.insert(0, str[len - 1 - idx]);
+    }
+    return tmp;
+}
+
+void MainWindow::onFullRange(bool)
+{
+    int model = m_analyzer->getModel();
+
+    qint64 from = minFq[model].toULongLong();
+    qint64 to = maxFq[model].toULongLong();
+    qint64 range = to - from;
+    on_dataChanged(from + range/2, range, m_dotsNumber);
+}
+
+

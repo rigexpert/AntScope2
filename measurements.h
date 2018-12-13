@@ -151,6 +151,7 @@ signals:
 public slots:
     void on_newData(rawData _rawData);
     void on_newMeasurement(QString name);
+    void on_newMeasurement(QString name, qint64 fq, qint64 sw, qint64 dots);
     void on_currentTab(QString);
     void on_focus(bool focus);
     void hideGraphBriefHint();

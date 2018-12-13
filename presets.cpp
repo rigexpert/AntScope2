@@ -124,8 +124,8 @@ void Presets::refresh()
             m_tableWidget->setItem(i,1, new QTableWidgetItem(m_fqToList.at(i)));
         }else
         {
-            int center = (m_fqToList.at(i).toInt() + m_fqFromList.at(i).toInt())/2;
-            int band = (m_fqToList.at(i).toInt() - m_fqFromList.at(i).toInt())/2;
+            qint64 center = (m_fqToList.at(i).toULongLong() + m_fqFromList.at(i).toULongLong())/2;
+            qint64 band = (m_fqToList.at(i).toULongLong() - m_fqFromList.at(i).toULongLong())/2;
             m_tableWidget->setItem(i,0, new QTableWidgetItem(QString::number(center)));
             m_tableWidget->setItem(i,1, new QTableWidgetItem(QString::number(band)));
         }

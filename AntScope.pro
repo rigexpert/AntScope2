@@ -13,7 +13,7 @@ QT       += quick
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.10\\"'
+DEFINES += ANTSCOPE2VER='\\"1.0.11\\"'
 
 TARGET = AntScope2
 
@@ -71,7 +71,8 @@ SOURCES += main.cpp\
         markerspopup.cpp \
         updater.cpp \
         antscopeupdatedialog.cpp \
-    popupindicator.cpp
+    popupindicator.cpp \
+    analyzer/customanalyzer.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -106,7 +107,9 @@ HEADERS  += mainwindow.h \
         markerspopup.h \
         updater.h \
         antscopeupdatedialog.h \
-    popupindicator.h
+    popupindicator.h \
+    analyzer/customanalyzer.h \
+    fqinputvalidator.h
 
 FORMS    += mainwindow.ui \
         analyzer/analyzerdata.ui \
@@ -117,6 +120,9 @@ FORMS    += mainwindow.ui \
         print.ui \
         export.ui \
         antscopeupdatedialog.ui
+
+INCLUDEPATH +=  $$PWD/analyzer \
+            $$PWD/analyzer/updater
 
 win32{
     SOURCES += analyzer/usbhid/hidapi/windows/hid.c
@@ -165,6 +171,7 @@ macx {
 }
 
 
+#win32:QMAKE_CXXFLAGS_WARN_ON += -W4
 
 DISTFILES += \
     rig_logo.png

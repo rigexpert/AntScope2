@@ -90,7 +90,7 @@ public slots:
     void dataArrived();
     void searchAnalyzer();
     void timeoutChart();
-    void startMeasure(int fqFrom, int fqTo, int dotsNumber);
+    void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber);
     void stopMeasure();
     void continueMeasurement();
     void checkAnalyzer();

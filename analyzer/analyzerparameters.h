@@ -173,6 +173,13 @@ struct rawData{
 
 struct measurement{
 
+    qint64 qint64Fq;
+    qint64 qint64Sw;
+    qint64 qint64Dots;
+    void set(qint64 _qint64Fq, qint64 _qint64Sw, qint64 _qint64Dots) {
+        qint64Fq = _qint64Fq; qint64Sw = _qint64Sw; qint64Dots =_qint64Dots;
+    }
+
     QVector <rawData> dataRX;
 //---------------------------------
     QCPDataMap swrGraph;

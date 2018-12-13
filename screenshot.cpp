@@ -1,22 +1,26 @@
 #include "screenshot.h"
 #include "ui_screenshot.h"
+#include "analyzer/customanalyzer.h"
 
-Screenshot::Screenshot(QWidget *parent, int model, int height, int width) :
+
+Screenshot::Screenshot(QWidget *parent, int _model, int height, int width) :
     QDialog(parent),
     ui(new Ui::Screenshot),
 //    m_screenCounter(0),
     m_error(0)
 {
     ui->setupUi(this);
-    m_analyzerModel = model;
+    m_analyzerModel = _model;
     m_lcdHeight = height;
     m_lcdWidth = width;
 
     m_popUp = new PopUp();
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
 
-    if(     (names[m_analyzerModel] == "AA-30") ||
-            (names[m_analyzerModel] == "AA-54")||
-            (names[m_analyzerModel] == "AA-170")    )
+    if(     (model == "AA-30") ||
+            (model == "AA-54")||
+            (model == "AA-170")    )
     {
         m_image = new QImage(m_lcdWidth*2, m_lcdHeight*2, QImage::Format_RGB32);
     }else
@@ -45,9 +49,12 @@ void Screenshot::paintEvent(QPaintEvent *)
     QPainter painter(this);
 
     int biasx,biasy;
-    if(     (names[m_analyzerModel] == "AA-30") ||
-            (names[m_analyzerModel] == "AA-54")||
-            (names[m_analyzerModel] == "AA-170")    )
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+
+    if(     (model == "AA-30") ||
+            (model == "AA-54")||
+            (model == "AA-170")    )
     {
         biasx = (320 - m_lcdWidth*2)/2;
         biasy = (240 - m_lcdHeight*2)/2;
@@ -125,9 +132,12 @@ void Screenshot::on_newData(QByteArray data)
         //m_inputDataDebug.append((unsigned char)data.at(i));
     }
 
-    if(     (names[m_analyzerModel] == "AA-30") ||
-            (names[m_analyzerModel] == "AA-54") ||
-            (names[m_analyzerModel] == "AA-170")    )
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+
+    if(     (model == "AA-30") ||
+            (model == "AA-54")||
+            (model == "AA-170")    )
     {
         while(m_inputData.length() >= 2)
         {
@@ -187,9 +197,9 @@ void Screenshot::on_newData(QByteArray data)
     int percent = m_imageVector.length()/(m_lcdHeight*m_lcdWidth/100);
 
     ui->progressBar->setValue(percent);
-    if(     (names[m_analyzerModel] == "AA-30") ||
-            (names[m_analyzerModel] == "AA-54") ||
-            (names[m_analyzerModel] == "AA-170")    )
+    if(     (model == "AA-30") ||
+            (model == "AA-54")||
+            (model == "AA-170")    )
     {
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
         {
@@ -214,7 +224,7 @@ void Screenshot::on_newData(QByteArray data)
             repaint();
         }
     } else if((m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
-              || ( (names[m_analyzerModel] == "AA-230 ZOOM")&&(m_imageVector.length() >= 63604) )) {
+              || ( (model == "AA-230 ZOOM")&&(m_imageVector.length() >= 63604) )) {
             ui->progressBar->setValue(100);
             QApplication::clipboard()->setImage(*m_image,QClipboard::Clipboard);
             m_popUp->setPopupText(tr("Image added to clipboard"));

@@ -1,5 +1,7 @@
 #include "analyzer.h"
 #include "popupindicator.h"
+#include "customanalyzer.h"
+
 
 Analyzer::Analyzer(QObject *parent) : QObject(parent),
     m_hidAnalyzer(NULL),
@@ -166,10 +168,11 @@ bool Analyzer::checkFile(QString path)
         m_hidAnalyzer->setRevision(revision);
     }
 
-    if(((names[getAnalyzerModel()] == "AA-230 ZOOM") && (magic == m_MAGICAA230Z)) ||
-            ((names[getAnalyzerModel()] == "AA-55 ZOOM") && (magic == m_MAGICHID)) ||
-            ((names[getAnalyzerModel()] == "AA-35 ZOOM") && (magic == m_MAGICHID)) ||
-            ((names[getAnalyzerModel()] == "AA-30 ZERO") && (magic == m_MAGICAA30ZERO)))
+    QString prototype = CustomAnalyzer::currentPrototype();
+    if(((names[getAnalyzerModel()] == "AA-230 ZOOM" || prototype == "AA-230 ZOOM") && (magic == m_MAGICAA230Z)) ||
+            ((names[getAnalyzerModel()] == "AA-55 ZOOM" || prototype == "AA-55 ZOOM") && (magic == m_MAGICHID)) ||
+            ((names[getAnalyzerModel()] == "AA-35 ZOOM" || prototype == "AA-35 ZOOM") && (magic == m_MAGICHID)) ||
+            ((names[getAnalyzerModel()] == "AA-30 ZERO" || prototype == "AA-30 ZERO") && (magic == m_MAGICAA30ZERO)))
     {
     }else
     {
@@ -207,8 +210,8 @@ bool Analyzer::checkFile(QString path)
 }
 
 QString Analyzer::getModelString( void )
-{
-    return names[m_analyzerModel];
+{    
+    return CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
 }
 
 quint32 Analyzer::getModel( void )
@@ -232,7 +235,7 @@ QString Analyzer::getSerialNumber(void) const
     }
     return QString();
 }
-void Analyzer::on_measure (qint32 fqFrom, qint32 fqTo, qint32 dotsNumber)
+void Analyzer::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
 {
     if(!m_isMeasuring)
     {
@@ -308,7 +311,7 @@ void Analyzer::on_hidAnalyzerFound (quint32 analyzerNumber)
     }
     m_hidAnalyzerFound = true;
     m_analyzerModel = analyzerNumber;
-    QString str = names[m_analyzerModel];
+    QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
     emit analyzerFound(str);
 
     //if(m_autoCheckUpdate)
@@ -354,7 +357,7 @@ void Analyzer::on_comAnalyzerFound (quint32 analyzerNumber)
     }
     m_comAnalyzerFound = true;
     m_analyzerModel = analyzerNumber;
-    QString str = names[m_analyzerModel];
+    QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
     emit analyzerFound(str);
 
 //    //if(m_autoCheckUpdate)
@@ -421,19 +424,17 @@ void Analyzer::getAnalyzerData()
     {
         if(m_comAnalyzerFound)
         {
-            m_isMeasuring = true;
             QTimer::singleShot(100, m_comAnalyzer, SLOT(getAnalyzerData()));
         }else if (m_hidAnalyzerFound)
         {
-            m_isMeasuring = true;
             QTimer::singleShot(100, m_hidAnalyzer, SLOT(getAnalyzerData()));
         }
-        PopUpIndicator::setIndicatorVisible(true);
     }
 }
 
 void Analyzer::on_itemDoubleClick(QString number, QString dotsNumber, QString name)
 {
+    setIsMeasuring(true);
     if(m_comAnalyzerFound)
     {
         m_chartCounter = 0;
@@ -451,22 +452,12 @@ void Analyzer::on_itemDoubleClick(QString number, QString dotsNumber, QString na
 
 void Analyzer::on_dialogClosed()
 {
-    PopUpIndicator::setIndicatorVisible(false);
-    m_isMeasuring = false;
-    if(m_comAnalyzerFound)
-    {
-        if (m_comAnalyzer != nullptr)
-            m_comAnalyzer->setIsMeasuring(false);
-    } else {
-        if (m_hidAnalyzer != nullptr)
-            m_hidAnalyzer->setIsMeasuring(false);
-    }
+    //setIsMeasuring(false);
 }
 
 void Analyzer::on_stopMeasuring()
 {
-    PopUpIndicator::setIndicatorVisible(false);
-    m_isMeasuring = false;
+    setIsMeasuring(false);
 }
 
 void Analyzer::on_analyzerScreenshotDataArrived(QByteArray arr)
@@ -497,7 +488,9 @@ void Analyzer::on_checkUpdatesBtn_clicked()
                 this, SLOT(on_progress(qint64,qint64)));
     }
     QString url = "https://www.rigexpert.com/getfirmware?model=";
-    url += names[m_analyzerModel].toLower().remove(" ").remove("-");
+    QString prototype = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+    //url += names[m_analyzerModel].toLower().remove(" ").remove("-");
+    url += prototype.toLower().remove(" ").remove("-");
     url += "&sn=";
     if(m_hidAnalyzerFound)
     {
@@ -561,16 +554,21 @@ void Analyzer::on_measureCalib(int dotsNumber)
 {
     m_isMeasuring = true;
     m_dotsNumber = dotsNumber;
+    qint64 minFq_ = minFq[m_analyzerModel].toULongLong()*1000;
+    qint64 maxFq_ = maxFq[m_analyzerModel].toULongLong()*1000;
+    if (CustomAnalyzer::customized()) {
+        CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+        if (ca != nullptr) {
+            minFq_ = ca->minFq().toULongLong();
+            maxFq_ = ca->maxFq().toULongLong();
+        }
+    }
     if(m_comAnalyzerFound)
     {
-        m_comAnalyzer->startMeasure(minFq[m_analyzerModel].toInt()*1000,
-                                    maxFq[m_analyzerModel].toInt()*1000,
-                                    dotsNumber);
+        m_comAnalyzer->startMeasure(minFq_, maxFq_, dotsNumber);
     }else if (m_hidAnalyzerFound)
     {
-        m_hidAnalyzer->startMeasure(minFq[m_analyzerModel].toInt()*1000,
-                                    maxFq[m_analyzerModel].toInt()*1000,
-                                    dotsNumber);
+        m_hidAnalyzer->startMeasure(minFq_, maxFq_, dotsNumber);
     }
 }
 

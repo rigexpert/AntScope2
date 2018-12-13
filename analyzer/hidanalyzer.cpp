@@ -1,4 +1,5 @@
 #include "hidanalyzer.h"
+#include "customanalyzer.h"
 
 hidAnalyzer::hidAnalyzer(QObject *parent) : QObject(parent),
       m_parseState(1),
@@ -317,15 +318,15 @@ void hidAnalyzer::sendData(QString data)
     }
 }
 
-void hidAnalyzer::startMeasure(int fqFrom, int fqTo, int dotsNumber)
+void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
 {
     static qint32 state = 1;
     static QString FQ;
     static QString SW;
     static QString FRX;
 
-    quint32 center;
-    quint32 band;
+    qint64 center;
+    qint64 band;
 
 
     if(dotsNumber > 0)
@@ -457,6 +458,7 @@ void hidAnalyzer::hidRead (void)
 
 qint32 hidAnalyzer::parse (QByteArray arr)
 {
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
     quint32 retVal = 0;
     if(m_parseState == WAIT_SCREENSHOT_DATA)
     {

@@ -1,6 +1,10 @@
 #include "settings.h"
 #include "ui_settings.h"
 #include "popupindicator.h"
+#include "analyzer/customanalyzer.h"
+#include "fqinputvalidator.h"
+
+extern QString appendSpaces(const QString& number);
 
 QString Settings::iniFilePath;
 Settings::Settings(QWidget *parent) :
@@ -65,8 +69,16 @@ Settings::Settings(QWidget *parent) :
     ui->cableComboBox->setStyleSheet("QComboBox { combobox-popup: 0; }");
     ui->cableComboBox->setMaxVisibleItems(20);
 
-//    QString cablesPath = Settings::localDataPath();
-//    cablesPath += "cables.txt";
+    connect(ui->lineEditMin, &QLineEdit::editingFinished, this, &Settings::on_fqMinFinished);
+    connect(ui->lineEditMax, &QLineEdit::editingFinished, this, &Settings::on_fqMaxFinished);
+
+    CustomAnalyzer::load();
+    //{
+    // TODO Analyzer customization is not fully implemented yet
+    ui->tabWidget->removeTab(4);
+    //initCustomizeTab();
+    //}
+
     QString cablesPath = Settings::programDataPath("cables.txt");
     openCablesFile(cablesPath);
 
@@ -90,6 +102,8 @@ Settings::~Settings()
     {
         emit Z0Changed(Z0);
     }
+
+    CustomAnalyzer::save();
 
     m_settings->beginGroup("Settings");
     m_settings->setValue("markersHintEnabled", m_markersHintEnabled);
@@ -1026,3 +1040,141 @@ void Settings::setBands(QList<QString> list)
     connect(ui->bandsCombobox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_bandsComboBox_currentIndexChanged(int)));
     ui->bandsCombobox->setCurrentText(current_band);
 }
+
+void Settings::initCustomizeTab()
+{
+    ui->comboBoxPrototype->clear();
+    ui->comboBoxName->clear();
+
+    ui->comboBoxName->blockSignals(true);
+    ui->comboBoxPrototype->blockSignals(true);
+
+    //CustomAnalyzer::load(m_settings);
+    QString curAlias = CustomAnalyzer::currentAlias();
+    for (int idx=0; idx<QUANTITY; idx++) {
+        ui->comboBoxPrototype->addItem(names[idx]);
+    }
+    const QMap<QString, CustomAnalyzer>& map = CustomAnalyzer::getMap();
+    QStringList keys = map.keys();
+    for (int idx=0; idx<keys.size(); idx++) {
+        ui->comboBoxName->addItem(map[keys[idx]].alias());
+    }
+
+    CustomAnalyzer::setCurrent(curAlias);
+    CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+    //CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+    if (ca != nullptr) {
+        ui->comboBoxName->setCurrentText(ca->alias());
+        ui->lineEditMin->setText(ca->minFq());
+        ui->lineEditMax->setText(ca->maxFq());
+        ui->spinBoxWidth->setValue(ca->width());
+        ui->spinBoxHeight->setValue(ca->height());
+        ui->comboBoxPrototype->setCurrentText(ca->prototype());
+    } else {
+        on_comboBoxName_currentIndexChanged(ui->comboBoxName->currentIndex());
+    }
+
+    connect(ui->customizeCheckBox, &QCheckBox::toggled, this, &Settings::on_enableCustomizeControls);
+    connect(ui->btnAdd, &QPushButton::clicked, this, &Settings::on_addButton);
+    connect(ui->btnRemove, &QPushButton::clicked, this, &Settings::on_removeButton);
+    connect(ui->btnAply, &QPushButton::clicked, this, &Settings::onApplyButton);
+    connect(ui->comboBoxPrototype, SIGNAL(currentIndexChanged(int)), this, SLOT(on_comboBoxPrototype_currentIndexChanged(int)));
+    connect(ui->comboBoxName, SIGNAL(currentIndexChanged(int)), this, SLOT(on_comboBoxName_currentIndexChanged(int)));
+    ui->customizeCheckBox->setChecked(CustomAnalyzer::customized());
+
+    ui->comboBoxName->blockSignals(false);
+    ui->comboBoxPrototype->blockSignals(false);
+    on_enableCustomizeControls(CustomAnalyzer::customized());
+}
+
+void Settings::on_enableCustomizeControls(bool enable)
+{
+    ui->comboBoxName->setEnabled(enable);
+    ui->comboBoxPrototype->setEnabled(enable);
+    ui->lineEditMin->setEnabled(enable);
+    ui->lineEditMax->setEnabled(enable);
+    ui->spinBoxWidth->setEnabled(enable);
+    ui->spinBoxHeight->setEnabled(enable);
+    ui->btnAdd->setEnabled(enable);
+    ui->btnRemove->setEnabled(enable);
+    CustomAnalyzer::customize(enable);
+}
+
+void Settings::on_comboBoxPrototype_currentIndexChanged(int index)
+{
+    ui->lineEditMin->setText(minFq[index]);
+    ui->lineEditMax->setText(maxFq[index]);
+    ui->spinBoxWidth->setValue(lcdWidth[index]);
+    ui->spinBoxHeight->setValue(lcdHeight[index]);
+}
+
+void Settings::on_comboBoxName_currentIndexChanged(int index)
+{
+    Q_UNUSED(index)
+    QString key = ui->comboBoxName->currentText();
+    if (!key.isEmpty()) {
+        CustomAnalyzer::setCurrent(key);
+        CustomAnalyzer* ca = CustomAnalyzer::get(key);
+        if (ca != nullptr) {
+            ui->comboBoxName->setCurrentText(ca->alias());
+            ui->lineEditMin->setText(ca->minFq());
+            ui->lineEditMax->setText(ca->maxFq());
+            ui->spinBoxWidth->setValue(ca->width());
+            ui->spinBoxHeight->setValue(ca->height());
+            ui->comboBoxPrototype->setCurrentText(ca->prototype());
+        }
+    }
+}
+
+void Settings::onApplyButton()
+{
+    if (ui->comboBoxName->currentText().isEmpty())
+        return;
+    CustomAnalyzer ca;
+    ca.setAlias(ui->comboBoxName->currentText());
+    ca.setPrototype(ui->comboBoxPrototype->currentText());
+    ca.setMinFq(ui->lineEditMin->text());
+    ca.setMaxFq(ui->lineEditMax->text());
+    ca.setWidth(ui->spinBoxWidth->value());
+    ca.setHeight(ui->spinBoxHeight->value());
+    CustomAnalyzer::add(ca);
+    CustomAnalyzer::setCurrent(ca.alias());
+    CustomAnalyzer::save();
+
+    initCustomizeTab();
+}
+
+void Settings::on_removeButton()
+{
+    if (ui->comboBoxName->currentText().isEmpty())
+        return;
+    CustomAnalyzer::remove(ui->comboBoxName->currentText());
+    CustomAnalyzer::save();
+    initCustomizeTab();
+}
+
+void Settings::on_addButton()
+{
+    ui->comboBoxName->setCurrentText("");
+    ui->comboBoxPrototype->setCurrentText("names[0]");
+    ui->lineEditMin->setText("0");
+    ui->lineEditMax->setText("0");
+    ui->spinBoxWidth->setValue(0);
+    ui->spinBoxHeight->setValue(0);
+}
+
+void Settings::on_fqMinFinished()
+{
+    QString str = ui->lineEditMin->text();
+    str.remove(' ');
+    ui->lineEditMin->setText(appendSpaces(str));
+}
+
+void Settings::on_fqMaxFinished()
+{
+    QString str = ui->lineEditMax->text();
+    str.remove(' ');
+    ui->lineEditMax->setText(appendSpaces(str));
+}
+
+

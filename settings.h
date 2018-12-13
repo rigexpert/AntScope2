@@ -98,6 +98,7 @@ private:
     void enableButtons(bool enabled);
     void cableActionEnableButtons(bool enabled);
     void openCablesFile(QString path);
+    void initCustomizeTab();
 
 signals:
     void paramsChanged();
@@ -169,6 +170,14 @@ private slots:
     void on_languageComboBox_currentIndexChanged(int index);    
     void on_closeButton_clicked();
     void on_bandsComboBox_currentIndexChanged(int index);
+    void on_enableCustomizeControls(bool enable);
+    void on_addButton();
+    void on_removeButton();
+    void onApplyButton();
+    void on_comboBoxPrototype_currentIndexChanged(int index);
+    void on_comboBoxName_currentIndexChanged(int index);
+    void on_fqMinFinished();
+    void on_fqMaxFinished();
 };
 
 #endif // SETTINGS_H

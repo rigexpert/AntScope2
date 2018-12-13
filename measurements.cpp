@@ -206,16 +206,33 @@ void Measurements::deleteRow(int row)
     m_tableWidget->setRowCount(m_tableNames.length());
 }
 
+void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint64 dots)
+{
+    on_newMeasurement(name);
+
+    m_measurements.last().set(fq, sw, dots);
+    m_viewMeasurements.last().set(fq, sw, dots);
+    m_farEndMeasurementsAdd.last().set(fq, sw, dots);
+    m_farEndMeasurementsSub.last().set(fq, sw, dots);
+}
+
 void Measurements::on_newMeasurement(QString name)
 {
     if(m_graphBriefHintEnabled)
     {
         m_graphBriefHint->show();
     }
+    /*
     m_tableNames.insert(0,name);
     if(m_tableNames.length() == MAX_MEASUREMENTS+1)
     {
         m_tableNames.remove(MAX_MEASUREMENTS,1);
+    }
+    */
+    m_tableNames.append(name);
+    if(m_tableNames.length() == MAX_MEASUREMENTS+1)
+    {
+        m_tableNames.remove(0,1);
     }
     if(m_tableNames.length() > m_tableWidget->rowCount())
     {
@@ -238,8 +255,9 @@ void Measurements::on_newMeasurement(QString name)
     }
 
     m_tableWidget->reset();
-    QModelIndex myIndex = m_tableWidget->model()->index( 0, 0, QModelIndex());
+    QModelIndex myIndex = m_tableWidget->model()->index( m_tableNames.size()-1, 0, QModelIndex());
     m_tableWidget->selectionModel()->select(myIndex,QItemSelectionModel::Select);
+    m_tableWidget->scrollToBottom();
 
     if(m_measurements.length() == MAX_MEASUREMENTS)
     {
@@ -1880,7 +1898,7 @@ void Measurements::exportData(QString _name, int _type, int _number)
         {
             QString s;
 
-            s = QString("%1").arg(vector.at(i).fq);		// Fq
+            s = QString("%1").arg(vector.at(i).fq, 0, 'f', 6);		// Fq
             out << s << " ";
 
             double R = vector.at(i).r;
@@ -1962,7 +1980,7 @@ void Measurements::exportData(QString _name, int _type, int _number)
 
             for (int i = 0; i < len; ++i)
             {
-                str = QString::number(vector.at(i).fq) +
+                str = QString::number(vector.at(i).fq, 'f', 6) +
                 "," +//";" +
                 QString::number(vector.at(i).r,'f',2) +
                 "," +//";" +
@@ -1997,7 +2015,7 @@ void Measurements::exportData(QString _name, int _type, int _number)
 
             for (int i = 0; i < len; ++i)
             {
-                str = QString::number(vector.at(i).fq) +
+                str = QString::number(vector.at(i).fq, 'f', 6) +
                 " " +//";" +
                 QString::number(vector.at(i).r,'f',2) +
                 " " +//";" +
@@ -2114,25 +2132,28 @@ void Measurements::importData(QString _name)
 
                             if ( (Z0<=0) || (Z0>10000) )
                             {
-                                bErr = true;
-                                break;
+                                //bErr = true;
+                                //break;
+                                return;
                             }
                         }
                         else
                         {
-                            bErr = true;
-                            break;
+                            //bErr = true;
+                            //break;
+                            return;
                         }
                     }
                     else
                     {
-                        bErr = true;
-                        break;
+                        //bErr = true;
+                        //break;
+                        return;
                     }
                 }
 
                 // Check possible combinations
-
+/*
                 if ( (iUnit == 1) && (iFormat == 1) ) // S, MA
                 {
                 }
@@ -2150,6 +2171,14 @@ void Measurements::importData(QString _name)
                 }
 
                 if (bErr == true)
+                {
+                    return;
+                }
+*/
+                if(! ((iUnit == 1) && (iFormat == 1) // S, MA
+                        || (iUnit == 1) && (iFormat == 2)  // S, RI
+                        || (iUnit == 2) && (iFormat == 2)  // Z, RI
+                    ))
                 {
                     return;
                 }
@@ -2219,7 +2248,8 @@ void Measurements::importData(QString _name)
         {
             return;
         }
-    }else if(_name.indexOf(".csv") >= 0 )
+    }
+    else if(_name.indexOf(".csv") >= 0 )
     {
         QStringList list;
         list = _name.split("/");
@@ -2240,7 +2270,7 @@ void Measurements::importData(QString _name)
             for(int i = 1; i < nList.length(); ++i)
             {
                 QStringList dList = nList.at(i).split(',');
-                if(dList.length() ==3)
+                if(dList.length() == 3)
                 {
                     rawData data;
                     data.fq = dList.at(0).toDouble();
@@ -2280,6 +2310,57 @@ void Measurements::importData(QString _name)
                     on_newData(data);
                 }
             }
+        }
+    } else if (_name.indexOf(".antdata") >= 0) {
+        QStringList list;
+        list = _name.split("/");
+        if(list.length() == 1)
+        {
+            list.clear();
+            list = _name.split("\\");
+        }
+        on_newMeasurement(list.last());
+
+        QFile file(_name);
+        bool result = file.open(QFile::ReadOnly);
+        QString strInstrument;
+        if(result)
+        {
+            QByteArray ar = file.readAll();
+            if (ar.size() < 4)
+                return; // empty file
+            const char* pData = ar.constData();
+            int comment = ar.indexOf(':');
+            if (comment > 0)
+            {
+                const char* pInstrument = pData+comment+1;
+                strInstrument = QString(pInstrument);
+                strInstrument.remove(";");
+            }
+            double minFq = 100000000000.0;
+            double maxFq = 0;
+            qint16 points = *(qint16*)pData;
+            points--;
+            qint32* p = (qint32*)(pData+6);
+            for (int idx=0; idx<points; idx++) {
+                rawData data_;
+                data_.fq = p[0] / 1000000.0;
+                minFq = qMin(minFq, data_.fq);
+                maxFq = qMax(maxFq, data_.fq);
+                double* pd = (double*)(p+1);
+                data_.r  = pd[0];
+                data_.x  = pd[1];
+                on_newData(data_);
+
+//                QString msg = QString("%1, %2, %3")
+//                        .arg(data_.fq, 0, 'f', 2)
+//                        .arg(data_.r, 0, 'f', 2)
+//                        .arg(data_.x, 0, 'f', 2)
+//                        ;
+//                qDebug() << msg;
+                p += 14;
+            }
+            // TODO rescale chart? (minFq, maxFq)
         }
     }
 }

@@ -31,6 +31,7 @@ signals:
     void itemDoubleClick(QString, QString, QString);
     void dialogClosed(void);
     void signalSaveFile(QString path);
+    void dataChanged(qint64 _center, qint64 _range, qint32 _dots);
 
 public slots:
     void on_analyzerDataStringArrived(QString str);

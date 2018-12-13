@@ -37,6 +37,9 @@ void AnalyzerData::on_listWidget_itemDoubleClicked(QListWidgetItem *item)
     QStringList list = str.split(",");
     QStringList list2 = list.at(3).split(":");
 
+    // center, range, dots
+    emit dataChanged(list[1].toULongLong(), list[2].toULongLong(), list2[0].toInt());
+    // index, dots, name
     emit itemDoubleClick(list.at(0), list2.at(0), list2.at(1));
     this->close();
 }
@@ -49,6 +52,9 @@ void AnalyzerData::on_buttonBox_accepted()
         QString str = list.at(0)->data(0).toString();
         QStringList list1 = str.split(",");
         QStringList list2 = list1.at(3).split(":");
+        // center, range, dots
+        emit dataChanged(list1[1].toULongLong(), list1[2].toULongLong(), list2[0].toInt());
+        // index, dots, name
         emit itemDoubleClick(list1.at(0), list2.at(0), list2.at(1));
     }
 }

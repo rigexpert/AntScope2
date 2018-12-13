@@ -6,6 +6,7 @@
 #include <analyzer/comanalyzer.h>
 #include <analyzer/hidanalyzer.h>
 #include <math.h>
+#include "analyzerparameters.h"
 
 #include <analyzer/analyzerparameters.h>
 #include <analyzer/updater/downloader.h>
@@ -103,7 +104,7 @@ public slots:
     void on_comAnalyzerFound (quint32 analyzerNumber);
     void on_comAnalyzerDisconnected ();
     void on_hidAnalyzerDisconnected ();
-    void on_measure (qint32 fqFrom, qint32 fqTo, qint32 dotsNumber);
+    void on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void on_newData(rawData _rawData);
     void on_analyzerDataStringArrived(QString str);
     void on_stopMeasuring();

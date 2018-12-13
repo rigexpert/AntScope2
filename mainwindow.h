@@ -182,7 +182,7 @@ private:
     QCustomPlot* getCurrentPlot();
 
 signals:
-    void measure(int,int,int);
+    void measure(qint64,qint64,int);
     void currentTab(QString);
     void focus(bool);
     void newCursorFq(double x, int number, int mouseX, int mouseY);
@@ -210,6 +210,7 @@ public slots:
     void on_pressCtrlPlus();
     void on_pressMinus();
     void on_pressCtrlMinus();
+    void on_pressCtrlZero();
     void on_pressLeft();
     void on_pressRight();
     void on_pressCtrlC();
@@ -276,6 +277,8 @@ private slots:
     void on_bandChanged(QString);
     void onSpinChanged(int value);
     void calibrationToggled(bool checked);
+    void on_dataChanged(qint64 _center, qint64 _range, qint32 _dots);
+    void onFullRange(bool);
 };
 
 
