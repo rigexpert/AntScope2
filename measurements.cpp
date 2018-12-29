@@ -218,46 +218,50 @@ void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint64 
 
 void Measurements::on_newMeasurement(QString name)
 {
-    if(m_graphBriefHintEnabled)
+    // name.isEmpty - singlePoint measurement
+    if (!name.isEmpty())
     {
-        m_graphBriefHint->show();
-    }
-    /*
-    m_tableNames.insert(0,name);
-    if(m_tableNames.length() == MAX_MEASUREMENTS+1)
-    {
-        m_tableNames.remove(MAX_MEASUREMENTS,1);
-    }
-    */
-    m_tableNames.append(name);
-    if(m_tableNames.length() == MAX_MEASUREMENTS+1)
-    {
-        m_tableNames.remove(0,1);
-    }
-    if(m_tableNames.length() > m_tableWidget->rowCount())
-    {
-        m_tableWidget->setRowCount(m_tableNames.length());
-    }
-    for(int i = 0; i < m_tableNames.length(); ++i)
-    {
-        QTableWidgetItem *item = m_tableWidget->item(i,0);
-        if(item == NULL)
+        if(m_graphBriefHintEnabled)
         {
-            item = new QTableWidgetItem();
-            QString str = m_tableNames.at(i);
-            item->setText(str);
-            m_tableWidget->setItem(i,0, item);
-        }else
-        {
-            QString str = m_tableNames.at(i);
-            item->setText(str);
+            m_graphBriefHint->show();
         }
-    }
+        /*
+        m_tableNames.insert(0,name);
+        if(m_tableNames.length() == MAX_MEASUREMENTS+1)
+        {
+            m_tableNames.remove(MAX_MEASUREMENTS,1);
+        }
+        */
+        m_tableNames.append(name);
+        if(m_tableNames.length() == MAX_MEASUREMENTS+1)
+        {
+            m_tableNames.remove(0,1);
+        }
+        if(m_tableNames.length() > m_tableWidget->rowCount())
+        {
+            m_tableWidget->setRowCount(m_tableNames.length());
+        }
+        for(int i = 0; i < m_tableNames.length(); ++i)
+        {
+            QTableWidgetItem *item = m_tableWidget->item(i,0);
+            if(item == NULL)
+            {
+                item = new QTableWidgetItem();
+                QString str = m_tableNames.at(i);
+                item->setText(str);
+                m_tableWidget->setItem(i,0, item);
+            }else
+            {
+                QString str = m_tableNames.at(i);
+                item->setText(str);
+            }
+        }
 
-    m_tableWidget->reset();
-    QModelIndex myIndex = m_tableWidget->model()->index( m_tableNames.size()-1, 0, QModelIndex());
-    m_tableWidget->selectionModel()->select(myIndex,QItemSelectionModel::Select);
-    m_tableWidget->scrollToBottom();
+        m_tableWidget->reset();
+        QModelIndex myIndex = m_tableWidget->model()->index( m_tableNames.size()-1, 0, QModelIndex());
+        m_tableWidget->selectionModel()->select(myIndex,QItemSelectionModel::Select);
+        m_tableWidget->scrollToBottom();
+    }
 
     if(m_measurements.length() == MAX_MEASUREMENTS)
     {
@@ -599,9 +603,6 @@ void Measurements::on_newData(rawData _rawData)
 
             if (!res)
             {
-                qDebug() << "Interpolation Error";
-                //on_redrawGraphs();
-                //return;
                 SOR =  1; SOI = 0; // Ideal model
                 SSR = -1; SSI = 0;
                 SLR =  0; SLI = 0;
@@ -1835,13 +1836,18 @@ void Measurements::loadData(QString path)
 
         QJsonArray measureArray = mainObj["Measurements"].toArray();
 
+        double fqMin = DBL_MAX;
+        double fqMax = 0;
         for(int i = 0; i < measureArray.size(); ++i)
         {
             QJsonObject dataObject = measureArray[i].toObject();
             rawData data;
             data.read(dataObject);
             on_newData(data);
+            fqMin = qMin(fqMin, data.fq);
+            fqMax = qMax(fqMax, data.fq);
         }
+        emit import_finished(fqMin*1000, fqMax*1000);
     }else
     {
         importData(path);
@@ -1963,7 +1969,7 @@ void Measurements::exportData(QString _name, int _type, int _number)
         bool result = file.open(QFile::ReadWrite);
         if(result)
         {
-            str = "Frequency;R;X";
+            str = "Frequency(MHz);R;X";
             file.write( str.toLocal8Bit(), str.length());
             file.write("\r\n", 2);
 
@@ -1998,7 +2004,7 @@ void Measurements::exportData(QString _name, int _type, int _number)
         bool result = file.open(QFile::ReadWrite);
         if(result)
         {
-            str = "/\"Freq(kHz)\" \"Rs\" \"Xs\"/";
+            str = "/\"Freq(MHz)\" \"Rs\" \"Xs\"/";
             file.write( str.toLocal8Bit(), str.length());
             file.write("\r\n", 2);
 
@@ -2071,6 +2077,8 @@ void Measurements::importData(QString _name)
 
         double Z0 = 50;
 
+        double fqMin = DBL_MAX;
+        double fqMax = 0;
         do//while (ifs.isOpen() && (!ifs.eof()))
         {
             line = in.readLine();
@@ -2238,10 +2246,13 @@ void Measurements::importData(QString _name)
             data.x =x*(Z0);
             on_newData(data);
             iPoints++;
+            fqMin = qMin(fqMin, data.fq);
+            fqMax = qMax(fqMax, data.fq);
         }while (!line.isNull());
+        emit import_finished(fqMin*1000, fqMax*1000);
 
         if (bGood && (iPoints>1) )
-        {
+        {            
             return;
         }
         else
@@ -2265,20 +2276,49 @@ void Measurements::importData(QString _name)
         if(result)
         {
             QString str = file.readAll();
-
+            double fqMin = DBL_MAX;
+            double fqMax = 0;
             QStringList nList = str.split('\n');
+
+            double mul=1.0;
+            QString strFQ = nList.at(0);
+            if (strFQ.contains("kHz", Qt::CaseInsensitive))
+                mul = 0.001;
+            else if (strFQ.contains("MHz", Qt::CaseInsensitive))
+                mul = 1;
+            else if (strFQ.contains("GHz", Qt::CaseInsensitive))
+                mul = 1000;
+            else if (strFQ.contains("Hz", Qt::CaseInsensitive))
+                mul = 0.000001;
+            else {
+                QStringList dList = strFQ.split(',');
+                if(dList.length() == 3)
+                {
+                    rawData data;
+                    data.fq = dList.at(0).toDouble()*mul;
+                    data.r = dList.at(1).toDouble();
+                    data.x = dList.at(2).toDouble();
+                    on_newData(data);
+                    fqMin = qMin(fqMin, data.fq);
+                    fqMax = qMax(fqMax, data.fq);
+                }
+
+            }
             for(int i = 1; i < nList.length(); ++i)
             {
                 QStringList dList = nList.at(i).split(',');
                 if(dList.length() == 3)
                 {
                     rawData data;
-                    data.fq = dList.at(0).toDouble();
+                    data.fq = dList.at(0).toDouble()*mul;
                     data.r = dList.at(1).toDouble();
                     data.x = dList.at(2).toDouble();
                     on_newData(data);
+                    fqMin = qMin(fqMin, data.fq);
+                    fqMax = qMax(fqMax, data.fq);
                 }
             }
+            emit import_finished(fqMin*1000, fqMax*1000);
         }
     }else if(_name.indexOf(".nwl") >= 0 )
     {
@@ -2297,19 +2337,36 @@ void Measurements::importData(QString _name)
         {
             QString str = file.readAll();
 
+            double fqMin = DBL_MAX;
+            double fqMax = 0;
             QStringList nList = str.split('\n');
+
+            double mul=1.0;
+            QString strFQ = nList.at(0);
+            if (strFQ.contains("kHz", Qt::CaseInsensitive))
+                mul = 0.001;
+            else if (strFQ.contains("MHz", Qt::CaseInsensitive))
+                mul = 1;
+            else if (strFQ.contains("GHz", Qt::CaseInsensitive))
+                mul = 1000;
+            else if (strFQ.contains("Hz", Qt::CaseInsensitive))
+                mul = 0.000001;
+
             for(int i = 1; i < nList.length(); ++i)
             {
                 QStringList dList = nList.at(i).split(' ');
                 if(dList.length() ==3)
                 {
                     rawData data;
-                    data.fq = dList.at(0).toDouble();
+                    data.fq = dList.at(0).toDouble()*mul;
                     data.r = dList.at(1).toDouble();
                     data.x = dList.at(2).toDouble();
                     on_newData(data);
+                    fqMin = qMin(fqMin, data.fq);
+                    fqMax = qMax(fqMax, data.fq);
                 }
             }
+            emit import_finished(fqMin*1000, fqMax*1000);
         }
     } else if (_name.indexOf(".antdata") >= 0) {
         QStringList list;
@@ -2337,7 +2394,7 @@ void Measurements::importData(QString _name)
                 strInstrument = QString(pInstrument);
                 strInstrument.remove(";");
             }
-            double minFq = 100000000000.0;
+            double minFq = DBL_MAX;
             double maxFq = 0;
             qint16 points = *(qint16*)pData;
             points--;
@@ -2352,15 +2409,9 @@ void Measurements::importData(QString _name)
                 data_.x  = pd[1];
                 on_newData(data_);
 
-//                QString msg = QString("%1, %2, %3")
-//                        .arg(data_.fq, 0, 'f', 2)
-//                        .arg(data_.r, 0, 'f', 2)
-//                        .arg(data_.x, 0, 'f', 2)
-//                        ;
-//                qDebug() << msg;
                 p += 14;
             }
-            // TODO rescale chart? (minFq, maxFq)
+            emit import_finished(minFq*1000, maxFq*1000);
         }
     }
 }
@@ -2577,7 +2628,6 @@ void Measurements::on_changeMeasureSystemMetric (bool state)
 {
     m_measureSystemMetric = state;
     int count = m_tdrWidget->graphCount();
-    qDebug() << "Measurements::on_changeMeasureSystemMetric " << count;
     if(m_tdrWidget->graphCount()>2)
     {
         if(m_measureSystemMetric)

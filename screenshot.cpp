@@ -183,6 +183,11 @@ void Screenshot::on_newData(QByteArray data)
             int green = (data>>5)&0x3F;
             int blue = (data>>11)&0x1F;
 
+            if (model == "AA-230 ZOOM") {
+                int tmp = red;
+                red = blue;
+                blue = tmp;
+            }
             red = (red<<3) + ( (red&0x10) ? 0x07 : 0 );
             green = (green<<2) + ( (green&0x20) ? 0x03 : 0 );
             blue = (blue<<3)+ ( (blue&0x10) ? 0x07 : 0 );

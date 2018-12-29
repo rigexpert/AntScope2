@@ -245,6 +245,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(newCursorSmithPos(double, double, int)), m_measurements,SLOT(on_newCursorSmithPos(double, double, int)));
     connect(this, SIGNAL(mainWindowPos(int,int)), m_measurements,SLOT(on_mainWindowPos(int,int)));
     connect(m_measurements, SIGNAL(calibrationChanged()), this,SLOT(on_calibrationChanged()));
+    connect(m_measurements, &Measurements::import_finished, this, &MainWindow::on_importFinished);
 
     QString name = "AntScope2 v." + QString(ANTSCOPE2VER);
     name += tr(" - Analyzer not connected");
@@ -641,7 +642,7 @@ void MainWindow::setWidgetsSettings()
     m_swrWidget->yAxis->setLabel(tr("SWR"));
     m_swrWidget->xAxis->setRange(0,1400000);
     m_swrWidget->yAxis->setRangeMin(1);
-
+    m_swrWidget->yAxis->setRangeMax(MAX_SWR);
     m_swrWidget->yAxis->setRange(1, m_swrZoomState+0.2);
 
      //| Qt::Vertical | Qt::Horizontal
@@ -2781,7 +2782,7 @@ void MainWindow::on_exportBtn_clicked()
 
 void MainWindow::on_analyzerDataBtn_clicked()
 {
-    m_analyzerData = new AnalyzerData(this);
+    m_analyzerData = new AnalyzerData(m_analyzer->getModel(), this);
     m_analyzerData->setAttribute(Qt::WA_DeleteOnClose);
     m_analyzer->getAnalyzerData();
     connect(m_analyzer,SIGNAL(analyzerDataStringArrived(QString)),m_analyzerData,SLOT(on_analyzerDataStringArrived(QString)));
@@ -3080,6 +3081,8 @@ void MainWindow::on_measurementComplete()
         ui->singleStart->setChecked(false);
         ui->measurmentsDeleteBtn->setEnabled(true);
         ui->measurmentsClearBtn->setEnabled(true);
+        ui->exportBtn->setEnabled(true);
+        ui->measurmentsSaveBtn->setEnabled(true);
         m_analyzer->setContinuos(false);
         PopUpIndicator::setIndicatorVisible(false);
     }
@@ -3250,14 +3253,15 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
 
     if(ui->tableWidget_measurments->rowCount() == 0)
     {
-        m_settings->beginGroup("MainWindow");
-        qint64 from = m_settings->value("rangeLower",0).toULongLong();
-        qint64 to =  m_settings->value("rangeUpper",1400000).toULongLong();
-        qint32 dots = m_settings->value("dotsNumber", 50).toInt();
-        m_settings->endGroup();
+//        m_settings->beginGroup("MainWindow");
+//        qint64 from = m_settings->value("rangeLower",0).toULongLong();
+//        qint64 to =  m_settings->value("rangeUpper",1400000).toULongLong();
+//        qint32 dots = m_settings->value("dotsNumber", 50).toInt();
+//        m_settings->endGroup();
 
-        qint64 range = (to - from);
-        on_dataChanged(from + range/2, range, dots);
+//        qint64 range = (to - from);
+//        on_dataChanged(from + range/2, range, dots);
+        onFullRange(true);
 
         ui->measurmentsSaveBtn->setEnabled(false);
         ui->measurmentsDeleteBtn->setEnabled(false);
@@ -3286,14 +3290,15 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
         m_measurements->deleteRow(rowNumber);
     }
 
-    m_settings->beginGroup("MainWindow");
-    qint64 from = m_settings->value("rangeLower",0).toULongLong();
-    qint64 to =  m_settings->value("rangeUpper",1400000).toULongLong();
-    qint32 dots = m_settings->value("dotsNumber", 50).toInt();
-    m_settings->endGroup();
+//    m_settings->beginGroup("MainWindow");
+//    qint64 from = m_settings->value("rangeLower",0).toULongLong();
+//    qint64 to =  m_settings->value("rangeUpper",1400000).toULongLong();
+//    qint32 dots = m_settings->value("dotsNumber", 50).toInt();
+//    m_settings->endGroup();
 
-    qint64 range = (to - from);
-    on_dataChanged(from + range/2, range, dots);
+//    qint64 range = (to - from);
+//    on_dataChanged(from + range/2, range, dots);
+    onFullRange(true);
 
     if(ui->tableWidget_measurments->rowCount() == 0)
     {
@@ -4204,20 +4209,33 @@ void MainWindow::calibrationToggled(bool checked)
     }
 }
 
-void MainWindow::on_dataChanged(qint64 _center, qint64 _range, qint32 _dots)
+void MainWindow::on_dataChanged(qint64 _center_khz, qint64 _range_khz, qint32 _dots)
 {
     ui->spinBoxPoints->setValue(_dots);
     if (m_isRange) {
-        ui->lineEdit_fqFrom->setText(QString::number(_center));
-        ui->lineEdit_fqTo->setText(QString::number(_range/2));
+        ui->lineEdit_fqFrom->setText(QString::number(_center_khz));
+        ui->lineEdit_fqTo->setText(QString::number(_range_khz/2));
     } else {
-        ui->lineEdit_fqFrom->setText(QString::number(_center - _range/2));
-        ui->lineEdit_fqTo->setText(QString::number(_center + _range/2));
+        ui->lineEdit_fqFrom->setText(QString::number(_center_khz - _range_khz/2));
+        ui->lineEdit_fqTo->setText(QString::number(_center_khz + _range_khz/2));
     }
     on_lineEdit_fqTo_editingFinished();
     on_lineEdit_fqFrom_editingFinished();
 }
 
+
+void MainWindow::on_importFinished(double _fqMin_khz, double _fqMax_khz)
+{
+    qint64 _range = (qint64)(_fqMax_khz - _fqMin_khz);
+    qint64 _center = (qint64)(_fqMin_khz + _range / 2);
+    on_dataChanged(_center, _range, ui->spinBoxPoints->value());
+
+    ui->measurmentsSaveBtn->setEnabled(true);
+    ui->exportBtn->setEnabled(true);
+    ui->measurmentsDeleteBtn->setEnabled(true);
+    ui->measurmentsClearBtn->setEnabled(true);
+
+}
 
 QString appendSpaces(const QString& str) {
     QString tmp;

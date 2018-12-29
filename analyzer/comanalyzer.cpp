@@ -241,11 +241,9 @@ qint32 comAnalyzer::parse (QByteArray arr)
             if(m_parseState == VER)
             {
                 if (str.indexOf("MAC\t") == 0) {
-                    qDebug() << "FULLINFO: " << str;
                     emit signalFullInfo(str);
                     continue;
                 } else if (str.indexOf("SN\t") == 0) {
-                    qDebug() << "FULLINFO: " << str;
                     emit signalFullInfo(str);
                     continue;
                 }
@@ -544,45 +542,8 @@ void comAnalyzer::timeoutChart()
     if(len >=1)
     {
         str = m_stringList.takeFirst();
-/*
-        QString tempString;
-        for(qint32 i = 0; i < str.length(); ++i)
-        {
-            if(str.at(i) == ',')
-            {
-                stringList.append(tempString);
-                tempString.clear();
-            }else
-            {
-                tempString.append(str.at(i));
-            }
-            if(i == str.length()-1)
-            {
-                stringList.append(tempString);
-                tempString.clear();
-            }
-        }
-*/
+        //qDebug() << str;
         stringList = str.split(',');
-
-
-/*
-        while(stringList.length() >= 3)
-        {
-            rawData data;
-            str = stringList.takeFirst();
-            data.fq = str.toDouble(0);
-
-            str = stringList.takeFirst();
-            data.r = str.toDouble(0);
-
-            str = stringList.takeFirst();
-            data.x = str.toDouble(0);
-
-            qDebug() << QString("  comAnalyzer::timeoutChart() emit newData(data)") ;
-            emit newData(data);
-        }
-*/
         int count = (stringList.size() / 3) * 3;
         for (int idx=0; idx<count; idx+=3)
         {

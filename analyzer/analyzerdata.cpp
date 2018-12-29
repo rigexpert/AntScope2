@@ -6,10 +6,10 @@
 #include <iostream>
 
 
-AnalyzerData::AnalyzerData(QWidget *parent) :
+AnalyzerData::AnalyzerData(int _model, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AnalyzerData),
-    m_isSelected(false),
+    m_isSelected(false), m_model(_model),
     progressDialog(nullptr)
 {
     ui->setupUi(this);
@@ -37,8 +37,12 @@ void AnalyzerData::on_listWidget_itemDoubleClicked(QListWidgetItem *item)
     QStringList list = str.split(",");
     QStringList list2 = list.at(3).split(":");
 
+    int div = 1000;
+    QString model = names[m_model];
+    if (model == "AA-170")
+        div = 1;
     // center, range, dots
-    emit dataChanged(list[1].toULongLong(), list[2].toULongLong(), list2[0].toInt());
+    emit dataChanged(list[1].toULongLong()/div, list[2].toULongLong()/div, list2[0].toInt());
     // index, dots, name
     emit itemDoubleClick(list.at(0), list2.at(0), list2.at(1));
     this->close();
@@ -52,8 +56,12 @@ void AnalyzerData::on_buttonBox_accepted()
         QString str = list.at(0)->data(0).toString();
         QStringList list1 = str.split(",");
         QStringList list2 = list1.at(3).split(":");
+        int div = 1000;
+        QString model = names[m_model];
+        if (model == "AA-170")
+            div = 1;
         // center, range, dots
-        emit dataChanged(list1[1].toULongLong(), list1[2].toULongLong(), list2[0].toInt());
+        emit dataChanged(list1[1].toULongLong()/div, list1[2].toULongLong()/div, list2[0].toInt());
         // index, dots, name
         emit itemDoubleClick(list1.at(0), list2.at(0), list2.at(1));
     }

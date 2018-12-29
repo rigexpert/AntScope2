@@ -13,9 +13,10 @@ class AnalyzerData;
 class AnalyzerData : public QDialog
 {
     Q_OBJECT
+    int m_model;
 
 public:
-    explicit AnalyzerData(QWidget *parent = 0);
+    explicit AnalyzerData(int _model, QWidget *parent = 0);
     ~AnalyzerData();
 
 private:

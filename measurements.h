@@ -147,6 +147,7 @@ private:
     void calcFarEnd(void);
 signals:
     void calibrationChanged();
+    void import_finished(double _fqMin_khz, double _fqMax_khz);
 
 public slots:
     void on_newData(rawData _rawData);

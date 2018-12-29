@@ -1337,7 +1337,7 @@ Step response = %7
     <message>
       <location filename="settings.ui" line="1065"/>
       <source>Use customized analyzer</source>
-      <translation type="unfinished">Use customized analyzer</translation>
+      <translation>Застосовувати настроюваний аналізатор</translation>
     </message>
     <message>
       <location filename="settings.ui" line="1074"/>

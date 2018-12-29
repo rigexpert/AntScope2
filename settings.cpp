@@ -74,8 +74,14 @@ Settings::Settings(QWidget *parent) :
 
     CustomAnalyzer::load();
     //{
+    // TODO Bug #2247: update doesn't work from Antscope2
+    ui->tabWidget->removeTab(1);
+    //}
+
+    //{
     // TODO Analyzer customization is not fully implemented yet
-    ui->tabWidget->removeTab(4);
+    //ui->tabWidget->removeTab(4); // when Update table present
+    ui->tabWidget->removeTab(3); // when Update table absent
     //initCustomizeTab();
     //}
 

@@ -277,7 +277,8 @@ private slots:
     void on_bandChanged(QString);
     void onSpinChanged(int value);
     void calibrationToggled(bool checked);
-    void on_dataChanged(qint64 _center, qint64 _range, qint32 _dots);
+    void on_dataChanged(qint64 _center_khz, qint64 _range_khz, qint32 _dots);
+    void on_importFinished(double _fqMin, double _fqMax);
     void onFullRange(bool);
 };
 
