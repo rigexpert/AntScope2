@@ -19,7 +19,9 @@
 
 #define SPEEDOFLIGHT 299792458.0
 #define FEETINMETER 3.2808399
-
+#ifndef DBL_MAX
+#define DBL_MAX 1.797693134862315e+308
+#endif
 typedef std::complex <double> Complex;
 
 class Measurements : public QObject
