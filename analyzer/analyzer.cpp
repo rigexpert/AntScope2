@@ -83,6 +83,7 @@ void Analyzer::on_downloadInfoComplete()
         m_updateDialog->exec();
     }
 }
+
 void Analyzer::on_downloadFileComplete()
 {
     *m_pfw = m_downloader->file();
@@ -172,7 +173,8 @@ bool Analyzer::checkFile(QString path)
     if(((names[getAnalyzerModel()] == "AA-230 ZOOM" || prototype == "AA-230 ZOOM") && (magic == m_MAGICAA230Z)) ||
             ((names[getAnalyzerModel()] == "AA-55 ZOOM" || prototype == "AA-55 ZOOM") && (magic == m_MAGICHID)) ||
             ((names[getAnalyzerModel()] == "AA-35 ZOOM" || prototype == "AA-35 ZOOM") && (magic == m_MAGICHID)) ||
-            ((names[getAnalyzerModel()] == "AA-30 ZERO" || prototype == "AA-30 ZERO") && (magic == m_MAGICAA30ZERO)))
+            ((names[getAnalyzerModel()] == "AA-30 ZERO" || prototype == "AA-30 ZERO") && (magic == m_MAGICAA30ZERO)) ||
+            ((names[getAnalyzerModel()] == "AA-30.ZERO" || prototype == "AA-30.ZERO") && (magic == m_MAGICAA30ZERO)))
     {
     }else
     {
@@ -241,7 +243,29 @@ void Analyzer::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
     {
         m_isMeasuring = true;
         QDateTime datetime = QDateTime::currentDateTime();
-        emit newMeasurement(datetime.toString("dd.MM.yyyy-hh:mm:ss"));
+        emit newMeasurement(datetime.toString("##dd.MM.yyyy-hh:mm:ss"));
+        m_dotsNumber = dotsNumber;
+        m_chartCounter = 0;
+        if(m_comAnalyzerFound)
+        {
+            m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
+        }else if (m_hidAnalyzerFound)
+        {
+            m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
+        }
+        PopUpIndicator::setIndicatorVisible(true);
+    } else {
+        on_stopMeasure();
+    }
+}
+
+void Analyzer::on_measureContinuous(qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
+{
+    if(!m_isMeasuring)
+    {
+        m_isMeasuring = true;
+        //QThread::msleep(500);
+        emit continueMeasurement(fqFrom, fqTo, dotsNumber);
         m_dotsNumber = dotsNumber;
         m_chartCounter = 0;
         if(m_comAnalyzerFound)
@@ -472,6 +496,8 @@ void Analyzer::on_screenshotComplete(void)
 
 void Analyzer::on_updatePercentChanged(int number)
 {
+    if (m_updateDialog != nullptr)
+        m_updateDialog->on_percentChanged(number);
     emit updatePercentChanged(number);
 }
 
@@ -650,6 +676,17 @@ void Analyzer::slotFullInfo(QString str)
     if (list.size() < 2)
         return;
     m_mapFullInfo.insert(list[0], list[1]);
+}
+
+void Analyzer::searchAnalyzer()
+{
+    if (!isMeasuring())
+    {
+        if (m_hidAnalyzer != nullptr)
+            m_hidAnalyzer->searchAnalyzer(true);
+        if (m_comAnalyzer != nullptr)
+            m_comAnalyzer->searchAnalyzer();
+    }
 }
 
 

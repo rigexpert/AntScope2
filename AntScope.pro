@@ -9,11 +9,12 @@ QT       += printsupport
 QT       += serialport
 QT       += network
 QT       += xml
-QT       += quick
+#QT       += quick
+QT       += concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.11\\"'
+DEFINES += ANTSCOPE2VER='\\"1.0.12\\"'
 
 TARGET = AntScope2
 
@@ -21,7 +22,7 @@ TRANSLATIONS += QtLanguage.ts
 TRANSLATIONS += QtLanguage_uk.ts
 TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_ja.ts
-CODECFORSRC     = UTF-8
+CODECFORSRC   = UTF-8
 
 CONFIG -= debug
 CONFIG += release
@@ -72,7 +73,11 @@ SOURCES += main.cpp\
         updater.cpp \
         antscopeupdatedialog.cpp \
     popupindicator.cpp \
-    analyzer/customanalyzer.cpp
+    analyzer/customanalyzer.cpp \
+    analyzer/updater/aa30zerofirmwareupdater.cpp \
+    analyzer/updater/aa230firmwareupdater.cpp \
+    analyzer/updater/firmwareupdater.cpp \
+    analyzer/updater/hidfirmwareupdater.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -109,7 +114,11 @@ HEADERS  += mainwindow.h \
         antscopeupdatedialog.h \
     popupindicator.h \
     analyzer/customanalyzer.h \
-    fqinputvalidator.h
+    fqinputvalidator.h \
+    analyzer/updater/aa30zerofirmwareupdater.h \
+    analyzer/updater/aa230firmwareupdater.h \
+    analyzer/updater/firmwareupdater.h \
+    analyzer/updater/hidfirmwareupdater.h
 
 FORMS    += mainwindow.ui \
         analyzer/analyzerdata.ui \

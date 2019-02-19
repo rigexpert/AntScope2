@@ -58,6 +58,7 @@ public:
     static QString localDataPath(QString _fileName);
     static QString setIniFile();
 
+    void setFirmwareAutoUpdate(bool checked);
     void setAntScopeAutoUpdate(bool checked);
     void setAntScopeVersion(QString version);
     void setAutoDetectMode(bool state, QString portName);
@@ -125,6 +126,7 @@ signals:
     void Z0Changed(double);
 
     void cableActionChanged(int);
+    void firmwareAutoUpdateStateChanged(bool);
     void antScopeAutoUpdateStateChanged(bool);
 
     void changedAutoDetectMode(bool);
@@ -163,6 +165,7 @@ private slots:
     void on_aa30updateComplete();
     void on_graphBriefHintCheckBox_clicked(bool checked);
 
+    void on_autoUpdatesCheckBox(bool checked);
     void on_checkBox_AntScopeAutoUpdate_clicked(bool checked);
     void on_autoDetect_clicked(bool checked);
     void on_manualDetect_clicked(bool checked);

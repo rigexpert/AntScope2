@@ -1,16 +1,32 @@
 #include "hidanalyzer.h"
 #include "customanalyzer.h"
+#include <QtConcurrent/QtConcurrentRun>
+#include <QThread>
+
+
+QString hidError(hid_device* _device)
+{
+    const wchar_t* perr;
+    perr = hid_error(_device);
+    return QString::fromWCharArray(perr);
+}
 
 hidAnalyzer::hidAnalyzer(QObject *parent) : QObject(parent),
       m_parseState(1),
       m_analyzerModel(0),
-      m_chartTimer(NULL),
+      m_chartTimer(nullptr),
       m_ok(false),
       m_isMeasuring(false),
+      m_isContinuos(false),
       m_analyzerPresent(false),
-      m_bootMode(false)
+      m_bootMode(false),
+      m_devices(nullptr),
+      m_futureRefresh(nullptr),
+      m_watcherRefresh(nullptr)
 {
-    m_hidDevice = NULL;
+    qDebug() << "hidAnalyzer::ctor";
+
+    m_hidDevice = nullptr;
     m_checkTimer = new QTimer(this);
     QObject::connect(m_checkTimer, SIGNAL(timeout()), this, SLOT(checkTimerTick()));
     m_checkTimer->start(1000);
@@ -25,33 +41,80 @@ hidAnalyzer::hidAnalyzer(QObject *parent) : QObject(parent),
     m_hidReadTimer = new QTimer(this);
     QObject::connect(m_hidReadTimer, SIGNAL(timeout()), this, SLOT(hidRead()));
     m_hidReadTimer->start(1);
+
+    QTimer::singleShot(1000, this, &hidAnalyzer::startResresh);
 }
+
+#if 0
+void hidAnalyzer::startResresh()
+{
+    qDebug() << "hidAnalyzer::startResresh()";
+    if (future != nullptr) {
+        watcher->disconnect();
+        delete watcher;
+        delete future;
+        watcher = nullptr;
+        future = nullptr;
+    }
+    future = new QFuture<struct hid_device_info*>;
+    watcher = new QFutureWatcher<struct hid_device_info*>;
+
+    QObject::connect(watcher, SIGNAL(finished()), this, SLOT(refreshReady()));
+
+    *future = QtConcurrent::run(this, &hidAnalyzer::refreshThreadStarted, this);
+    watcher->setFuture(*future);
+}
+#endif
+void hidAnalyzer::startResresh()
+{
+    //qDebug() << "hidAnalyzer::startResresh()";
+    if (m_futureRefresh == nullptr) {
+        m_futureRefresh = new QFuture<struct hid_device_info*>;
+        m_watcherRefresh = new QFutureWatcher<struct hid_device_info*>;
+        QObject::connect(m_watcherRefresh, SIGNAL(finished()), this, SLOT(refreshReady()));
+    }
+
+    *m_futureRefresh = QtConcurrent::run(this, &hidAnalyzer::refreshThreadStarted);
+    m_watcherRefresh->setFuture(*m_futureRefresh);
+}
+
+
+
 
 hidAnalyzer::~hidAnalyzer()
 {
-    if(m_checkTimer != NULL)
+    if (m_devices != nullptr) {
+        hid_free_enumeration(m_devices);
+        m_devices = nullptr;
+    }
+    delete m_futureRefresh;
+    m_futureRefresh = nullptr;
+    delete m_watcherRefresh;
+    m_watcherRefresh = nullptr;
+
+    if(m_checkTimer != nullptr)
     {
         m_checkTimer->stop();
         delete m_checkTimer;
-        m_checkTimer = NULL;
+        m_checkTimer = nullptr;
     }
-    if(m_chartTimer != NULL)
+    if(m_chartTimer != nullptr)
     {
         m_chartTimer->stop();
         delete m_chartTimer;
-        m_chartTimer = NULL;
+        m_chartTimer = nullptr;
     }
-    if(m_sendTimer != NULL)
+    if(m_sendTimer != nullptr)
     {
         m_sendTimer->stop();
         delete m_sendTimer;
-        m_sendTimer = NULL;
+        m_sendTimer = nullptr;
     }
-    if(m_hidReadTimer != NULL)
+    if(m_hidReadTimer != nullptr)
     {
         m_hidReadTimer->stop();
         delete m_hidReadTimer;
-        m_hidReadTimer = NULL;
+        m_hidReadTimer = nullptr;
     }
     disconnect();
 }
@@ -83,11 +146,21 @@ void hidAnalyzer::nonblocking (int nonblock)
 
 bool hidAnalyzer::searchAnalyzer(bool arrival)
 {
+    //qDebug() << "hidAnalyzer::searchAnalyzer";
     bool result = false;
     if(arrival)//add device
     {
         struct hid_device_info *devs, *cur_dev;
-        devs = hid_enumerate(0x0, 0x0);
+
+        QMutexLocker locker(&m_mutex);
+        qint64 t0 = QDateTime::currentMSecsSinceEpoch();
+        //devs = hid_enumerate(0x0, 0x0);
+        devs = m_devices;
+        if (devs == nullptr)
+            return false;
+
+        qint64 t1 = QDateTime::currentMSecsSinceEpoch();
+        //qDebug() << "hidAnalyzer::searchAnalyzer: arrival " << (t1-t0) << " ms";
         cur_dev = devs;
 
         for(int i = 0; i < 100; i++)
@@ -160,6 +233,25 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                         }
                     }
                     break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA2000)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-2000")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
                 }
             }else if((cur_dev->vendor_id == RE_BOOT_VID) && (cur_dev->product_id == RE_BOOT_PID))
             {
@@ -196,17 +288,40 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                         }
                     }
                     break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_AA2000))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-2000")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
                 }
             }
             cur_dev = cur_dev->next;
-        }
-        hid_free_enumeration(devs);
+        }        
+        //hid_free_enumeration(devs);
         return result;
     }else//delete device
     {
         struct hid_device_info *devs, *cur_dev;
 
-        devs = hid_enumerate(0x0, 0x0);
+        qint64 t0 = QDateTime::currentMSecsSinceEpoch();
+        QMutexLocker loacker(&m_mutex);
+        //devs = hid_enumerate(0x0, 0x0);
+        devs = m_devices;
+        if (devs == nullptr)
+            return false;
+
+        qint64 t1 = QDateTime::currentMSecsSinceEpoch();
+        //qDebug() << "hidAnalyzer::searchAnalyzer: delete " << (t1-t0) << " ms";
+
         cur_dev = devs;
 
         bool result = true;
@@ -235,14 +350,14 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
             emit analyzerDisconnected();
             disconnect();
         }
-        hid_free_enumeration(devs);
+        //hid_free_enumeration(devs);
         return false;
     }
 }
 
 bool hidAnalyzer::connect(quint32 vid, quint32 pid)
 {
-    if(m_hidDevice != NULL)
+    if(m_hidDevice != nullptr)
     {
         return false;
     }
@@ -252,7 +367,7 @@ bool hidAnalyzer::connect(quint32 vid, quint32 pid)
     serial[m_serialNumber.length()] = 0;
     m_hidDevice = hid_open(vid, pid, serial);//m_hidDevice = hid_open(RE_VID, RE_PID, serial);
 
-    if(m_hidDevice != NULL)
+    if(m_hidDevice != nullptr)
     {
         hid_set_nonblocking(m_hidDevice, 1);
         m_parseState = VER;
@@ -268,10 +383,10 @@ bool hidAnalyzer::connect(quint32 vid, quint32 pid)
 
 bool hidAnalyzer::disconnect(void)
 {
-    if(m_hidDevice != NULL)
+    if(m_hidDevice != nullptr)
     {
         hid_close(m_hidDevice);
-        m_hidDevice = NULL;
+        m_hidDevice = nullptr;
         return true;
     }
     else
@@ -285,6 +400,7 @@ void hidAnalyzer::checkTimerTick ()
     if(!m_isMeasuring)
     {
         searchAnalyzer((bool)!m_analyzerModel);
+        //startResresh();
     }
 }
 
@@ -300,7 +416,7 @@ void hidAnalyzer::on_measurementComplete()
 
 void hidAnalyzer::sendData(QString data)
 {
-    if(m_hidDevice == NULL)
+    if(m_hidDevice == nullptr)
     {
         return;
     }
@@ -327,7 +443,6 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
 
     qint64 center;
     qint64 band;
-
 
     if(dotsNumber > 0)
     {
@@ -359,6 +474,7 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
     case 2:
         if(m_ok)
         {
+            m_isMeasuring = true;
             m_ok = false;
             sendData(SW);
             state++;
@@ -367,6 +483,7 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
     case 3:
         if(m_ok)
         {
+            m_isMeasuring = true;
             m_ok = false;
             sendData(FRX);
             state = 1;
@@ -435,7 +552,7 @@ void hidAnalyzer::timeoutChart()
 
 void hidAnalyzer::hidRead (void)
 {
-    if(m_hidDevice == NULL)
+    if(m_hidDevice == nullptr)
     {
         return;
     }
@@ -499,8 +616,14 @@ qint32 hidAnalyzer::parse (QByteArray arr)
         for(int i = 0; i < stringList.length(); ++i)
         {
             QString str = stringList.at(i);
-            int r = str.indexOf('\r');
-            if(r)
+//            int r = str.indexOf('\r');
+//            if(r != -1)
+//            {
+//                str.remove(r,1);
+//                retVal++;
+//            }
+            int r = -1;
+            while ((r=str.indexOf('\r')) != -1)
             {
                 str.remove(r,1);
                 retVal++;
@@ -633,6 +756,13 @@ bool hidAnalyzer::waitAnswer()
     return false;
 }
 
+void hidAnalyzer::preUpdate ()
+{
+    hid_close(m_hidDevice);
+    m_hidDevice = nullptr;
+    searchAnalyzer(true);
+}
+
 bool hidAnalyzer::update (QIODevice *fw)
 {
     m_hidReadTimer->stop();
@@ -645,6 +775,11 @@ bool hidAnalyzer::update (QIODevice *fw)
         buff[0] = 1;
         memcpy(&buff[1], "RESET", strlen("RESET"));
         hid_write(m_hidDevice, buff, sizeof(buff));
+        qDebug() << "RESET: " << hidError(m_hidDevice);
+
+        QTimer::singleShot(5000, this, [this]() {
+            this->preUpdate();
+        });
         while(1)//for(int i = 0; i < 565535; ++i)
         {
             if(m_bootMode)
@@ -653,7 +788,7 @@ bool hidAnalyzer::update (QIODevice *fw)
         }
         if(!m_bootMode)
         {
-            QMessageBox::warning(NULL,tr("Warning"),tr("Can't enter to boot mode!"));
+            QMessageBox::warning(nullptr,tr("Warning"),tr("Can't enter to boot mode!"));
             return false;
         }
     }
@@ -688,6 +823,8 @@ bool hidAnalyzer::update (QIODevice *fw)
 
         if (hret <= 0)
         {
+            QString err = hidError(m_hidDevice);
+            qDebug() << err;
             return false;
             break;
         }
@@ -729,12 +866,13 @@ bool hidAnalyzer::update (QIODevice *fw)
             memset(buff, 0, sizeof(buff));
             buff[1] = BL_CMD_START;
             hid_write(m_hidDevice, buff, sizeof(buff));
-            QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
+            QMessageBox::information(nullptr,tr("Finish"),tr("Successfully updated!"));
         }else
         {
-            QMessageBox::warning(NULL,tr("Warning"),tr("Update failed!"));
+            QMessageBox::warning(nullptr,tr("Warning"),tr("Update failed!"));
         }
     }
+    preUpdate();
     m_hidReadTimer->start(1);
     return res;
 }
@@ -743,4 +881,34 @@ void hidAnalyzer::stopMeasure()
 {
     sendData("off\r");
     m_isMeasuring = false;
+}
+
+void hidAnalyzer::setIsMeasuring (bool isMeasuring)
+{
+    m_isMeasuring = isMeasuring;
+}
+
+struct hid_device_info* hidAnalyzer::refreshThreadStarted()
+{
+    //qDebug() << "hidAnalyzer::refreshThreadStarted";
+    qint64 t0 = QDateTime::currentMSecsSinceEpoch();
+    struct hid_device_info *devs = hid_enumerate(0x0, 0x0);
+    qint64 t1 = QDateTime::currentMSecsSinceEpoch();
+
+    //qDebug() << "hidAnalyzer::refreshThreadStarted " << (t1 - t0);
+
+    return devs;
+}
+
+void hidAnalyzer::refreshReady()
+{
+    //qDebug() << "hidAnalyzer::refreshReady()";
+    QTimer::singleShot(1000, this, &hidAnalyzer::startResresh);
+
+    struct hid_device_info* devs = m_futureRefresh->result();
+    QMutexLocker locker(&m_mutex);
+    if (m_devices != nullptr) {
+        hid_free_enumeration(m_devices);
+    }
+    m_devices = devs;
 }

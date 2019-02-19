@@ -4,6 +4,7 @@
 #include "analyzer/customanalyzer.h"
 
 extern QString appendSpaces(const QString& number);
+extern bool g_noRestrictScale; // see main.cpp
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -155,6 +156,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_analyzer,SIGNAL(analyzerFound(QString)),this,SLOT(on_analyzerFound(QString)));
     connect(m_analyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_analyzerDisconnected()));
     connect(this,SIGNAL(measure(qint64,qint64,int)),m_analyzer,SLOT(on_measure(qint64,qint64,int)));
+    connect(this,SIGNAL(measureContinuous(qint64,qint64,int)),m_analyzer,SLOT(on_measureContinuous(qint64,qint64,int)));
     connect(m_analyzer,SIGNAL(measurementComplete()),this,SLOT(on_measurementComplete()), Qt::QueuedConnection);
     connect(this,SIGNAL(stopMeasure()), m_analyzer, SLOT(on_stopMeasure()));
 
@@ -239,6 +241,7 @@ MainWindow::MainWindow(QWidget *parent) :
                                ui->tableWidget_measurments);
     connect(m_analyzer, SIGNAL(newData(rawData)), m_measurements, SLOT(on_newData(rawData)));
     connect(m_analyzer, SIGNAL(newMeasurement(QString)), m_measurements, SLOT(on_newMeasurement(QString)));
+    connect(m_analyzer, SIGNAL(continueMeasurement(qint64, qint64, qint32)), m_measurements, SLOT(on_continueMeasurement(qint64, qint64, qint32)));
     connect(this, SIGNAL(currentTab(QString)), m_measurements, SLOT(on_currentTab(QString)));
     connect(this, SIGNAL(focus(bool)), m_measurements,SLOT(on_focus(bool)));
     connect(this, SIGNAL(newCursorFq(double, int, int, int)), m_measurements,SLOT(on_newCursorFq(double, int, int, int)));
@@ -357,6 +360,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->spinBoxPoints, SIGNAL(valueChanged(int)), this, SLOT(onSpinChanged(int)));
     connect(ui->fullBtn, &QPushButton::clicked, this, &MainWindow::onFullRange);
 
+    m_autoFirmwareUpdateEnabled = m_settings->value("autoFirmwareUpdate", true).toBool();
     m_autoUpdateEnabled = m_settings->value("autoUpdate", true).toBool();
     m_autoDetectMode = m_settings->value("autoDetectMode",true).toBool();
     m_serialPort = m_settings->value("serialPort","").toString();
@@ -409,8 +413,7 @@ MainWindow::MainWindow(QWidget *parent) :
     emit currentTab (str);
     QTimer::singleShot(100, this, SLOT(updateGraph()));
 
-#ifdef Q_OS_WIN
-
+//#ifdef Q_OS_WIN
     m_updater = new Updater();
     connect(m_updater,SIGNAL(newVersionAvailable()), this, SLOT(on_newVersionAvailable()));
     connect(m_updater,SIGNAL(progress(int)), this, SIGNAL(updateProgress(int)));
@@ -418,7 +421,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         QTimer::singleShot(1000, m_updater, SLOT(on_checkUpdates()));
     }
-#endif
+//#endif
 
     m_1secTimer = new QTimer(this);
     connect(m_1secTimer, SIGNAL(timeout()), this, SLOT(on_1secTimerTick()));
@@ -520,6 +523,7 @@ MainWindow::~MainWindow()
     m_settings->setValue("systemImpedance", m_Z0);
     m_settings->setValue("rangeLower", m_swrWidget->xAxis->range().lower);
     m_settings->setValue("rangeUpper", m_swrWidget->xAxis->range().upper);
+    m_settings->setValue("autoFirmwareUpdate", m_autoFirmwareUpdateEnabled);
     m_settings->setValue("autoUpdate", m_autoUpdateEnabled);
     m_settings->setValue("autoDetectMode", m_autoDetectMode);
     m_settings->setValue("serialPort",m_serialPort);
@@ -2019,7 +2023,7 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
         }
         if(e->delta() < 0)
         {
-            if(m_swrZoomState <= 9)
+            if(g_noRestrictScale || m_swrZoomState <= 9)
             {
                 ++m_swrZoomState;
                 m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
@@ -2181,7 +2185,7 @@ void MainWindow::on_mouseWheel_rs(QWheelEvent * e)
         int val;
         if(e->delta() < 0)
         {
-            if(state <= 19)
+            if(g_noRestrictScale || state <= 19)
             {
                 ++state;
                 val = state*80;
@@ -2290,7 +2294,7 @@ void MainWindow::on_mouseWheel_rp(QWheelEvent *e)
     {
         if(e->delta() < 0)
         {
-            if(state <= 19)
+            if(g_noRestrictScale || state <= 19)
             {
                 ++state;
                 int val = state*80;
@@ -2403,7 +2407,7 @@ void MainWindow::on_mouseWheel_rl(QWheelEvent *e)
         }
         if(e->delta() < 0)
         {
-            if(state <= 9)
+            if(g_noRestrictScale || state <= 9)
             {
                 ++state;
                 m_rlWidget->yAxis->setRangeUpper(state*5);
@@ -2829,6 +2833,8 @@ void MainWindow::on_screenshotAA_clicked()
 
 void MainWindow::on_singleStart_clicked()
 {
+    hidAnalyzer* hid = m_analyzer->getHidAnalyzer();
+
     bool use_min_max = isMeasuring();
     if (isMeasuring())
     {
@@ -2936,6 +2942,7 @@ void MainWindow::on_singleStart_clicked()
 
 void MainWindow::on_continuousStartBtn_clicked(bool checked)
 {
+    hidAnalyzer* hid = m_analyzer->getHidAnalyzer();
     if (isMeasuring())
     {
         m_bInterrupted = true;
@@ -2944,6 +2951,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         ui->continuousStartBtn->setChecked(false);
         return;
     }
+
     ui->singleStart->setChecked(false);
     m_isContinuos = checked;
     m_analyzer->setContinuos(m_isContinuos);
@@ -3068,12 +3076,13 @@ void MainWindow::on_measurementComplete()
         m_rlWidget->xAxis->setRange(range);
         if (!m_bInterrupted)
         {
-            emit measure(start*1000, stop*1000, m_dotsNumber);
+            emit measureContinuous(start*1000, stop*1000, m_dotsNumber);
         } else {
             m_bInterrupted = true;
             ui->measurmentsDeleteBtn->setEnabled(true);
             ui->measurmentsClearBtn->setEnabled(true);
             m_analyzer->setContinuos(false);
+            m_analyzer->setIsMeasuring(false);
             PopUpIndicator::setIndicatorVisible(false);
         }
     } else {
@@ -3084,6 +3093,7 @@ void MainWindow::on_measurementComplete()
         ui->exportBtn->setEnabled(true);
         ui->measurmentsSaveBtn->setEnabled(true);
         m_analyzer->setContinuos(false);
+        m_analyzer->setIsMeasuring(false);
         PopUpIndicator::setIndicatorVisible(false);
     }
 }
@@ -3139,6 +3149,7 @@ void MainWindow::on_settingsBtn_clicked()
     m_settingsDialog->setCableLength(m_cableLength);
     m_settingsDialog->setCableFarEndMeasurement(m_farEndMeasurement);
     m_settingsDialog->setCableIndex(m_cableIndex);
+    m_settingsDialog->setFirmwareAutoUpdate(m_autoFirmwareUpdateEnabled);
     m_settingsDialog->setAntScopeAutoUpdate(m_autoUpdateEnabled);
     m_settingsDialog->setAntScopeVersion(ANTSCOPE2VER);
     m_settingsDialog->setAutoDetectMode(m_autoDetectMode, m_serialPort);
@@ -3216,7 +3227,9 @@ void MainWindow::on_settingsBtn_clicked()
     connect(m_analyzer, SIGNAL(aa30updateComplete()),
             m_settingsDialog, SLOT(on_aa30updateComplete()));
 
-    connect(m_settingsDialog,SIGNAL(antScopeAutoUpdateStateChanged(bool)),this, SLOT(on_antScopeAutoApdateStateChanged(bool)));
+    connect(m_settingsDialog,SIGNAL(firmwareAutoUpdateStateChanged(bool)),this, SLOT(on_firmwareAutoUpdateStateChanged(bool)));
+
+    connect(m_settingsDialog,SIGNAL(antScopeAutoUpdateStateChanged(bool)),this, SLOT(on_antScopeAutoUpdateStateChanged(bool)));
 
     connect(m_settingsDialog, SIGNAL(changedAutoDetectMode(bool)), this, SLOT(on_changedAutoDetectMode(bool)));
 
@@ -3268,6 +3281,10 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
         ui->measurmentsClearBtn->setEnabled(false);
         ui->exportBtn->setEnabled(false);
     }
+    else
+    {
+        on_tableWidget_measurments_cellClicked(ui->tableWidget_measurments->rowCount()-1, 0);
+    }
     if(m_markers)
     {
         m_markers->repaint();
@@ -3314,6 +3331,7 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
     }
 }
 
+#if 0
 void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
 {
     Q_UNUSED(column)
@@ -3323,7 +3341,7 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
         for(int i = 1; i < count; ++i)
         {
             int j = (i-1)*3 + 1;
-            if(i == (count - 1 - row))
+            if((i-1) == row)
             {
                 QPen pen = m_swrWidget->graph(i)->pen();
                 pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
@@ -3393,6 +3411,91 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
         updateGraph();
     }
 }
+#endif
+void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
+{
+    Q_UNUSED(column)
+    int count = m_swrWidget->graphCount();
+    if(count > 0)
+    {
+        for(int i = 1; i < count; ++i)
+        {
+            int j = (i-1)*3 + 1;
+//            if((i-1) != row)
+            {
+                QPen pen = m_swrWidget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_swrWidget->graph(i)->setPen(pen);
+                m_phaseWidget->graph(i)->setPen(pen);
+                m_rlWidget->graph(i)->setPen(pen);
+                m_measurements->getMeasurement(count - 2 - (i-1))->smithCurve->setPen(pen);
+
+                pen = m_rpWidget->graph(j+0)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+0)->setPen(pen);
+
+                pen = m_rpWidget->graph(j+1)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+1)->setPen(pen);
+
+                pen = m_rpWidget->graph(j+2)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rpWidget->graph(j+2)->setPen(pen);
+
+
+                pen = m_rsWidget->graph(j+0)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+0)->setPen(pen);
+
+                pen = m_rsWidget->graph(j+1)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+1)->setPen(pen);
+
+                pen = m_rsWidget->graph(j+2)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_rsWidget->graph(j+2)->setPen(pen);
+            }
+        }
+
+        int i = row+1;
+        int j = (i-1)*3 + 1;
+
+        QPen pen = m_swrWidget->graph(i)->pen();
+        pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+        m_swrWidget->graph(i)->setPen(pen);
+        m_phaseWidget->graph(i)->setPen(pen);
+        m_rlWidget->graph(i)->setPen(pen);
+        m_measurements->getMeasurement(count - 2 - (i-1))->smithCurve->setPen(pen);
+
+        pen = m_rpWidget->graph(j+0)->pen();
+        pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+        m_rpWidget->graph(j+0)->setPen(pen);
+
+        pen = m_rpWidget->graph(j+1)->pen();
+        pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+        m_rpWidget->graph(j+1)->setPen(pen);
+
+        pen = m_rpWidget->graph(j+2)->pen();
+        pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+        m_rpWidget->graph(j+2)->setPen(pen);
+
+
+        pen = m_rsWidget->graph(j+0)->pen();
+        pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+        m_rsWidget->graph(j+0)->setPen(pen);
+
+        pen = m_rsWidget->graph(j+1)->pen();
+        pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+        m_rsWidget->graph(j+1)->setPen(pen);
+
+        pen = m_rsWidget->graph(j+2)->pen();
+        pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+        m_rsWidget->graph(j+2)->setPen(pen);
+
+        updateGraph();
+    }
+}
+
 
 /*
 void MainWindow::on_screenshot_clicked()
@@ -3958,6 +4061,7 @@ void MainWindow::on_lineEdit_fqTo_editingFinished()
 
 void MainWindow::on_newVersionAvailable()
 {
+#ifdef Q_OS_WIN
     if(m_updateDialog == NULL)
     {
         m_updateDialog = new AntScopeUpdateDialog();
@@ -3967,6 +4071,27 @@ void MainWindow::on_newVersionAvailable()
     }
     m_updateDialog->setAsNewVersion();
     m_updateDialog->show();
+#endif
+
+#ifdef Q_OS_DARWIN
+    if (m_updater != nullptr)
+    {
+        const Downloader* downloader = m_updater->downloader();
+        if (downloader != nullptr)
+        {
+            QMessageBox msgBox;
+            msgBox.setTextFormat(Qt::RichText);   //this is what makes the links clickable
+            QString text = QString("<a href='%1' style='color:#01B2FF;'><br><br>%2<center>%3</center><br></a>")
+                    .arg(downloader->downloadLink())
+                    .arg(tr("New version of AntScope2 is available!"))
+                    .arg(tr("Click to Download"));
+            msgBox.setWindowTitle(tr("AntScope2 update"));
+            msgBox.setText(text);
+            msgBox.setStandardButtons(QMessageBox::Close);
+            msgBox.exec();
+        }
+    }
+#endif
 }
 
 void MainWindow::on_downloadAfterClosing()
@@ -3974,7 +4099,12 @@ void MainWindow::on_downloadAfterClosing()
     m_deferredUpdate = true;
 }
 
-void MainWindow::on_antScopeAutoApdateStateChanged(bool state)
+void MainWindow::on_firmwareAutoUpdateStateChanged(bool state)
+{
+    m_autoFirmwareUpdateEnabled = state;
+}
+
+void MainWindow::on_antScopeAutoUpdateStateChanged(bool state)
 {
     m_autoUpdateEnabled = state;
 }

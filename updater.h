@@ -16,6 +16,7 @@ class Updater : public QObject
 public:
     explicit Updater(QObject *parent = 0);
     ~Updater();
+    const Downloader* downloader() const { return m_downloader; }
 
 private:
     Downloader *m_downloader;

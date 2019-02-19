@@ -26,35 +26,36 @@ void Updater::on_checkUpdates()
         connect(m_downloader, SIGNAL(progress(qint64,qint64)),
                 this, SLOT(on_progress(qint64,qint64)));
     }
-    QString url = "https://rigexpert.com/getsoftware?model=antscope2&revision=1";
+
+    QString os;
+#ifdef Q_OS_WIN
+    os = "&os=win";
+#endif
+#ifdef Q_OS_MAC
+    os = "&os=mac";
+#endif
+
+    QString url = "https://rigexpert.com/getsoftware?model=antscope2&revision=1" + os;
     m_downloader->startDownloadInfo(QUrl(url));
 }
 
 void Updater::on_downloadInfoComplete()
 {
     QString str = m_downloader->version();
-    if(str.length() == 6)
-    {
-        str.insert(4,'.');
-        str.insert(2,'.');
-        if(str.at(6) == '0')
-        {
-            str.remove(6,1);
-        }
-        if(str.at(3) == '0')
-        {
-            str.remove(3,1);
-        }
-        if(str.at(0) == '0')
-        {
-            str.remove(0,1);
-        }
 
-        if(QString(ANTSCOPE2VER).remove('.').toInt() < str.remove('.').toInt())
-        {
-            emit newVersionAvailable();
-        }
+    QStringList list = QString(ANTSCOPE2VER).split('.');
+    quint64 local_ver = list[2].toInt() + 1000 * list[1].toInt() + 1000000 * list[0].toInt();
+    quint64 remote_ver = local_ver;
+    list = QString(str).split('.');
+    if (list.size() > 2)
+        remote_ver = list[2].toInt() + 1000 * list[1].toInt() + 1000000 * list[0].toInt();
+
+    // TODO DEBUG
+    if (remote_ver > local_ver)
+    {
+        emit newVersionAvailable();
     }
+    //}
 }
 
 void Updater::on_downloadFileComplete()
@@ -72,8 +73,8 @@ void Updater::openInstaller()
 {
     QByteArray arr = m_downloader->file();
 
-    QString path = QDir::tempPath();
-    path += "/RE.exe";
+    QDir dir = QDir::tempPath();
+    QString path = dir.absoluteFilePath("RE.exe");
 
     QFile file(path);
     file.open(QIODevice::WriteOnly);
@@ -81,10 +82,16 @@ void Updater::openInstaller()
     file.close();
 
     QString program = path;
-    QStringList arguments;
-    QProcess *myProcess = new QProcess();
-    myProcess->start(program, arguments);
-//    this->close();
+    //QStringList arguments;
+    //QProcess *myProcess = new QProcess();
+    //myProcess->start(program, arguments);
+    //myProcess->waitForStarted( -1 );
+    //QProcess::ProcessError err = myProcess->error();
+    //QString errString = myProcess->errorString();
+
+    QString cmd = "cmd /c START " + program;
+    system(cmd.toStdString().c_str());
+
     QApplication::quit();
 }
 

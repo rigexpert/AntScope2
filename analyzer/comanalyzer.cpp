@@ -1,6 +1,6 @@
 #include "comanalyzer.h"
 #include "customanalyzer.h"
-
+#include <qserialport.h>
 
 static const unsigned char crc8_table[256] = {
     0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F,
@@ -99,9 +99,13 @@ bool comAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
     m_comPort->setParity(QSerialPort::NoParity);
     m_comPort->setStopBits(QSerialPort::OneStop);
 
-    bool result = m_comPort->open(QSerialPort::ReadWrite);
-
     connect(m_comPort, SIGNAL(readyRead()), this, SLOT(dataArrived()));
+    bool result = m_comPort->open(QSerialPort::ReadWrite);
+    if (!result) {
+        //SerialPortError err = m_comPort->error();
+        QString str = m_comPort->errorString();
+        qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
+    }
     return result;
 }
 
@@ -120,8 +124,12 @@ void comAnalyzer::closeComPort()
 
 void comAnalyzer::dataArrived()
 {
+    qint64 bytes = m_comPort->bytesAvailable();
+
     QByteArray ar = m_comPort->readAll();
     m_incomingBuffer += ar;
+
+    //qDebug() << "com dataArrived: " << ar;
 
     int count = parse(m_incomingBuffer);
     m_incomingBuffer.remove(0, count);
@@ -178,7 +186,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
                     }
                 }
             }
-        }else if(model == "AA-30 ZERO")
+        }else if(model == "AA-30 ZERO" || model == "AA-30.ZERO")
         {
             if(arr.length() >= 4)
             {
@@ -200,6 +208,8 @@ qint32 comAnalyzer::parse (QByteArray arr)
     {
         QStringList stringList;
         QString tempString;
+//------- Belarus EU1KY analyzer support --------------------
+/*
         for(qint32 i = 0; i < arr.length(); ++i)
         {
             if(arr.at(i) == '\n')
@@ -212,6 +222,25 @@ qint32 comAnalyzer::parse (QByteArray arr)
                 tempString.append(arr.at(i));
             }
         }
+*/
+
+        for(qint32 i = 0; i < arr.length(); ++i)
+        {
+            if(arr.at(i) == '\r')
+            {
+                retVal++;
+                stringList.append(tempString);
+                tempString.clear();
+            } else if (arr.at(i) == '\n')
+            {
+                retVal++;
+            } else
+            {
+                tempString.append(arr.at(i));
+            }
+        }
+
+//-------------------------
         if(stringList.isEmpty())
         {
             return 0;
@@ -220,7 +249,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
         {
             QString str = stringList.at(i);
             int r = str.indexOf('\r');
-            if(r)
+            if(r != -1)
             {
                 str.remove(r,1);
                 retVal++;
@@ -229,7 +258,8 @@ qint32 comAnalyzer::parse (QByteArray arr)
             {
                 continue;
             }
-            if(str == "OK")
+            //if(str == "OK")
+            if(str.contains("OK"))
             {
                 m_ok = true;
                 continue;
@@ -247,8 +277,9 @@ qint32 comAnalyzer::parse (QByteArray arr)
                     emit signalFullInfo(str);
                     continue;
                 }
+
                 for(quint32 idx = QUANTITY-1; idx > 0; idx--)
-                {
+                {                            
                     if(str.indexOf(names[idx]) >= 0 )
                     {
                         if(m_analyzerModel != 0)
@@ -333,80 +364,86 @@ void comAnalyzer::searchAnalyzer()
     static bool messageWasShown = false;
     static int state = 0;
 
+    if (m_isMeasuring)
+        return;
+
     if(!m_autoDetectMode)
     {
-        if(!m_isMeasuring)
+        if( m_analyzerModel != 0)
         {
-            if( m_analyzerModel != 0)
+            return;
+        }
+
+        if(state == 0)
+        {
+            state = 1;
+            openComPort(m_serialPortName,38400);
+            if(m_comPort->isOpen())
             {
-                return;
+                versionRequest();
             }
 
-            if(state == 0)
+        }else if(state == 1)
+        {
+            state = 0;
+            openComPort(m_serialPortName,115200);
+            if(m_comPort->isOpen())
             {
-                state = 1;
-                openComPort(m_serialPortName,38400);
-                if(m_comPort->isOpen())
-                {
-                    sendData("VER\r\n");
-                }
-
-            }else if(state == 1)
-            {
-                state = 0;
-                openComPort(m_serialPortName,115200);
-                if(m_comPort->isOpen())
-                {
-                    sendData("VER\r\n");
-                }
+                versionRequest();
             }
         }
     }else
     {
-        if(!m_isMeasuring)
+        if( m_analyzerModel != 0)
         {
-            if( m_analyzerModel != 0)
+            QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
+            return;
+        }
+        if(analyzerDetected && !messageWasShown)
+        {
+            messageWasShown = true;
+            QMessageBox::information(NULL,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
+        }
+        analyzerDetected = false;
+        closeComPort();
+        QList<ReDeviceInfo> list;
+        list = ReDeviceInfo::availableDevices(ReDeviceInfo::Serial);
+        if(list.isEmpty())
+        {
+            QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
+            return;
+        }else
+        {
+            QString name = ReDeviceInfo::deviceName(list.at(0));
+            for(quint32 i = QUANTITY-1; i > 0; i--)
             {
-                QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
-                return;
-            }
-            if(analyzerDetected && !messageWasShown)
-            {
-                messageWasShown = true;
-                QMessageBox::information(NULL,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
-            }
-            analyzerDetected = false;
-            closeComPort();
-            QList<ReDeviceInfo> list;
-            list = ReDeviceInfo::availableDevices(ReDeviceInfo::Serial);
-            if(list.isEmpty())
-            {
-                QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
-                return;
-            }else
-            {
-                QString name = ReDeviceInfo::deviceName(list.at(0));
-                for(quint32 i = QUANTITY-1; i > 0; i--)
+                if(names[i].indexOf(name) >= 0 )
                 {
-                    if(names[i].indexOf(name) >= 0 )
+                    bool opened = false;
+                    if(name == "AA-230 ZOOM")
                     {
-                        if(name == "AA-230 ZOOM")
-                        {
-                            openComPort(list.at(0).portName(),115200);
-                        }else
-                        {
-                            openComPort(list.at(0).portName(),38400);
-                        }
-                        analyzerDetected = true;
-                        sendData("\r\nVER\r\n");
-                        return;
+                        opened = openComPort(list.at(0).portName(),115200);
+                        //{ TODO debug BLE
+                        //opened = openComPort(m_serialPortName,115200);
+                        //}
+                    } else if (name == "AA-30 ZERO" || name == "AA-30.ZERO")
+                    {
+                        opened = openComPort(m_serialPortName,38400);
+
+                    } else
+                    {
+                        opened = openComPort(list.at(0).portName(),38400);
                     }
-                    else
-                    {
+                    if (opened) {
+                        analyzerDetected = true;
+                        versionRequest();
+                    } else {
                         QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
                     }
+                    return;
                 }
             }
+            QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
         }
     }
 }
@@ -420,8 +457,7 @@ void comAnalyzer::checkAnalyzer()
         {
             m_analyzerPresent = false;
             m_parseState = VER;
-            sendData("\r\nVER\r\n");
-            //sendData("FULLINFO\r\n");
+            versionRequest();
             state++;
             QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
         }else if(state == 1)
@@ -429,7 +465,7 @@ void comAnalyzer::checkAnalyzer()
             if(m_analyzerPresent == false)
             {
                 m_parseState = VER;
-                sendData("\r\nVER\r\n");
+                versionRequest();
                 //sendData("FULLINFO\r\n");
                 state++;
             }else
@@ -457,6 +493,7 @@ void comAnalyzer::checkAnalyzer()
 
 qint64 comAnalyzer::sendData(QString data)
 {
+    qDebug() << "comAnalyzer::sendData> " << data;
     qint64 res = m_comPort->write(data.toLocal8Bit());
     return res;
 }
@@ -542,7 +579,6 @@ void comAnalyzer::timeoutChart()
     if(len >=1)
     {
         str = m_stringList.takeFirst();
-        //qDebug() << str;
         stringList = str.split(',');
         int count = (stringList.size() / 3) * 3;
         for (int idx=0; idx<count; idx+=3)
@@ -627,7 +663,7 @@ bool comAnalyzer::waitAnswer()
 
             ++ times;
         }
-    }else if(model == "AA-30 ZERO")
+    }else if(model == "AA-30 ZERO" || model == "AA-30.ZERO")
     {
         while (times < 100)
         {
@@ -704,7 +740,7 @@ bool comAnalyzer::update (QIODevice *fw)
         m_comPort->close();
         openComPort(name,115200);
         setIsMeasuring(false);
-    }else if(model == "AA-30 ZERO")
+    }else if(model == "AA-30 ZERO" || model == "AA-30.ZERO")
     {
         QByteArray arr;
         QString name;
@@ -885,4 +921,10 @@ void comAnalyzer::on_changedSerialPort(QString portName)
     closeComPort();
     m_analyzerModel = 0;
     emit analyzerDisconnected();
+}
+
+void comAnalyzer::versionRequest()
+{
+    //sendData("\r\nVER\r\n");
+    sendData("VER\n");
 }

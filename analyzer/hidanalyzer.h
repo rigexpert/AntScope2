@@ -30,6 +30,7 @@
 #define PREFIX_SERIAL_NUMBER_AA55	1550
 #define PREFIX_SERIAL_NUMBER_AA55_ZOOM	1551
 #define PREFIX_SERIAL_NUMBER_AA230_ZOOM	1232
+#define PREFIX_SERIAL_NUMBER_AA2000	4600
 
 class hidAnalyzer : public QObject
 {
@@ -38,7 +39,7 @@ class hidAnalyzer : public QObject
                             BL_CMD_DATA, BL_CMD_CHECK, BL_CMD_START,
                             BL_CMD_OK, BL_CMD_ERROR};
 public:
-    explicit hidAnalyzer(QObject *parent = 0);
+    explicit hidAnalyzer(QObject *parent = nullptr);
     ~hidAnalyzer();
 
     QString getVersion(void) const;
@@ -48,9 +49,11 @@ public:
     int getModel(void) const;
     void nonblocking (int nonblock);
     bool update(QIODevice *fw);
-    void setIsMeasuring (bool isMeasuring) {m_isMeasuring = isMeasuring;}
+    void setIsMeasuring (bool isMeasuring);
     bool getIsMeasuring (void) const { return m_isMeasuring;}
-
+    void setContinuos(bool continuos){m_isContinuos = continuos;}
+    bool getContinuos(void){ return m_isContinuos;}
+    void preUpdate();
 
 private:
     hid_device *m_hidDevice;
@@ -68,10 +71,16 @@ private:
     QString m_revision;
 
     volatile bool m_ok;
-    bool m_isMeasuring;
+    volatile bool m_isMeasuring;
+    volatile bool m_isContinuos;
+
     bool m_analyzerPresent;
 
     volatile bool m_bootMode;
+
+    QMutex m_mutex;
+    struct hid_device_info* m_devices;
+    QThread* m_refreshThread;
 
 //    unsigned char m_inputBuffer[INPUT_BUFFER_SIZE];
 //    int m_inputBufferHead;
@@ -82,6 +91,8 @@ private:
     void sendData(QString data);
     qint32 parse (QByteArray arr);
     bool waitAnswer();
+    QFuture<struct hid_device_info*> *m_futureRefresh;
+    QFutureWatcher<struct hid_device_info*> *m_watcherRefresh;
 
 signals:
     void analyzerFound (quint32);
@@ -99,6 +110,8 @@ public slots:
     void getAnalyzerData(QString number);
     void makeScreenshot();
     void stopMeasure();
+    void refreshReady();
+    void startResresh();
 
 private slots:
     void checkTimerTick ();
@@ -107,6 +120,8 @@ private slots:
     void timeoutChart();
     void continueMeasurement();
     void hidRead (void);
+    struct hid_device_info* refreshThreadStarted();
+
 };
 
 #endif // HIDANALYZER_H

@@ -911,9 +911,19 @@ void Settings::on_aa30updateComplete()
     this->close();
 }
 
+void Settings::on_autoUpdatesCheckBox(bool checked)
+{
+    emit firmwareAutoUpdateStateChanged(checked);
+}
+
 void Settings::on_checkBox_AntScopeAutoUpdate_clicked(bool checked)
 {
     emit antScopeAutoUpdateStateChanged(checked);
+}
+
+void Settings::setFirmwareAutoUpdate(bool checked)
+{
+    ui->autoUpdatesCheckBox->setChecked(checked);
 }
 
 void Settings::setAntScopeAutoUpdate(bool checked)

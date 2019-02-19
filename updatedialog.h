@@ -26,8 +26,10 @@ signals:
 private slots:
     void on_updateBtn_clicked();
     void on_cancelBtn_clicked();
-    void on_percentChanged(qint32 percent);
     void on_errorTimerTick();
+
+public slots:
+    void on_percentChanged(qint32 percent);
 
 private:
     Ui::UpdateDialog *ui;

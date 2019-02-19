@@ -76,20 +76,18 @@ void Downloader::fileDownloaded(QNetworkReply *reply)
     m_state = Finished;
     m_timer.stop();
 
-    arr = reply->readAll();
+    m_arr = reply->readAll();
 
     if (reply->error() != QNetworkReply::NoError ) {
         m_lastError = reply->errorString();
         m_info.clear();
         m_link.clear();
-    } else if(!m_isInfo && isHTML(arr)) {
+    } else if(!m_isInfo && isHTML(m_arr)) {
         m_lastError = tr("Server does not have firmware file.");
     } else {
         m_lastError.clear();
         if (m_isInfo) {
-            parse(&arr);
-        } else {
-            m_arr = arr;
+            parse(&m_arr);
         }
     }
 
@@ -100,18 +98,19 @@ void Downloader::fileDownloaded(QNetworkReply *reply)
     } else {
         emit downloadFileComplete();
     }
+
 }
 
 
 void Downloader::parse(QByteArray *data)
 {
     QDomDocument xml;
-    QBuffer buff(data);
 
-    buff.open(QIODevice::ReadOnly);
-
-    if (!xml.setContent(&buff)){
-        qCWarning(DOWNLOADER) << "Wrong XML content";
+    int line=0;
+    int col=0;
+    QString err;
+    if (!xml.setContent(*data,&err, &line, &col)){
+        qCWarning(DOWNLOADER) << "Wrong XML content: " << err << "[line " << line << " column " << col << "]";
         return;
     }
 

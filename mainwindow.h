@@ -17,7 +17,7 @@
 #include <fqsettings.h>
 #include <markers.h>
 #include <QSettings>
-#include <QQuickItem>
+//#include <QQuickItem>
 #include <calibration.h>
 #include <print.h>
 #include <QJsonObject>
@@ -44,9 +44,6 @@ static QString languages_small[LANGUAGES_QUANTITY]={
     "uk",
     "ja"
 };
-
-#define ACTIVE_GRAPH_PEN_WIDTH 5
-#define INACTIVE_GRAPH_PEN_WIDTH 2
 
 class MainWindow : public QMainWindow
 {
@@ -140,6 +137,7 @@ private:
     bool m_deferredUpdate;
 
     bool m_autoUpdateEnabled;
+    bool m_autoFirmwareUpdateEnabled;
 
     int m_swrZoomState;
     int m_phaseZoomState;
@@ -183,6 +181,7 @@ private:
 
 signals:
     void measure(qint64,qint64,int);
+    void measureContinuous(qint64,qint64,int);
     void currentTab(QString);
     void focus(bool);
     void newCursorFq(double x, int number, int mouseX, int mouseY);
@@ -264,7 +263,8 @@ private slots:
     void resizeWnd(void);
     void on_newVersionAvailable();
     void on_downloadAfterClosing();
-    void on_antScopeAutoApdateStateChanged( bool state);
+    void on_firmwareAutoUpdateStateChanged( bool state);
+    void on_antScopeAutoUpdateStateChanged( bool state);
     void on_1secTimerTick();
     void on_changedAutoDetectMode(bool state);
     void on_changedSerialPort(QString portName);

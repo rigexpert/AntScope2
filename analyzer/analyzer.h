@@ -45,8 +45,15 @@ public:
         {
             m_comAnalyzer->setContinuos(isContinuos);
         }
+        if(m_hidAnalyzer != NULL)
+        {
+            m_hidAnalyzer->setContinuos(isContinuos);
+        }
     }
     bool isMeasuring (void) const { return m_isMeasuring;}
+
+    hidAnalyzer * getHidAnalyzer() { return m_hidAnalyzer; }
+    comAnalyzer * getComAnalyzer() { return m_comAnalyzer; }
 
     void setAnalyzerModel (int model);
     quint32 getAnalyzerModel (void) const { return m_analyzerModel;}
@@ -91,6 +98,7 @@ signals:
     void analyzerDisconnected();
     void newData (rawData);
     void newMeasurement(QString);
+    void continueMeasurement(qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void measurementComplete();
     void analyzerDataStringArrived(QString);
     void analyzerScreenshotDataArrived(QByteArray);
@@ -100,11 +108,13 @@ signals:
     void aa30updateComplete();
 
 public slots:
+    void searchAnalyzer();
     void on_hidAnalyzerFound (quint32 analyzerNumber);
     void on_comAnalyzerFound (quint32 analyzerNumber);
     void on_comAnalyzerDisconnected ();
     void on_hidAnalyzerDisconnected ();
     void on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
+    void on_measureContinuous(qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void on_newData(rawData _rawData);
     void on_analyzerDataStringArrived(QString str);
     void on_stopMeasuring();

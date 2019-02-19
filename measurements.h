@@ -22,6 +22,11 @@
 #ifndef DBL_MAX
 #define DBL_MAX 1.797693134862315e+308
 #endif
+
+#define ACTIVE_GRAPH_PEN_WIDTH 5
+#define INACTIVE_GRAPH_PEN_WIDTH 2
+
+
 typedef std::complex <double> Complex;
 
 class Measurements : public QObject
@@ -155,6 +160,7 @@ public slots:
     void on_newData(rawData _rawData);
     void on_newMeasurement(QString name);
     void on_newMeasurement(QString name, qint64 fq, qint64 sw, qint64 dots);
+    void on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots);
     void on_currentTab(QString);
     void on_focus(bool focus);
     void hideGraphBriefHint();

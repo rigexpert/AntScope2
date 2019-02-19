@@ -2,7 +2,7 @@
 
 
 #ifdef Q_OS_WIN
- #include <windows.h>
+ #include <Windows.h>
  #include <ftdi/ftd2xx.h>
 
  QList<FtdiInfo::Info> FtdiInfo::m_lastInfo;
@@ -28,7 +28,7 @@ QList <FtdiInfo::Info> FtdiInfo::info()
 {
     FT_STATUS status;
     DWORD num = 0;
-    FT_DEVICE_LIST_INFO_NODE *nodes = NULL;
+    FT_DEVICE_LIST_INFO_NODE *nodes = nullptr;
     QList<QSerialPortInfo> info;
     QString desc;
     QString number;

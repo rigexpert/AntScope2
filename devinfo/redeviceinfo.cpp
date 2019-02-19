@@ -98,6 +98,12 @@ QList<ReDeviceInfo> ReDeviceInfo::availableSerial()
         list.append(ReDeviceInfo(Serial, item.portInfo, item.portName));
     }
 
+    if (list.isEmpty()) {
+        list.append(ReDeviceInfo(Serial, "AA-30 ZERO", "AA-30 ZERO"));
+        //{ TODO debug BLE
+        //list.append(ReDeviceInfo(Serial, "AA-230 ZOOM", "AA-230 ZOOM"));
+        //}
+    }
     return list;
 }
 

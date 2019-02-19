@@ -95,7 +95,7 @@
     </font>
    </property>
    <property name="text">
-    <string>There are new version of AntScope2 available!</string>
+    <string>New version of AntScope 2 is available!</string>
    </property>
   </widget>
   <widget class="QPushButton" name="afterClosing">

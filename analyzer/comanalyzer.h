@@ -40,6 +40,7 @@ public:
     bool getContinuos(void){ return m_isContinuos;}
     void setAnalyzerModel (int model) {m_analyzerModel = model;}
     bool getAnalyzerModel (void) const { return m_analyzerModel;}
+    void versionRequest();
 
 private:
     QSerialPort * m_comPort;
