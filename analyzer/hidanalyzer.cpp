@@ -420,6 +420,7 @@ void hidAnalyzer::sendData(QString data)
     {
         return;
     }
+    //qDebug() << "hidAnalyzer::sendData: " << data;
     unsigned char buf[REPORT_SIZE] = {0};
     int size = data.length();
     if(size)

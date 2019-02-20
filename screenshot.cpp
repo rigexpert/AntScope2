@@ -52,18 +52,28 @@ void Screenshot::paintEvent(QPaintEvent *)
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
 
+    QRectF r;
     if(     (model == "AA-30") ||
             (model == "AA-54")||
             (model == "AA-170")    )
     {
         biasx = (320 - m_lcdWidth*2)/2;
         biasy = (240 - m_lcdHeight*2)/2;
+        r.setRect(biasx, biasy, m_lcdWidth*2, m_lcdHeight*2);
+    }else if (m_lcdWidth > 320 || m_lcdHeight > 240)
+    {
+        biasx = 0;//(320 - m_lcdWidth/2)/2;
+        biasy = 0;//(240 - m_lcdHeight/2)/2;
+        r.setRect(biasx, biasy, 320, 320*m_lcdHeight/m_lcdWidth);
     }else
     {
         biasx = (320 - m_lcdWidth)/2;
         biasy = (240 - m_lcdHeight)/2;
+        r.setRect(biasx, biasy, m_lcdWidth, m_lcdHeight);
     }
-    painter.drawImage(biasx, biasy, *m_image);
+    //painter.drawImage(biasx, biasy, *m_image);
+    //qDebug() << r;
+    painter.drawImage(r, *m_image);
 }
 
 void Screenshot::on_closeBtn_clicked()

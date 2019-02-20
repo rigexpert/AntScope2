@@ -125,7 +125,7 @@ static int lcdHeight[QUANTITY]={//in kHz
     0,   //AA-700ZOOM
     240,  //AA-1000
     240,   //AA-1400
-    240   //AA-2000
+    480   //AA-2000
 };
 
 static int lcdWidth[QUANTITY]={//in kHz
@@ -147,7 +147,7 @@ static int lcdWidth[QUANTITY]={//in kHz
     0,   //AA-700ZOOM
     320,  //AA-1000
     320,   //AA-1400
-    320   //AA-2000
+    743   //AA-2000
 };
 
 enum parse{
