@@ -22,8 +22,8 @@ static int ABSOLUTE_MAX_FQ = 1400000;
 
 enum {
     AANONE = 0,
-    AA30ZERO,
     AA30,
+    AA30ZERO,
     AA30_ZERO,
     AA35ZOOM,
     AA54,
@@ -33,6 +33,7 @@ enum {
     AA230,
     AA230PRO,
     AA230ZOOM,
+    AA230STICK,
     AA500,
     AA520,
     AA600,
@@ -55,6 +56,7 @@ static QString names[QUANTITY]={
     "AA-230",
     "AA-230PRO",
     "AA-230 ZOOM",
+    "AA-230 Stick",
     "AA-500",
     "AA-520",
     "AA-600",
@@ -76,6 +78,7 @@ static QString minFq[QUANTITY]={//in kHz
     "100",  //AA-230
     "100",  //AA-230PRO
     "100",  //AA-230ZOOM
+    "100",  //AA-230STICK
     "100",  //AA-500
     "100",  //AA-520
     "100",  //AA-600
@@ -97,13 +100,15 @@ static QString maxFq[QUANTITY]={//in kHz
     "230000",   //AA-230
     "230000",   //AA-230PRO
     "230000",   //AA-230ZOOM
+    "230000",  //AA-230STICK
     "500000",   //AA-500
     "520000",   //AA-520
     "600000",   //AA-600
     "700000",   //AA-700ZOOM
     "1000000",  //AA-1000
     "1400000",  //AA-1400
-    "6000000"   //AA-2000
+//                                "6000000"   //AA-2000
+                                "3500000"   //AA-2000
 };
 
 static int lcdHeight[QUANTITY]={//in kHz
@@ -119,6 +124,7 @@ static int lcdHeight[QUANTITY]={//in kHz
     0,   //AA-230
     0,   //AA-230PRO
     220,   //AA-230ZOOM
+    220,   //AA-230STICK
     0,   //AA-500
     0,   //AA-520
     240,   //AA-600
@@ -141,6 +147,7 @@ static int lcdWidth[QUANTITY]={//in kHz
     0,   //AA-230
     0,   //AA-230PRO
     290,   //AA-230ZOOM
+    290,   //AA-230STICK
     0,   //AA-500
     0,   //AA-520
     320,   //AA-600
