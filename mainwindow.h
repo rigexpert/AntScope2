@@ -178,6 +178,7 @@ private:
     bool loadLanguage(QString locale); // locale: en, ukr, ru, jp, etc.
     void saveFile(int row, QString path);
     QCustomPlot* getCurrentPlot();
+    void setAbsoluteFqMaximum();
 
 signals:
     void measure(qint64,qint64,int);

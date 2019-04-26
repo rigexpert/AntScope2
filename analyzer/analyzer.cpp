@@ -4,8 +4,8 @@
 
 
 Analyzer::Analyzer(QObject *parent) : QObject(parent),
-    m_hidAnalyzer(NULL),
-    m_comAnalyzer(NULL),
+    m_hidAnalyzer(nullptr),
+    m_comAnalyzer(nullptr),
     m_analyzerModel(0),
     m_comAnalyzerFound(false),
     m_hidAnalyzerFound(false),
@@ -13,9 +13,9 @@ Analyzer::Analyzer(QObject *parent) : QObject(parent),
     m_isMeasuring(false),
     m_isContinuos(false),
     m_dotsNumber(100),
-    m_downloader(NULL),
-    m_updateDialog(NULL),
-    m_pfw(NULL),
+    m_downloader(nullptr),
+    m_updateDialog(nullptr),
+    m_pfw(nullptr),
     m_INFOSIZE(512),
     m_MAGICAA230Z(0xFE02A185),
     m_MAGICHID(0x5c620202),
@@ -31,27 +31,27 @@ Analyzer::~Analyzer()
     if(m_downloader)
     {
         delete m_downloader;
-        m_downloader = NULL;
+        m_downloader = nullptr;
     }
     delete m_pfw;
     if(m_hidAnalyzer)
     {
         delete m_hidAnalyzer;
-        m_hidAnalyzer = NULL;
+        m_hidAnalyzer = nullptr;
     }
     if(m_comAnalyzer)
     {
         delete m_comAnalyzer;
-        m_comAnalyzer = NULL;
+        m_comAnalyzer = nullptr;
     }
 }
 
 double Analyzer::getVersion() const
 {
-    if(m_comAnalyzerFound)
+    if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         return m_comAnalyzer->getVersion().toDouble();
-    }else if (m_hidAnalyzerFound)
+    }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
     {
         return m_hidAnalyzer->getVersion().toDouble();
     }
@@ -63,7 +63,7 @@ void Analyzer::on_downloadInfoComplete()
     QString ver = m_downloader->version();
     if(ver.isEmpty())
     {
-        QMessageBox::information(NULL, tr("Latest version"),
+        QMessageBox::information(nullptr, tr("Latest version"),
                              tr("Can not get the latest version.\nPlease try later."));
     }else
     {
@@ -108,7 +108,7 @@ void Analyzer::readFile(QString pathToFw)
 
     if(!file.open(QIODevice::ReadOnly))
     {
-        QMessageBox::warning(NULL, tr("Warning"), tr("Can not open firmware file."));
+        QMessageBox::warning(nullptr, tr("Warning"), tr("Can not open firmware file."));
         return;
     }
 
@@ -116,7 +116,7 @@ void Analyzer::readFile(QString pathToFw)
 
     if (m_pfw->isEmpty())
     {
-        QMessageBox::warning(NULL, tr("Warning"), tr("Can not read firmware file."));
+        QMessageBox::warning(nullptr, tr("Warning"), tr("Can not read firmware file."));
         state = false;
     }
 
@@ -144,7 +144,7 @@ bool Analyzer::checkFile(QString path)
     const char *pd;
 
     if (!fwfile.open(QIODevice::ReadOnly)) {
-        QMessageBox::warning(NULL, tr("Warning"),
+        QMessageBox::warning(nullptr, tr("Warning"),
                              tr("Firmware file can not open"));
         return false;
     }
@@ -166,7 +166,8 @@ bool Analyzer::checkFile(QString path)
 
     if(m_hidAnalyzer)
     {
-        m_hidAnalyzer->setRevision(revision);
+        //m_hidAnalyzer->setRevision(revision); // old
+        m_hidAnalyzer->setRevision(QString::number(revision));
     }
 
     QString prototype = CustomAnalyzer::currentPrototype();
@@ -178,7 +179,7 @@ bool Analyzer::checkFile(QString path)
     {
     }else
     {
-        QMessageBox::warning(NULL, tr("Warning"),
+        QMessageBox::warning(nullptr, tr("Warning"),
                              tr("Firmware file has wrong format"));
         fwfile.close();
         return false;
@@ -186,7 +187,7 @@ bool Analyzer::checkFile(QString path)
 
     if (!fwfile.seek(m_INFOSIZE))
     {
-        QMessageBox::warning(NULL, tr("Warning"),
+        QMessageBox::warning(nullptr, tr("Warning"),
                              tr("Firmware file is too short."));
         fwfile.close();
         return false;
@@ -197,13 +198,13 @@ bool Analyzer::checkFile(QString path)
     fwfile.close();
 
     if ((quint32)fw.length() != len) {
-        QMessageBox::warning(NULL, tr("Warning"),
+        QMessageBox::warning(nullptr, tr("Warning"),
                              tr("Firmware file has wrong length."));
         return false;
     }
 
     if (readCrc != CRC32::crc(0xffffffff, fw)) {
-        QMessageBox::warning(NULL, tr("Warning"),
+        QMessageBox::warning(nullptr, tr("Warning"),
                              tr("Firmware file has wrong CRC."));
         return false;
     }
@@ -331,7 +332,7 @@ void Analyzer::on_hidAnalyzerFound (quint32 analyzerNumber)
     if(m_comAnalyzer)
     {
         delete m_comAnalyzer;
-        m_comAnalyzer = NULL;
+        m_comAnalyzer = nullptr;
     }
     m_hidAnalyzerFound = true;
     m_analyzerModel = analyzerNumber;
@@ -377,7 +378,7 @@ void Analyzer::on_comAnalyzerFound (quint32 analyzerNumber)
     if(m_hidAnalyzer)
     {
         delete m_hidAnalyzer;
-        m_hidAnalyzer = NULL;
+        m_hidAnalyzer = nullptr;
     }
     m_comAnalyzerFound = true;
     m_analyzerModel = analyzerNumber;
@@ -412,7 +413,7 @@ void Analyzer::on_comAnalyzerDisconnected ()
     }
     m_comAnalyzerFound = false;
     m_analyzerModel = 0;
-    if(m_comAnalyzer != NULL)
+    if(m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->setAnalyzerModel(0);
     }
@@ -503,7 +504,7 @@ void Analyzer::on_updatePercentChanged(int number)
 
 void Analyzer::on_checkUpdatesBtn_clicked()
 {
-    if(m_downloader == NULL)
+    if(m_downloader == nullptr)
     {
         m_downloader = new Downloader();
         connect(m_downloader, SIGNAL(downloadInfoComplete()),
@@ -560,7 +561,7 @@ bool Analyzer::openComPort(const QString& portName, quint32 portSpeed)
 
 void Analyzer::closeComPort()
 {
-    if(m_comAnalyzer != NULL)
+    if(m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->closeComPort();
     }
@@ -607,7 +608,7 @@ void Analyzer::on_changedAutoDetectMode(bool state)
 {
     if(state)
     {
-        if(m_hidAnalyzer == NULL)
+        if(m_hidAnalyzer == nullptr)
         {
             m_hidAnalyzer = new hidAnalyzer(this);
             connect(m_hidAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
@@ -620,14 +621,14 @@ void Analyzer::on_changedAutoDetectMode(bool state)
         }
     }else
     {
-        if(m_hidAnalyzer != NULL)
+        if(m_hidAnalyzer != nullptr)
         {
             delete m_hidAnalyzer;
-            m_hidAnalyzer = NULL;
+            m_hidAnalyzer = nullptr;
         }
     }
 
-    if(m_comAnalyzer == NULL)
+    if(m_comAnalyzer == nullptr)
     {
         m_comAnalyzer = new comAnalyzer(this);
         connect(m_comAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
@@ -650,7 +651,7 @@ void Analyzer::on_changedAutoDetectMode(bool state)
 
 void Analyzer::on_changedSerialPort(QString portName)
 {
-    if(m_comAnalyzer != NULL)
+    if(m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->on_changedSerialPort(portName);
     }
@@ -659,11 +660,11 @@ void Analyzer::on_changedSerialPort(QString portName)
 void Analyzer::setIsMeasuring (bool _isMeasuring)
 {
     m_isMeasuring = _isMeasuring;
-    if(m_comAnalyzer != NULL)
+    if(m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->setIsMeasuring(_isMeasuring);
     }
-    if(m_hidAnalyzer != NULL)
+    if(m_hidAnalyzer != nullptr)
     {
         m_hidAnalyzer->setIsMeasuring(_isMeasuring);
     }

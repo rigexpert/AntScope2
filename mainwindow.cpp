@@ -35,6 +35,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_bInterrupted(false)
 {
     ui->setupUi(this);
+
+    setAbsoluteFqMaximum();
+
     m_qtLanguageTranslator = new QTranslator();
 
     QString path = Settings::setIniFile();
@@ -356,6 +359,7 @@ MainWindow::MainWindow(QWidget *parent) :
         setFqFrom((range.upper + range.lower)/2);
         setFqTo((range.upper - range.lower)/2);
     }
+
     ui->spinBoxPoints->setValue(m_dotsNumber);
     connect(ui->spinBoxPoints, SIGNAL(valueChanged(int)), this, SLOT(onSpinChanged(int)));
     connect(ui->fullBtn, &QPushButton::clicked, this, &MainWindow::onFullRange);
@@ -577,6 +581,7 @@ void MainWindow::changeEvent(QEvent* event)
             loadLanguage(locale);
         }
             break;
+        default:break; // ignore all others
         }
     }
     QMainWindow::changeEvent(event);
@@ -1994,6 +1999,8 @@ void MainWindow::on_analyzerDisconnected()
     ui->continuousStartBtn->setEnabled(false);
     ui->analyzerDataBtn->setEnabled(false);
     ui->screenshotAA->setEnabled(false);
+    if (m_analyzer != nullptr)
+        m_analyzer->searchAnalyzer();
 }
 
 void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
@@ -2949,6 +2956,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         emit stopMeasure();
         ui->singleStart->setChecked(false);
         ui->continuousStartBtn->setChecked(false);
+        m_isContinuos = false;
         return;
     }
 
@@ -3130,7 +3138,7 @@ void MainWindow::resizeWnd(void)
 
 void MainWindow::on_settingsBtn_clicked()
 {
-    m_analyzer->setIsMeasuring(true);
+    m_analyzer->setIsMeasuring(false);
     m_settingsDialog = new Settings(this);
     m_settingsDialog->setAttribute(Qt::WA_DeleteOnClose);
     m_settingsDialog->setWindowTitle(tr("Settings"));
@@ -4389,3 +4397,13 @@ void MainWindow::onFullRange(bool)
 }
 
 
+void MainWindow::setAbsoluteFqMaximum()
+{
+    int fqMax = 0;
+    for (int idx=1; idx<QUANTITY; idx++) {
+        QString str = maxFq[idx];
+        int fq = str.toInt();
+        fqMax = qMax(fqMax, fq);
+    }
+    ABSOLUTE_MAX_FQ = fqMax;
+}

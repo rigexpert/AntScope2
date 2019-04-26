@@ -24,7 +24,7 @@ class Analyzer : public QObject
 
     Q_OBJECT
 public:
-    explicit Analyzer(QObject *parent = 0);
+    explicit Analyzer(QObject *parent = nullptr);
     ~Analyzer();
 
     QString getModelString(void);
@@ -41,11 +41,11 @@ public:
     void setContinuos(bool isContinuos)
     {
         m_isContinuos = isContinuos;
-        if(m_comAnalyzer != NULL)
+        if(m_comAnalyzer != nullptr)
         {
             m_comAnalyzer->setContinuos(isContinuos);
         }
-        if(m_hidAnalyzer != NULL)
+        if(m_hidAnalyzer != nullptr)
         {
             m_hidAnalyzer->setContinuos(isContinuos);
         }

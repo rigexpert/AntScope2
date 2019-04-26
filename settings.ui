@@ -41,7 +41,7 @@
     </sizepolicy>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="General">
     <attribute name="title">
@@ -510,7 +510,7 @@
       <rect>
        <x>10</x>
        <y>0</y>
-       <width>404</width>
+       <width>464</width>
        <height>248</height>
       </rect>
      </property>
@@ -522,33 +522,6 @@
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_18">
          <item>
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Status:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="labelWizardStatus">
-           <property name="text">
-            <string>Calibration is off</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="turnOnOffBtn">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>24</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Turn On</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="calibWizard">
            <property name="minimumSize">
             <size>
@@ -558,6 +531,45 @@
            </property>
            <property name="text">
             <string>Start</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Points</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="lineEditPoints">
+           <property name="minimumSize">
+            <size>
+             <width>64</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>64</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>

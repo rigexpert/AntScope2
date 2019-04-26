@@ -150,7 +150,6 @@ private slots:
     void on_openCalibBtn_clicked();
     void on_shortCalibBtn_clicked();
     void on_loadCalibBtn_clicked();
-    void on_turnOnOffBtn_clicked();
     void on_openOpenFileBtn_clicked();
     void on_shortOpenFileBtn_clicked();
     void on_loadOpenFileBtn_clicked();
@@ -181,6 +180,8 @@ private slots:
     void on_comboBoxName_currentIndexChanged(int index);
     void on_fqMinFinished();
     void on_fqMaxFinished();
+    void on_PointsFinished();
+
 };
 
 #endif // SETTINGS_H

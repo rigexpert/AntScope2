@@ -124,7 +124,7 @@ static int lcdHeight[QUANTITY]={//in kHz
     0,   //AA-230
     0,   //AA-230PRO
     220,   //AA-230ZOOM
-    220,   //AA-230STICK
+    200,   //AA-230STICK
     0,   //AA-500
     0,   //AA-520
     240,   //AA-600
@@ -147,7 +147,7 @@ static int lcdWidth[QUANTITY]={//in kHz
     0,   //AA-230
     0,   //AA-230PRO
     290,   //AA-230ZOOM
-    290,   //AA-230STICK
+    200,   //AA-230STICK
     0,   //AA-500
     0,   //AA-520
     320,   //AA-600

@@ -7,8 +7,6 @@
 #include <QSettings>
 //#include <shlobj.h>
 
-#define DOTS_NUMBER 500
-
 enum {CALIB_NONE = 0, CALIB_OPEN, CALIB_SHORT, CALIB_LOAD, CALIB_NUM};
 
 class CalibData
@@ -345,6 +343,8 @@ public:
 
     double getZ0 () const {return m_Z0;}
     void setZ0 (double _Z0) {m_Z0 = _Z0;}
+    int dotsNumber() { return ((m_dotsNumber < 0) ? 500 : m_dotsNumber); }
+    void setDotsNumber(int _dots) { m_dotsNumber = (_dots > 2000) ? 2000 : _dots; }
 
 private:
     CalibData m_openData;
@@ -370,6 +370,8 @@ private:
 
     void clearCalibration(void);
     QString m_calibrationPath;
+    int m_dotsNumber;
+
 
 signals:
     void progress(int, int);

@@ -4,6 +4,7 @@
 Calibration::Calibration(QObject *parent) : QObject(parent),
     m_state(CALIB_NONE),
     m_dotsCount(0),
+    m_dotsNumber(500),
     m_onlyOneCalib(false),
     m_Z0(50),
     m_OSLCalibrationEnabled(false),
@@ -32,7 +33,7 @@ Calibration::Calibration(QObject *parent) : QObject(parent),
     m_openCalibFilePath = m_settings->value("OpenPath", "Not chosen").toString();
     m_shortCalibFilePath = m_settings->value("ShortPath", "Not chosen").toString();
     m_loadCalibFilePath = m_settings->value("LoadPath", "Not chosen").toString();
-
+    setDotsNumber(m_settings->value("DotsNumber", 500).toInt());
     m_settings->endGroup();
 }
 
@@ -46,6 +47,7 @@ Calibration::~Calibration()
     m_settings->setValue("OpenPath", m_openCalibFilePath);
     m_settings->setValue("ShortPath", m_shortCalibFilePath);
     m_settings->setValue("LoadPath", m_loadCalibFilePath);
+    m_settings->setValue("DotsNumber", dotsNumber());
 
     m_settings->endGroup();
 }
@@ -164,14 +166,14 @@ void Calibration::on_newData(rawData _rawData)
     }
 
     ++m_dotsCount;
-    int percent = 100*m_dotsCount/DOTS_NUMBER;
+    int percent = 100*m_dotsCount/dotsNumber();
     if(percent > 100)
     {
         percent = 100;
     }
     emit progress(m_state, percent);
 
-    if(m_dotsCount == DOTS_NUMBER+1)
+    if(m_dotsCount == m_dotsNumber+1)
     {
         m_dotsCount = 0;
 
@@ -254,7 +256,7 @@ void Calibration::on_startCalibration()
     if(m_analyzer != NULL)
     {
         emit setCalibrationMode(true);
-        m_analyzer->on_measureCalib(DOTS_NUMBER);
+        m_analyzer->on_measureCalib(dotsNumber());
     }
 }
 
@@ -268,7 +270,7 @@ void Calibration::on_startCalibrationOpen()
         connect(m_analyzer,SIGNAL(newData(rawData)),
                 this, SLOT(on_newData(rawData)));
         emit setCalibrationMode(true);
-        m_analyzer->on_measureCalib(DOTS_NUMBER);
+        m_analyzer->on_measureCalib(dotsNumber());
     }
 }
 
@@ -282,7 +284,7 @@ void Calibration::on_startCalibrationShort()
         connect(m_analyzer,SIGNAL(newData(rawData)),
                 this, SLOT(on_newData(rawData)));
         emit setCalibrationMode(true);
-        m_analyzer->on_measureCalib(DOTS_NUMBER);
+        m_analyzer->on_measureCalib(dotsNumber());
     }
 }
 
@@ -296,7 +298,7 @@ void Calibration::on_startCalibrationLoad()
         connect(m_analyzer,SIGNAL(newData(rawData)),
                 this, SLOT(on_newData(rawData)));
         emit setCalibrationMode(true);
-        m_analyzer->on_measureCalib(DOTS_NUMBER);
+        m_analyzer->on_measureCalib(dotsNumber());
     }
 }
 

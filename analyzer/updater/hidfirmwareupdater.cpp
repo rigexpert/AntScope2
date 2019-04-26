@@ -54,7 +54,7 @@ bool HidFirmwareUpdater::update(const ReDeviceInfo &dev, QIODevice *fw)
 
         if (hret <= 0) {
             m_error = hidError();
-            qCDebug(HIDFIRMWAREUPDATER) << Q_FUNC_INFO << "hret=" << hret;
+           // qCDebug(HIDFIRMWAREUPDATER) << Q_FUNC_INFO << "hret=" << hret;
             res = false;
             break;
         }

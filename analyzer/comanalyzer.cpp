@@ -101,11 +101,13 @@ bool comAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
 
     connect(m_comPort, SIGNAL(readyRead()), this, SLOT(dataArrived()));
     bool result = m_comPort->open(QSerialPort::ReadWrite);
-    if (!result) {
-        //SerialPortError err = m_comPort->error();
-        QString str = m_comPort->errorString();
-        qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
-    }
+//    if (!result) {
+//        //SerialPortError err = m_comPort->error();
+//        QString str = m_comPort->errorString();
+//        qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
+//    } else {
+//        qDebug() << "comAnalyzer::openComPort: " << portName << (m_comPort ? " opened" : "NOT opened");
+//    }
     return result;
 }
 
@@ -583,10 +585,17 @@ void comAnalyzer::timeoutChart()
         int count = (stringList.size() / 3) * 3;
         for (int idx=0; idx<count; idx+=3)
         {
+            bool ok=true;
             rawData data;
-            data.fq = stringList[idx+0].toDouble(0);
-            data.r  = stringList[idx+1].toDouble(0);
-            data.x  = stringList[idx+2].toDouble(0);
+            data.fq = stringList[idx+0].toDouble(&ok);
+            if (!ok)
+                qDebug() << "***** ERROR: " << stringList[idx+0];
+            data.r  = stringList[idx+1].toDouble(&ok);
+            if (!ok)
+                qDebug() << "***** ERROR: " << stringList[idx+1];
+            data.x  = stringList[idx+2].toDouble(&ok);
+            if (!ok)
+                qDebug() << "***** ERROR: " << stringList[idx+2];
             emit newData(data);
         }
     }

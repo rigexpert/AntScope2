@@ -74,8 +74,8 @@ Measurements::~Measurements()
     m_settings->setValue("GraphBriefHintEnabled",m_graphBriefHintEnabled);
     m_settings->endGroup();
 
-    delete m_pdTdrImp;
-    delete m_pdTdrStep;
+    delete []m_pdTdrImp;
+    delete []m_pdTdrStep;
 
     if(m_graphHint)
     {
@@ -784,6 +784,13 @@ void Measurements::on_newData(rawData _rawData)
             RhoPhase = atan2(RhoImag, RhoReal) / M_PI * 180.0;            
             RhoMod = sqrt(RhoReal*RhoReal+RhoImag*RhoImag);
 
+            QString msg = QString("f=%1, r=%2, x=%3, RhoPhase=%4")
+                    .arg(_rawData.fq, 0, 'f', 4, QLatin1Char(' '))
+                    .arg(calR, 0, 'f', 4, QLatin1Char(' '))
+                    .arg(calX, 0, 'f', 4, QLatin1Char(' '))
+                    .arg(RhoPhase, 0, 'f', 4, QLatin1Char(' '));
+            //qDebug() << "RhoPhase: " << msg;
+
             data.value = RhoPhase;
             m_measurements.last().phaseGraphCalib.insert(data.key,data);
             data.value = RhoMod;
@@ -1050,10 +1057,14 @@ void Measurements::on_newCursorSmithPos (double x, double y, int index)
     zString+= QString::number(r,'f', 2);
     if(x1 >= 0)
     {
+        if (x1 > 2000)
+            x1 = 2000; // HUCK
         zString+= " + j";
         zString+= QString::number(x1,'f', 2);
     }else
     {
+        if (x1 < -2000)
+            x1 = -2000; // HUCK
         zString+= " - j";
         zString+= QString::number((x1 * (-1)),'f', 2);
     }
@@ -1473,10 +1484,14 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         zString+= QString::number(r,'f', 2);
                         if(x >= 0)
                         {
+                            if (x > 2000)
+                                x = 2000; // HUCK
                             zString+= " + j";
                             zString+= QString::number(x,'f', 2);
                         }else
                         {
+                            if (x < -2000)
+                                x = -2000; // HUCK
                             zString+= " - j";
                             zString+= QString::number((x * (-1)),'f', 2);
                         }
@@ -1898,7 +1913,8 @@ void Measurements::loadData(QString path)
 
         double fqMin = DBL_MAX;
         double fqMax = 0;
-        for(int i = 0; i < measureArray.size(); ++i)
+        int size = measureArray.size();
+        for(int i = 0; i < size; ++i)
         {
             QJsonObject dataObject = measureArray[i].toObject();
             rawData data;
@@ -2029,7 +2045,7 @@ void Measurements::exportData(QString _name, int _type, int _number)
         bool result = file.open(QFile::ReadWrite);
         if(result)
         {
-            str = "Frequency(MHz);R;X";
+            str = "#Frequency(MHz);R;X";
             file.write( str.toLocal8Bit(), str.length());
             file.write("\r\n", 2);
 

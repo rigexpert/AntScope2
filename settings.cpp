@@ -34,7 +34,6 @@ Settings::Settings(QWidget *parent) :
     ui->shortCalibBtn->setStyleSheet(style);
     ui->loadOpenFileBtn->setStyleSheet(style);
     ui->loadCalibBtn->setStyleSheet(style);
-    ui->turnOnOffBtn->setStyleSheet(style);
     ui->calibWizard->setStyleSheet(style);
 
     style = "QGroupBox {border: 2px solid rgb(100,100,100); margin-top: 1ex;}";
@@ -72,6 +71,9 @@ Settings::Settings(QWidget *parent) :
     connect(ui->lineEditMin, &QLineEdit::editingFinished, this, &Settings::on_fqMinFinished);
     connect(ui->lineEditMax, &QLineEdit::editingFinished, this, &Settings::on_fqMaxFinished);
 
+    ui->lineEditPoints->setText("500");
+    connect(ui->lineEditPoints, &QLineEdit::editingFinished, this, &Settings::on_PointsFinished);
+
     CustomAnalyzer::load();
     //{
     // TODO Bug #2247: update doesn't work from Antscope2
@@ -93,11 +95,6 @@ Settings::Settings(QWidget *parent) :
         ui->serialPortComboBox->addItem(info.portName());
     }
     connect(ui->closeBtn, SIGNAL(pressed()), this, SLOT(close()));
-
-    // calibration turn-on/off moved to the main window
-    ui->label_3->hide();
-    ui->labelWizardStatus->hide();
-    ui->turnOnOffBtn->hide();
 }
 
 Settings::~Settings()
@@ -247,19 +244,16 @@ void Settings::setCalibration(Calibration * calibration)
         ui->labelOpenState->setText(m_calibration->getOpenFileName());
         ui->labelShortState->setText(m_calibration->getShortFileName());
         ui->labelLoadState->setText(m_calibration->getLoadFileName());
+        ui->lineEditPoints->setText(QString::number(m_calibration->dotsNumber()));
 
         if(m_calibration->getCalibrationPerformed())
         {
             if(m_calibration->getCalibrationEnabled())
             {
-                ui->turnOnOffBtn->setText("Turn Off");
-                ui->labelWizardStatus->setText("Calibration is On");
                 emit calibrationEnabled(true);
             }
             else
             {
-                ui->turnOnOffBtn->setText("Turn On");
-                ui->labelWizardStatus->setText("Calibration is Off");
                 emit calibrationEnabled(false);
             }
         }
@@ -289,7 +283,7 @@ void Settings::findBootloader (void)
     for(int n = 0; n < list.length(); ++n)
     {
         QString name = ReDeviceInfo::deviceName(list.at(n));
-        for(quint32 i = QUANTITY-1; i > 0; i--)
+        for(int i = QUANTITY-1; i > 0; i--)
         {
             if(names[i].indexOf(name) >= 0 )
             {
@@ -466,28 +460,6 @@ void Settings::on_loadCalibBtn_clicked()
     emit startCalibrationLoad();
 }
 
-void Settings::on_turnOnOffBtn_clicked()
-{
-    if(m_calibration->getCalibrationPerformed())
-    {
-        if(ui->turnOnOffBtn->text() == "Turn On")
-        {
-            ui->turnOnOffBtn->setText("Turn Off");
-            ui->labelWizardStatus->setText("Calibration is On");
-            emit calibrationEnabled(true);
-        }
-        else if (ui->turnOnOffBtn->text() == "Turn Off")
-        {
-            ui->turnOnOffBtn->setText("Turn On");
-            ui->labelWizardStatus->setText("Calibration is Off");
-            emit calibrationEnabled(false);
-        }
-    }else
-    {
-        QMessageBox::information(NULL, tr("Calibration not performed"),
-                              tr("Calibration not performed."));
-    }
-}
 
 void Settings::enableButtons(bool enabled)
 {
@@ -498,7 +470,6 @@ void Settings::enableButtons(bool enabled)
     ui->loadOpenFileBtn->setEnabled(enabled);
     ui->loadCalibBtn->setEnabled(enabled);
 
-    ui->turnOnOffBtn->setEnabled(enabled);
     ui->calibWizard->setEnabled(enabled);
 }
 
@@ -873,6 +844,8 @@ QString Settings::localDataPath(QString _fileName)
     QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
     return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
 #endif
+  qDebug("TODO Settings::localDataPath");
+  return QString();
 }
 
 QString Settings::programDataPath(QString _fileName)
@@ -895,6 +868,8 @@ QString Settings::programDataPath(QString _fileName)
     }
     return QString();
 #endif
+  //qDebug("TODO Settings::programDataPath");
+  return QString();
 }
 
 void Settings::on_aa30bootFound()
@@ -1193,4 +1168,9 @@ void Settings::on_fqMaxFinished()
     ui->lineEditMax->setText(appendSpaces(str));
 }
 
+void Settings::on_PointsFinished()
+{
+    QString str = ui->lineEditPoints->text();
+    m_calibration->setDotsNumber(str.toInt());
+}
 

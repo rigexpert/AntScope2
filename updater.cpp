@@ -34,6 +34,9 @@ void Updater::on_checkUpdates()
 #ifdef Q_OS_MAC
     os = "&os=mac";
 #endif
+#ifdef Q_OS_LINUX
+    os = "&os=linux";
+#endif
 
     QString url = "https://rigexpert.com/getsoftware?model=antscope2&revision=1" + os;
     m_downloader->startDownloadInfo(QUrl(url));

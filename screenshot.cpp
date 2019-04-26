@@ -28,7 +28,7 @@ Screenshot::Screenshot(QWidget *parent, int _model, int height, int width) :
         m_image = new QImage(m_lcdWidth, m_lcdHeight, QImage::Format_RGB32);
     }
     connect(&m_errorTimer,SIGNAL(timeout()), this, SLOT(on_errorTimerTick()));
-    m_errorTimer.start(1000);
+    m_errorTimer.start(5000);
 }
 
 Screenshot::~Screenshot()
@@ -136,10 +136,12 @@ void Screenshot::on_lineEdit_returnPressed()
 
 void Screenshot::on_newData(QByteArray data)
 {
+    //----------------
+    QString str2;
+    //----------------
     for(int i = 0; i < data.length(); ++i)
     {
         m_inputData.append((unsigned char)data.at(i));
-        //m_inputDataDebug.append((unsigned char)data.at(i));
     }
 
     QString model = CustomAnalyzer::customized() ?
@@ -178,7 +180,20 @@ void Screenshot::on_newData(QByteArray data)
             }
         }
     }
-    else
+    else if (model == "AA-230 Stick") {
+        while (!m_inputData.isEmpty()) {
+            unsigned char data = m_inputData.takeFirst();
+            if (data != 0)
+                qDebug() << "-------- " << data;
+            int mask = 0x80;
+            for (int idx=0; idx<8; idx++) {
+                //QRgb color = data&mask ? Qt::white : Qt::black;
+                QRgb color = data&mask ? qRgb(255, 255, 255) : qRgb(0, 0, 0);
+                m_imageVector.append(color);
+                mask >>= 1;
+            }
+        }
+    }else
     {
         while(m_inputData.length() > 3)
         {
@@ -238,8 +253,27 @@ void Screenshot::on_newData(QByteArray data)
             m_imageVector.clear();
             repaint();
         }
+    } else if (model == "AA-230 Stick") {
+        if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
+        {
+            int x,y;
+            int i = 0;
+            for (y = 0; y < m_lcdHeight; ++y)
+            {
+                for (x = 0; x < m_lcdWidth; ++x)
+                {
+                    m_image->setPixel (x, y, m_imageVector.at(i));
+                    i++;
+                }
+            }
+            m_inputData.clear();
+            m_imageVector.clear();
+            repaint();
+        }
     } else if((m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
-              || ( (model == "AA-230 ZOOM")&&(m_imageVector.length() >= 63604) )) {
+    //          || ( (model == "AA-230 ZOOM")&&(m_imageVector.length() >= 63604) )
+              )
+    {
             ui->progressBar->setValue(100);
             QApplication::clipboard()->setImage(*m_image,QClipboard::Clipboard);
             m_popUp->setPopupText(tr("Image added to clipboard"));
@@ -262,6 +296,14 @@ void Screenshot::on_newData(QByteArray data)
                     }
                 }
             }
+
+
+            QString str;
+            for(int idx=0; idx<m_lcdWidth*2; idx++) {
+                QString str1 = QString("%1 ").arg(m_imageVector.at(idx), 8, 16, QLatin1Char('0') );
+                str += str1;
+            }
+
             //emit screenshotComplete();
             m_inputData.clear();
             m_imageVector.clear();
@@ -346,6 +388,16 @@ void Screenshot::on_refreshBtn_clicked()
 
 void Screenshot::on_errorTimerTick()
 {
+    if ((m_lcdHeight == 0) || (m_lcdWidth == 0)) {
+        m_errorTimer.stop();
+        QMessageBox::warning(NULL, tr("Error"), tr("Screenshot not supported on this device."));
+        ui->progressBar->setValue(100);
+        m_inputData.clear();
+        m_imageVector.clear();
+        m_error = 0;
+        this->close();
+        return;
+    }
     if((m_error == m_imageVector.length()/(m_lcdHeight*m_lcdWidth/100)) && m_error != 0 && m_error != 100)
     {
         QMessageBox::warning(NULL, tr("Error"), tr("Error while make screenshot. Please try again."));

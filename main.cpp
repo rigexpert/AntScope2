@@ -3,11 +3,13 @@
 #include <QMessageBox>
 #include <QAbstractNativeEventFilter>
 
+bool g_noRestrictScale = false;
+
+
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <dbt.h>
 
-bool g_noRestrictScale = false;
 
 QString logFilePath = "antscope2-debug.log";
 bool logToFile = false;

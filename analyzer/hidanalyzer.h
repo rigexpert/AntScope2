@@ -15,6 +15,8 @@
 //    WAIT_DATA
 //};
 
+#ifndef RE_VID
+
 #define RE_VID          0x0483
 #define RE_PID			0xA1DE
 
@@ -30,7 +32,10 @@
 #define PREFIX_SERIAL_NUMBER_AA55	1550
 #define PREFIX_SERIAL_NUMBER_AA55_ZOOM	1551
 #define PREFIX_SERIAL_NUMBER_AA230_ZOOM	1232
+#define PREFIX_SERIAL_NUMBER_AA230_STICK 4230
 #define PREFIX_SERIAL_NUMBER_AA2000	4600
+
+#endif
 
 class hidAnalyzer : public QObject
 {
@@ -44,7 +49,7 @@ public:
 
     QString getVersion(void) const;
     QString getRevision(void) const;
-    void setRevision(quint32 rev){m_revision = QString::number(rev);}
+    void setRevision(QString rev){ m_revision = rev;}
     QString getSerial(void) const;
     int getModel(void) const;
     void nonblocking (int nonblock);
@@ -78,7 +83,8 @@ private:
 
     volatile bool m_bootMode;
 
-    QMutex m_mutex;
+    QMutex m_mutexSearch;
+    QMutex m_mutexRead;
     struct hid_device_info* m_devices;
     QThread* m_refreshThread;
 

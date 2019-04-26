@@ -6,6 +6,10 @@
 #include <mainwindow.h>
 
 PopUp::PopUp(QWidget *parent) : QWidget(parent),
+    m_bgColor(0,0,0,180),
+    m_penColor(255,155,255,180),
+    m_textColor("white"),
+    m_popupOpacity(0.1),
     m_durability(2000),
     m_hiding(true),
     m_x(850),
@@ -15,10 +19,7 @@ PopUp::PopUp(QWidget *parent) : QWidget(parent),
     m_mainX(177),
     m_mainY(131),
     m_mainBiasX(0),
-    m_mainBiasY(0),
-    m_bgColor(0,0,0,180),
-    m_penColor(255,255,255,180),
-    m_textColor("white")
+    m_mainBiasY(0)
 {
     setWindowFlags(Qt::FramelessWindowHint |
                    Qt::Tool |
@@ -166,14 +167,14 @@ void PopUp::hide()
 
 void PopUp::setPopupOpacity(float opacity)
 {
-    popupOpacity = opacity;
+    m_popupOpacity = opacity;
 
     setWindowOpacity(opacity);
 }
 
 float PopUp::getPopupOpacity() const
 {
-    return popupOpacity;
+    return m_popupOpacity;
 }
 
 void PopUp::mousePressEvent(QMouseEvent * event)

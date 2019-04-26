@@ -14,7 +14,7 @@ QT       += concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.12\\"'
+DEFINES += ANTSCOPE2VER='\\"1.0.13\\"'
 
 TARGET = AntScope2
 
@@ -82,7 +82,6 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
         qcustomplot.h \
         analyzer/analyzer.h \
-        ui_mainwindow.h \
         analyzer/hidanalyzer.h \
         analyzer/comanalyzer.h \
         analyzer/analyzerparameters.h \
@@ -97,11 +96,6 @@ HEADERS  += mainwindow.h \
         fqsettings.h \
         crc32.h \
         updatedialog.h \
-        ui_analyzerdata.h \
-        ui_fqsettings.h \
-        ui_screenshot.h \
-        ui_settings.h \
-        ui_updatedialog.h \
         devinfo/redeviceinfo.h \
         ftdi/ftd2xx.h \
         ftdi/ftdiinfo.h \
@@ -119,6 +113,14 @@ HEADERS  += mainwindow.h \
     analyzer/updater/aa230firmwareupdater.h \
     analyzer/updater/firmwareupdater.h \
     analyzer/updater/hidfirmwareupdater.h
+
+# TODO these files dont exist and are not generated
+#        ui_mainwindow.h \
+#        ui_analyzerdata.h \
+#        ui_fqsettings.h \
+#        ui_screenshot.h \
+#        ui_settings.h \
+#        ui_updatedialog.h \
 
 FORMS    += mainwindow.ui \
         analyzer/analyzerdata.ui \
@@ -153,13 +155,18 @@ win64{
     LIBS += -L$$PWD/ftdi/windows/win64/ -lftd2xx
     QMAKE_POST_LINK = COPY .\ftdi\windows\win64\ftd2xx.dll $$APPDIR\ftd2xx.dll &&
 }
-unix {
-    SOURCES += analyzer/usbhid/hidapi/mac/hid.c
-    LIBS += -framework CoreFoundation
+
+# Linux
+unix:!macx {
+    SOURCES += analyzer/usbhid/hidapi/linux/hid.c
+    LIBS += -lusb-1.0
     DEFINES += _NO_WINDOWS_
 }
 
 macx {
+    SOURCES += analyzer/usbhid/hidapi/mac/hid.c
+    LIBS += -framework CoreFoundation
+    DEFINES += _NO_WINDOWS_
     RUNTIME_FILES.path = Contents/MacOS/Resources
     RUNTIME_FILES.files = \
         $$PWD/cables.txt \

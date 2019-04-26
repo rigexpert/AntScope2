@@ -82,7 +82,7 @@ private:
 //    QGridLayout layout;     // Размещение для лейбла
     QVBoxLayout layout;
     QPropertyAnimation animation;   // Свойство анимации для всплывающего сообщения
-    float popupOpacity;     // Свойства полупрозрачности виджета
+    float m_popupOpacity;     // Свойства полупрозрачности виджета
     QTimer *timer;          // Таймер, по которому виджет будет скрыт
     int m_durability;
     bool m_hiding;

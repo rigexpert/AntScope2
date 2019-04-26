@@ -24,8 +24,6 @@ hidAnalyzer::hidAnalyzer(QObject *parent) : QObject(parent),
       m_futureRefresh(nullptr),
       m_watcherRefresh(nullptr)
 {
-    qDebug() << "hidAnalyzer::ctor";
-
     m_hidDevice = nullptr;
     m_checkTimer = new QTimer(this);
     QObject::connect(m_checkTimer, SIGNAL(timeout()), this, SLOT(checkTimerTick()));
@@ -152,7 +150,7 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
     {
         struct hid_device_info *devs, *cur_dev;
 
-        QMutexLocker locker(&m_mutex);
+        QMutexLocker locker(&m_mutexSearch);
         qint64 t0 = QDateTime::currentMSecsSinceEpoch();
         //devs = hid_enumerate(0x0, 0x0);
         devs = m_devices;
@@ -226,6 +224,25 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     for(quint32 i = 0; i < QUANTITY; ++i)
                     {
                         if(names[i] == "AA-230 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;                    
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA230_STICK)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-230 Stick")
                         {
                             m_analyzerModel = i;
                             emit analyzerFound(i);
@@ -313,17 +330,21 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
         struct hid_device_info *devs, *cur_dev;
 
         qint64 t0 = QDateTime::currentMSecsSinceEpoch();
-        QMutexLocker loacker(&m_mutex);
-        //devs = hid_enumerate(0x0, 0x0);
-        devs = m_devices;
-        if (devs == nullptr)
+        //QMutexLocker locker(&m_mutex);
+        if (!m_mutexSearch.tryLock())
             return false;
 
+        devs = m_devices;
+        if (devs == nullptr) {
+            m_mutexSearch.unlock();
+            return false;
+        }
         qint64 t1 = QDateTime::currentMSecsSinceEpoch();
         //qDebug() << "hidAnalyzer::searchAnalyzer: delete " << (t1-t0) << " ms";
 
         cur_dev = devs;
 
+        /*
         bool result = true;
         int i;
         for(i = 0; i < 100; i++)
@@ -343,14 +364,24 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
             }
             cur_dev = cur_dev->next;
         }
-        if(result)
-        {
-            m_bootMode = false;
-            m_analyzerModel = 0;
-            emit analyzerDisconnected();
-            disconnect();
+        */
+        while (cur_dev != nullptr) {
+            if (QString::fromWCharArray(cur_dev->serial_number) == m_serialNumber) {
+                if (cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID ||
+                    cur_dev->vendor_id == RE_BOOT_VID && cur_dev->product_id == RE_BOOT_PID ) {
+                    m_mutexSearch.unlock();
+                    return false;
+                }
+            }
+            cur_dev = cur_dev->next;
         }
-        //hid_free_enumeration(devs);
+        m_mutexSearch.unlock();
+
+        m_bootMode = false;
+        m_analyzerModel = 0;
+        emit analyzerDisconnected();
+        disconnect();
+
         return false;
     }
 }
@@ -535,16 +566,22 @@ void hidAnalyzer::timeoutChart()
             }
         }
         while(stringList.length() >= 3)
-        {
+        {            
+            bool ok;
             rawData data;
             str = stringList.takeFirst();
-            data.fq = str.toDouble(0);
+            data.fq = str.toDouble(&ok);
+            if (!ok)
+                qDebug() << "***** ERROR: " << str;
+            str = stringList.takeFirst();
+            data.r = str.toDouble(&ok);
+            if (!ok)
+                qDebug() << "***** ERROR: " << str;
 
             str = stringList.takeFirst();
-            data.r = str.toDouble(0);
-
-            str = stringList.takeFirst();
-            data.x = str.toDouble(0);
+            data.x = str.toDouble(&ok);
+            if (!ok)
+                qDebug() << "***** ERROR: " << str;
 
             emit newData(data);
         }
@@ -559,7 +596,7 @@ void hidAnalyzer::hidRead (void)
     }
     unsigned char readBuff[64];
     int read = hid_read(m_hidDevice, readBuff, 64);
-
+    m_mutexRead.lock();
     if(read > 0)
     {
         if(readBuff[0] == ANTSCOPE_REPORT)
@@ -572,6 +609,7 @@ void hidAnalyzer::hidRead (void)
             m_incomingBuffer.remove(0,ret);
         }
     }
+    m_mutexRead.unlock();
 }
 
 qint32 hidAnalyzer::parse (QByteArray arr)
@@ -645,11 +683,11 @@ qint32 hidAnalyzer::parse (QByteArray arr)
             if(m_parseState == VER)
             {
                 if (str.indexOf("MAC\t") == 0) {
-                    qDebug() << "FULLINFO: " << str;
+                    //qDebug() << "FULLINFO: " << str;
                     emit signalFullInfo(str);
                     continue;
                 } else if (str.indexOf("SN\t") == 0) {
-                    qDebug() << "FULLINFO: " << str;
+                    //qDebug() << "FULLINFO: " << str;
                     emit signalFullInfo(str);
                     continue;
                 }
@@ -722,7 +760,9 @@ void hidAnalyzer::makeScreenshot()
     nonblocking(true);
     m_incomingBuffer.clear();
     QString str = "screenshot\r";
+    qDebug() << "========== hidAnalyzer::makeScreenshot()";
     sendData(str);
+    //QThread::currentThread()->msleep(100);
 }
 
 bool hidAnalyzer::waitAnswer()
@@ -907,9 +947,11 @@ void hidAnalyzer::refreshReady()
     QTimer::singleShot(1000, this, &hidAnalyzer::startResresh);
 
     struct hid_device_info* devs = m_futureRefresh->result();
-    QMutexLocker locker(&m_mutex);
-    if (m_devices != nullptr) {
-        hid_free_enumeration(m_devices);
+    if (m_mutexSearch.tryLock()) {
+        if (m_devices != nullptr) {
+            hid_free_enumeration(m_devices);
+        }
+        m_devices = devs;
+        m_mutexSearch.unlock();
     }
-    m_devices = devs;
 }

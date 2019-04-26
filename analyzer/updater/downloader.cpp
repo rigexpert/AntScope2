@@ -29,7 +29,7 @@ Downloader::State Downloader::startDownloadInfo(QUrl url)
     QNetworkRequest request(url);
     m_mng.get(request);
 
-    qCDebug(DOWNLOADER) << "start download " << url;
+    //qCDebug(DOWNLOADER) << "start download " << url;
 
     m_state = InProgress;
 
