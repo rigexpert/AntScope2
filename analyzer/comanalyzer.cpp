@@ -405,6 +405,7 @@ void comAnalyzer::searchAnalyzer()
         {
             messageWasShown = true;
             QMessageBox::information(NULL,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
+            return;
         }
         analyzerDetected = false;
         closeComPort();

@@ -54,8 +54,8 @@ public:
 
     void setPrototype(QString _prototype) { m_prototype=_prototype.trimmed(); }
     void setAlias(QString _alias) { m_alias=_alias.trimmed(); }
-    void setMinFq(QString _fq) { m_minFq=_fq.trimmed(); }
-    void setMaxFq(QString _fq) { m_maxFq=_fq.trimmed(); }
+    void setMinFq(QString _fq) { m_minFq=_fq.trimmed().replace(" ", ""); }
+    void setMaxFq(QString _fq) { m_maxFq=_fq.trimmed().replace(" ", ""); }
     void setWidth(int _wd) { m_lcdWidth=_wd; }
     void setHeight(int _ht) { m_lcdHeight=_ht; }
 };

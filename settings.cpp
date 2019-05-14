@@ -74,17 +74,19 @@ Settings::Settings(QWidget *parent) :
     ui->lineEditPoints->setText("500");
     connect(ui->lineEditPoints, &QLineEdit::editingFinished, this, &Settings::on_PointsFinished);
 
-    CustomAnalyzer::load();
     //{
     // TODO Bug #2247: update doesn't work from Antscope2
-    ui->tabWidget->removeTab(1);
+    ui->tabWidget->removeTab(4);
     //}
 
     //{
     // TODO Analyzer customization is not fully implemented yet
-    //ui->tabWidget->removeTab(4); // when Update table present
-    ui->tabWidget->removeTab(3); // when Update table absent
-    //initCustomizeTab();
+    extern bool g_developerMode;
+    if (!g_developerMode) {
+        ui->tabWidget->removeTab(3);
+    } else {
+        initCustomizeTab();
+    }
     //}
 
     QString cablesPath = Settings::programDataPath("cables.txt");
@@ -859,6 +861,9 @@ QString Settings::programDataPath(QString _fileName)
 // win32 and win64
 #ifdef Q_OS_WIN
     QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
+
+    qDebug() << list;
+
     for (int idx=0; idx<list.size(); idx++)
     {
         QDir dir = list[idx];
@@ -1034,6 +1039,9 @@ void Settings::setBands(QList<QString> list)
 
 void Settings::initCustomizeTab()
 {
+    ui->comboBoxPrototype->hide();
+    ui->label_19->hide();
+
     ui->comboBoxPrototype->clear();
     ui->comboBoxName->clear();
 
@@ -1053,7 +1061,6 @@ void Settings::initCustomizeTab()
 
     CustomAnalyzer::setCurrent(curAlias);
     CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
-    //CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
     if (ca != nullptr) {
         ui->comboBoxName->setCurrentText(ca->alias());
         ui->lineEditMin->setText(ca->minFq());

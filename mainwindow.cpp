@@ -4,7 +4,8 @@
 #include "analyzer/customanalyzer.h"
 
 extern QString appendSpaces(const QString& number);
-extern bool g_noRestrictScale; // see main.cpp
+extern bool g_developerMode; // see main.cpp
+extern void setAbsoluteFqMaximum();
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -38,6 +39,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setAbsoluteFqMaximum();
 
+    if (g_developerMode) {
+        ui->spinBoxPoints->setRange(1, 1000000);
+    }
+
     m_qtLanguageTranslator = new QTranslator();
 
     QString path = Settings::setIniFile();
@@ -46,7 +51,8 @@ MainWindow::MainWindow(QWidget *parent) :
     createTabs(m_settings->value("tabSequence","0123456").toString());
     ui->tabWidget->setCurrentIndex(m_settings->value("currentTab",0).toInt());
 
-    m_swrZoomState = m_settings->value("swrZoomState", 10).toInt();
+    if (g_developerMode)
+        m_swrZoomState = m_settings->value("swrZoomState", 10).toInt();
     m_phaseZoomState = m_settings->value("phaseZoomState", 10).toInt();
     m_rsZoomState = m_settings->value("rsZoomState", 10).toInt();
     m_rpZoomState = m_settings->value("rpZoomState", 10).toInt();
@@ -55,6 +61,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_smithZoomState = m_settings->value("smithZoomState", 10).toInt();
 
     m_settings->endGroup();
+
+    if (g_developerMode)
+        CustomAnalyzer::load(m_settings);
 
     setWindowFlags(windowFlags() | Qt::CustomizeWindowHint |
                                    Qt::WindowMinimizeButtonHint |
@@ -217,7 +226,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(shortCtrlMinus,SIGNAL(activated()),this,SLOT(on_pressCtrlMinus()));
     QShortcut *shortCtrlDoun = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Down),this);
     connect(shortCtrlDoun,SIGNAL(activated()),this,SLOT(on_pressCtrlMinus()));
-    QShortcut *shortCtrlZero = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Insert),this);
+    QShortcut *shortCtrlIns = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Asterisk),this);
+    connect(shortCtrlIns,SIGNAL(activated()),this,SLOT(on_pressCtrlZero()));
+    QShortcut *shortCtrlZero = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_0),this);
     connect(shortCtrlZero,SIGNAL(activated()),this,SLOT(on_pressCtrlZero()));
 
     QShortcut *shortLeft = new QShortcut(QKeySequence(Qt::Key_Left),this);
@@ -242,7 +253,7 @@ MainWindow::MainWindow(QWidget *parent) :
                                m_tdrWidget,
                                m_smithWidget,
                                ui->tableWidget_measurments);
-    connect(m_analyzer, SIGNAL(newData(rawData)), m_measurements, SLOT(on_newData(rawData)));
+    connect(m_analyzer, SIGNAL(newData(rawData)), m_measurements, SLOT(on_newDataRedraw(rawData)));
     connect(m_analyzer, SIGNAL(newMeasurement(QString)), m_measurements, SLOT(on_newMeasurement(QString)));
     connect(m_analyzer, SIGNAL(continueMeasurement(qint64, qint64, qint32)), m_measurements, SLOT(on_continueMeasurement(qint64, qint64, qint32)));
     connect(this, SIGNAL(currentTab(QString)), m_measurements, SLOT(on_currentTab(QString)));
@@ -348,6 +359,8 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->limitsBtn->setChecked(true);
         on_limitsBtn_clicked(true);
 //        ui->rangeBtn->setChecked(false);
+        m_lastEnteredFqFrom = range.lower;
+        m_lastEnteredFqTo = range.upper;
         setFqFrom(range.lower);
         setFqTo(range.upper);
     }else
@@ -356,6 +369,8 @@ MainWindow::MainWindow(QWidget *parent) :
         on_rangeBtn_clicked(true);
 //        ui->rangeBtn->setChecked(true);
 //        ui->limitsBtn->setChecked(false);
+        m_lastEnteredFqFrom = (range.upper + range.lower)/2;
+        m_lastEnteredFqTo = (range.upper - range.lower)/2;
         setFqFrom((range.upper + range.lower)/2);
         setFqTo((range.upper - range.lower)/2);
     }
@@ -372,6 +387,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_analyzer->on_changedAutoDetectMode(m_autoDetectMode);
     m_analyzer->on_changedSerialPort(m_serialPort);
 
+    /* ???
     m_swrZoomState = m_settings->value("swrZoomState", 10).toInt();
     m_phaseZoomState = m_settings->value("phaseZoomState", 10).toInt();
     m_rsZoomState = m_settings->value("rsZoomState", 10).toInt();
@@ -379,7 +395,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_rlZoomState = m_settings->value("rlZoomState", 10).toInt();
     m_tdrZoomState = m_settings->value("tdrZoomState", 10).toInt();
     m_smithZoomState = m_settings->value("smithZoomState", 10).toInt();
-
+    */
     m_languageNumber = m_settings->value("languageNumber",0).toInt();
 
     m_settings->endGroup();
@@ -631,10 +647,11 @@ void MainWindow::setWidgetsSettings()
 
     bool bands_loaded = loadBands();
     QStringList* bands = nullptr;
+    QString band;
     if (bands_loaded)
     {
         m_settings->beginGroup("Settings");
-        QString band = m_settings->value("current_band", "ITU Region 1 - Europe, Africa").toString();
+        band = m_settings->value("current_band", "ITU Region 1 - Europe, Africa").toString();
         m_settings->endGroup();
         if (m_BandsMap.contains(band))
         {
@@ -644,15 +661,22 @@ void MainWindow::setWidgetsSettings()
 
     //-------SWR Widget---------------------------------------------
     m_swrWidget->addGraph();//graph(0) - SWR
-    setBands(m_swrWidget, bands, 1, MAX_SWR);
+    setBands(m_swrWidget, bands, MIN_SWR, MAX_SWR);
 
     m_swrWidget->graph(0)->setPen(pen);
     m_swrWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_swrWidget->yAxis->setLabel(tr("SWR"));
     m_swrWidget->xAxis->setRange(0,1400000);
-    m_swrWidget->yAxis->setRangeMin(1);
+    m_swrWidget->yAxis->setRangeMin(MIN_SWR);
     m_swrWidget->yAxis->setRangeMax(MAX_SWR);
-    m_swrWidget->yAxis->setRange(1, m_swrZoomState+0.2);
+    m_swrWidget->yAxis->setRange(MIN_SWR, m_swrZoomState+0.2);
+    m_swrWidget->yAxis->setNumberPrecision(2);
+    m_swrWidget->yAxis->setAutoTicks(true);
+    m_swrWidget->yAxis->setAutoSubTicks(true);
+    m_swrWidget->yAxis->setTickStep(0.1);
+    m_swrWidget->yAxis->setAutoTickCount(8);
+    m_swrWidget->yAxis->setTickLength(8, 0);
+    m_swrWidget->yAxis->setSubTickLength(4, 0);
 
      //| Qt::Vertical | Qt::Horizontal
     m_swrWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
@@ -662,6 +686,7 @@ void MainWindow::setWidgetsSettings()
     m_swrWidget->yAxis->setTickLabelFont(fontTickLabel);
     m_swrWidget->xAxis->setLabelFont(fontLabel);
     m_swrWidget->yAxis->setLabelFont(fontLabel);
+    on_bandChanged(band);
     m_swrWidget->replot();
 
     //-------Phase Widget---------------------------------------------
@@ -1121,19 +1146,21 @@ void MainWindow::on_pressCtrlPlus ()
     QString str = ui->tabWidget->currentWidget()->objectName();
     if( str == "tab_1")
     {
-        if(m_swrZoomState > 1)
-        {
-            --m_swrZoomState;
-            m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-            m_swrWidget->yAxis->setRangeLower(1);
-            m_swrWidget->replot();
-            if(m_markers)
+        if (g_developerMode) {
+            if(m_swrZoomState > 1)
             {
-                QTimer::singleShot(5, m_markers, SLOT(redraw()));
-            }
-            if(m_measurements)
-            {
-                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+                --m_swrZoomState;
+                m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
+                m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+                m_swrWidget->replot();
+                if(m_markers)
+                {
+                    QTimer::singleShot(5, m_markers, SLOT(redraw()));
+                }
+                if(m_measurements)
+                {
+                    QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+                }
             }
         }
     }else if(str == "tab_2")
@@ -1429,19 +1456,21 @@ void MainWindow::on_pressCtrlMinus ()
     QString str = ui->tabWidget->currentWidget()->objectName();
     if( str == "tab_1")
     {
-        if(m_swrZoomState <= 9)
-        {
-            ++m_swrZoomState;
-            m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-            m_swrWidget->yAxis->setRangeLower(1);
-            m_swrWidget->replot();
-            if(m_markers)
+        if (g_developerMode) {
+            if(m_swrZoomState <= 9)
             {
-                QTimer::singleShot(5, m_markers, SLOT(redraw()));
-            }
-            if(m_measurements)
-            {
-                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+                ++m_swrZoomState;
+                m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
+                m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+                m_swrWidget->replot();
+                if(m_markers)
+                {
+                    QTimer::singleShot(5, m_markers, SLOT(redraw()));
+                }
+                if(m_measurements)
+                {
+                    QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+                }
             }
         }
     }else if(str == "tab_2")
@@ -1508,20 +1537,23 @@ void MainWindow::on_pressCtrlMinus ()
 
 void MainWindow::on_pressCtrlZero()
 {
-    m_swrZoomState = 1;
     QString str = ui->tabWidget->currentWidget()->objectName();
     if( str == "tab_1")
     {
-        m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-        m_swrWidget->yAxis->setRangeLower(1);
-        m_swrWidget->replot();
-        if(m_markers)
-        {
-            QTimer::singleShot(5, m_markers, SLOT(redraw()));
-        }
-        if(m_measurements)
-        {
-            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        if (g_developerMode) {
+
+            m_swrZoomState = 10;
+            m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
+            m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+            m_swrWidget->replot();
+            if(m_markers)
+            {
+                QTimer::singleShot(5, m_markers, SLOT(redraw()));
+            }
+            if(m_measurements)
+            {
+                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+            }
         }
     }else if(str == "tab_2")
     {
@@ -2021,31 +2053,32 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
     m_rsWidget->xAxis->setRange(m_swrWidget->xAxis->range());
     m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
     m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
-
-    if (e->modifiers() == Qt::ControlModifier)
-    {
-        if(m_measurements)
+    if (g_developerMode) {
+        if (e->modifiers() == Qt::ControlModifier)
         {
-            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
-        }
-        if(e->delta() < 0)
-        {
-            if(g_noRestrictScale || m_swrZoomState <= 9)
+            if(m_measurements)
             {
-                ++m_swrZoomState;
-                m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-                m_swrWidget->yAxis->setRangeLower(1);
+                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
-        }else
-        {
-            if(m_swrZoomState > 1)
+            if(e->delta() < 0)
             {
-                --m_swrZoomState;
-                m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-                m_swrWidget->yAxis->setRangeLower(1);
+                if(m_swrZoomState <= 9)
+                {
+                    ++m_swrZoomState;
+                    m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
+                    m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+                }
+            }else
+            {
+                if(m_swrZoomState > 1)
+                {
+                    --m_swrZoomState;
+                    m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
+                    m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+                }
             }
+            QTimer::singleShot(5, m_markers, SLOT(redraw()));
         }
-        QTimer::singleShot(5, m_markers, SLOT(redraw()));
     }
     emit rescale();
 }
@@ -2192,7 +2225,7 @@ void MainWindow::on_mouseWheel_rs(QWheelEvent * e)
         int val;
         if(e->delta() < 0)
         {
-            if(g_noRestrictScale || state <= 19)
+            if(g_developerMode || state <= 19)
             {
                 ++state;
                 val = state*80;
@@ -2301,7 +2334,7 @@ void MainWindow::on_mouseWheel_rp(QWheelEvent *e)
     {
         if(e->delta() < 0)
         {
-            if(g_noRestrictScale || state <= 19)
+            if(g_developerMode || state <= 19)
             {
                 ++state;
                 int val = state*80;
@@ -2414,7 +2447,7 @@ void MainWindow::on_mouseWheel_rl(QWheelEvent *e)
         }
         if(e->delta() < 0)
         {
-            if(g_noRestrictScale || state <= 9)
+            if(g_developerMode || state <= 9)
             {
                 ++state;
                 m_rlWidget->yAxis->setRangeUpper(state*5);
@@ -2564,7 +2597,10 @@ void MainWindow::createTabs (QString sequence)
             m_horizontalLayout_1->setObjectName(QStringLiteral("horizontalLayout_1"));
             m_swrWidget = new QCustomPlot(m_tab_1);
             m_swrWidget->setObjectName(QStringLiteral("swr_widget"));
-            //m_swrWidget->yAxis->setScaleType(QCPAxis::stLogarithmic);
+//            m_swrWidget->yAxis->setScaleType(QCPAxis::stLogarithmic);
+//            m_swrWidget->yAxis->setNumberFormat("b");
+//            m_swrWidget->yAxis->setNumberPrecision(2);
+//            m_swrWidget->yAxis->setTickStep(0.1);
 
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
@@ -2864,8 +2900,10 @@ void MainWindow::on_singleStart_clicked()
     if (CustomAnalyzer::customized()) {
         CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
         if (ca != nullptr) {
-            minFreq = ca->minFq().toULongLong();
-            maxFreq = ca->maxFq().toULongLong();
+            QString strMin = ca->minFq();
+            minFreq = strMin.toULongLong();
+            QString strMax = ca->maxFq();
+            maxFreq = strMax.toULongLong();
         }
     }
 
@@ -3247,7 +3285,18 @@ void MainWindow::on_settingsBtn_clicked()
 
     connect(m_settingsDialog, SIGNAL(bandChanged(QString)), this, SLOT(on_bandChanged(QString)));
 
+    bool was_customized = CustomAnalyzer::customized();
+
     m_settingsDialog->exec();
+
+    if (CustomAnalyzer::customized()) {
+        CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+        if (ca != nullptr) {
+            on_analyzerFound(ca->alias());
+        }
+    } else if (was_customized) {
+        m_analyzer->searchAnalyzer();
+    }
 
     ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
     ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
@@ -3315,15 +3364,13 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
         m_measurements->deleteRow(rowNumber);
     }
 
-//    m_settings->beginGroup("MainWindow");
-//    qint64 from = m_settings->value("rangeLower",0).toULongLong();
-//    qint64 to =  m_settings->value("rangeUpper",1400000).toULongLong();
-//    qint32 dots = m_settings->value("dotsNumber", 50).toInt();
-//    m_settings->endGroup();
-
-//    qint64 range = (to - from);
-//    on_dataChanged(from + range/2, range, dots);
-    onFullRange(true);
+    //{ Antonov's request: keep user's values
+    //onFullRange(true);
+    qint64 from = m_lastEnteredFqFrom;
+    qint64 to =  m_lastEnteredFqTo;
+    qint64 range = (to - from);
+    on_dataChanged(from + range/2, range, m_dotsNumber);
+    //}
 
     if(ui->tableWidget_measurments->rowCount() == 0)
     {
@@ -3577,7 +3624,7 @@ void MainWindow::on_printBtn_clicked()
     if(name == "tab_1")
     {
         string += "SWR graph";
-        m_print->drawBands( 1, MAX_SWR);
+        m_print->drawBands( MIN_SWR, MAX_SWR);
         m_print->setRange(m_swrWidget->xAxis->range(),m_swrWidget->yAxis->range());
         m_print->setLabel(m_swrWidget->xAxis->label(), m_swrWidget->yAxis->label());
         for(int i = 1; i < m_swrWidget->graphCount(); ++i)
@@ -3874,14 +3921,6 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
 void MainWindow::setFqFrom(QString from)
 {
     from.remove(' ');
-//    if(from.length() > 6)
-//    {
-//        from.insert(from.length()-6,' ');
-//    }
-//    if(from.length() > 3)
-//    {
-//        from.insert(from.length()-3,' ');
-//    }
     from = appendSpaces(from);
     ui->lineEdit_fqFrom->setText(from);
 }
@@ -3889,14 +3928,6 @@ void MainWindow::setFqFrom(QString from)
 void MainWindow::setFqFrom(double from)
 {
     QString sFrom = QString::number(from,'f', 0);
-//    if(sFrom.length() > 6)
-//    {
-//        sFrom.insert(sFrom.length()-6,' ');
-//    }
-//    if(sFrom.length() > 3)
-//    {
-//        sFrom.insert(sFrom.length()-3,' ');
-//    }
     sFrom = appendSpaces(sFrom);
     ui->lineEdit_fqFrom->setText(sFrom);
 }
@@ -3904,14 +3935,6 @@ void MainWindow::setFqFrom(double from)
 void MainWindow::setFqTo(QString to)
 {
     to.remove(' ');
-//    if(to.length() > 6)
-//    {
-//        to.insert(to.length()-6,' ');
-//    }
-//    if(to.length() > 3)
-//    {
-//        to.insert(to.length()-3,' ');
-//    }
     to = appendSpaces(to);
     ui->lineEdit_fqTo->setText(to);
 }
@@ -3919,14 +3942,6 @@ void MainWindow::setFqTo(QString to)
 void MainWindow::setFqTo(double to)
 {
     QString sTo = QString::number(to,'f', 0);
-//    if(sTo.length() > 6)
-//    {
-//        sTo.insert(sTo.length()-6,' ');
-//    }
-//    if(sTo.length() > 3)
-//    {
-//        sTo.insert(sTo.length()-3,' ');
-//    }
     sTo = appendSpaces(sTo);
     ui->lineEdit_fqTo->setText(sTo);
 }
@@ -3941,7 +3956,8 @@ double MainWindow::getFqTo(void)
     return m_swrWidget->xAxis->range().upper;
 }
 
-void MainWindow::on_lineEdit_fqFrom_editingFinished()
+
+void MainWindow::changeFqFrom(bool _backupValue)
 {
     setFqFrom(ui->lineEdit_fqFrom->text());
     double lower = 0;
@@ -4003,12 +4019,14 @@ void MainWindow::on_lineEdit_fqFrom_editingFinished()
         m_rlWidget->xAxis->setRangeUpper(lower+ui->lineEdit_fqTo->text().remove(' ').toDouble()*2);
         m_rlWidget->xAxis->setRangeLower(lower);
     }
+    if (_backupValue) {
+        m_lastEnteredFqFrom = lower;
+        m_lastEnteredFqTo = upper;
+    }
     updateGraph();
-    //ui->lineEdit_fqTo->setFocus();
-    //ui->lineEdit_fqTo->selectAll();
 }
 
-void MainWindow::on_lineEdit_fqTo_editingFinished()
+void MainWindow::changeFqTo(bool _backupValue)
 {
     setFqTo(ui->lineEdit_fqTo->text());
     double lower;
@@ -4063,8 +4081,22 @@ void MainWindow::on_lineEdit_fqTo_editingFinished()
         m_rlWidget->xAxis->setRangeUpper(upper);
         m_rlWidget->xAxis->setRangeLower(lower);
     }
+    if (_backupValue) {
+        m_lastEnteredFqFrom = lower;
+        m_lastEnteredFqTo = upper;
+    }
     updateGraph();
     ui->singleStart->setFocus();
+}
+
+void MainWindow::on_lineEdit_fqFrom_editingFinished()
+{
+    changeFqFrom(true);
+}
+
+void MainWindow::on_lineEdit_fqTo_editingFinished()
+{
+    changeFqTo(true);
 }
 
 void MainWindow::on_newVersionAvailable()
@@ -4317,7 +4349,7 @@ void MainWindow::on_bandChanged(QString band)
         }
 
         QStringList* bands = m_BandsMap[band];
-        setBands(m_swrWidget, bands, 1, MAX_SWR);
+        setBands(m_swrWidget, bands, MIN_SWR, MAX_SWR);
         setBands(m_phaseWidget, bands, -180, 180);
         setBands(m_rsWidget, bands, -2000, 2000);
         setBands(m_rpWidget, bands, -2000, 2000);
@@ -4357,8 +4389,10 @@ void MainWindow::on_dataChanged(qint64 _center_khz, qint64 _range_khz, qint32 _d
         ui->lineEdit_fqFrom->setText(QString::number(_center_khz - _range_khz/2));
         ui->lineEdit_fqTo->setText(QString::number(_center_khz + _range_khz/2));
     }
-    on_lineEdit_fqTo_editingFinished();
-    on_lineEdit_fqFrom_editingFinished();
+    changeFqTo();
+    changeFqFrom();
+    //on_lineEdit_fqTo_editingFinished();
+    //on_lineEdit_fqFrom_editingFinished();
 }
 
 
@@ -4389,21 +4423,19 @@ QString appendSpaces(const QString& str) {
 void MainWindow::onFullRange(bool)
 {
     int model = m_analyzer->getModel();
-
     qint64 from = minFq[model].toULongLong();
     qint64 to = maxFq[model].toULongLong();
     qint64 range = to - from;
+
+    if (CustomAnalyzer::customized()) {
+        CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
+        if (ca != nullptr) {
+            from = ca->minFq().replace(" ", "").toULongLong();
+            to = ca->maxFq().replace(" ", "").toULongLong();
+            range = to - from;
+        }
+    }
     on_dataChanged(from + range/2, range, m_dotsNumber);
 }
 
 
-void MainWindow::setAbsoluteFqMaximum()
-{
-    int fqMax = 0;
-    for (int idx=1; idx<QUANTITY; idx++) {
-        QString str = maxFq[idx];
-        int fq = str.toInt();
-        fqMax = qMax(fqMax, fq);
-    }
-    ABSOLUTE_MAX_FQ = fqMax;
-}

@@ -15,7 +15,8 @@
 //#pragma GCC diagnostic ignored "-Wtype-limits"
 //#pragma GCC diagnostic pop
 
-static int MAX_SWR = 11;
+static double MAX_SWR = 10.0;
+static double MIN_SWR = 0;
 
 static int ABSOLUTE_MIN_FQ = 0;
 static int ABSOLUTE_MAX_FQ = 1400000;

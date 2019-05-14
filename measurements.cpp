@@ -1,5 +1,5 @@
 #include "measurements.h"
-
+#include "ProgressDlg.h"
 
 Measurements::Measurements(QObject *parent) : QObject(parent),
     m_currentIndex(0),
@@ -449,8 +449,12 @@ void Measurements::on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots)
     */
 }
 
+void Measurements::on_newDataRedraw(rawData _rawData)
+{
+    on_newData(_rawData, true);
+}
 
-void Measurements::on_newData(rawData _rawData)
+void Measurements::on_newData(rawData _rawData, bool _redraw)
 {
     if(m_calibrationMode)
     {
@@ -480,7 +484,7 @@ void Measurements::on_newData(rawData _rawData)
     double fq = _rawData.fq*1000;
     x.append(fq);
     x.append(fq);
-    y.append(0);
+    y.append(MIN_SWR);
     y.append(MAX_SWR);
 
     QCPData data;
@@ -808,7 +812,8 @@ void Measurements::on_newData(rawData _rawData)
             //----------------------calc smith end---------------------------
         }
     }
-    on_redrawGraphs();
+    if (_redraw)
+        on_redrawGraphs();
 }
 
 quint32 Measurements::computeSWR(double freq, double Z0, double R, double X, double *VSWR, double *RL)
@@ -1577,7 +1582,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                     m_swrLine2->setAntialiased(false);
                     m_swrWidget->addItem(m_swrLine2);
                 }
-                m_swrLine->point1->setCoords(frequency, 1);
+                m_swrLine->point1->setCoords(frequency, MIN_SWR);
                 m_swrLine->point2->setCoords(frequency, MAX_SWR);
 
                 m_swrLine2->point1->setCoords(m_swrWidget->yAxis->getRangeLower(), swr);
@@ -1898,8 +1903,8 @@ void Measurements::loadData(QString path)
         QFile loadFile(path);
 
         if (!loadFile.open(QIODevice::ReadOnly)) {
-            QMessageBox::information(NULL, tr("Error"), tr("Couldn't open save file."));
-            qWarning("Couldn't open save file.");
+            QMessageBox::information(NULL, tr("Error"), tr("Couldn't open saved file."));
+            qWarning("Couldn't open saved file.");
             return;
         }
         on_newMeasurement(list.last());
@@ -1914,6 +1919,16 @@ void Measurements::loadData(QString path)
         double fqMin = DBL_MAX;
         double fqMax = 0;
         int size = measureArray.size();
+
+        ProgressDlg* progressDlg = new ProgressDlg();
+        progressDlg->setValue(0);
+        progressDlg->setProgressData(0, size, 1);
+        progressDlg->updateActionInfo(tr("Load measurement"));
+        progressDlg->updateStatusInfo(tr("please wait ...."));
+        progressDlg->show();
+        progressDlg->setWindowModality(Qt::WindowModal);
+        QApplication::processEvents();
+
         for(int i = 0; i < size; ++i)
         {
             QJsonObject dataObject = measureArray[i].toObject();
@@ -1922,7 +1937,14 @@ void Measurements::loadData(QString path)
             on_newData(data);
             fqMin = qMin(fqMin, data.fq);
             fqMax = qMax(fqMax, data.fq);
+            if ((i%10) == 0) {
+                progressDlg->setValue(i);
+                progressDlg->updateStatusInfo(QString(tr("loaded %1 dots, from %2")).arg(i).arg(size));
+            }
         }
+        progressDlg->hide();
+        delete progressDlg;
+
         emit import_finished(fqMin*1000, fqMax*1000);
     }else
     {

@@ -107,6 +107,8 @@ private:
 
     bool m_isContinuos;
     int m_dotsNumber;
+    quint64 m_lastEnteredFqFrom=0;
+    quint64 m_lastEnteredFqTo=0;
 
     QString m_lastSavePath;
     QString m_lastOpenPath;
@@ -178,7 +180,8 @@ private:
     bool loadLanguage(QString locale); // locale: en, ukr, ru, jp, etc.
     void saveFile(int row, QString path);
     QCustomPlot* getCurrentPlot();
-    void setAbsoluteFqMaximum();
+    void changeFqFrom(bool _backupValue=false);
+    void changeFqTo(bool _backupValue=false);
 
 signals:
     void measure(qint64,qint64,int);

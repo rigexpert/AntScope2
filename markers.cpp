@@ -108,7 +108,7 @@ void Markers::setFq(double fq)
 
     m_markersList.last()->frequency = fq;
 
-    m_markersList.last()->swrLine->point1->setCoords(fq, 1);
+    m_markersList.last()->swrLine->point1->setCoords(fq, MIN_SWR);
     m_markersList.last()->swrLine->point2->setCoords(fq, MAX_SWR);
 
     double offsetX = (m_swrWidget->xAxis->range().upper - m_swrWidget->xAxis->range().lower)/40;

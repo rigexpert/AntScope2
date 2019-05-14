@@ -41,8 +41,9 @@ Analyzer::~Analyzer()
     }
     if(m_comAnalyzer)
     {
-        delete m_comAnalyzer;
+        comAnalyzer* tmp = m_comAnalyzer;
         m_comAnalyzer = nullptr;
+        delete tmp;
     }
 }
 
@@ -331,12 +332,13 @@ void Analyzer::on_hidAnalyzerFound (quint32 analyzerNumber)
 {
     if(m_comAnalyzer)
     {
-        delete m_comAnalyzer;
+        comAnalyzer* tmp = m_comAnalyzer;
         m_comAnalyzer = nullptr;
+        delete tmp;
     }
     m_hidAnalyzerFound = true;
     m_analyzerModel = analyzerNumber;
-    QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+    QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentAlias() : names[m_analyzerModel];
     emit analyzerFound(str);
 
     //if(m_autoCheckUpdate)

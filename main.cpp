@@ -2,8 +2,9 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QAbstractNativeEventFilter>
+#include "analyzer/customanalyzer.h"
 
-bool g_noRestrictScale = false;
+bool g_developerMode = false;
 
 
 #ifdef Q_OS_WIN
@@ -66,10 +67,28 @@ public :
 };
 #endif
 
+
+void setAbsoluteFqMaximum()
+{
+    int fqMax = 0;
+
+    if (CustomAnalyzer::customized() && CustomAnalyzer::getCurrent() != nullptr) {
+            fqMax = CustomAnalyzer::getCurrent()->maxFq().toInt();
+    } else {
+        for (int idx=1; idx<QUANTITY; idx++) {
+            QString str = maxFq[idx];
+            int fq = str.toInt();
+            fqMax = qMax(fqMax, fq);
+        }
+    }
+    ABSOLUTE_MAX_FQ = fqMax;
+}
+
 int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
+    QStringList args = a.arguments();
 
     //{ TODO log to file support
     //qInstallMessageHandler(customMessageOutput);
@@ -81,23 +100,15 @@ int main(int argc, char *argv[])
     //a.eventDispatcher()->installNativeEventFilter(&myEventfilter);
 #endif
 
+    if (args.contains("-developer"))
+        g_developerMode = true;
+
     MainWindow w;
-//    QMessageBox::information(NULL, "Test",
-//                 QString::number(argc));
-//    for(int i = 0; i < argc; ++i )
-//    {
-//        QMessageBox::information(NULL, "Test",
-//                     argv[i]);
-//    }
-    if(argc > 1)
-    {
-        QString path = argv[1];
-        if(path.indexOf(".asd") >= 0)
-        {
+
+    foreach (QString path, args) {
+        if (path.contains(".asd")) {
             w.openFile(path);
-        } else if(path.indexOf("-develop") >= 0)
-        {
-            g_noRestrictScale = true;
+            break;
         }
     }
     w.show();

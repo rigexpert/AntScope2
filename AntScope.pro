@@ -14,7 +14,7 @@ QT       += concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.13\\"'
+DEFINES += ANTSCOPE2VER='\\"1.0.14.BETA2\\"'
 
 TARGET = AntScope2
 
@@ -24,8 +24,8 @@ TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_ja.ts
 CODECFORSRC   = UTF-8
 
-CONFIG -= debug
-CONFIG += release
+CONFIG += debug
+CONFIG -= release
 
 CONFIG(release) {
     DESTDIR = $${PWD}/build/release
@@ -77,7 +77,8 @@ SOURCES += main.cpp\
     analyzer/updater/aa30zerofirmwareupdater.cpp \
     analyzer/updater/aa230firmwareupdater.cpp \
     analyzer/updater/firmwareupdater.cpp \
-    analyzer/updater/hidfirmwareupdater.cpp
+    analyzer/updater/hidfirmwareupdater.cpp \
+    ProgressDlg.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -112,7 +113,8 @@ HEADERS  += mainwindow.h \
     analyzer/updater/aa30zerofirmwareupdater.h \
     analyzer/updater/aa230firmwareupdater.h \
     analyzer/updater/firmwareupdater.h \
-    analyzer/updater/hidfirmwareupdater.h
+    analyzer/updater/hidfirmwareupdater.h \
+    ProgressDlg.h
 
 # TODO these files dont exist and are not generated
 #        ui_mainwindow.h \
@@ -130,7 +132,8 @@ FORMS    += mainwindow.ui \
         updatedialog.ui \
         print.ui \
         export.ui \
-        antscopeupdatedialog.ui
+        antscopeupdatedialog.ui \
+    ProgressDlg.ui
 
 INCLUDEPATH +=  $$PWD/analyzer \
             $$PWD/analyzer/updater

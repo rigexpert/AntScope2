@@ -88,7 +88,7 @@ void CustomAnalyzer::save(QSettings* set)
 
 void CustomAnalyzer::clear()
 {
-    m_prototype = "";
+    m_prototype = "Custom";
     m_alias = "";
     m_minFq = "";
     m_maxFq = "";
@@ -135,8 +135,8 @@ void CustomAnalyzer::set(QString& _alias, QString& _prototype, QString& _minFq, 
 {
     m_alias = _alias.trimmed();
     m_prototype = _prototype.trimmed();
-    m_minFq = _minFq.trimmed();
-    m_maxFq = _maxFq.trimmed();
+    setMinFq(_minFq);
+    setMaxFq(_maxFq);
     m_lcdWidth = _wd;
     m_lcdHeight = _ht;
 }
@@ -181,7 +181,7 @@ void CustomAnalyzer::remove(QString _alias)
 
 QString CustomAnalyzer::currentPrototype()
 {
-    QString ret = "NONE";
+    QString ret = "Custom";
     if (!customized() || m_currentAlias.isEmpty())
         return ret;
     CustomAnalyzer* ca = CustomAnalyzer::getCurrent();

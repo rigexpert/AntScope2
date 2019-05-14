@@ -157,7 +157,8 @@ signals:
     void import_finished(double _fqMin_khz, double _fqMax_khz);
 
 public slots:
-    void on_newData(rawData _rawData);
+    void on_newDataRedraw(rawData _rawData);
+    void on_newData(rawData _rawData, bool _redraw=false);
     void on_newMeasurement(QString name);
     void on_newMeasurement(QString name, qint64 fq, qint64 sw, qint64 dots);
     void on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots);
