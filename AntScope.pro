@@ -14,7 +14,7 @@ QT       += concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.14.BETA2\\"'
+DEFINES += ANTSCOPE2VER='\\"1.0.13\\"'
 
 TARGET = AntScope2
 
@@ -24,8 +24,8 @@ TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_ja.ts
 CODECFORSRC   = UTF-8
 
-CONFIG += debug
-CONFIG -= release
+CONFIG -= debug
+CONFIG += release
 
 CONFIG(release) {
     DESTDIR = $${PWD}/build/release

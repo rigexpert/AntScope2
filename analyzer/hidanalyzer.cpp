@@ -575,12 +575,12 @@ void hidAnalyzer::timeoutChart()
                 qDebug() << "***** ERROR: " << str;
             str = stringList.takeFirst();
             data.r = str.toDouble(&ok);
-            if (!ok)
+            if (!ok ||  qIsNaN(data.r))
                 qDebug() << "***** ERROR: " << str;
 
             str = stringList.takeFirst();
             data.x = str.toDouble(&ok);
-            if (!ok)
+            if (!ok ||  qIsNaN(data.x))
                 qDebug() << "***** ERROR: " << str;
 
             emit newData(data);

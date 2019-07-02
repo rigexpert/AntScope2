@@ -183,8 +183,8 @@ void Screenshot::on_newData(QByteArray data)
     else if (model == "AA-230 Stick") {
         while (!m_inputData.isEmpty()) {
             unsigned char data = m_inputData.takeFirst();
-            if (data != 0)
-                qDebug() << "-------- " << data;
+            //if (data != 0)
+              //  qDebug() << "-------- " << data;
             int mask = 0x80;
             for (int idx=0; idx<8; idx++) {
                 //QRgb color = data&mask ? Qt::white : Qt::black;
@@ -254,6 +254,7 @@ void Screenshot::on_newData(QByteArray data)
             repaint();
         }
     } else if (model == "AA-230 Stick") {
+        //qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
         {
             int x,y;
