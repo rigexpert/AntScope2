@@ -44,7 +44,7 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext &context, cons
 
 class MyNativeEventFilter : public QAbstractNativeEventFilter {
 public :
-    virtual bool nativeEventFilter( const QByteArray &eventType, void *message, long *result )
+    virtual bool nativeEventFilter( const QByteArray &eventType, void *message, long * /*result*/ )
     Q_DECL_OVERRIDE
     {
         if (eventType == "windows_generic_MSG")
@@ -100,8 +100,10 @@ int main(int argc, char *argv[])
     //a.eventDispatcher()->installNativeEventFilter(&myEventfilter);
 #endif
 
-    if (args.contains("-developer"))
+    if (args.contains("-developer")) {
         g_developerMode = true;
+        MAX_DOTS = 1000000;
+    }
 
     MainWindow w;
 

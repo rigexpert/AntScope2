@@ -151,14 +151,10 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
         struct hid_device_info *devs, *cur_dev;
 
         QMutexLocker locker(&m_mutexSearch);
-        qint64 t0 = QDateTime::currentMSecsSinceEpoch();
-        //devs = hid_enumerate(0x0, 0x0);
         devs = m_devices;
         if (devs == nullptr)
             return false;
 
-        qint64 t1 = QDateTime::currentMSecsSinceEpoch();
-        //qDebug() << "hidAnalyzer::searchAnalyzer: arrival " << (t1-t0) << " ms";
         cur_dev = devs;
 
         for(int i = 0; i < 100; i++)
@@ -328,9 +324,6 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
     }else//delete device
     {
         struct hid_device_info *devs, *cur_dev;
-
-        qint64 t0 = QDateTime::currentMSecsSinceEpoch();
-        //QMutexLocker locker(&m_mutex);
         if (!m_mutexSearch.tryLock())
             return false;
 
@@ -339,32 +332,8 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
             m_mutexSearch.unlock();
             return false;
         }
-        qint64 t1 = QDateTime::currentMSecsSinceEpoch();
-        //qDebug() << "hidAnalyzer::searchAnalyzer: delete " << (t1-t0) << " ms";
 
         cur_dev = devs;
-
-        /*
-        bool result = true;
-        int i;
-        for(i = 0; i < 100; i++)
-        {
-            if(!cur_dev)
-            {
-              break;
-            }
-            if( cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID &&  QString::fromWCharArray(cur_dev->serial_number) == m_serialNumber )
-            {
-                result = false;
-                break;
-            }else if(cur_dev->vendor_id == RE_BOOT_VID && cur_dev->product_id == RE_BOOT_PID &&  QString::fromWCharArray(cur_dev->serial_number) == m_serialNumber)
-            {
-                result = false;
-                break;
-            }
-            cur_dev = cur_dev->next;
-        }
-        */
         while (cur_dev != nullptr) {
             if (QString::fromWCharArray(cur_dev->serial_number) == m_serialNumber) {
                 if (cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID ||
@@ -466,13 +435,17 @@ void hidAnalyzer::sendData(QString data)
     }
 }
 
+void hidAnalyzer::startMeasureOneFq(qint64 fqFrom, int dotsNumber)
+{
+    startMeasure(fqFrom, fqFrom, dotsNumber);
+}
+
 void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
 {
     static qint32 state = 1;
     static QString FQ;
     static QString SW;
     static QString FRX;
-
     qint64 center;
     qint64 band;
 
@@ -485,7 +458,6 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
     {
     case 1:
         m_isMeasuring = true;
-        m_parseState = WAIT_DATA;
         if(dotsNumber != 0)
         {
             band = fqTo - fqFrom;
@@ -497,7 +469,7 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
         }
         FQ  = "FQ"  + QString::number(center) + 0x0D;
         SW  = "SW"  + QString::number(band) + 0x0D;
-        FRX = "FRX" + QString::number(dotsNumber) + 0x0D;
+        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + 0x0D;
         m_ok = false;
         sendData(FQ);
         m_sendTimer->start(10);
@@ -518,6 +490,7 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
             m_isMeasuring = true;
             m_ok = false;
             sendData(FRX);
+            m_parseState = m_isFRX ? WAIT_DATA : WAIT_USER_DATA;
             state = 1;
             m_sendTimer->stop();
         }
@@ -543,11 +516,19 @@ void hidAnalyzer::timeoutChart()
         m_stringList.clear();
         return;
     }
+
+    if (m_parseState == WAIT_USER_DATA)
+    {
+        timeoutChartUser();
+        return;
+    }
+
     len = m_stringList.length();
 
     if(len >=1)
     {
         str = m_stringList.takeFirst();
+
         QString tempString;
         for(qint32 i = 0; i < str.length(); ++i)
         {
@@ -570,6 +551,7 @@ void hidAnalyzer::timeoutChart()
             bool ok;
             rawData data;
             str = stringList.takeFirst();
+
             data.fq = str.toDouble(&ok);
             if (!ok)
                 qDebug() << "***** ERROR: " << str;
@@ -587,6 +569,56 @@ void hidAnalyzer::timeoutChart()
         }
     }
 }
+
+void hidAnalyzer::timeoutChartUser()
+{
+    quint32 len = m_stringList.length();
+    if(len >=1)
+    {
+        QString str = m_stringList.takeFirst();
+
+        bool isHeader = str[0] == '#';
+        str.replace('#', ' ');
+        QStringList fields = str.split(',');
+
+        if (isHeader) {
+            emit newUserDataHeader(fields);
+            return;
+        }
+
+        rawData rdata;
+        UserData udata;
+        bool ok;
+        QString field = fields.takeFirst();
+        rdata.fq = field.toDouble(&ok);
+        if (!ok) {
+            qDebug() << "***** ERROR: " << str;
+            return;
+        }
+        udata.fq = rdata.fq;
+        field = fields.takeFirst();
+        rdata.r = field.toDouble(&ok);
+        if (!ok) {
+            qDebug() << "***** ERROR: " << str;
+            return;
+        }
+        field = fields.takeFirst();
+        rdata.x = field.toDouble(&ok);
+        if (!ok) {
+            qDebug() << "***** ERROR: " << str;
+            return;
+        }
+        while (!fields.isEmpty()) {
+            udata.values.append(fields.takeFirst().toDouble(&ok));
+            if (!ok) {
+                qDebug() << "***** ERROR: " << str;
+                return;
+            }
+        }
+        emit newUserData(rdata, udata);
+    }
+}
+
 
 void hidAnalyzer::hidRead (void)
 {
@@ -651,6 +683,9 @@ qint32 hidAnalyzer::parse (QByteArray arr)
         {
             return 0;
         }
+
+        //qDebug() << "-----------------------";
+        //qDebug() << stringList;
 
         for(int i = 0; i < stringList.length(); ++i)
         {
@@ -722,7 +757,7 @@ qint32 hidAnalyzer::parse (QByteArray arr)
                         break;
                     }
                 }
-            }else if(m_parseState == WAIT_DATA)
+            }else if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA)
             {
                 m_stringList.append(str);
                 retVal += str.length();
@@ -931,13 +966,7 @@ void hidAnalyzer::setIsMeasuring (bool isMeasuring)
 
 struct hid_device_info* hidAnalyzer::refreshThreadStarted()
 {
-    //qDebug() << "hidAnalyzer::refreshThreadStarted";
-    qint64 t0 = QDateTime::currentMSecsSinceEpoch();
     struct hid_device_info *devs = hid_enumerate(0x0, 0x0);
-    qint64 t1 = QDateTime::currentMSecsSinceEpoch();
-
-    //qDebug() << "hidAnalyzer::refreshThreadStarted " << (t1 - t0);
-
     return devs;
 }
 

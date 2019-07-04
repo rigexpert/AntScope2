@@ -62,6 +62,7 @@ public:
     void setHidAnalyzerFound (bool found) {m_hidAnalyzerFound = found;}
 
     QString getSerialNumber(void) const;
+    int getDots() { return m_dotsNumber; }
 
 private:
 //    void send (char* byte);
@@ -97,7 +98,10 @@ signals:
     void analyzerFound(QString);
     void analyzerDisconnected();
     void newData (rawData);
+    void newUserData (rawData, UserData);
+    void newUserDataHeader (QStringList);
     void newMeasurement(QString);
+    void newMeasurement(QString, qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void continueMeasurement(qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void measurementComplete();
     void analyzerDataStringArrived(QString);
@@ -114,8 +118,12 @@ public slots:
     void on_comAnalyzerDisconnected ();
     void on_hidAnalyzerDisconnected ();
     void on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
+    void on_measureUser (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void on_measureContinuous(qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
+    void on_measureOneFq(QWidget* parent, qint64 fqFrom, qint32 dotsNumber);
     void on_newData(rawData _rawData);
+    void on_newUserData(rawData,UserData);
+    void on_newUserDataHeader(QStringList);
     void on_analyzerDataStringArrived(QString str);
     void on_stopMeasuring();
     void on_itemDoubleClick(QString number, QString dotsNumber, QString name);

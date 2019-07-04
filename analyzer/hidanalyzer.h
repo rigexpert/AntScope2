@@ -59,6 +59,8 @@ public:
     void setContinuos(bool continuos){m_isContinuos = continuos;}
     bool getContinuos(void){ return m_isContinuos;}
     void preUpdate();
+    void setIsFRXMode(bool _mode=true) { m_isFRX = _mode;}
+    bool getIsFRXMode() { return m_isFRX; }
 
 private:
     hid_device *m_hidDevice;
@@ -78,6 +80,7 @@ private:
     volatile bool m_ok;
     volatile bool m_isMeasuring;
     volatile bool m_isContinuos;
+    volatile bool m_isFRX = true;
 
     bool m_analyzerPresent;
 
@@ -104,14 +107,18 @@ signals:
     void analyzerFound (quint32);
     void analyzerDisconnected();
     void newData(rawData);
+    void newUserDataHeader(QStringList);
+    void newUserData(rawData, UserData);
     void analyzerDataStringArrived(QString);
     void analyzerScreenshotDataArrived(QByteArray);
     void updatePercentChanged(int);
     void signalFullInfo(QString str);
+    void signalOk();
 
 public slots:
     bool searchAnalyzer(bool arrival);
     void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber);
+    void startMeasureOneFq(qint64 fqFrom, int dotsNumber);
     void getAnalyzerData();
     void getAnalyzerData(QString number);
     void makeScreenshot();
@@ -124,6 +131,7 @@ private slots:
     void on_screenshotComplete();
     void on_measurementComplete();
     void timeoutChart();
+    void timeoutChartUser();
     void continueMeasurement();
     void hidRead (void);
     struct hid_device_info* refreshThreadStarted();

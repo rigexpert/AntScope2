@@ -40,7 +40,6 @@ public:
     bool getContinuos(void){ return m_isContinuos;}
     void setAnalyzerModel (int model) {m_analyzerModel = model;}
     bool getAnalyzerModel (void) const { return m_analyzerModel;}
-    void versionRequest();
 
 private:
     QSerialPort * m_comPort;
@@ -91,7 +90,8 @@ public slots:
     void dataArrived();
     void searchAnalyzer();
     void timeoutChart();
-    void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber);
+    void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool frx=true);
+    void startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx=true);
     void stopMeasure();
     void continueMeasurement();
     void checkAnalyzer();
@@ -102,6 +102,7 @@ public slots:
     void on_measurementComplete();
     void on_changedAutoDetectMode(bool state);
     void on_changedSerialPort(QString portName);
+    void versionRequest();
 };
 
 #endif // COMANALYZER_H

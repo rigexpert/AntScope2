@@ -101,11 +101,13 @@ bool comAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
 
     connect(m_comPort, SIGNAL(readyRead()), this, SLOT(dataArrived()));
     bool result = m_comPort->open(QSerialPort::ReadWrite);
-//    if (!result) {
-//        //SerialPortError err = m_comPort->error();
-//        QString str = m_comPort->errorString();
-//        qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
-//    } else {
+    if (!result) {
+        QString str = m_comPort->errorString();
+        qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
+        // TODO show dialog
+        // ...
+    }
+//    else {
 //        qDebug() << "comAnalyzer::openComPort: " << portName << (m_comPort ? " opened" : "NOT opened");
 //    }
     return result;
@@ -126,8 +128,6 @@ void comAnalyzer::closeComPort()
 
 void comAnalyzer::dataArrived()
 {
-    qint64 bytes = m_comPort->bytesAvailable();
-
     QByteArray ar = m_comPort->readAll();
     m_incomingBuffer += ar;
 
@@ -363,7 +363,7 @@ quint32 comAnalyzer::compareStrings (QString arr, QString arr1)
 void comAnalyzer::searchAnalyzer()
 {
     static bool analyzerDetected = false;
-    static bool messageWasShown = false;
+    static int messageWasShown = 5;
     static int state = 0;
 
     if (m_isMeasuring)
@@ -401,12 +401,14 @@ void comAnalyzer::searchAnalyzer()
             QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
             return;
         }
-        if(analyzerDetected && !messageWasShown)
+        if(analyzerDetected && (--messageWasShown < 0))
         {
-            messageWasShown = true;
+            //messageWasShown = -1;
             QMessageBox::information(NULL,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
             return;
         }
+        qDebug() << "messageWasShown" << messageWasShown;
+
         analyzerDetected = false;
         closeComPort();
         QList<ReDeviceInfo> list;
@@ -501,8 +503,16 @@ qint64 comAnalyzer::sendData(QString data)
     return res;
 }
 
-void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
+void comAnalyzer::startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx)
 {
+    startMeasure(fqFrom, fqFrom, dotsNumber, frx);
+}
+
+
+void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool frx)
+{
+    Q_UNUSED (frx)
+
     static qint32 state = 1;
     static QString FQ;
     static QString SW;

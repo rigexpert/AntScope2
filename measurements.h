@@ -13,7 +13,8 @@
 #include <ctime>
 #include <complex>
 #include <settings.h>
-
+#include "ProgressDlg.h"
+#include "onefqwidget.h"
 #define MAX_MEASUREMENTS 5
 #define TDR_MAXARRAY 20000
 
@@ -26,7 +27,6 @@
 #define ACTIVE_GRAPH_PEN_WIDTH 5
 #define INACTIVE_GRAPH_PEN_WIDTH 2
 
-
 typedef std::complex <double> Complex;
 
 class Measurements : public QObject
@@ -38,6 +38,7 @@ public:
 
     void setWidgets(QCustomPlot * swr, QCustomPlot * phase, QCustomPlot * rs, QCustomPlot * rp,
                     QCustomPlot * rl, QCustomPlot * tdr, QCustomPlot * smith, QTableWidget *table);
+    void setUserWidget(QCustomPlot * user);
     void setCalibration(Calibration * _calibration);
     bool getCalibrationEnabled(void);
     void deleteRow(int row);
@@ -53,6 +54,7 @@ public:
 
     void exportData(QString _name, int _type, int _number);
     void importData(QString _name);
+    void importData(QString _name, bool user_format);
 
     double getZ0(void) const{ return m_Z0;}
     void setZ0(double _Z0) { m_Z0 = _Z0;}
@@ -74,6 +76,11 @@ public:
     void setCableLength(double value);
     void setCableFarEndMeasurement(int value);
     void on_translate();
+    int getBaseUserGraphIndex(int row);
+    void startTDRProgress(QWidget* _parent, int _dots);
+    void updateTDRProgress(int _dots);
+    void stopTDRProgress();
+    bool isOneFqMode() { return m_oneFqMode; }
 
 private:
 //    QVector <rawData> m_rawDataVector;
@@ -96,6 +103,7 @@ private:
     QCustomPlot *m_tdrWidget;
     QCustomPlot *m_smithWidget;
     QTableWidget *m_tableWidget;
+    QCustomPlot *m_userWidget;
 
     qint32 m_currentIndex;
 
@@ -127,8 +135,10 @@ private:
 
     double m_tdrResolution;
     double m_tdrRange;
+    ProgressDlg* m_tdrProgressDlg = nullptr;
 
-    qint32 m_dotsNumber;
+    qint32 m_dotsNumber=0;
+    quint32 m_tdrDots=0;
 
 //    bool m_calibrationEnabled;
     bool m_measureSystemMetric;
@@ -146,21 +156,32 @@ private:
 
     bool m_focus;
 
+    bool m_oneFqMode = false;
+    qint64 m_oneFqStartTime;
+    OneFqWidget* m_oneFqWidget = nullptr;
+
     quint32 computeSWR(double freq, double Z0, double R, double X, double *VSWR, double *RL);
     double computeZ (double R, double X);
 
     void NormRXtoSmithPoint(double Rnorm, double Xnorm, double &x, double &y);    
     void drawSmithImage(void);
     void calcFarEnd(void);
+    void prepareGraphs(rawData _rawData, GraphData& data, GraphData& calibData);
+
 signals:
     void calibrationChanged();
     void import_finished(double _fqMin_khz, double _fqMax_khz);
+    void measurementCanceled();
+    void oneFqCanceled();
 
 public slots:
     void on_newDataRedraw(rawData _rawData);
     void on_newData(rawData _rawData, bool _redraw=false);
+    void on_newUserDataHeader(QStringList);
+    void on_newUserData(rawData, UserData);
     void on_newMeasurement(QString name);
-    void on_newMeasurement(QString name, qint64 fq, qint64 sw, qint64 dots);
+    void on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 dots);
+    void on_newMeasurementOneFq(QWidget*, qint64 fq, qint32 dots);
     void on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots);
     void on_currentTab(QString);
     void on_focus(bool focus);
@@ -178,6 +199,9 @@ public slots:
     void on_redrawGraphs();
     void on_changeMeasureSystemMetric (bool state);
     void replot();
+    void showOneFqWidget(QWidget* parent, int _dots);
+    void updateOneFqWidget(GraphData& _data);
+    void hideOneFqWidget(bool dummy=false);
 };
 
 #endif // MEASUREMENTS_H

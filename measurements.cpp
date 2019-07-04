@@ -1,6 +1,21 @@
 #include "measurements.h"
 #include "ProgressDlg.h"
 
+extern bool g_developerMode;
+
+QVector<QColor> generateColors(int number) {
+    const int MAX_COLOR = 360;
+    const int MIN_COLOR = 0;
+    QVector<QColor> colors;
+    double jump = (MAX_COLOR-MIN_COLOR) / (number*1.0);
+    for (int i = 0; i < number; i++) {
+        int h = (int)(MIN_COLOR + (jump*i));
+        colors.append(QColor::fromHsv(h, 255, 255));
+    }
+    return colors;
+}
+
+
 Measurements::Measurements(QObject *parent) : QObject(parent),
     m_currentIndex(0),
     m_graphHint(NULL),
@@ -116,6 +131,12 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
     }
 }
 
+void Measurements::setUserWidget(QCustomPlot * user) {
+    m_userWidget = user;
+    m_userWidget->legend->setVisible(true);
+    m_userWidget->legend->removeAt(0);
+}
+
 void Measurements::setCalibration(Calibration * _calibration)
 {
     m_calibration = _calibration;
@@ -123,7 +144,7 @@ void Measurements::setCalibration(Calibration * _calibration)
 
 bool Measurements::getCalibrationEnabled(void)
 {
-    return m_calibration->getCalibrationEnabled();
+    return ((m_calibration != nullptr) && (m_calibration->getCalibrationEnabled()));
 }
 
 void Measurements::deleteRow(int row)
@@ -161,6 +182,7 @@ void Measurements::deleteRow(int row)
     {
         int row_ = row+1;
         delete m_measurements[row].smithCurve;
+        measurement mm = m_measurements[row];
         m_measurements.removeAt(row);
         m_viewMeasurements.removeAt(row);
         m_farEndMeasurementsAdd.removeAt(row);
@@ -177,6 +199,12 @@ void Measurements::deleteRow(int row)
         m_rlWidget->removeGraph(row_);
         m_tdrWidget->removeGraph(1+row*2);
         m_tdrWidget->removeGraph(1+row*2);
+        if (g_developerMode) {
+            int index = getBaseUserGraphIndex(row);
+            int cnt = mm.userGraphs.size();
+            for (int i=0; i<cnt; i++)
+                m_userWidget->removeGraph(index);
+        }
 
         if(row == m_tableNames.length())
         {
@@ -206,7 +234,7 @@ void Measurements::deleteRow(int row)
     m_tableWidget->setRowCount(m_tableNames.length());
 }
 
-void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint64 dots)
+void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 dots)
 {
     on_newMeasurement(name);
 
@@ -281,7 +309,8 @@ void Measurements::on_newMeasurement(QString name)
 
     if(m_measurements.length() == MAX_MEASUREMENTS)
     {
-        delete m_measurements.takeFirst().smithCurve;
+        measurement mm = m_measurements.takeFirst();
+        delete mm.smithCurve;
         delete m_viewMeasurements.takeFirst().smithCurve;
         delete m_farEndMeasurementsAdd.takeFirst().smithCurve;
         delete m_farEndMeasurementsSub.takeFirst().smithCurve;
@@ -296,6 +325,12 @@ void Measurements::on_newMeasurement(QString name)
         m_rlWidget->removeGraph(1);
         m_tdrWidget->removeGraph(1);
         m_tdrWidget->removeGraph(1);
+
+        if (g_developerMode) {
+            int count = mm.userGraphs.size();
+            for (int i=0; i<count; i++)
+                m_userWidget->removeGraph(1);
+        }
     }
     m_measurements.append( measurement());
     m_viewMeasurements.append( measurement());
@@ -337,6 +372,7 @@ void Measurements::on_newMeasurement(QString name)
     m_tdrWidget->graph()->setName(tr("Impulse response"));
     m_tdrWidget->addGraph();
     m_tdrWidget->graph()->setName(tr("Step response"));
+
     m_measurements.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_viewMeasurements.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_farEndMeasurementsAdd.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
@@ -419,34 +455,11 @@ void Measurements::on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots)
     m_farEndMeasurementsAdd.last().dataRXCalib.clear();
     m_farEndMeasurementsSub.last().dataRX.clear();
     m_farEndMeasurementsSub.last().dataRXCalib.clear();
-/*
-    m_measurements.removeLast();
-    m_viewMeasurements.removeLast();
-    m_farEndMeasurementsAdd.removeLast();
-    m_farEndMeasurementsSub.removeLast();
 
-    m_measurements.append( measurement());
-    m_viewMeasurements.append( measurement());
-    m_farEndMeasurementsAdd.append( measurement());
-    m_farEndMeasurementsSub.append( measurement());
-*/
     m_measurements.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_viewMeasurements.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_farEndMeasurementsAdd.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_farEndMeasurementsSub.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
-/*
-    m_swrWidget->graph()->clearData();
-    m_phaseWidget->graph()->clearData();
-    m_rsWidget->graph()->clearData();
-    m_rsWidget->graph()->clearData();
-    m_rsWidget->graph()->clearData();
-    m_rpWidget->graph()->clearData();
-    m_rpWidget->graph()->clearData();
-    m_rpWidget->graph()->clearData();
-    m_rlWidget->graph()->clearData();
-    m_tdrWidget->graph()->clearData();
-    m_tdrWidget->graph()->clearData();
-    */
 }
 
 void Measurements::on_newDataRedraw(rawData _rawData)
@@ -454,14 +467,69 @@ void Measurements::on_newDataRedraw(rawData _rawData)
     on_newData(_rawData, true);
 }
 
+void Measurements::on_newUserDataHeader(QStringList fields)
+{
+    m_measurements.last().fieldsUser.clear();
+    if (fields.isEmpty())
+        return;
+    m_measurements.last().fieldsUser.append(fields);
+    QVector<QColor> colors = generateColors(fields.size());
+
+    m_userWidget->setAutoAddPlottableToLegend(m_userWidget->legend->itemCount() < fields.size());
+    for (int i=0; i<fields.size(); i++) {
+        m_measurements.last().userGraphs.append(new QCPDataMap());
+        m_viewMeasurements.last().userGraphs.append(new QCPDataMap());
+        QCPGraph* grp = m_userWidget->addGraph();
+        grp->setName(fields.at(i));
+        QColor color = colors.takeFirst();
+        QPen pen(color);
+        pen.setWidth(3);
+        grp->setPen(pen);
+    }
+}
+
+void Measurements::on_newUserData(rawData _rawData, UserData _userData)
+{
+    on_newData(_rawData);
+
+    m_measurements.last().dataUser.append(_userData);
+    for (int idx=0; idx<_userData.values.size(); idx++) {
+        QCPData qcpData;
+        qcpData.key = _userData.fq*1000;
+        qcpData.value = _userData.values.at(idx);
+        QCPDataMap* map = m_measurements.last().userGraphs.at(idx);
+        map->insert(qcpData.key,qcpData);
+        QCPDataMap* vmap = m_viewMeasurements.last().userGraphs.at(idx);
+        vmap->insert(qcpData.key,qcpData);
+    }
+    QVector <double> x,y;
+    x.append(_userData.fq*1000);
+    x.append(_userData.fq*1000);
+    y.append(m_userWidget->yAxis->getRangeLower());
+    y.append(m_userWidget->yAxis->getRangeUpper());
+    m_userWidget->graph(0)->setData(x,y);
+
+    on_redrawGraphs();
+}
+
 void Measurements::on_newData(rawData _rawData, bool _redraw)
 {
+    if (m_oneFqMode) {
+        GraphData _data;
+        GraphData _calibData;
+        prepareGraphs(_rawData, _data, _calibData);
+        updateOneFqWidget(getCalibrationEnabled() ? _calibData : _data);
+        return;
+    }
+
     if(m_calibrationMode)
     {
         return;
     }
 
     m_measurements.last().dataRX.append(_rawData);
+
+    updateTDRProgress(m_measurements.last().dataRX.size());
 
     double VSWR;
     double RL;
@@ -482,6 +550,7 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
 
     QVector <double> x,y;
     double fq = _rawData.fq*1000;
+
     x.append(fq);
     x.append(fq);
     y.append(MIN_SWR);
@@ -490,6 +559,7 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
     QCPData data;
     data.key = fq;
     data.value = VSWR;
+
     m_measurements.last().swrGraph.insert(data.key,data);
 
     m_swrWidget->graph(0)->setData(x,y);
@@ -815,6 +885,116 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
     if (_redraw)
         on_redrawGraphs();
 }
+
+void Measurements::prepareGraphs(rawData _rawData, GraphData& _data, GraphData& _calibData)
+{
+    _data.FQ = _rawData.fq;
+    _data.R = _rawData.r;
+    _data.X = _rawData.x;
+
+    computeSWR(_rawData.fq, m_Z0,_data.R,_data.X,&_data.SWR,&_data.RL);
+    _data.Z = computeZ(_data.R,_data.X);
+
+    //------------------RXZ par-----------------------------------------------------
+    double R = _rawData.r;
+    double X = _rawData.x;
+    if (qIsNaN(R) || (R<0.001) )
+        R = 0.01;
+    if (qIsNaN(X))
+        X = 0;
+    _data.Rpar = R*(1+X*X/R/R);
+    _data.Xpar = X*(1+R*R/X/X);
+    _data.Zpar = computeZ(R, X);
+
+    //----------------------calc phase----------------------------------------------
+    double Rnorm = R/m_Z0;
+    double Xnorm = X/m_Z0;
+    double Denom = (Rnorm+1)*(Rnorm+1)+Xnorm*Xnorm;
+    double RhoReal = ((Rnorm-1)*(Rnorm+1)+Xnorm*Xnorm)/Denom;
+    double RhoImag = 2*Xnorm/Denom;
+    double RhoPhase = atan2(RhoImag, RhoReal) / M_PI * 180.0;
+    double RhoMod = sqrt(RhoReal*RhoReal+RhoImag*RhoImag);
+    _data.RhoPhase = RhoPhase;
+    _data.RhoMod = RhoMod;
+
+    //----------------------Calc calibration if performed---------------------------
+    if(m_calibration != NULL)
+    {
+        if(m_calibration->getCalibrationPerformed())
+        {
+            _calibData.FQ = _rawData.fq;
+            R = _rawData.r;
+            X = _rawData.x;
+            double Gre = (R*R-m_Z0*m_Z0+X*X)/((R+m_Z0)*(R+m_Z0)+X*X);
+            double Gim = (2*m_Z0*X)/((R+m_Z0)*(R+m_Z0)+X*X);
+
+            double GreOut;
+            double GimOut;
+
+            double SOR =  1; double SOI = 0; // Ideal model
+            double SSR = -1; double SSI = 0;
+            double SLR =  0; double SLI = 0;
+
+            double COR, COI; // CalibrationReOpen, CalibrationImOpen
+            double CSR, CSI; // CalibrationReShort, CalibrationImShort
+            double CLR, CLI; // CalibrationReLoad, CalibrationImLoad
+            bool res = m_calibration->interpolateS(_rawData.fq, COR, COI, CSR, CSI, CLR, CLI);
+//            COR = 1;
+//            COI = 0;
+//            CSR = -1;
+//            CSI = 0;
+//            CLR = 0;
+//            CLI = 0;
+
+            if (!res)
+            {
+                SOR =  1; SOI = 0; // Ideal model
+                SSR = -1; SSI = 0;
+                SLR =  0; SLI = 0;
+            }
+            m_calibration->applyCalibration(Gre,Gim,  // Measured
+                                            COR,COI,CSR,CSI,CLR,CLI, // Measured parameters of cal standards
+                                            SOR,SOI,SSR,SSI,SLR,SLI, // Actual (Ideal) parameters of cal standards
+                                            GreOut,GimOut); // Actual
+
+            double calR = (1-GreOut*GreOut-GimOut*GimOut)/((1-GreOut)*(1-GreOut)+GimOut*GimOut);
+            calR *= m_Z0;
+            double calX = (2*GimOut)/((1-GreOut)*(1-GreOut)+GimOut*GimOut);
+            calX *= m_Z0;
+            double calZ = computeZ(calR,calX);
+
+            _calibData.R = calR;
+            _calibData.X = calX;
+            _calibData.Z = calZ;
+            computeSWR(_calibData.FQ, m_Z0, calR, calX, &_calibData.SWR, &_calibData.RL);
+
+            double calRpar = calR*(1+calX*calX/calR/calR);
+            double calZpar = computeZ(calRpar, calX);
+
+            _calibData.Rpar = calRpar;
+            _calibData.Xpar = calX;
+            _calibData.Zpar = calZpar;
+
+            if (qIsNaN(calR) || (calR<0.001) )
+                calR = 0.01;
+            if (qIsNaN(calX))
+                calX = 0;
+            Rnorm = calR/m_Z0;
+            Xnorm = calX/m_Z0;
+
+            Denom = (Rnorm+1)*(Rnorm+1)+Xnorm*Xnorm;
+            RhoReal = ((Rnorm-1)*(Rnorm+1)+Xnorm*Xnorm)/Denom;
+            RhoImag = 2*Xnorm/Denom;
+
+            RhoPhase = atan2(RhoImag, RhoReal) / M_PI * 180.0;
+            RhoMod = sqrt(RhoReal*RhoReal+RhoImag*RhoImag);
+
+            _calibData.RhoPhase = RhoPhase;
+            _calibData.RhoMod = RhoMod;
+        }
+    }
+}
+
 
 quint32 Measurements::computeSWR(double freq, double Z0, double R, double X, double *VSWR, double *RL)
 {
@@ -1752,9 +1932,10 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
 void Measurements::on_mainWindowPos(int x, int y)
 {
     if(m_graphHint)
-    {
         m_graphHint->MainWindowPos(x, y);
-    }
+
+    if (m_oneFqWidget)
+        m_oneFqWidget->MainWindowPos(x, y);
 }
 
 void Measurements::setCalibrationMode(bool enabled)
@@ -2133,6 +2314,76 @@ void Measurements::exportData(QString _name, int _type, int _number)
     }
 }
 
+void Measurements::importData(QString _name, bool /*user_format*/)
+{
+    QStringList list;
+    list = _name.split("/");
+    if(list.length() == 1)
+    {
+        list.clear();
+        list = _name.split("\\");
+    }
+    on_newMeasurement(list.last());
+
+    QFile file(_name);
+    bool result = file.open(QFile::ReadOnly);
+    if(result)
+    {
+        QString str = file.readAll();
+        double fqMin = DBL_MAX;
+        double fqMax = 0;
+        QStringList nList = str.split('\n');
+
+        str = nList.takeFirst();
+        if (str.at(0) == '#') {
+            str.replace('#', ' ');
+            on_newUserDataHeader(str.trimmed().split(','));
+        }
+
+        while (!nList.isEmpty()) {
+            str = nList.takeFirst();
+            if (str.isEmpty())
+                continue;
+            QStringList fields = str.split(',');
+            rawData rdata;
+            UserData udata;
+            bool ok;
+            QString field = fields.takeFirst();
+            rdata.fq = field.toDouble(&ok);
+            if (!ok) {
+                qDebug() << "***** ERROR: " << str;
+                return;
+            }
+            udata.fq = rdata.fq;
+            fqMin = qMin(fqMin, rdata.fq);
+            fqMax = qMax(fqMax, rdata.fq);
+
+            field = fields.takeFirst();
+            rdata.r = field.toDouble(&ok);
+            if (!ok) {
+                qDebug() << "***** ERROR: " << str;
+                return;
+            }
+            field = fields.takeFirst();
+            rdata.x = field.toDouble(&ok);
+            if (!ok) {
+                qDebug() << "***** ERROR: " << str;
+                return;
+            }
+            while (!fields.isEmpty()) {
+                udata.values.append(fields.takeFirst().toDouble(&ok));
+                if (!ok) {
+                    qDebug() << "***** ERROR: " << str;
+                    return;
+                }
+            }
+            on_newUserData(rdata, udata);
+        }
+        emit import_finished(fqMin*1000, fqMax*1000);
+        on_redrawGraphs();
+    }
+}
+
 void Measurements::importData(QString _name)
 {
     if(_name.indexOf(".s1p") >= 0 )
@@ -2185,10 +2436,7 @@ void Measurements::importData(QString _name)
             if ( (line.length() > 2) && (line[0] == '#')) // Option line
             {
                 line.remove(0,1);
-                bool bErr = false;
-
                 int ns = sscanf(line.toLocal8Bit(), "%s %s %s %s %s", strn[0], strn[1], strn[2], strn[3], strn[4]);
-
                 for (int i=0; i<ns; i++)
                 {
                     // Frequency unit
@@ -2359,7 +2607,14 @@ void Measurements::importData(QString _name)
         }
     }
     else if(_name.indexOf(".csv") >= 0 )
-    {
+    {        
+        //{ TODO USER_DATE debug
+//        if (g_developerMode) {
+//            importData(_name, true);
+//            return;
+//        }
+        //}
+
         QStringList list;
         list = _name.split("/");
         if(list.length() == 1)
@@ -2516,9 +2771,12 @@ void Measurements::importData(QString _name)
 
 int Measurements::CalcTdr(QVector <rawData> *data)
 {
+    if (data == nullptr || data->length() == 0)
+        return 0;
+
     int asize = data->length();
 
-    if (asize < 200)
+    if (asize < (int)m_tdrDots)
     {
         return 0;
     }
@@ -2725,7 +2983,6 @@ void Measurements::on_dotsNumberChanged(int number)
 void Measurements::on_changeMeasureSystemMetric (bool state)
 {
     m_measureSystemMetric = state;
-    int count = m_tdrWidget->graphCount();
     if(m_tdrWidget->graphCount()>2)
     {
         if(m_measureSystemMetric)
@@ -3034,7 +3291,6 @@ void Measurements::on_redrawGraphs()
                         m_farEndMeasurementsSub.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
-                        //dataFeet.key = x*step/FEETINMETER;
                         dataFeet.key = x*step*FEETINMETER;
                         dataFeet.value = y;
                         m_farEndMeasurementsSub.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
@@ -3072,7 +3328,6 @@ void Measurements::on_redrawGraphs()
                         m_farEndMeasurementsAdd.last().tdrStepGraph.insert(data.key,data);
 
                         QCPData dataFeet;
-                        //dataFeet.key = x*step/FEETINMETER;
                         dataFeet.key = x*step*FEETINMETER;
                         dataFeet.value = y;
                         m_farEndMeasurementsAdd.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
@@ -3111,7 +3366,6 @@ void Measurements::on_redrawGraphs()
                     m_measurements.last().tdrStepGraph.insert(data.key,data);
 
                     QCPData dataFeet;
-                    //dataFeet.key = x*step/FEETINMETER;
                     dataFeet.key = x*step*FEETINMETER;
                     dataFeet.value = y;
                     m_measurements.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
@@ -3529,7 +3783,6 @@ void Measurements::on_redrawGraphs()
                     m_tdrWidget->graph()->setData(&m_measurements.last().tdrStepGraphFeet, true);
                 }
             }
-
         }else if(m_currentTab == "tab_7")//Smith
         {
             if(m_farEndMeasurement)
@@ -3553,6 +3806,43 @@ void Measurements::on_redrawGraphs()
                 for(int i = 0; i < m_measurements.length(); ++i)
                 {
                     m_measurements[i].smithCurve->setData(&m_measurements[i].smithGraphView,true);
+                }
+            }
+        }else if(m_currentTab == "tab_8")//user
+        {
+            for(int i = 0; i < m_measurements.length(); ++i)
+            {
+                int count = m_viewMeasurements[i].userGraphs.size();
+                for (int idx=0; idx<count; idx++) {
+                    m_viewMeasurements[i].userGraphs[idx]->clear();
+
+                    QCPData data;
+                    QCPData value;
+                    double maxVal = m_userWidget->yAxis->range().upper;
+                    double minVal = m_userWidget->yAxis->range().lower;
+
+                    QCPDataMap* map = m_measurements[i].userGraphs.at(idx);
+                    QCPDataMap* vmap = m_viewMeasurements[i].userGraphs.at(idx);
+
+                    QList <double> list = map->keys();
+                    for(int n = 0; n < list.length(); ++n)
+                    {
+                        data.key = list.at(n);
+                        value = map->value(list.at(n));
+                        if( value.value > maxVal)
+                        {
+                            data.value = maxVal;
+                        }else if(value.value < minVal)
+                        {
+                            data.value = minVal;
+                        }else
+                        {
+                            data.value = value.value;
+                        }
+                        vmap->insertMulti(data.key,data);
+                    }
+                    int index = getBaseUserGraphIndex(i)+idx;
+                    m_userWidget->graph(index)->setData(m_viewMeasurements[i].userGraphs[idx], true);
                 }
             }
         }
@@ -3583,6 +3873,9 @@ void Measurements::replot()
     }else if(m_currentTab == "tab_7")
     {
         m_smithWidget->replot();
+    }else if(m_currentTab == "tab_8")
+    {
+        m_userWidget->replot();
     }
 }
 
@@ -4389,5 +4682,99 @@ void Measurements::on_translate()
         m_tdrWidget->xAxis->setLabel(m_measureSystemMetric ? tr("Length, m") : tr("Length, feet"));
     }
 }
+
+
+int Measurements::getBaseUserGraphIndex(int row)
+{
+    int idx = 1;
+    for (int i=row-1; i>=0; i--) {
+        idx += m_measurements[i].userGraphs.size();
+    }
+    return idx;
+}
+
+void Measurements::startTDRProgress(QWidget* _parent, int _dots)
+{
+    m_tdrDots = _dots;
+    delete m_tdrProgressDlg;
+
+    m_tdrProgressDlg = new ProgressDlg(_parent);
+    m_tdrProgressDlg->setWindowModality(Qt::WindowModal);
+    m_tdrProgressDlg->setValue(0);
+    m_tdrProgressDlg->setProgressData(0, _dots, 1);
+    m_tdrProgressDlg->updateActionInfo(tr("TDR measuring"));
+    m_tdrProgressDlg->updateStatusInfo(tr("please wait ...."));
+    m_tdrProgressDlg->setCancelable();
+    connect(m_tdrProgressDlg, &ProgressDlg::canceled, this, &Measurements::measurementCanceled);
+    m_tdrProgressDlg->show();
+}
+
+void Measurements::stopTDRProgress()
+{
+    if (m_tdrProgressDlg != nullptr)
+    {
+        m_tdrProgressDlg->hide();
+        delete m_tdrProgressDlg;
+        m_tdrProgressDlg = nullptr;
+    }
+}
+
+void Measurements::updateTDRProgress(int dots)
+{
+    if (m_tdrProgressDlg != nullptr) {
+        //if ((dots%10) == 0)
+        {
+            m_tdrProgressDlg->setValue(dots);
+            m_tdrProgressDlg->updateStatusInfo(QString(tr("processed %1 dots, from %2")).arg(dots).arg(m_tdrDots));
+        }
+    }
+}
+
+void Measurements::showOneFqWidget(QWidget* _parent, int _dots)
+{
+    m_oneFqMode = true;
+    if (m_graphHint != nullptr)
+        m_graphHint->focusHide();
+    delete m_oneFqWidget;
+    m_oneFqWidget = new OneFqWidget(_dots, _parent);
+
+    m_oneFqWidget->saveHintFlags(QPair<bool,bool>(m_graphHintEnabled, m_graphBriefHintEnabled));
+    m_graphHintEnabled = false;
+    m_graphBriefHintEnabled = false;
+
+    connect(m_oneFqWidget, &OneFqWidget::canceled, this, &Measurements::hideOneFqWidget);
+    m_oneFqWidget->show();
+}
+
+void Measurements::updateOneFqWidget(GraphData& _data)
+{
+    if (m_oneFqWidget == nullptr)
+        return;
+    m_oneFqWidget->addData(_data);
+}
+
+void Measurements::hideOneFqWidget(bool)
+{
+    m_oneFqMode = false;
+    OneFqWidget* tmp = m_oneFqWidget;
+    if (tmp != nullptr) {
+        m_oneFqWidget = nullptr;
+        QPair<bool,bool> hints = tmp->resoreHintFlags();
+        m_graphHintEnabled = hints.first;
+        m_graphBriefHintEnabled = hints.second;
+        disconnect(tmp);
+        tmp->hide();
+        showHideHints();
+        emit oneFqCanceled();
+        delete tmp;
+    }
+}
+
+void Measurements::on_newMeasurementOneFq(QWidget* parent, qint64 fq, qint32 dots)
+{
+    Q_UNUSED (fq)
+    showOneFqWidget(parent, dots);
+}
+
 
 

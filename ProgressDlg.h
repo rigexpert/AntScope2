@@ -14,15 +14,18 @@ class ProgressDlg : public QDialog, public Ui::dlgProgress
 		
 		void setStatusInfo(QString _strInfo);
 		void setActionInfo(QString _strInfo);
+        void setCancelable();
 
-	public slots:
+public slots:
 		void setProgressData(int _iMinValue, int _iMaxValue, int _iStepValue=1);
 		void stepIt();
 		void setValue(int _value);
 		void updateStatusInfo(QString _strInfo);
 		void updateActionInfo(QString _strInfo);
-
-	private:
+        virtual void reject();
+signals:
+        void canceled();
+private:
 		int m_iMinValue;
 		int m_iMaxValue;
 		int m_iStepValue;

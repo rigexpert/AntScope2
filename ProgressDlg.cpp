@@ -10,6 +10,7 @@ ProgressDlg::ProgressDlg(QWidget * parent) : QDialog(parent),
 	setStatusInfo(tr(""));
 	setActionInfo(tr(""));
 	setWindowOpacity(0.95);
+    stopButton->hide();
 }
 
 ProgressDlg::~ProgressDlg() {
@@ -55,4 +56,15 @@ void ProgressDlg::updateStatusInfo(QString _strInfo)
 void ProgressDlg::updateActionInfo(QString _strInfo)
 {
 	lblActionInfo->setText(_strInfo);
+}
+
+void ProgressDlg::reject()
+{
+    // to skip ESC
+}
+
+void ProgressDlg::setCancelable()
+{
+    stopButton->show();
+    connect(stopButton, &QPushButton::clicked, this, &ProgressDlg::canceled);
 }

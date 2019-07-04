@@ -239,13 +239,16 @@ QString Analyzer::getSerialNumber(void) const
     }
     return QString();
 }
+
 void Analyzer::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
 {
     if(!m_isMeasuring)
     {
         m_isMeasuring = true;
         QDateTime datetime = QDateTime::currentDateTime();
-        emit newMeasurement(datetime.toString("##dd.MM.yyyy-hh:mm:ss"));
+        QString name = datetime.toString("##dd.MM.yyyy-hh:mm:ss");
+        emit newMeasurement(name, fqFrom, fqTo, dotsNumber);
+        //emit newMeasurement(name);
         m_dotsNumber = dotsNumber;
         m_chartCounter = 0;
         if(m_comAnalyzerFound)
@@ -253,6 +256,7 @@ void Analyzer::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
             m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }else if (m_hidAnalyzerFound)
         {
+            m_hidAnalyzer->setIsFRXMode(true);
             m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }
         PopUpIndicator::setIndicatorVisible(true);
@@ -275,11 +279,51 @@ void Analyzer::on_measureContinuous(qint64 fqFrom, qint64 fqTo, qint32 dotsNumbe
             m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }else if (m_hidAnalyzerFound)
         {
+            //m_hidAnalyzer->setIsFRXMode(true);
             m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }
         PopUpIndicator::setIndicatorVisible(true);
     } else {
         on_stopMeasure();
+    }
+}
+
+void Analyzer::on_measureUser (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
+{
+    if(!m_isMeasuring)
+    {
+        m_isMeasuring = true;
+        QDateTime datetime = QDateTime::currentDateTime();
+        QString name = datetime.toString("##dd.MM.yyyy-hh:mm:ss");
+        emit newMeasurement(name, fqFrom, fqTo, dotsNumber);
+        m_dotsNumber = dotsNumber;
+        m_chartCounter = 0;
+        if(m_comAnalyzerFound)
+        {
+            m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
+        }else if (m_hidAnalyzerFound)
+        {
+            m_hidAnalyzer->setIsFRXMode(false);
+            m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
+        }
+        PopUpIndicator::setIndicatorVisible(true);
+    } else {
+        on_stopMeasure();
+    }
+}
+
+void Analyzer::on_measureOneFq(QWidget* /*parent*/, qint64 fqFrom, qint32 /*dotsNumber*/)
+{
+    m_isMeasuring = true;
+    m_dotsNumber = 100000;
+    m_chartCounter = 0;
+    if(m_comAnalyzerFound)
+    {
+        m_comAnalyzer->startMeasureOneFq(fqFrom,m_dotsNumber);
+    }else if (m_hidAnalyzerFound)
+    {
+        m_hidAnalyzer->setIsFRXMode(true);
+        m_hidAnalyzer->startMeasureOneFq(fqFrom,m_dotsNumber);
     }
 }
 
@@ -405,6 +449,8 @@ void Analyzer::on_comAnalyzerDisconnected ()
     {
         m_hidAnalyzer = new hidAnalyzer(this);
         connect(m_hidAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
+        connect(m_hidAnalyzer,SIGNAL(newUserData(rawData,UserData)),this,SLOT(on_newUserData(rawData,UserData)));
+        connect(m_hidAnalyzer,SIGNAL(newUserDataHeader(QStringList)),this,SLOT(on_newUserDataHeader(QStringList)));
         connect(m_hidAnalyzer,SIGNAL(analyzerFound(quint32)),this,SLOT(on_hidAnalyzerFound(quint32)));
         connect(m_hidAnalyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_hidAnalyzerDisconnected()));
         connect(m_hidAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));
@@ -424,7 +470,7 @@ void Analyzer::on_comAnalyzerDisconnected ()
 
 void Analyzer::on_newData(rawData _rawData)
 {
-    if(++m_chartCounter == m_dotsNumber+1 || !m_isMeasuring)
+    if(++m_chartCounter >= m_dotsNumber+1 || !m_isMeasuring)
     {
         emit newData (_rawData);
         m_isMeasuring = false;
@@ -438,6 +484,29 @@ void Analyzer::on_newData(rawData _rawData)
     {
         emit newData (_rawData);
     }
+}
+
+void Analyzer::on_newUserData(rawData _rawData, UserData _userData)
+{
+    if(++m_chartCounter == m_dotsNumber+1 || !m_isMeasuring)
+    {
+        emit newUserData (_rawData, _userData);
+        m_isMeasuring = false;
+        m_chartCounter = 0;
+        PopUpIndicator::setIndicatorVisible(false);
+        if(!m_calibrationMode)
+        {
+            emit measurementComplete();
+        }
+    }else
+    {
+        emit newUserData (_rawData, _userData);
+    }
+}
+
+void Analyzer::on_newUserDataHeader(QStringList fields)
+{
+    emit newUserDataHeader (fields);
 }
 
 void Analyzer::on_analyzerDataStringArrived(QString str)
@@ -462,6 +531,9 @@ void Analyzer::getAnalyzerData()
 void Analyzer::on_itemDoubleClick(QString number, QString dotsNumber, QString name)
 {
     setIsMeasuring(true);
+    if (name.trimmed().isEmpty()) {
+        name = number;
+    }
     if(m_comAnalyzerFound)
     {
         m_chartCounter = 0;
@@ -614,6 +686,8 @@ void Analyzer::on_changedAutoDetectMode(bool state)
         {
             m_hidAnalyzer = new hidAnalyzer(this);
             connect(m_hidAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
+            connect(m_hidAnalyzer,SIGNAL(newUserData(rawData,UserData)),this,SLOT(on_newUserData(rawData,UserData)));
+            connect(m_hidAnalyzer,SIGNAL(newUserDataHeader(QStringList)),this,SLOT(on_newUserDataHeader(QStringList)));
             connect(m_hidAnalyzer,SIGNAL(analyzerFound(quint32)),this,SLOT(on_hidAnalyzerFound(quint32)));
             connect(m_hidAnalyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_hidAnalyzerDisconnected()));
             connect(m_hidAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));

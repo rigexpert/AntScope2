@@ -22307,6 +22307,8 @@ void QCPItemRect::draw(QCPPainter *painter)
 {
   QPointF p1 = topLeft->pixelPoint();
   QPointF p2 = bottomRight->pixelPoint();
+  if (qIsInf(p1.x()) || qIsInf(p1.y()) || qIsInf(p2.x()) || qIsInf(p2.y()))
+      return;
   if (p1.toPoint() == p2.toPoint())
     return;
   QRectF rect = QRectF(p1, p2).normalized();

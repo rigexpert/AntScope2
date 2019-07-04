@@ -26,6 +26,7 @@
 #include <QTranslator>
 #include <updater.h>
 #include <antscopeupdatedialog.h>
+#include "ProgressDlg.h"
 
 namespace Ui {
 class MainWindow;
@@ -78,6 +79,7 @@ private:
     QWidget *m_tab_5;
     QWidget *m_tab_6;
     QWidget *m_tab_7;
+    QWidget *m_tab_8;
     QHBoxLayout *m_horizontalLayout_1;
     QHBoxLayout *m_horizontalLayout_2;
     QHBoxLayout *m_horizontalLayout_3;
@@ -85,6 +87,7 @@ private:
     QHBoxLayout *m_horizontalLayout_5;
     QHBoxLayout *m_horizontalLayout_6;
     QHBoxLayout *m_horizontalLayout_7;
+    QHBoxLayout *m_horizontalLayout_8;
     QCustomPlot *m_swrWidget;
     QCustomPlot *m_phaseWidget;
     QCustomPlot *m_rsWidget;
@@ -92,6 +95,7 @@ private:
     QCustomPlot *m_rlWidget;
     QCustomPlot *m_tdrWidget;
     QCustomPlot *m_smithWidget;
+    QCustomPlot *m_userWidget;
     QMap<QString, QCustomPlot *> m_mapWidgets;
 
     Measurements *m_measurements;
@@ -148,6 +152,7 @@ private:
     int m_rlZoomState;
     int m_tdrZoomState;
     int m_smithZoomState;
+    int m_userZoomState;
 
     bool m_autoDetectMode;
     QString m_serialPort;
@@ -185,7 +190,9 @@ private:
 
 signals:
     void measure(qint64,qint64,int);
+    void measureUser(qint64,qint64,int);
     void measureContinuous(qint64,qint64,int);
+    void measureOneFq(QWidget*,qint64,int);
     void currentTab(QString);
     void focus(bool);
     void newCursorFq(double x, int number, int mouseX, int mouseY);
@@ -232,6 +239,8 @@ public slots:
     void on_mouseWheel_tdr(QWheelEvent *e);
     void on_mouseMove_tdr(QMouseEvent *e);
     void on_mouseMove_smith(QMouseEvent *e);
+    void on_mouseWheel_user(QWheelEvent * e);
+    void on_mouseMove_user(QMouseEvent *);
     void on_singleStart_clicked();
     void on_continuousStartBtn_clicked(bool checked);
     void on_fqSettingsBtn_clicked();
@@ -242,6 +251,8 @@ public slots:
     void on_exportBtn_clicked();
     void on_measurementComplete();
     void on_translate(int number);
+    void on_startOneFq(quint64 fq, int dots);
+
 private slots:
     void on_analyzerDataBtn_clicked();
     void on_tabWidget_currentChanged(int index);

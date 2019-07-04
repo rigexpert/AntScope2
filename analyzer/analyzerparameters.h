@@ -3,6 +3,7 @@
 
 #include <QVector>
 #include <qcustomplot.h>
+#include <float.h>
 
 //#define SETTINGS_PATH "AntScope2.ini"
 
@@ -18,8 +19,12 @@
 static double MAX_SWR = 10.0;
 static double MIN_SWR = 0;
 
+static double MIN_USER_RANGE = -2000;
+static double MAX_USER_RANGE = 2000;
+
 static int ABSOLUTE_MIN_FQ = 0;
 static int ABSOLUTE_MAX_FQ = 1400000;
+static int MAX_DOTS = 2000;
 
 enum {
     AANONE = 0,
@@ -164,7 +169,8 @@ enum parse{
     WAIT_ANALYZER_DATA,
     WAIT_SCREENSHOT_DATA,
     WAIT_ANALYZER_UPDATE,
-    FULLINFO
+    FULLINFO,
+    WAIT_USER_DATA
 };
 
 struct rawData{
@@ -185,6 +191,27 @@ struct rawData{
     }
 };
 
+struct GraphData {
+    double FQ=DBL_MAX;
+    double SWR=DBL_MAX;
+    double RhoPhase=DBL_MAX;
+    double RhoMod=DBL_MAX;
+    double R=DBL_MAX;
+    double X=DBL_MAX;
+    double Z=DBL_MAX;
+    double Rpar=DBL_MAX;
+    double Xpar=DBL_MAX;
+    double Zpar=DBL_MAX;
+    double RL=DBL_MAX;
+};
+
+
+struct UserData {
+    double fq;
+    QVector<double> values;
+};
+
+
 struct measurement{
 
     qint64 qint64Fq;
@@ -195,6 +222,8 @@ struct measurement{
     }
 
     QVector <rawData> dataRX;
+    QVector <UserData> dataUser;
+    QStringList fieldsUser;
 //---------------------------------
     QCPDataMap swrGraph;
     QCPDataMap phaseGraph;
@@ -210,6 +239,7 @@ struct measurement{
     QCPDataMap tdrStepGraph;
     QCPDataMap tdrImpGraphFeet;
     QCPDataMap tdrStepGraphFeet;
+    QVector<QCPDataMap*> userGraphs;
 
     QCPCurve *smithCurve;
     QCPCurveDataMap smithGraph;
