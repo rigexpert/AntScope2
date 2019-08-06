@@ -246,6 +246,7 @@ void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 
 
 void Measurements::on_newMeasurement(QString name)
 {
+    m_interrupted = false;
     // name.isEmpty -> singlePoint measurement
     if (!name.isEmpty())
     {
@@ -1026,6 +1027,14 @@ quint32 Measurements::computeSWR(double freq, double Z0, double R, double X, dou
     {
         SWR = 1;
     }
+
+    if (SWR > MAX_SWR)
+        SWR = MAX_SWR;
+
+    if (SWR < MIN_SWR)
+        SWR = MIN_SWR;
+
+
     if (VSWR)
     {
         *VSWR = SWR;
@@ -1616,25 +1625,31 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         {
                             if(m_farEndMeasurement == 1)
                             {
+                                swr = m_farEndMeasurementsSub.at(index).swrGraph.value(frequency).value;
+                                rl = m_farEndMeasurementsSub.at(index).rlGraph.value(frequency).value;
                                 rho = m_farEndMeasurementsSub.at(index).rhoGraph.value(frequency).value;
                                 phase = m_farEndMeasurementsSub.at(index).phaseGraph.value(frequency).value;
                                 r = m_farEndMeasurementsSub.at(index).rsrGraph.value(frequency).value;
                                 x = m_farEndMeasurementsSub.at(index).rsxGraph.value(frequency).value;
                             }else if(m_farEndMeasurement == 2)
                             {
+                                swr = m_farEndMeasurementsAdd.at(index).swrGraph.value(frequency).value;
+                                rl = m_farEndMeasurementsAdd.at(index).rlGraph.value(frequency).value;
                                 rho = m_farEndMeasurementsAdd.at(index).rhoGraph.value(frequency).value;
                                 phase = m_farEndMeasurementsAdd.at(index).phaseGraph.value(frequency).value;
                                 r = m_farEndMeasurementsAdd.at(index).rsrGraph.value(frequency).value;
                                 x = m_farEndMeasurementsAdd.at(index).rsxGraph.value(frequency).value;
                             }else
                             {
+                                swr = m_measurements.at(index).swrGraphCalib.value(frequency).value;
+                                rl = m_measurements.at(index).rlGraphCalib.value(frequency).value;
                                 rho = m_measurements.at(index).rhoGraph.value(frequency).value;
                                 phase = m_measurements.at(index).phaseGraphCalib.value(frequency).value;
                                 r = m_measurements.at(index).dataRXCalib.at(previousI).r;
                                 x = m_measurements.at(index).dataRXCalib.at(previousI).x;
                             }
-                            swr = m_measurements.at(index).swrGraphCalib.value(frequency).value;
-                            rl = m_measurements.at(index).rlGraphCalib.value(frequency).value;
+                            //swr = m_measurements.at(index).swrGraphCalib.value(frequency).value;
+                            //rl = m_measurements.at(index).rlGraphCalib.value(frequency).value;
                             z = m_viewMeasurements.at(index).rszGraph.value(frequency).value;
                             rpar = m_viewMeasurements.at(index).rprGraph.value(frequency).value;
                             xpar = m_viewMeasurements.at(index).rpxGraph.value(frequency).value;
@@ -1642,25 +1657,31 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         {
                             if(m_farEndMeasurement == 1)
                             {
+                                swr = m_farEndMeasurementsSub.at(index).swrGraph.value(frequency).value;
+                                rl = m_farEndMeasurementsSub.at(index).rlGraph.value(frequency).value;
                                 rho = m_farEndMeasurementsSub.at(index).rhoGraph.value(frequency).value;
                                 phase = m_farEndMeasurementsSub.at(index).phaseGraph.value(frequency).value;
                                 r = m_farEndMeasurementsSub.at(index).rsrGraph.value(frequency).value;
                                 x = m_farEndMeasurementsSub.at(index).rsxGraph.value(frequency).value;
                             }else if(m_farEndMeasurement == 2)
                             {
+                                swr = m_farEndMeasurementsAdd.at(index).swrGraph.value(frequency).value;
+                                rl = m_farEndMeasurementsAdd.at(index).rlGraph.value(frequency).value;
                                 rho = m_farEndMeasurementsAdd.at(index).rhoGraph.value(frequency).value;
                                 phase = m_farEndMeasurementsAdd.at(index).phaseGraph.value(frequency).value;
                                 r = m_farEndMeasurementsAdd.at(index).rsrGraph.value(frequency).value;
                                 x = m_farEndMeasurementsAdd.at(index).rsxGraph.value(frequency).value;
                             }else
                             {
+                                swr = m_measurements.at(index).swrGraph.value(frequency).value;
+                                rl = m_measurements.at(index).rlGraph.value(frequency).value;
                                 rho = m_measurements.at(index).rhoGraph.value(frequency).value;
                                 phase = m_measurements.at(index).phaseGraph.value(frequency).value;
                                 r = m_measurements.at(index).dataRX.at(previousI).r;
                                 x = m_measurements.at(index).dataRX.at(previousI).x;
                             }
-                            swr = m_measurements.at(index).swrGraph.value(frequency).value;
-                            rl = m_measurements.at(index).rlGraph.value(frequency).value;
+                            //swr = m_measurements.at(index).swrGraph.value(frequency).value;
+                            //rl = m_measurements.at(index).rlGraph.value(frequency).value;
                             z = m_viewMeasurements.at(index).rszGraph.value(frequency).value;
                             rpar = m_viewMeasurements.at(index).rprGraph.value(frequency).value;
                             xpar = m_viewMeasurements.at(index).rpxGraph.value(frequency).value;
@@ -3017,56 +3038,66 @@ void Measurements::on_redrawGraphs()
         return;
     }
 
+    if(m_farEndMeasurement)
+    {
+        calcFarEnd();
+    }
     if(m_calibration->getCalibrationEnabled())
     {
         if( m_currentTab == "tab_1")//SWR
         {
-            if(m_farEndMeasurement)
-            {
-                calcFarEnd();
-            }
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                m_viewMeasurements[i].swrGraphCalib.clear();
+//            for(int i = 0; i < m_measurements.length(); ++i)
+//            {
+//                m_viewMeasurements[i].swrGraphCalib.clear();
 
-                QCPDataMap map = m_measurements[i].swrGraphCalib;
-                QList <double> list = map.keys();
-                QCPData data;
-                QCPData viewData;
-                double maxSwr = m_swrWidget->yAxis->range().upper;
-                for(int n = 0; n < list.length(); ++n)
-                {
-                    data.key = list.at(n);
-                    viewData = map.value(list.at(n));
-                    if( viewData.value > maxSwr || viewData.value < 1)
-                    {
-                        data.value = maxSwr;
-                    }else
-                    {
-                        data.value = viewData.value;
-                    }
-                    m_viewMeasurements[i].swrGraphCalib.insert(data.key,data);
-                }
-                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraphCalib, true);
-            }
-        }else if(m_currentTab == "tab_2")//Phase
-        {
-            if(m_farEndMeasurement == 1)
+//                QCPDataMap map = m_measurements[i].swrGraphCalib;
+//                QList <double> list = map.keys();
+//                QCPData data;
+//                QCPData viewData;
+//                double maxSwr = m_swrWidget->yAxis->range().upper;
+//                for(int n = 0; n < list.length(); ++n)
+//                {
+//                    data.key = list.at(n);
+//                    viewData = map.value(list.at(n));
+//                    if( viewData.value > maxSwr || viewData.value < 1)
+//                    {
+//                        data.value = maxSwr;
+//                    }else
+//                    {
+//                        data.value = viewData.value;
+//                    }
+//                    m_viewMeasurements[i].swrGraphCalib.insert(data.key,data);
+//                }
+//                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraphCalib, true);
+//            }
+            if(m_farEndMeasurement != 0)
             {
-                calcFarEnd();
                 for(int i = 0; i < m_measurements.length(); ++i)
                 {
-                    m_phaseWidget->graph(i+1)->setData(&m_farEndMeasurementsSub[i].phaseGraph, true);
-                }
-            }else if(m_farEndMeasurement == 1)
-            {
-                calcFarEnd();
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_phaseWidget->graph(i+1)->setData(&m_farEndMeasurementsAdd[i].phaseGraph, true);
+                    m_swrWidget->graph(i+1)->setData(m_farEndMeasurement == 1
+                                                       ? &m_farEndMeasurementsSub[i].swrGraph
+                                                       : &m_farEndMeasurementsAdd[i].swrGraph,
+                                                       true);
                 }
             }else
             {
+                for(int i = 0; i < m_measurements.length(); ++i)
+                {
+                    m_swrWidget->graph(i+1)->setData(&m_measurements[i].swrGraphCalib, true);
+                }
+            }
+        }else if(m_currentTab == "tab_2")//Phase
+        {            
+            if(m_farEndMeasurement != 0)
+            {
+                for(int i = 0; i < m_measurements.length(); ++i)
+                {
+                    if (m_farEndMeasurement == 1)
+                        m_phaseWidget->graph(i+1)->setData(&m_farEndMeasurementsSub[i].phaseGraph, true);
+                    else
+                        m_phaseWidget->graph(i+1)->setData(&m_farEndMeasurementsAdd[i].phaseGraph, true);
+                }
+            } else {
                 for(int i = 0; i < m_measurements.length(); ++i)
                 {
                     m_phaseWidget->graph(i+1)->setData(&m_measurements[i].phaseGraphCalib, true);
@@ -3074,7 +3105,6 @@ void Measurements::on_redrawGraphs()
             }
         }else if(m_currentTab == "tab_3")//RX
         {
-            calcFarEnd();
             for(int i = 0; i < m_measurements.length(); ++i)
             {
                 QCPDataMap mapr;
@@ -3091,19 +3121,13 @@ void Measurements::on_redrawGraphs()
                 QList <double> listr;
                 QList <double> listx;
                 QList <double> listz;
-                if(m_farEndMeasurement)
+                if(m_farEndMeasurement != 0)
                 {
-                    if(m_farEndMeasurement == 1)
-                    {
-                        mapr = m_farEndMeasurementsSub.at(i).rsrGraph;
-                        mapx = m_farEndMeasurementsSub.at(i).rsxGraph;
-                        mapz = m_farEndMeasurementsSub.at(i).rszGraph;
-                    }else if (m_farEndMeasurement == 2)
-                    {
-                        mapr = m_farEndMeasurementsAdd.at(i).rsrGraph;
-                        mapx = m_farEndMeasurementsAdd.at(i).rsxGraph;
-                        mapz = m_farEndMeasurementsAdd.at(i).rszGraph;
-                    }
+                    QList <measurement>& _farEndMeasurements =
+                            m_farEndMeasurement == 1 ? m_farEndMeasurementsSub : m_farEndMeasurementsAdd;
+                    mapr = _farEndMeasurements.at(i).rsrGraph;
+                    mapx = _farEndMeasurements.at(i).rsxGraph;
+                    mapz = _farEndMeasurements.at(i).rszGraph;
                 }else
                 {
                     mapr = m_measurements.at(i).rsrGraphCalib;
@@ -3163,10 +3187,6 @@ void Measurements::on_redrawGraphs()
             }
         }else if(m_currentTab == "tab_4")//RXpar
         {
-            if(m_farEndMeasurement)
-            {
-                calcFarEnd();
-            }
             for(int i = 0; i < m_measurements.length(); ++i)
             {
                 QCPDataMap mapr;
@@ -3183,19 +3203,13 @@ void Measurements::on_redrawGraphs()
                 QList <double> listr;
                 QList <double> listx;
                 QList <double> listz;
-                if(m_farEndMeasurement)
+                if(m_farEndMeasurement != 0)
                 {
-                    if(m_farEndMeasurement == 1)
-                    {
-                        mapr = m_farEndMeasurementsSub.at(i).rprGraph;
-                        mapx = m_farEndMeasurementsSub.at(i).rpxGraph;
-                        mapz = m_farEndMeasurementsSub.at(i).rpzGraph;
-                    }else if (m_farEndMeasurement == 2)
-                    {
-                        mapr = m_farEndMeasurementsAdd.at(i).rprGraph;
-                        mapx = m_farEndMeasurementsAdd.at(i).rpxGraph;
-                        mapz = m_farEndMeasurementsAdd.at(i).rpzGraph;
-                    }
+                    QList <measurement>& _farEndMeasurements =
+                            m_farEndMeasurement == 1 ? m_farEndMeasurementsSub : m_farEndMeasurementsAdd;
+                    mapr = _farEndMeasurements.at(i).rprGraph;
+                    mapx = _farEndMeasurements.at(i).rpxGraph;
+                    mapz = _farEndMeasurements.at(i).rpzGraph;
                 }else
                 {
                     mapr = m_measurements.at(i).rprGraphCalib;
@@ -3255,10 +3269,6 @@ void Measurements::on_redrawGraphs()
             }
         }else if(m_currentTab == "tab_5")//RL
         {
-            if(m_farEndMeasurement)
-            {
-                calcFarEnd();
-            }
             for(int i = 0; i < m_measurements.length(); ++i)
             {
                 m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraphCalib, true);
@@ -3268,7 +3278,6 @@ void Measurements::on_redrawGraphs()
             int len;
             if(m_farEndMeasurement)
             {
-                calcFarEnd();
                 if(m_farEndMeasurement == 1)
                 {
                     len = CalcTdr(&m_farEndMeasurementsSub.last().dataRXCalib);
@@ -3386,7 +3395,6 @@ void Measurements::on_redrawGraphs()
         {
             if(m_farEndMeasurement)
             {
-                calcFarEnd();
                 if(m_farEndMeasurement == 1)
                 {
                     for(int i = 0; i < m_measurements.length(); ++i)
@@ -3412,49 +3420,56 @@ void Measurements::on_redrawGraphs()
     {
         if( m_currentTab == "tab_1")//SWR
         {
-            if(m_farEndMeasurement)
-            {
-                calcFarEnd();
-            }
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                m_viewMeasurements[i].swrGraph.clear();
+//            for(int i = 0; i < m_measurements.length(); ++i)
+//            {
+//                m_viewMeasurements[i].swrGraph.clear();
 
-                QCPDataMap map = m_measurements[i].swrGraph;
-                QList <double> list = map.keys();
-                QCPData data;
-                QCPData viewData;
-                double maxSwr = m_swrWidget->yAxis->range().upper;
-                for(int n = 0; n < list.length(); ++n)
+//                QCPDataMap map = m_measurements[i].swrGraph;
+//                QList <double> list = map.keys();
+//                QCPData data;
+//                QCPData viewData;
+//                double maxSwr = m_swrWidget->yAxis->range().upper;
+//                for(int n = 0; n < list.length(); ++n)
+//                {
+//                    data.key = list.at(n);
+//                    viewData = map.value(list.at(n));
+//                    if( viewData.value > maxSwr || viewData.value < 1)
+//                    {
+//                        data.value = maxSwr;
+//                    }else
+//                    {
+//                        data.value = viewData.value;
+//                    }
+//                    m_viewMeasurements[i].swrGraph.insert(data.key,data);
+//                }
+//                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
+//            }
+            if(m_farEndMeasurement != 0)
+            {
+                for(int i = 0; i < m_measurements.length(); ++i)
                 {
-                    data.key = list.at(n);
-                    viewData = map.value(list.at(n));
-                    if( viewData.value > maxSwr || viewData.value < 1)
-                    {
-                        data.value = maxSwr;
-                    }else
-                    {
-                        data.value = viewData.value;
-                    }
-                    m_viewMeasurements[i].swrGraph.insert(data.key,data);
+                    m_swrWidget->graph(i+1)->setData(m_farEndMeasurement == 1
+                                                       ? &m_farEndMeasurementsSub[i].swrGraph
+                                                       : &m_farEndMeasurementsAdd[i].swrGraph,
+                                                       true);
                 }
-                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
+            }else
+            {
+                for(int i = 0; i < m_measurements.length(); ++i)
+                {
+                    m_swrWidget->graph(i+1)->setData(&m_measurements[i].swrGraph, true);
+                }
             }
         }else if(m_currentTab == "tab_2")//Phase
-        {
-            if(m_farEndMeasurement == 1)
+        {            
+            if(m_farEndMeasurement != 0)
             {
-                calcFarEnd();
                 for(int i = 0; i < m_measurements.length(); ++i)
                 {
-                    m_phaseWidget->graph(i+1)->setData(&m_farEndMeasurementsSub[i].phaseGraph, true);
-                }
-            }else if(m_farEndMeasurement == 1)
-            {
-                calcFarEnd();
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_phaseWidget->graph(i+1)->setData(&m_farEndMeasurementsAdd[i].phaseGraph, true);
+                    m_phaseWidget->graph(i+1)->setData(m_farEndMeasurement == 1
+                                                       ? &m_farEndMeasurementsSub[i].phaseGraph
+                                                       : &m_farEndMeasurementsAdd[i].phaseGraph,
+                                                       true);
                 }
             }else
             {
@@ -3465,7 +3480,6 @@ void Measurements::on_redrawGraphs()
             }
         }else if(m_currentTab == "tab_3")//RX
         {
-            calcFarEnd();
             for(int i = 0; i < m_measurements.length(); ++i)
             {
                 QCPDataMap mapr;
@@ -3562,10 +3576,6 @@ void Measurements::on_redrawGraphs()
             }
         }else if(m_currentTab == "tab_4")//RXpar
         {
-            if(m_farEndMeasurement)
-            {
-                calcFarEnd();
-            }
             for(int i = 0; i < m_measurements.length(); ++i)
             {
                 QCPDataMap rMap;
@@ -3654,20 +3664,35 @@ void Measurements::on_redrawGraphs()
             }
         }else if(m_currentTab == "tab_5")//RL
         {
-            if(m_farEndMeasurement)
+//            if(m_farEndMeasurement)
+//            {
+//                calcFarEnd();
+//            }
+//            for(int i = 0; i < m_measurements.length(); ++i)
+//            {
+//                m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraph, true);
+//            }
+            if(m_farEndMeasurement != 0)
             {
-                calcFarEnd();
-            }
-            for(int i = 0; i < m_measurements.length(); ++i)
+                for(int i = 0; i < m_measurements.length(); ++i)
+                {
+                    m_rlWidget->graph(i+1)->setData(m_farEndMeasurement == 1
+                                                       ? &m_farEndMeasurementsSub[i].rlGraph
+                                                       : &m_farEndMeasurementsAdd[i].rlGraph,
+                                                       true);
+                }
+            }else
             {
-                m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraph, true);
+                for(int i = 0; i < m_measurements.length(); ++i)
+                {
+                    m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraph, true);
+                }
             }
         }else if(m_currentTab == "tab_6")//TDR
         {
             int len;
             if(m_farEndMeasurement)
             {
-                calcFarEnd();
                 if(m_farEndMeasurement == 1)
                 {
                     len = CalcTdr(&m_farEndMeasurementsSub.last().dataRX);
@@ -3787,7 +3812,6 @@ void Measurements::on_redrawGraphs()
         {
             if(m_farEndMeasurement)
             {
-                calcFarEnd();
                 if(m_farEndMeasurement == 1)
                 {
                     for(int i = 0; i < m_measurements.length(); ++i)
@@ -4167,7 +4191,7 @@ void Measurements::setCableFarEndMeasurement(int value)
 
 void Measurements::calcFarEnd(void)
 {
-    if(m_calibration != NULL)
+    //if(m_calibration != NULL)
     {
         int count = m_measurements.length();
         int dataCount;
@@ -4175,7 +4199,7 @@ void Measurements::calcFarEnd(void)
 
         for(int i = 0; i < count; ++i)
         {
-            if(m_calibration->getCalibrationEnabled())
+            if(m_calibration != nullptr && m_calibration->getCalibrationEnabled())
             {
                 dataCount = m_measurements.at(i).dataRXCalib.length();
                 data = m_measurements.at(i).dataRXCalib;
@@ -4188,6 +4212,8 @@ void Measurements::calcFarEnd(void)
             if(m_farEndMeasurement==1) // subtract cable
             {
                 m_farEndMeasurementsSub[i].dataRX.clear();
+                m_farEndMeasurementsSub[i].swrGraph.clear();
+                m_farEndMeasurementsSub[i].rlGraph.clear();
                 m_farEndMeasurementsSub[i].rsrGraph.clear();
                 m_farEndMeasurementsSub[i].rsxGraph.clear();
                 m_farEndMeasurementsSub[i].rszGraph.clear();
@@ -4200,6 +4226,8 @@ void Measurements::calcFarEnd(void)
             }else if(m_farEndMeasurement==2) // add cable
             {
                 m_farEndMeasurementsAdd[i].dataRX.clear();
+                m_farEndMeasurementsAdd[i].swrGraph.clear();
+                m_farEndMeasurementsAdd[i].rlGraph.clear();
                 m_farEndMeasurementsAdd[i].rsrGraph.clear();
                 m_farEndMeasurementsAdd[i].rsxGraph.clear();
                 m_farEndMeasurementsAdd[i].rszGraph.clear();
@@ -4210,180 +4238,9 @@ void Measurements::calcFarEnd(void)
                 m_farEndMeasurementsAdd[i].rhoGraph.clear();
                 m_farEndMeasurementsAdd[i].smithGraph.clear();
             }
-
-            double fq;
-            double R;
-            double X;
-            double Rpar;
-            double Xpar;
-            QCPData qdata;
-            for(int n = 0; n < dataCount; ++n)
+            for(int ii = 0; ii < dataCount; ++ii)
             {
-                fq = data.at(n).fq;
-                qdata.key = fq*1000;
-                R = data.at(n).r;
-                X = data.at(n).x;
-                //if (m_farEndMeasurement != 0)
-                {
-                    double Klen = 1;
-                    switch (m_cableLossUnits)
-                    {
-                        case 0: Klen = 1; break;
-                        case 1: Klen = 1*100.0; break;
-                        case 2: Klen = 1/FEETINMETER; break;
-                        case 3: Klen = 1/FEETINMETER*100.0; break;
-                    }
-
-                    Complex Zload = Complex( R, X);
-
-                    double dMatchedLossDb;  // Note that K1/K2 are in dB/100 ft
-                    if(!m_cableLossAtAnyFq)
-                        dMatchedLossDb = m_cableLossConductive*Klen*sqrt(fq/1000.0) + m_cableLossDielectric*Klen*fq/1000.0;
-                    else
-                        dMatchedLossDb = m_cableLossConductive*Klen + m_cableLossDielectric*Klen;
-
-
-            #define NEPER 8.68588963806504        // = 20 / Ln(10)
-
-                    double Alpha = dMatchedLossDb / 100.0 / NEPER; // Nepers (attenuation) per foot
-                    double Beta = (2*M_PI * fq/1000.0) / (SPEEDOFLIGHT*FEETINMETER/1000000.0 * m_cableVelFactor); // Radians (phase constant) per foot
-
-                    double Alphal = Alpha * m_cableLength;
-                    double Betal = Beta * m_cableLength;
-
-                    if(m_farEndMeasurement==1) // subtract cable
-                    {
-                        Alphal = -Alphal;
-                        Betal = -Betal;
-
-                        if (m_cableLossUnits==0)
-                        {
-                            Alphal *= FEETINMETER;
-                            Betal *= FEETINMETER;
-                        }
-
-                        Complex Sinh_gl = Complex( cos(Betal) * sinh(Alphal), sin(Betal) * cosh(Alphal) );
-                        Complex Cosh_gl = Complex( cos(Betal) * cosh(Alphal), sin(Betal) * sinh(Alphal) );
-
-                        Complex Zo = Complex(m_cableResistance, -m_cableResistance * (Alpha / Beta));
-
-                        Complex ZIZL = Zo * ( (Zload*Cosh_gl + Zo*Sinh_gl) /  (Zo*Cosh_gl + Zload*Sinh_gl) );
-
-                        R = ZIZL.real();
-                        if(R<0.0001)
-                            R = 0.0001;
-                        X = ZIZL.imag();
-
-                        Rpar = R*(1+X*X/R/R);
-                        Xpar = X*(1+R*R/X/X);
-
-                        if (qIsNaN(R) || (R<0.001) ) {R = 0.01;}
-                        if (qIsNaN(X)) {X = 0;}
-
-                        double Rnorm = R/m_Z0;
-                        double Xnorm = X/m_Z0;
-
-                        double Denom = (Rnorm+1)*(Rnorm+1)+Xnorm*Xnorm;
-                        double RhoReal = ((Rnorm-1)*(Rnorm+1)+Xnorm*Xnorm)/Denom;
-                        double RhoImag = 2*Xnorm/Denom;
-
-                        double RhoPhase = atan2(RhoImag, RhoReal) / M_PI * 180.0;
-                        double RhoMod = sqrt(RhoReal*RhoReal+RhoImag*RhoImag);
-
-                        rawData da = data.at(n);
-                        da.r = R;
-                        da.x = X;
-                        m_farEndMeasurementsSub[i].dataRX.append(da);
-
-                        qdata.value = R;
-                        m_farEndMeasurementsSub[i].rsrGraph.insert(qdata.key,qdata);
-                        qdata.value = X;
-                        m_farEndMeasurementsSub[i].rsxGraph.insert(qdata.key,qdata);
-                        qdata.value = computeZ(R, X);
-                        m_farEndMeasurementsSub[i].rszGraph.insert(qdata.key,qdata);
-
-                        qdata.value = Rpar;
-                        m_farEndMeasurementsSub[i].rprGraph.insert(qdata.key,qdata);
-                        qdata.value = Xpar;
-                        m_farEndMeasurementsSub[i].rpxGraph.insert(qdata.key,qdata);
-                        qdata.value = computeZ(R, X);
-                        m_farEndMeasurementsSub[i].rpzGraph.insert(qdata.key,qdata);
-
-                        qdata.value = RhoPhase;
-                        m_farEndMeasurementsSub[i].phaseGraph.insert(qdata.key,qdata);
-                        qdata.value = RhoMod;
-                        m_farEndMeasurementsSub[i].rhoGraph.insert(qdata.key,qdata);
-
-                        double pointX,pointY;
-                        NormRXtoSmithPoint(R/m_Z0, X/m_Z0, pointX, pointY);
-                        int len = m_farEndMeasurementsSub[i].dataRX.length();
-                        m_farEndMeasurementsSub[i].smithGraph.insert(len, QCPCurveData(len, pointX, pointY));
-                    }else if (m_farEndMeasurement==2) // add cable
-                    {
-                        if (m_cableLossUnits==0)
-                        {
-                            Alphal *= FEETINMETER;
-                            Betal *= FEETINMETER;
-                        }
-
-                        Complex Sinh_gl = Complex( cos(Betal) * sinh(Alphal), sin(Betal) * cosh(Alphal) );
-                        Complex Cosh_gl = Complex( cos(Betal) * cosh(Alphal), sin(Betal) * sinh(Alphal) );
-
-                        Complex Zo = Complex(m_cableResistance, -m_cableResistance * (Alpha / Beta));
-
-                        Complex ZIZL = Zo * ( (Zload*Cosh_gl + Zo*Sinh_gl) /  (Zo*Cosh_gl + Zload*Sinh_gl) );
-
-                        R = ZIZL.real();
-                        if(R<0.0001)
-                            R = 0.0001;
-                        X = ZIZL.imag();
-
-                        Rpar = R*(1+X*X/R/R);
-                        Xpar = X*(1+R*R/X/X);
-
-                        if (qIsNaN(R) || (R<0.001) ) {R = 0.01;}
-                        if (qIsNaN(X)) {X = 0;}
-
-                        double Rnorm = R/m_Z0;
-                        double Xnorm = X/m_Z0;
-
-                        double Denom = (Rnorm+1)*(Rnorm+1)+Xnorm*Xnorm;
-                        double RhoReal = ((Rnorm-1)*(Rnorm+1)+Xnorm*Xnorm)/Denom;
-                        double RhoImag = 2*Xnorm/Denom;
-
-                        double RhoPhase = atan2(RhoImag, RhoReal) / M_PI * 180.0;
-                        double RhoMod = sqrt(RhoReal*RhoReal+RhoImag*RhoImag);
-
-                        rawData da = data.at(n);
-                        da.r = R;
-                        da.x = X;
-                        m_farEndMeasurementsAdd[i].dataRX.append(da);
-
-                        qdata.value = R;
-                        m_farEndMeasurementsAdd[i].rsrGraph.insert(qdata.key,qdata);
-                        qdata.value = X;
-                        m_farEndMeasurementsAdd[i].rsxGraph.insert(qdata.key,qdata);
-                        qdata.value = computeZ(R, X);
-                        m_farEndMeasurementsAdd[i].rszGraph.insert(qdata.key,qdata);
-
-                        qdata.value = Rpar;
-                        m_farEndMeasurementsAdd[i].rprGraph.insert(qdata.key,qdata);
-                        qdata.value = Xpar;
-                        m_farEndMeasurementsAdd[i].rpxGraph.insert(qdata.key,qdata);
-                        qdata.value = computeZ(R, X);
-                        m_farEndMeasurementsAdd[i].rpzGraph.insert(qdata.key,qdata);
-
-                        qdata.value = RhoPhase;
-                        m_farEndMeasurementsAdd[i].phaseGraph.insert(qdata.key,qdata);
-                        qdata.value = RhoMod;
-                        m_farEndMeasurementsAdd[i].rhoGraph.insert(qdata.key,qdata);
-
-                        double pointX,pointY;
-                        NormRXtoSmithPoint(R/m_Z0, X/m_Z0, pointX, pointY);
-                        int len = m_farEndMeasurementsAdd[i].dataRX.length();
-                        m_farEndMeasurementsAdd[i].smithGraph.insert(len, QCPCurveData(len, pointX, pointY));
-                    }
-                }
+                calcFarEnd(data.at(ii), i);
             }
         }
     }
@@ -4772,9 +4629,473 @@ void Measurements::hideOneFqWidget(bool)
 
 void Measurements::on_newMeasurementOneFq(QWidget* parent, qint64 fq, qint32 dots)
 {
+    m_interrupted = false;
     Q_UNUSED (fq)
     showOneFqWidget(parent, dots);
 }
 
 
+rawData Measurements::calcFarEnd(const rawData& data, int idx, bool refreshGraphs)
+{
+    rawData da = data;
 
+    double Rpar;
+    double Xpar;
+
+    double fq = data.fq;
+    double R = data.r;
+    double X = data.x;
+
+    QCPData qdata;
+    qdata.key = fq*1000;
+
+    double Klen = 1;
+    switch (m_cableLossUnits)
+    {
+    case 0: Klen = 1; break;
+    case 1: Klen = 1*100.0; break;
+    case 2: Klen = 1/FEETINMETER; break;
+    case 3: Klen = 1/FEETINMETER*100.0; break;
+    }
+
+    Complex Zload = Complex( R, X);
+
+    double dMatchedLossDb;  // Note that K1/K2 are in dB/100 ft
+    if(!m_cableLossAtAnyFq)
+        dMatchedLossDb = m_cableLossConductive*Klen*sqrt(fq) + m_cableLossDielectric*Klen*fq;
+    else
+        dMatchedLossDb = m_cableLossConductive*Klen + m_cableLossDielectric*Klen;
+
+
+#define NEPER 8.68588963806504        // = 20 / Ln(10)
+
+    double Alpha = dMatchedLossDb / 100.0 / NEPER; // Nepers (attenuation) per foot
+    double Beta = (2*M_PI * fq) / (SPEEDOFLIGHT*FEETINMETER/1000000.0 * m_cableVelFactor); // Radians (phase constant) per foot
+
+    double Alphal = Alpha * m_cableLength;
+    double Betal = Beta * m_cableLength;
+
+    da.r = R;
+    da.x = X;
+
+    if(m_farEndMeasurement==1) // subtract cable
+    {
+        Alphal = -Alphal;
+        Betal = -Betal;
+    }
+    if (m_cableLossUnits==0)
+    {
+        Alphal *= FEETINMETER;
+        Betal *= FEETINMETER;
+    }
+
+    Complex Sinh_gl = Complex( cos(Betal) * sinh(Alphal), sin(Betal) * cosh(Alphal) );
+    Complex Cosh_gl = Complex( cos(Betal) * cosh(Alphal), sin(Betal) * sinh(Alphal) );
+
+    Complex Zo = Complex(m_cableResistance, -m_cableResistance * (Alpha / Beta));
+
+    Complex ZIZL = Zo * ( (Zload*Cosh_gl + Zo*Sinh_gl) /  (Zo*Cosh_gl + Zload*Sinh_gl) );
+
+    R = ZIZL.real();
+    if(R<0.0001)
+        R = 0.0001;
+    X = ZIZL.imag();
+
+    Rpar = R*(1+X*X/R/R);
+    Xpar = X*(1+R*R/X/X);
+
+    if (qIsNaN(R) || (R<0.001) ) {R = 0.01;}
+    if (qIsNaN(X)) {X = 0;}
+
+    double Rnorm = R/m_Z0;
+    double Xnorm = X/m_Z0;
+
+    double Denom = (Rnorm+1)*(Rnorm+1)+Xnorm*Xnorm;
+    double RhoReal = ((Rnorm-1)*(Rnorm+1)+Xnorm*Xnorm)/Denom;
+    double RhoImag = 2*Xnorm/Denom;
+
+    double RhoPhase = atan2(RhoImag, RhoReal) / M_PI * 180.0;
+    double RhoMod = sqrt(RhoReal*RhoReal+RhoImag*RhoImag);
+
+    double swr=1;
+    double rl=0;
+    computeSWR(fq, getZ0(), R, X, &swr, &rl);
+
+    da.r = R;
+    da.x = X;
+    QList <measurement>& _farEndMeasurements = (m_farEndMeasurement==1)
+            ? m_farEndMeasurementsSub
+            : m_farEndMeasurementsAdd;
+
+    _farEndMeasurements[idx].dataRX.append(da);
+
+    if (refreshGraphs) {
+        qdata.value = swr;
+        _farEndMeasurements[idx].swrGraph.insert(qdata.key,qdata);
+
+        qdata.value = rl;
+        _farEndMeasurements[idx].rlGraph.insert(qdata.key,qdata);
+
+        qdata.value = R;
+        _farEndMeasurements[idx].rsrGraph.insert(qdata.key,qdata);
+        qdata.value = X;
+        _farEndMeasurements[idx].rsxGraph.insert(qdata.key,qdata);
+        qdata.value = computeZ(R, X);
+        _farEndMeasurements[idx].rszGraph.insert(qdata.key,qdata);
+
+        qdata.value = Rpar;
+        _farEndMeasurements[idx].rprGraph.insert(qdata.key,qdata);
+        qdata.value = Xpar;
+        _farEndMeasurements[idx].rpxGraph.insert(qdata.key,qdata);
+        qdata.value = computeZ(R, X);
+        _farEndMeasurements[idx].rpzGraph.insert(qdata.key,qdata);
+
+        qdata.value = RhoPhase;
+        _farEndMeasurements[idx].phaseGraph.insert(qdata.key,qdata);
+        qdata.value = RhoMod;
+        _farEndMeasurements[idx].rhoGraph.insert(qdata.key,qdata);
+
+        double pointX,pointY;
+        NormRXtoSmithPoint(R/m_Z0, X/m_Z0, pointX, pointY);
+        int len = _farEndMeasurements[idx].dataRX.length();
+        _farEndMeasurements[idx].smithGraph.insert(len, QCPCurveData(len, pointX, pointY));
+    }
+    return da;
+}
+
+/*
+rawData Measurements::calcFarEnd(const rawData& data, int idx, bool refreshGraphs)
+{
+    rawData da = data;
+
+    double Rpar;
+    double Xpar;
+
+    double fq = data.fq;
+    double R = data.r;
+    double X = data.x;
+
+    QCPData qdata;
+    qdata.key = fq*1000;
+
+    double Klen = 1;
+    switch (m_cableLossUnits)
+    {
+    case 0: Klen = 1; break;
+    case 1: Klen = 1*100.0; break;
+    case 2: Klen = 1/FEETINMETER; break;
+    case 3: Klen = 1/FEETINMETER*100.0; break;
+    }
+
+    Complex Zload = Complex( R, X);
+
+    double dMatchedLossDb;  // Note that K1/K2 are in dB/100 ft
+    if(!m_cableLossAtAnyFq)
+        dMatchedLossDb = m_cableLossConductive*Klen*sqrt(fq) + m_cableLossDielectric*Klen*fq;
+    else
+        dMatchedLossDb = m_cableLossConductive*Klen + m_cableLossDielectric*Klen;
+
+
+#define NEPER 8.68588963806504        // = 20 / Ln(10)
+
+    double Alpha = dMatchedLossDb / 100.0 / NEPER; // Nepers (attenuation) per foot
+    double Beta = (2*M_PI * fq) / (SPEEDOFLIGHT*FEETINMETER/1000000.0 * m_cableVelFactor); // Radians (phase constant) per foot
+
+    double Alphal = Alpha * m_cableLength;
+    double Betal = Beta * m_cableLength;
+
+    da.r = R;
+    da.x = X;
+
+    if(m_farEndMeasurement==1) // subtract cable
+    {
+        Alphal = -Alphal;
+        Betal = -Betal;
+
+        if (m_cableLossUnits==0)
+        {
+            Alphal *= FEETINMETER;
+            Betal *= FEETINMETER;
+        }
+
+        Complex Sinh_gl = Complex( cos(Betal) * sinh(Alphal), sin(Betal) * cosh(Alphal) );
+        Complex Cosh_gl = Complex( cos(Betal) * cosh(Alphal), sin(Betal) * sinh(Alphal) );
+
+        Complex Zo = Complex(m_cableResistance, -m_cableResistance * (Alpha / Beta));
+
+        Complex ZIZL = Zo * ( (Zload*Cosh_gl + Zo*Sinh_gl) /  (Zo*Cosh_gl + Zload*Sinh_gl) );
+
+        R = ZIZL.real();
+        if(R<0.0001)
+            R = 0.0001;
+        X = ZIZL.imag();
+
+        Rpar = R*(1+X*X/R/R);
+        Xpar = X*(1+R*R/X/X);
+
+        if (qIsNaN(R) || (R<0.001) ) {R = 0.01;}
+        if (qIsNaN(X)) {X = 0;}
+
+        double Rnorm = R/m_Z0;
+        double Xnorm = X/m_Z0;
+
+        double Denom = (Rnorm+1)*(Rnorm+1)+Xnorm*Xnorm;
+        double RhoReal = ((Rnorm-1)*(Rnorm+1)+Xnorm*Xnorm)/Denom;
+        double RhoImag = 2*Xnorm/Denom;
+
+        double RhoPhase = atan2(RhoImag, RhoReal) / M_PI * 180.0;
+        double RhoMod = sqrt(RhoReal*RhoReal+RhoImag*RhoImag);
+
+        double swr=1;
+        double rl=0;
+        computeSWR(fq, getZ0(), R, X, &swr, &rl);
+
+        da.r = R;
+        da.x = X;
+        m_farEndMeasurementsSub[idx].dataRX.append(da);
+
+        if (refreshGraphs) {
+            qdata.value = swr;
+            m_farEndMeasurementsSub[idx].swrGraph.insert(qdata.key,qdata);
+
+            qdata.value = rl;
+            m_farEndMeasurementsSub[idx].rlGraph.insert(qdata.key,qdata);
+
+            qdata.value = R;
+            m_farEndMeasurementsSub[idx].rsrGraph.insert(qdata.key,qdata);
+            qdata.value = X;
+            m_farEndMeasurementsSub[idx].rsxGraph.insert(qdata.key,qdata);
+            qdata.value = computeZ(R, X);
+            m_farEndMeasurementsSub[idx].rszGraph.insert(qdata.key,qdata);
+
+            qdata.value = Rpar;
+            m_farEndMeasurementsSub[idx].rprGraph.insert(qdata.key,qdata);
+            qdata.value = Xpar;
+            m_farEndMeasurementsSub[idx].rpxGraph.insert(qdata.key,qdata);
+            qdata.value = computeZ(R, X);
+            m_farEndMeasurementsSub[idx].rpzGraph.insert(qdata.key,qdata);
+
+            qdata.value = RhoPhase;
+            m_farEndMeasurementsSub[idx].phaseGraph.insert(qdata.key,qdata);
+            qdata.value = RhoMod;
+            m_farEndMeasurementsSub[idx].rhoGraph.insert(qdata.key,qdata);
+
+            double pointX,pointY;
+            NormRXtoSmithPoint(R/m_Z0, X/m_Z0, pointX, pointY);
+            int len = m_farEndMeasurementsSub[idx].dataRX.length();
+            m_farEndMeasurementsSub[idx].smithGraph.insert(len, QCPCurveData(len, pointX, pointY));
+        }
+    }else if (m_farEndMeasurement==2) // add cable
+    {
+        if (m_cableLossUnits==0)
+        {
+            Alphal *= FEETINMETER;
+            Betal *= FEETINMETER;
+        }
+
+        Complex Sinh_gl = Complex( cos(Betal) * sinh(Alphal), sin(Betal) * cosh(Alphal) );
+        Complex Cosh_gl = Complex( cos(Betal) * cosh(Alphal), sin(Betal) * sinh(Alphal) );
+
+        Complex Zo = Complex(m_cableResistance, -m_cableResistance * (Alpha / Beta));
+
+        Complex ZIZL = Zo * ( (Zload*Cosh_gl + Zo*Sinh_gl) /  (Zo*Cosh_gl + Zload*Sinh_gl) );
+
+        R = ZIZL.real();
+        if(R<0.0001)
+            R = 0.0001;
+        X = ZIZL.imag();
+
+        Rpar = R*(1+X*X/R/R);
+        Xpar = X*(1+R*R/X/X);
+
+        if (qIsNaN(R) || (R<0.001) ) {R = 0.01;}
+        if (qIsNaN(X)) {X = 0;}
+
+        double Rnorm = R/m_Z0;
+        double Xnorm = X/m_Z0;
+
+        double Denom = (Rnorm+1)*(Rnorm+1)+Xnorm*Xnorm;
+        double RhoReal = ((Rnorm-1)*(Rnorm+1)+Xnorm*Xnorm)/Denom;
+        double RhoImag = 2*Xnorm/Denom;
+
+        double RhoPhase = atan2(RhoImag, RhoReal) / M_PI * 180.0;
+        double RhoMod = sqrt(RhoReal*RhoReal+RhoImag*RhoImag);
+
+        double swr=1;
+        double rl=0;
+        computeSWR(fq, getZ0(), R, X, &swr, &rl);
+
+        da.r = R;
+        da.x = X;
+        m_farEndMeasurementsAdd[idx].dataRX.append(da);
+
+        if (refreshGraphs) {
+            qdata.value = swr;
+            m_farEndMeasurementsSub[idx].swrGraph.insert(qdata.key,qdata);
+
+            qdata.value = rl;
+            m_farEndMeasurementsSub[idx].rlGraph.insert(qdata.key,qdata);
+
+            qdata.value = R;
+            m_farEndMeasurementsAdd[idx].rsrGraph.insert(qdata.key,qdata);
+            qdata.value = X;
+            m_farEndMeasurementsAdd[idx].rsxGraph.insert(qdata.key,qdata);
+            qdata.value = computeZ(R, X);
+            m_farEndMeasurementsAdd[idx].rszGraph.insert(qdata.key,qdata);
+
+            qdata.value = Rpar;
+            m_farEndMeasurementsAdd[idx].rprGraph.insert(qdata.key,qdata);
+            qdata.value = Xpar;
+            m_farEndMeasurementsAdd[idx].rpxGraph.insert(qdata.key,qdata);
+            qdata.value = computeZ(R, X);
+            m_farEndMeasurementsAdd[idx].rpzGraph.insert(qdata.key,qdata);
+
+            qdata.value = RhoPhase;
+            m_farEndMeasurementsAdd[idx].phaseGraph.insert(qdata.key,qdata);
+            qdata.value = RhoMod;
+            m_farEndMeasurementsAdd[idx].rhoGraph.insert(qdata.key,qdata);
+
+            double pointX,pointY;
+            NormRXtoSmithPoint(R/m_Z0, X/m_Z0, pointX, pointY);
+            int len = m_farEndMeasurementsAdd[idx].dataRX.length();
+            m_farEndMeasurementsAdd[idx].smithGraph.insert(len, QCPCurveData(len, pointX, pointY));
+        }
+    }
+    return da;
+}
+*/
+QPair<double, double> Measurements::autoCalibrate()
+{
+    const double cable_length_min = 0.0;
+    const double cable_length_max = 0.02;
+    const double cable_length_steps = 100;
+
+    const double cable_res_min = 20.0;
+    const double cable_res_max = 40.0;
+    const double cable_res_steps = 100;
+
+    // backup settings
+    double _cableResistance = m_cableResistance;
+    double _cableLength = m_cableLength;
+
+    if (m_autoCalibration == 1) {
+        m_cableLossConductive = 0;
+        m_cableLossDielectric = 0;
+        m_cableLossFqMHz = 1;
+        m_farEndMeasurement = 1;
+        m_cableLossAtAnyFq = 1;
+        m_cableLossUnits = 0;
+        m_cableVelFactor = 1;
+
+
+        double dBestLength = cable_length_min;
+        double dBestResistance = cable_res_max;
+        double dBestDistance = 100000000000.0;
+
+        double dBestMaxSwrValue = 0;
+        double dBestMaxSwrFq = 0;
+
+        double dSqrDist = 0;
+        double Rswr = getZ0();
+
+        //bKeypressDetected = FALSE;
+
+        double leStep = (cable_length_max-cable_length_min)/cable_length_steps;
+        double reStep = (cable_res_max-cable_res_min)/cable_res_steps;
+        for (double dLen = cable_length_min; dLen <cable_length_max; dLen += leStep)
+        {
+            m_cableLength = dLen;
+
+            for (double dRes = cable_res_min; dRes <cable_res_max; dRes += reStep)
+            {
+                m_cableResistance = dRes;
+
+                dSqrDist = 0;
+                double dMaxSwrValue = 0;
+                double dMaxSwrFq = 0;
+
+                int count = getMeasurementLength();
+                if (count == 0) {
+                    return QPair<double, double>(_cableResistance, _cableLength);
+                }
+                measurement* mm = getMeasurement(count-1);
+                const QVector<rawData>& data = mm->dataRX;
+
+                for (int i=0; i<data.size(); i++) {
+                    const rawData& inData = data.at(i);
+                    if (inData.fq*1000 > 10000)
+                    {
+                        rawData outData = calcFarEnd(inData, count-1, true);
+                        double R = outData.r;
+                        double X = outData.x;
+
+                        double Gre = (R*R-Rswr*Rswr+X*X)/((R+Rswr)*(R+Rswr)+X*X);
+                        double Gim = (2*Rswr*X)/((R+Rswr)*(R+Rswr)+X*X);
+
+                        dSqrDist += Gre*Gre+Gim*Gim;
+
+                        double tmpSWR;
+                        int ret = computeSWR(inData.fq*1000.0, getZ0(), R, X, &tmpSWR, nullptr);
+                        if (ret != 0) {
+                            double tmpFQ = inData.fq;
+                            if (tmpSWR > dMaxSwrValue)
+                            {
+                                dMaxSwrValue = tmpSWR;
+                                dMaxSwrFq = tmpFQ;
+                            }
+                        }
+                    }
+                }
+
+                if (dSqrDist<dBestDistance)
+                {
+                    dBestDistance = dSqrDist;
+                    dBestLength = dLen;
+                    dBestResistance = dRes;
+
+                    on_redrawGraphs();
+                    QApplication::processEvents();
+
+                    dBestMaxSwrValue = dMaxSwrValue;
+                    dBestMaxSwrFq = dMaxSwrFq;
+
+//                    qDebug() << "m_cableResistance: " <<   m_cableResistance
+//                             << ", m_cableLength: " << m_cableLength
+//                             << ", dBestMaxSwrValue: " << dBestMaxSwrValue
+//                             << ", dBestMaxSwrFq: " << dBestMaxSwrFq;
+                }
+
+                QApplication::processEvents();
+                if (m_interrupted)
+                    break;
+            }
+
+            QApplication::processEvents();
+            if (m_interrupted)
+                break;
+        }
+
+        if (m_interrupted) {
+            m_interrupted = false;
+            return QPair<double, double>(_cableResistance, _cableLength);;
+        }
+
+        m_cableLength = dBestLength;
+        m_cableResistance = dBestResistance;
+
+        qDebug() << QString("Connector compensation: SWR=%1 at Fq=%2 MHz: Rcable=%3, Lcable=%4")
+                    .arg(dBestMaxSwrValue).arg(dBestMaxSwrFq).arg(m_cableResistance).arg(m_cableLength);
+
+        on_redrawGraphs();
+    }
+
+    m_interrupted = false;
+    QPair<double, double> result(m_cableResistance, m_cableLength);
+
+    // restore settings
+    //m_cableResistance = _cableResistance;
+    //m_cableLength = _cableLength;
+
+    setAutoCalibration(0);
+    return result;
+}

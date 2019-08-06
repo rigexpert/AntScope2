@@ -187,6 +187,8 @@ private:
     QCustomPlot* getCurrentPlot();
     void changeFqFrom(bool _backupValue=false);
     void changeFqTo(bool _backupValue=false);
+    void autoCalibrate();
+    void showErrorPopup(QString text, int msDuration);
 
 signals:
     void measure(qint64,qint64,int);
@@ -224,6 +226,7 @@ public slots:
     void on_pressLeft();
     void on_pressRight();
     void on_pressCtrlC();
+    void on_presssCtrlAltShiftM();
     void on_analyzerFound(QString name);
     void on_analyzerDisconnected();
     void on_mouseWheel_swr(QWheelEvent *e);
@@ -295,6 +298,7 @@ private slots:
     void on_dataChanged(qint64 _center_khz, qint64 _range_khz, qint32 _dots);
     void on_importFinished(double _fqMin, double _fqMax);
     void onFullRange(bool);
+    void onMeasurementError();
 };
 
 

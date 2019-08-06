@@ -178,6 +178,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_analyzer,SIGNAL(measurementComplete()),this,SLOT(on_measurementComplete()), Qt::QueuedConnection);
     connect(this,SIGNAL(stopMeasure()), m_analyzer, SLOT(on_stopMeasure()));
     connect(this,&MainWindow::measureOneFq, m_analyzer,&Analyzer::on_measureOneFq);
+    connect(m_analyzer, &Analyzer::signalMeasurementError, this, &MainWindow::onMeasurementError);
 
     QShortcut *shortF1 = new QShortcut(QKeySequence("F1"),this);
     connect(shortF1,SIGNAL(activated()),this,SLOT(on_pressF1()));
@@ -246,6 +247,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QShortcut *shortCtrlC = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_C),this);
     connect(shortCtrlC,SIGNAL(activated()),this,SLOT(on_pressCtrlC()));
+
+    QShortcut *shortCtrlAltShiftM = new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::ALT + Qt::Key_M),this);
+    connect(shortCtrlAltShiftM,SIGNAL(activated()),this,SLOT(on_presssCtrlAltShiftM()));
 
     m_presets = new Presets(this);
     connect(this, SIGNAL(isRangeChanged(bool)), m_presets, SLOT(on_isRangeChanged(bool)));
@@ -941,6 +945,7 @@ void MainWindow::on_pressEsc ()
     m_bInterrupted = true;
 
     m_measurements->hideOneFqWidget();
+    m_measurements->interrupt();
     emit stopMeasure();
 }
 
@@ -3542,12 +3547,19 @@ void MainWindow::on_startOneFq(quint64 _fq, int _dots)
 
 void MainWindow::on_measurementComplete()
 {    
+
     if (g_developerMode) {
         if (m_measurements->isOneFqMode()) {
             on_continuousStartBtn_clicked(false);
             return;
         }
     }
+
+    int autoCalibration = m_measurements->getAutoCalibration();
+    if (autoCalibration != 0) {
+        autoCalibrate();
+    }
+
     m_measurements->stopTDRProgress();
     m_tdrWidget->xAxis->setRangeLower(0);
 
@@ -4856,3 +4868,112 @@ void MainWindow::onFullRange(bool)
     on_dataChanged(from + range/2, range, m_dotsNumber);
 }
 
+void MainWindow::on_presssCtrlAltShiftM()
+{
+    if (!g_developerMode)
+        return;
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
+    on_measurementsClearBtn_clicked(true);
+
+    m_measurements->setAutoCalibration(1);
+
+    QString cmd = "cals\r";
+    if (!m_analyzer->sendCommand(cmd)) {
+        return;
+    }
+    QCoreApplication::processEvents();
+    QThread::sleep(2);
+
+    cmd = "calt\r";
+    if (!m_analyzer->sendCommand(cmd)) {
+        return;
+    }
+    QCoreApplication::processEvents();
+    QThread::sleep(2);
+
+    m_measurements->setFarEndMeasurement(0);
+    onFullRange(true);
+    m_dotsNumber = 200;
+    QString style = "QPushButton:checked{"
+            "background-color: rgb(255, 1, 52);}";
+    ui->singleStart->setStyleSheet(style);
+
+    on_singleStart_clicked();
+    QApplication::processEvents();
+}
+
+void MainWindow::autoCalibrate()
+{
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
+    QPair<double, double> calibr = m_measurements->autoCalibrate(); // <CableResistance, CableLength>
+    QString cmd = QString("calrl%1,%2\r")
+            .arg((double)calibr.first, 0, 'f', 1, QLatin1Char(' '))
+            .arg((double)calibr.second, 0, 'f', 3, QLatin1Char(' '));
+    m_analyzer->sendCommand(cmd);
+
+    QString style = "QPushButton:checked{"
+            "background-color: rgb(1, 178, 255);}";
+    ui->singleStart->setStyleSheet(style);
+    QApplication::restoreOverrideCursor();
+}
+
+void MainWindow::onMeasurementError()
+{
+    QApplication::beep();
+    showErrorPopup(tr("Measurement ERROR!"), 2000);
+    on_pressEsc();
+}
+
+void MainWindow::showErrorPopup(QString text, int msDuration)
+{
+    QLabel* label = new QLabel();
+    label->setText(text);
+    label->setAlignment(Qt::AlignCenter);
+
+    QVBoxLayout* layout = new QVBoxLayout();
+    layout->addWidget(label);
+
+    QFrame* frame = new QFrame();
+    frame->setLayout(layout);
+
+    QVBoxLayout* layout1 = new QVBoxLayout();
+    layout1->addWidget(frame);
+
+    QWidget* widget = new QWidget(this);
+    widget->setWindowFlags(Qt::FramelessWindowHint |
+                   Qt::Tool | Qt::WindowStaysOnTopHint);
+    widget->setAttribute(Qt::WA_TranslucentBackground);
+    widget->setAttribute(Qt::WA_ShowWithoutActivating);
+
+    widget->setLayout(layout1);
+    widget->adjustSize();
+
+    int wd = widget->width();
+    int ht = widget->height();
+    QRect r = geometry();
+    int x = r.center().x()-wd/2;
+    int y = r.center().y()-ht/2;
+    widget->setGeometry(x, y, wd, ht);
+
+    label->setStyleSheet("QLabel { "
+                         "margin-top: 6px;"
+                         "margin-bottom: 6px;"
+                         "margin-left: 10px;"
+                         "margin-right: 10px; "
+                         "color: white; "
+                         "font-weight: bold; "
+                         "font-size: 16px; "
+                         "}");
+    frame->setStyleSheet("border: 1px; border-radius: 8px;");
+    widget->setStyleSheet("background-color:red;");
+
+    widget->show();
+
+    QTimer::singleShot(msDuration, [widget]() {
+       widget->hide();
+       delete widget;
+    });
+}

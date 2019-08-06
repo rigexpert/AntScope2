@@ -131,7 +131,7 @@ void comAnalyzer::dataArrived()
     QByteArray ar = m_comPort->readAll();
     m_incomingBuffer += ar;
 
-    //qDebug() << "com dataArrived: " << ar;
+    //qDebug() << "com dataArrived: " << QString::fromLatin1(ar);
 
     int count = parse(m_incomingBuffer);
     m_incomingBuffer.remove(0, count);
@@ -268,6 +268,8 @@ qint32 comAnalyzer::parse (QByteArray arr)
             }
             if(str == "ERROR")
             {
+                if (m_parseState == WAIT_DATA)
+                    emit signalMeasurementError();
                 continue;
             }
             if(m_parseState == VER)

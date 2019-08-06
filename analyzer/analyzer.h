@@ -63,6 +63,7 @@ public:
 
     QString getSerialNumber(void) const;
     int getDots() { return m_dotsNumber; }
+    bool sendCommand(QString cmd);
 
 private:
 //    void send (char* byte);
@@ -110,6 +111,7 @@ signals:
     void updatePercentChanged(qint32);
     void aa30bootFound();
     void aa30updateComplete();
+    void signalMeasurementError();
 
 public slots:
     void searchAnalyzer();

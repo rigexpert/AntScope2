@@ -40,6 +40,7 @@ public:
     bool getContinuos(void){ return m_isContinuos;}
     void setAnalyzerModel (int model) {m_analyzerModel = model;}
     bool getAnalyzerModel (void) const { return m_analyzerModel;}
+    qint64 sendData(QString data);
 
 private:
     QSerialPort * m_comPort;
@@ -69,7 +70,6 @@ private:
 
     qint32 parse (QByteArray arr);
     quint32 compareStrings(QString arr, QString arr1);
-    qint64 sendData(QString data);
     bool waitAnswer();
     QString textError(ReturnCode code);
 
@@ -85,6 +85,7 @@ signals:
     void aa30bootFound();
     void aa30updateComplete();
     void signalFullInfo(QString str);
+    void signalMeasurementError();
 
 public slots:
     void dataArrived();

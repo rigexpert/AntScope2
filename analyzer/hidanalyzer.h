@@ -61,6 +61,7 @@ public:
     void preUpdate();
     void setIsFRXMode(bool _mode=true) { m_isFRX = _mode;}
     bool getIsFRXMode() { return m_isFRX; }
+    void sendData(QString data);
 
 private:
     hid_device *m_hidDevice;
@@ -97,7 +98,6 @@ private:
 
     bool connect(quint32 vid, quint32 pid);
     bool disconnect(void);
-    void sendData(QString data);
     qint32 parse (QByteArray arr);
     bool waitAnswer();
     QFuture<struct hid_device_info*> *m_futureRefresh;
@@ -113,6 +113,7 @@ signals:
     void analyzerScreenshotDataArrived(QByteArray);
     void updatePercentChanged(int);
     void signalFullInfo(QString str);
+    void signalMeasurementError();
     void signalOk();
 
 public slots:

@@ -413,6 +413,7 @@ void Analyzer::on_hidAnalyzerDisconnected ()
         connect(m_comAnalyzer,SIGNAL(aa30bootFound()),this,SIGNAL(aa30bootFound()));
         connect(m_comAnalyzer, SIGNAL(aa30updateComplete()), this, SIGNAL(aa30updateComplete()));
         connect(m_comAnalyzer, &comAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
+        connect(m_comAnalyzer, &comAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
     }
     m_hidAnalyzerFound = false;
     m_analyzerModel = 0;
@@ -458,6 +459,7 @@ void Analyzer::on_comAnalyzerDisconnected ()
         connect(this, SIGNAL(screenshotComplete()),m_hidAnalyzer,SLOT(on_screenshotComplete()));
         connect(this, SIGNAL(measurementComplete()), m_hidAnalyzer, SLOT(on_measurementComplete()), Qt::QueuedConnection);
         connect(m_hidAnalyzer, &hidAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
+        connect(m_hidAnalyzer, &hidAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
     }
     m_comAnalyzerFound = false;
     m_analyzerModel = 0;
@@ -694,6 +696,7 @@ void Analyzer::on_changedAutoDetectMode(bool state)
             connect(m_hidAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
             connect(m_hidAnalyzer,SIGNAL(updatePercentChanged(int)),this,SLOT(on_updatePercentChanged(int)));
             connect(m_hidAnalyzer, &hidAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
+            connect(m_hidAnalyzer, &hidAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
         }
     }else
     {
@@ -718,6 +721,7 @@ void Analyzer::on_changedAutoDetectMode(bool state)
         connect(m_comAnalyzer, SIGNAL(aa30bootFound()), this, SIGNAL(aa30bootFound()));
         connect(m_comAnalyzer, SIGNAL(aa30updateComplete()), this, SIGNAL(aa30updateComplete()));
         connect(m_comAnalyzer, &comAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
+        connect(m_comAnalyzer, &comAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
 
         QTimer::singleShot(1000, m_comAnalyzer, SLOT(searchAnalyzer()));
     }
@@ -767,3 +771,15 @@ void Analyzer::searchAnalyzer()
 }
 
 
+bool Analyzer::sendCommand(QString cmd)
+{
+    bool ret = true;
+    if (getHidAnalyzer() != 0) {
+        getHidAnalyzer()->sendData(cmd);
+    } else if (getComAnalyzer() != 0) {
+        getComAnalyzer()->sendData(cmd);
+    } else {
+        ret = false;
+    }
+    return ret;
+}

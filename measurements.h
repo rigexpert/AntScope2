@@ -42,6 +42,7 @@ public:
     void setCalibration(Calibration * _calibration);
     bool getCalibrationEnabled(void);
     void deleteRow(int row);
+    void setFarEndMeasurement (qint32 mode) { m_farEndMeasurement=mode; }
     qint32 getFarEndMeasurement (void) {return m_farEndMeasurement;}
     measurement* getMeasurement(int number) {return &m_measurements[m_measurements.length()-1 - number];}
     measurement* getMeasurementSub(int number) {return &m_farEndMeasurementsSub[m_farEndMeasurementsSub.length()-1 - number];}
@@ -81,6 +82,10 @@ public:
     void updateTDRProgress(int _dots);
     void stopTDRProgress();
     bool isOneFqMode() { return m_oneFqMode; }
+    void setAutoCalibration(int _mode) { m_autoCalibration=_mode; } // 0-NONE, 1-R,L(old AA-1400), 2-C,L(new AA-230 ZOOM)
+    int  getAutoCalibration() { return m_autoCalibration; }
+    QPair<double, double> autoCalibrate();
+    void interrupt() { m_interrupted = true; }
 
 private:
 //    QVector <rawData> m_rawDataVector;
@@ -160,12 +165,16 @@ private:
     qint64 m_oneFqStartTime;
     OneFqWidget* m_oneFqWidget = nullptr;
 
+    int m_autoCalibration = 0; // 1-R,L(old AA-1400), 2-C,L(new AA-230 ZOOM)
+    bool m_interrupted = false;
+
     quint32 computeSWR(double freq, double Z0, double R, double X, double *VSWR, double *RL);
     double computeZ (double R, double X);
 
     void NormRXtoSmithPoint(double Rnorm, double Xnorm, double &x, double &y);    
     void drawSmithImage(void);
     void calcFarEnd(void);
+    rawData calcFarEnd(const rawData& data, int idx, bool refreshGraphs=true);
     void prepareGraphs(rawData _rawData, GraphData& data, GraphData& calibData);
 
 signals:

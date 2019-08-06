@@ -713,6 +713,8 @@ qint32 hidAnalyzer::parse (QByteArray arr)
             }
             if(str == "ERROR")
             {
+                if (m_parseState == WAIT_DATA)
+                    emit signalMeasurementError();
                 continue;
             }
             if(m_parseState == VER)
