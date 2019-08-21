@@ -850,12 +850,17 @@ QString Settings::setIniFile()
 }
 
 QString Settings::localDataPath(QString _fileName)
-{    
+{
 // Mac OS X and iOS
 #ifdef Q_OS_DARWIN
     QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
-#else
+#endif
+// Linux
+#ifdef Q_OS_LINUX
+    QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+#else // Windows
     QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
     return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
 #endif
@@ -887,6 +892,13 @@ QString Settings::programDataPath(QString _fileName)
     return QString();
 #endif
   //qDebug("TODO Settings::programDataPath");
+// Linux
+#ifdef Q_OS_LINUX
+    QDir dir = QCoreApplication::applicationDirPath();
+    QString name = dir.absoluteFilePath("Resources/" + _fileName);
+    return name;
+#endif
+
   return QString();
 }
 
