@@ -858,11 +858,13 @@ QString Settings::localDataPath(QString _fileName)
 #endif
 // Linux
 #ifdef Q_OS_LINUX
-    QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
-#else // Windows
-    QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
-    return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+    QDir dir_ini2 = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    return dir_ini2.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+#endif
+// Windows
+#ifdef Q_OS_WIN
+    QDir dir_ini1 = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+    return dir_ini1.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
 #endif
   qDebug("TODO Settings::localDataPath");
   return QString();
