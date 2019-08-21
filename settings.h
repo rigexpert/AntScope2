@@ -81,6 +81,7 @@ private:
     bool m_markersHintEnabled;
     bool m_graphHintEnabled;
     bool m_graphBriefHintEnabled;
+    bool m_restrictFq = true;
 
     bool m_onlyOneCalib;
 
@@ -110,6 +111,7 @@ signals:
     void graphHintChecked(bool);
     void graphBriefHintChecked(bool);
     void markersHintChecked(bool);
+    void fqRestrictChecked(bool);
 
     void startCalibration();
     void startCalibrationOpen();
@@ -145,6 +147,7 @@ private slots:
     void on_generalTimerTick();
     void on_graphHintCheckBox_clicked(bool checked);
     void on_markersHintCheckBox_clicked(bool checked);
+    void on_fqRestrictCheckBox_clicked(bool checked);
     void on_calibWizard_clicked();
     void on_percentCalibrationChanged(qint32 state, qint32 percent);
     void on_openCalibBtn_clicked();

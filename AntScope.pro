@@ -24,8 +24,8 @@ TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_ja.ts
 CODECFORSRC   = UTF-8
 
-CONFIG += debug
-CONFIG -= release
+CONFIG -= debug
+CONFIG += release
 
 CONFIG(release) {
     DESTDIR = $${PWD}/build/release

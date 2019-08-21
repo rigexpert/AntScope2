@@ -17,7 +17,8 @@
 //#pragma GCC diagnostic pop
 
 static double MAX_SWR = 10.0;
-static double MIN_SWR = 0;
+static double MIN_SWR = 1.0;
+static int SWR_ZOOM_LIMIT = 4;
 
 static double MIN_USER_RANGE = -2000;
 static double MAX_USER_RANGE = 2000;
@@ -160,7 +161,7 @@ static int lcdWidth[QUANTITY]={//in kHz
     0,   //AA-700ZOOM
     320,  //AA-1000
     320,   //AA-1400
-    743   //AA-2000
+    800   //AA-2000
 };
 
 enum parse{

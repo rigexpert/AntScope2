@@ -113,6 +113,7 @@ private:
     int m_dotsNumber;
     quint64 m_lastEnteredFqFrom=0;
     quint64 m_lastEnteredFqTo=0;
+    bool m_fqRestrict = true;
 
     QString m_lastSavePath;
     QString m_lastOpenPath;

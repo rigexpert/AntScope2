@@ -4,6 +4,7 @@
 #include "analyzer/customanalyzer.h"
 #include "fqinputvalidator.h"
 
+extern bool g_developerMode;
 extern QString appendSpaces(const QString& number);
 
 QString Settings::iniFilePath;
@@ -56,11 +57,19 @@ Settings::Settings(QWidget *parent) :
     m_markersHintEnabled = m_settings->value("markersHintEnabled", true).toBool();
     m_graphHintEnabled = m_settings->value("graphHintEnabled", true).toBool();
     m_graphBriefHintEnabled = m_settings->value("graphBriefHintEnabled", true).toBool();
+    m_restrictFq = m_settings->value("restrictFq", true).toBool();
 
     ui->tabWidget->setCurrentIndex(m_settings->value("currentIndex",0).toInt());
     ui->markersHintCheckBox->setChecked(m_markersHintEnabled);
     ui->graphHintCheckBox->setChecked(m_graphHintEnabled);
     ui->graphBriefHintCheckBox->setChecked(m_graphBriefHintEnabled);
+
+    // TODO developer(?)
+    ui->fqRestrictCheckBox->setChecked(g_developerMode ? m_restrictFq : true);
+    //if (!g_developerMode) {
+        ui->fqRestrictCheckBox->setVisible(false);
+    //}
+    // ///
 
     m_settings->endGroup();
 
@@ -79,15 +88,11 @@ Settings::Settings(QWidget *parent) :
     ui->tabWidget->removeTab(4);
     //}
 
-    //{
-    // TODO Analyzer customization is not fully implemented yet
-    extern bool g_developerMode;
     if (!g_developerMode) {
         ui->tabWidget->removeTab(3);
     } else {
         initCustomizeTab();
     }
-    //}
 
     QString cablesPath = Settings::programDataPath("cables.txt");
     openCablesFile(cablesPath);
@@ -114,6 +119,8 @@ Settings::~Settings()
     m_settings->setValue("markersHintEnabled", m_markersHintEnabled);
     m_settings->setValue("graphHintEnabled", m_graphHintEnabled);
     m_settings->setValue("graphBriefHintEnabled", m_graphBriefHintEnabled);
+    m_settings->setValue("restrictFq", m_restrictFq);
+
     m_settings->setValue("currentIndex",ui->tabWidget->currentIndex());
     m_settings->endGroup();
 
@@ -365,6 +372,12 @@ void Settings::on_markersHintCheckBox_clicked(bool checked)
 {
     emit markersHintChecked(checked);
     m_markersHintEnabled = checked;
+}
+
+void Settings::on_fqRestrictCheckBox_clicked(bool checked)
+{
+    emit fqRestrictChecked(!checked);
+    m_restrictFq = !checked;
 }
 
 void Settings::on_calibWizard_clicked()

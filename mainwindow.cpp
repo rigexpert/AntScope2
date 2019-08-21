@@ -63,6 +63,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_userZoomState = m_settings->value("userZoomState", 10).toInt();
 
     m_settings->endGroup();
+    m_settings->beginGroup("Settings");
+    m_fqRestrict = g_developerMode ? m_settings->value("restrictFq", true).toBool() : true;
+    m_settings->endGroup();
 
     if (g_developerMode)
         CustomAnalyzer::load(m_settings);
@@ -693,7 +696,9 @@ void MainWindow::setWidgetsSettings()
     m_swrWidget->xAxis->setRange(0,1400000);
     m_swrWidget->yAxis->setRangeMin(MIN_SWR);
     m_swrWidget->yAxis->setRangeMax(MAX_SWR);
-    m_swrWidget->yAxis->setRange(MIN_SWR, m_swrZoomState+0.2);
+    m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+    m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
+    //m_swrWidget->yAxis->setRangeUpper(MAX_SWR);
     m_swrWidget->yAxis->setNumberPrecision(2);
     m_swrWidget->yAxis->setAutoTicks(true);
     m_swrWidget->yAxis->setAutoSubTicks(true);
@@ -1255,23 +1260,23 @@ void MainWindow::on_pressCtrlPlus ()
     QString str = ui->tabWidget->currentWidget()->objectName();
     if( str == "tab_1")
     {
-        if (g_developerMode) {
-            if(m_swrZoomState > 1)
+        int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
+        if(m_swrZoomState > limit)
+        {
+            --m_swrZoomState;
+            m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
+            m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+            m_swrWidget->replot();
+            if(m_markers)
             {
-                --m_swrZoomState;
-                m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-                m_swrWidget->yAxis->setRangeLower(MIN_SWR);
-                m_swrWidget->replot();
-                if(m_markers)
-                {
-                    QTimer::singleShot(5, m_markers, SLOT(redraw()));
-                }
-                if(m_measurements)
-                {
-                    QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
-                }
+                QTimer::singleShot(5, m_markers, SLOT(redraw()));
+            }
+            if(m_measurements)
+            {
+                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
+
     }else if(str == "tab_2")
     {
     }else if(str == "tab_3")
@@ -1312,7 +1317,8 @@ void MainWindow::on_pressCtrlPlus ()
         }
     }else if(str == "tab_5")
     {
-        if(m_rlZoomState > 1)
+        int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
+        if(m_rlZoomState > limit)
         {
             --m_rlZoomState;
             m_rlWidget->yAxis->setRangeUpper(m_rlZoomState*5);
@@ -1626,21 +1632,19 @@ void MainWindow::on_pressCtrlMinus ()
     QString str = ui->tabWidget->currentWidget()->objectName();
     if( str == "tab_1")
     {
-        if (g_developerMode) {
-            if(m_swrZoomState <= 9)
+        if(m_swrZoomState <= 9)
+        {
+            ++m_swrZoomState;
+            m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
+            m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+            m_swrWidget->replot();
+            if(m_markers)
             {
-                ++m_swrZoomState;
-                m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-                m_swrWidget->yAxis->setRangeLower(MIN_SWR);
-                m_swrWidget->replot();
-                if(m_markers)
-                {
-                    QTimer::singleShot(5, m_markers, SLOT(redraw()));
-                }
-                if(m_measurements)
-                {
-                    QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
-                }
+                QTimer::singleShot(5, m_markers, SLOT(redraw()));
+            }
+            if(m_measurements)
+            {
+                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
     }else if(str == "tab_2")
@@ -1731,7 +1735,7 @@ void MainWindow::on_pressCtrlZero()
         if (g_developerMode) {
 
             m_swrZoomState = 10;
-            m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
+            m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
             m_swrWidget->yAxis->setRangeLower(MIN_SWR);
             m_swrWidget->replot();
             if(m_markers)
@@ -2331,33 +2335,34 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
     m_rsWidget->xAxis->setRange(m_swrWidget->xAxis->range());
     m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
     m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
-    if (g_developerMode) {
-        if (e->modifiers() == Qt::ControlModifier)
+
+    int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
+    if (e->modifiers() == Qt::ControlModifier)
+    {
+        if(m_measurements)
         {
-            if(m_measurements)
-            {
-                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
-            }
-            if(e->delta() < 0)
-            {
-                if(m_swrZoomState <= 9)
-                {
-                    ++m_swrZoomState;
-                    m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-                    m_swrWidget->yAxis->setRangeLower(MIN_SWR);
-                }
-            }else
-            {
-                if(m_swrZoomState > 1)
-                {
-                    --m_swrZoomState;
-                    m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.2);
-                    m_swrWidget->yAxis->setRangeLower(MIN_SWR);
-                }
-            }
-            QTimer::singleShot(5, m_markers, SLOT(redraw()));
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
+        if(e->delta() < 0)
+        {
+            if(m_swrZoomState <= 9)
+            {
+                ++m_swrZoomState;
+                m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
+                m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+            }
+        }else
+        {
+            if(m_swrZoomState > limit)
+            {
+                --m_swrZoomState;
+                m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
+                m_swrWidget->yAxis->setRangeLower(MIN_SWR);
+            }
+        }
+        QTimer::singleShot(5, m_markers, SLOT(redraw()));
     }
+
     emit rescale();
 }
 
@@ -2699,7 +2704,6 @@ void MainWindow::on_mouseMove_rp(QMouseEvent *e)
 
 void MainWindow::on_mouseWheel_rl(QWheelEvent *e)
 {
-    static int state = 10;
     double from  = m_rlWidget->xAxis->getRangeLower();
     double to = m_rlWidget->xAxis->getRangeUpper();
     if(!m_isRange)
@@ -2725,19 +2729,20 @@ void MainWindow::on_mouseWheel_rl(QWheelEvent *e)
         }
         if(e->delta() < 0)
         {
-            if(g_developerMode || state <= 9)
+            if(g_developerMode || m_rlZoomState <= 9)
             {
-                ++state;
-                m_rlWidget->yAxis->setRangeUpper(state*5);
+                ++m_rlZoomState;
+                m_rlWidget->yAxis->setRangeUpper(m_rlZoomState*5);
                 m_rlWidget->yAxis->setRangeLower(0);
                 m_rlWidget->replot();
             }
         }else
         {
-            if(state > 1)
+            int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
+            if(m_rlZoomState > limit)
             {
-                --state;
-                m_rlWidget->yAxis->setRangeUpper(state*5);
+                --m_rlZoomState;
+                m_rlWidget->yAxis->setRangeUpper(m_rlZoomState*5);
                 m_rlWidget->yAxis->setRangeLower(0);
                 m_rlWidget->replot();
             }
@@ -3289,7 +3294,7 @@ void MainWindow::on_screenshotAA_clicked()
 
 void MainWindow::on_singleStart_clicked()
 {
-    bool use_min_max = isMeasuring();
+    bool use_min_max = isMeasuring() && m_fqRestrict;
     if (isMeasuring())
     {
         m_bInterrupted = true;
@@ -3344,7 +3349,7 @@ void MainWindow::on_singleStart_clicked()
         stop = getFqTo();
     }
 
-    if(stop > static_cast<double>(maxFreq))
+    if(m_fqRestrict && (stop > static_cast<double>(maxFreq)))
     {
         stop = maxFreq;
         if(!m_isRange)
@@ -3357,16 +3362,18 @@ void MainWindow::on_singleStart_clicked()
             setFqFrom((stop+start)/2);
         }
     }
-    if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
-    {
-        start = minFreq;
-        if(!m_isRange)
+    if (m_fqRestrict) {
+        if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
         {
-            setFqFrom(start);
-        }else
-        {
-            setFqTo((stop-start)/2);
-            setFqFrom((stop+start)/2);
+            start = minFreq;
+            if(!m_isRange)
+            {
+                setFqFrom(start);
+            }else
+            {
+                setFqTo((stop-start)/2);
+                setFqFrom((stop+start)/2);
+            }
         }
     }
     QCPRange range(start, stop);
@@ -3472,29 +3479,30 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
             }
         }
 
-        if(stop > static_cast<double>(maxFreq))
+        if(m_fqRestrict && (stop > static_cast<double>(maxFreq)))
         {
             stop = maxFreq;
             if(!m_isRange)
             {
-                setFqTo(maxFreq);
+                setFqTo(stop);
             }else
             {
                 setFqTo((stop-start)/2);
             }
         }
-        if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
-        {
-            start = minFreq;
-            if(!m_isRange)
+        if (m_fqRestrict) {
+            if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
             {
-                setFqFrom(start);
-            }else
-            {
-                setFqFrom((stop+start)/2);
+                start = minFreq;
+                if(!m_isRange)
+                {
+                    setFqFrom(start);
+                }else
+                {
+                    setFqFrom((stop+start)/2);
+                }
             }
         }
-
         QCPRange range(start, stop);
         m_swrWidget->xAxis->setRange(range);
         m_phaseWidget->xAxis->setRange(range);
@@ -3581,7 +3589,7 @@ void MainWindow::on_measurementComplete()
                 maxFreq = ca->maxFq().toULongLong();
             }
         }
-        if(stop > static_cast<double>(maxFreq))
+        if(m_fqRestrict && (stop > static_cast<double>(maxFreq)))
         {
             stop = maxFreq;
             if(!m_isRange)
@@ -3592,15 +3600,17 @@ void MainWindow::on_measurementComplete()
                 setFqTo((stop-start)/2);
             }
         }
-        if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
-        {
-            start = minFreq;
-            if(!m_isRange)
+        if(m_fqRestrict) {
+            if((start > static_cast<double>(maxFreq)) || (start < static_cast<double>(minFreq)))
             {
-                setFqFrom(start);
-            }else
-            {
-                setFqFrom((stop+start)/2);
+                start = minFreq;
+                if(!m_isRange)
+                {
+                    setFqFrom(start);
+                }else
+                {
+                    setFqFrom((stop+start)/2);
+                }
             }
         }
         QCPRange range(start, stop);
@@ -3776,6 +3786,10 @@ void MainWindow::on_settingsBtn_clicked()
 
     connect(m_settingsDialog, SIGNAL(bandChanged(QString)), this, SLOT(on_bandChanged(QString)));
 
+    connect(m_settingsDialog, &Settings::fqRestrictChecked, this, [this](bool checked) {
+        this->m_fqRestrict=checked;
+    });
+
     bool was_customized = CustomAnalyzer::customized();
 
     m_settingsDialog->exec();
@@ -3814,14 +3828,6 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
 
     if(ui->tableWidget_measurments->rowCount() == 0)
     {
-//        m_settings->beginGroup("MainWindow");
-//        qint64 from = m_settings->value("rangeLower",0).toULongLong();
-//        qint64 to =  m_settings->value("rangeUpper",1400000).toULongLong();
-//        qint32 dots = m_settings->value("dotsNumber", 50).toInt();
-//        m_settings->endGroup();
-
-//        qint64 range = (to - from);
-//        on_dataChanged(from + range/2, range, dots);
         onFullRange(true);
 
         ui->measurmentsSaveBtn->setEnabled(false);
@@ -3881,6 +3887,7 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
 {
     Q_UNUSED(column)
     int count = m_swrWidget->graphCount();
+
     if(count > 0)
     {
         for(int i = 1; i < count; ++i)
@@ -3916,11 +3923,11 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
                     int index = m_measurements->getBaseUserGraphIndex(i-1);
                     int cnt = mm->userGraphs.size();
 
-                    for (int iii=0; iii<m_measurements->getMeasurementLength(); iii++) {
-                        qDebug() << iii << ": " << m_measurements->getMeasurement(iii)->userGraphs.size();
-                    }
-                    qDebug() << "-----------------------------------------";
-                    qDebug() << QString("(i-1)=%1, row=%2, index=%3, cnt=%4, graphs=%5").arg(i-1).arg(row).arg(index).arg(cnt).arg(m_userWidget->graphCount());
+//                    for (int iii=0; iii<m_measurements->getMeasurementLength(); iii++) {
+//                        qDebug() << iii << ": " << m_measurements->getMeasurement(iii)->userGraphs.size();
+//                    }
+//                    qDebug() << "-----------------------------------------";
+//                    qDebug() << QString("(i-1)=%1, row=%2, index=%3, cnt=%4, graphs=%5").arg(i-1).arg(row).arg(index).arg(cnt).arg(m_userWidget->graphCount());
                     for (int ii=0; ii<cnt; ii++) {
                         pen = m_userWidget->graph(index + ii)->pen();
                         pen.setWidth(pen_width);
@@ -3932,7 +3939,6 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
         updateGraph();
     }
 }
-
 
 /*
 void MainWindow::on_screenshot_clicked()
@@ -4009,12 +4015,14 @@ void MainWindow::on_printBtn_clicked()
         m_print->drawBands( MIN_SWR, MAX_SWR);
         m_print->setRange(m_swrWidget->xAxis->range(),m_swrWidget->yAxis->range());
         m_print->setLabel(m_swrWidget->xAxis->label(), m_swrWidget->yAxis->label());
+        int cnt = m_swrWidget->graphCount();
         for(int i = 1; i < m_swrWidget->graphCount(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
-                    index( m_swrWidget->graphCount()-i-1, 0, QModelIndex());
-
-            m_print->setData(m_swrWidget->graph(i)->data(), m_swrWidget->graph(i)->pen(), myIndex.data().toString());
+                    index( i-1, 0, QModelIndex());
+            QPen pen = m_swrWidget->graph(i)->pen();
+            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+            m_print->setData(m_swrWidget->graph(i)->data(), pen, myIndex.data().toString());
         }
     }else if(name == "tab_2")
     {
@@ -4025,9 +4033,10 @@ void MainWindow::on_printBtn_clicked()
         for(int i = 1; i < m_phaseWidget->graphCount(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
-                    index( m_swrWidget->graphCount()-i-1, 0, QModelIndex());
-
-            m_print->setData(m_phaseWidget->graph(i)->data(), m_phaseWidget->graph(i)->pen(), myIndex.data().toString());
+                    index( i-1, 0, QModelIndex());
+            QPen pen = m_phaseWidget->graph(i)->pen();
+            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+            m_print->setData(m_phaseWidget->graph(i)->data(), pen, myIndex.data().toString());
         }
     }else if(name == "tab_3")
     {
@@ -4037,7 +4046,9 @@ void MainWindow::on_printBtn_clicked()
         m_print->setLabel(m_rsWidget->xAxis->label(), m_rsWidget->yAxis->label());
         for(int i = 1; i < m_rsWidget->graphCount(); ++i)
         {
-            m_print->setData(m_rsWidget->graph(i)->data(), m_rsWidget->graph(i)->pen(), m_rsWidget->graph(i)->name());
+            QPen pen = m_rsWidget->graph(i)->pen();
+            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+            m_print->setData(m_rsWidget->graph(i)->data(), pen, m_rsWidget->graph(i)->name());
         }
     }else if(name == "tab_4")
     {
@@ -4047,7 +4058,9 @@ void MainWindow::on_printBtn_clicked()
         m_print->setLabel(m_rpWidget->xAxis->label(), m_rpWidget->yAxis->label());
         for(int i = 1; i < m_rpWidget->graphCount(); ++i)
         {
-            m_print->setData(m_rpWidget->graph(i)->data(), m_rpWidget->graph(i)->pen(), m_rpWidget->graph(i)->name());
+            QPen pen = m_rpWidget->graph(i)->pen();
+            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+            m_print->setData(m_rpWidget->graph(i)->data(), pen, m_rpWidget->graph(i)->name());
         }
     }else if(name == "tab_5")
     {
@@ -4058,9 +4071,10 @@ void MainWindow::on_printBtn_clicked()
         for(int i = 1; i < m_rlWidget->graphCount(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
-                    index( m_swrWidget->graphCount()-i-1, 0, QModelIndex());
-
-            m_print->setData(m_rlWidget->graph(i)->data(), m_rlWidget->graph(i)->pen(), myIndex.data().toString());
+                    index( i-1, 0, QModelIndex());
+            QPen pen = m_rlWidget->graph(i)->pen();
+            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+            m_print->setData(m_rlWidget->graph(i)->data(), pen, myIndex.data().toString());
         }
     }else if(name == "tab_6")
     {
@@ -4070,7 +4084,9 @@ void MainWindow::on_printBtn_clicked()
         m_print->setLabel(m_tdrWidget->xAxis->label(), m_tdrWidget->yAxis->label());
         for(int i = 1; i < m_tdrWidget->graphCount(); ++i)
         {
-            m_print->setData(m_tdrWidget->graph(i)->data(), m_tdrWidget->graph(i)->pen(), m_tdrWidget->graph(i)->name());
+            QPen pen = m_tdrWidget->graph(i)->pen();
+            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+            m_print->setData(m_tdrWidget->graph(i)->data(), pen, m_tdrWidget->graph(i)->name());
         }
     }else if(name == "tab_7")
     {
@@ -4083,9 +4099,9 @@ void MainWindow::on_printBtn_clicked()
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
                                 index( m_smithWidget->graphCount()-i-1, 0, QModelIndex());
-            m_print->setSmithData(&m_measurements->getMeasurement(i)->smithGraph,
-                                  m_measurements->getMeasurement(i)->smithCurve->pen(),//m_smithWidget->graph(i)->pen(),
-                                  myIndex.data().toString());
+            QPen pen = m_measurements->getMeasurement(i)->smithCurve->pen();
+            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+            m_print->setSmithData(&m_measurements->getMeasurement(i)->smithGraph, pen, myIndex.data().toString());
         }
     }else if(name == "tab_8")
     {
@@ -4929,6 +4945,8 @@ void MainWindow::onMeasurementError()
 
 void MainWindow::showErrorPopup(QString text, int msDuration)
 {
+    //qDebug() << "MainWindow::showErrorPopup";
+
     QLabel* label = new QLabel();
     label->setText(text);
     label->setAlignment(Qt::AlignCenter);
@@ -4972,8 +4990,13 @@ void MainWindow::showErrorPopup(QString text, int msDuration)
 
     widget->show();
 
-    QTimer::singleShot(msDuration, [widget]() {
-       widget->hide();
-       delete widget;
+    QTimer* timer = new QTimer(this);
+    timer->setSingleShot(true);
+    connect(timer, &QTimer::timeout, [timer, widget]() {
+        widget->hide();
+        widget->deleteLater();
+        timer->deleteLater();
     });
+
+    timer->start(msDuration);
 }

@@ -1028,13 +1028,6 @@ quint32 Measurements::computeSWR(double freq, double Z0, double R, double X, dou
         SWR = 1;
     }
 
-    if (SWR > MAX_SWR)
-        SWR = MAX_SWR;
-
-    if (SWR < MIN_SWR)
-        SWR = MIN_SWR;
-
-
     if (VSWR)
     {
         *VSWR = SWR;
@@ -3444,6 +3437,7 @@ void Measurements::on_redrawGraphs()
 //                }
 //                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
 //            }
+            /*
             if(m_farEndMeasurement != 0)
             {
                 for(int i = 0; i < m_measurements.length(); ++i)
@@ -3460,6 +3454,43 @@ void Measurements::on_redrawGraphs()
                     m_swrWidget->graph(i+1)->setData(&m_measurements[i].swrGraph, true);
                 }
             }
+            */
+
+            for(int i = 0; i < m_measurements.length(); ++i)
+            {
+                m_viewMeasurements[i].swrGraph.clear();
+                QCPDataMap *map;
+                switch (m_farEndMeasurement) {
+                case 1:
+                    map = &m_farEndMeasurementsSub[i].swrGraph;
+                    break;
+                case 2:
+                    map = &m_farEndMeasurementsAdd[i].swrGraph;
+                    break;
+                default:
+                    map = &m_measurements[i].swrGraph;
+                    break;
+                }
+                QList <double> list = map->keys();
+                QCPData data;
+                QCPData viewData;
+                double maxSwr = MAX_SWR;//m_swrWidget->yAxis->range().upper;
+                for(int n = 0; n < list.length(); ++n)
+                {
+                    data.key = list.at(n);
+                    viewData = map->value(list.at(n));
+                    if( viewData.value > maxSwr || viewData.value < 1)
+                    {
+                        data.value = maxSwr;
+                    }else
+                    {
+                        data.value = viewData.value;
+                    }
+                    m_viewMeasurements[i].swrGraph.insert(data.key,data);
+                }
+                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
+            }
+
         }else if(m_currentTab == "tab_2")//Phase
         {            
             if(m_farEndMeasurement != 0)
