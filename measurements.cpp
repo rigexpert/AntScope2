@@ -242,6 +242,24 @@ void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 
     m_viewMeasurements.last().set(fq, sw, dots);
     m_farEndMeasurementsAdd.last().set(fq, sw, dots);
     m_farEndMeasurementsSub.last().set(fq, sw, dots);
+
+    double range = sw;
+    double center = fq;
+    QString fmt;
+    if (m_RangeMode)
+    {
+        fmt = tr("FQ:%1kHz SW:%2kHz Points:%3");
+        range = (sw - fq)/2.0;
+        center = fq + range;
+    } else {
+        fmt = tr("Start:%1kHz Stop:%2kHz Points:%3");
+    }
+    QString tips = QString(fmt)
+            .arg((long)(center/1000))
+            .arg((long)(range/1000))
+            .arg(dots);
+    QTableWidgetItem *item = m_tableWidget->item(m_tableWidget->rowCount()-1,0);
+    item->setToolTip(tips);
 }
 
 void Measurements::on_newMeasurement(QString name)
@@ -883,8 +901,15 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
             //----------------------calc smith end---------------------------
         }
     }
-    if (_redraw)
-        on_redrawGraphs();
+    if (_redraw) {
+        if (g_developerMode) {
+            if ((m_measurements.last().dataRX.length() % 10) == 0) {
+                on_redrawGraphs();
+            }
+        } else {
+            on_redrawGraphs();
+        }
+    }
 }
 
 void Measurements::prepareGraphs(rawData _rawData, GraphData& _data, GraphData& _calibData)
@@ -3021,6 +3046,8 @@ void Measurements::on_changeMeasureSystemMetric (bool state)
 
 void Measurements::on_redrawGraphs()
 {
+    qint64 t0 = QDateTime::currentMSecsSinceEpoch();
+
     if(m_calibration == NULL)
     {
         return;
@@ -3413,49 +3440,6 @@ void Measurements::on_redrawGraphs()
     {
         if( m_currentTab == "tab_1")//SWR
         {
-//            for(int i = 0; i < m_measurements.length(); ++i)
-//            {
-//                m_viewMeasurements[i].swrGraph.clear();
-
-//                QCPDataMap map = m_measurements[i].swrGraph;
-//                QList <double> list = map.keys();
-//                QCPData data;
-//                QCPData viewData;
-//                double maxSwr = m_swrWidget->yAxis->range().upper;
-//                for(int n = 0; n < list.length(); ++n)
-//                {
-//                    data.key = list.at(n);
-//                    viewData = map.value(list.at(n));
-//                    if( viewData.value > maxSwr || viewData.value < 1)
-//                    {
-//                        data.value = maxSwr;
-//                    }else
-//                    {
-//                        data.value = viewData.value;
-//                    }
-//                    m_viewMeasurements[i].swrGraph.insert(data.key,data);
-//                }
-//                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
-//            }
-            /*
-            if(m_farEndMeasurement != 0)
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_swrWidget->graph(i+1)->setData(m_farEndMeasurement == 1
-                                                       ? &m_farEndMeasurementsSub[i].swrGraph
-                                                       : &m_farEndMeasurementsAdd[i].swrGraph,
-                                                       true);
-                }
-            }else
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_swrWidget->graph(i+1)->setData(&m_measurements[i].swrGraph, true);
-                }
-            }
-            */
-
             for(int i = 0; i < m_measurements.length(); ++i)
             {
                 m_viewMeasurements[i].swrGraph.clear();
@@ -3902,7 +3886,12 @@ void Measurements::on_redrawGraphs()
             }
         }
     }
+    qint64 t1 = QDateTime::currentMSecsSinceEpoch();
+
     replot();
+
+    qint64 t2 = QDateTime::currentMSecsSinceEpoch();
+    qDebug() << "on_redrawGraphs: " << (t1-t0) << ", " << (t2-t1) << ", " << (t2-t0);
 }
 
 void Measurements::replot()
@@ -5130,3 +5119,34 @@ QPair<double, double> Measurements::autoCalibrate()
     setAutoCalibration(0);
     return result;
 }
+
+void Measurements::on_isRangeChanged(bool _range)
+{
+    m_RangeMode = _range;
+
+    int len = getMeasurementLength();
+    for (int i=0; i<m_tableWidget->rowCount(); i++)
+    {
+        measurement* mm = getMeasurement(len-i-1);
+        qint64 sw = mm->qint64Sw;
+        qint64 fq = mm->qint64Fq;
+        double range = sw;
+        double center = fq;
+        QString fmt;
+        if (m_RangeMode)
+        {
+            fmt = tr("FQ:%1kHz SW:%2kHz Points:%3");
+            range = (sw - fq)/2.0;
+            center = fq + range;
+        } else {
+            fmt = tr("Start:%1kHz Stop:%2kHz Points:%3");
+        }
+        QString tips = QString(fmt)
+                .arg((long)(center/1000))
+                .arg((long)(range/1000))
+                .arg(mm->qint64Dots);
+        QTableWidgetItem *item = m_tableWidget->item(i,0);
+        item->setToolTip(tips);
+    }
+}
+

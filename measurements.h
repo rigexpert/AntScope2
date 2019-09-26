@@ -167,6 +167,7 @@ private:
 
     int m_autoCalibration = 0; // 1-R,L(old AA-1400), 2-C,L(new AA-230 ZOOM)
     bool m_interrupted = false;
+    bool m_RangeMode = false;
 
     quint32 computeSWR(double freq, double Z0, double R, double X, double *VSWR, double *RL);
     double computeZ (double R, double X);
@@ -211,6 +212,7 @@ public slots:
     void showOneFqWidget(QWidget* parent, int _dots);
     void updateOneFqWidget(GraphData& _data);
     void hideOneFqWidget(bool dummy=false);
+    void on_isRangeChanged(bool);
 };
 
 #endif // MEASUREMENTS_H

@@ -27,6 +27,7 @@ Screenshot::Screenshot(QWidget *parent, int _model, int height, int width) :
     {
         m_image = new QImage(m_lcdWidth, m_lcdHeight, QImage::Format_RGB32);
     }
+    m_image->fill(Qt::black);
     connect(&m_errorTimer,SIGNAL(timeout()), this, SLOT(on_errorTimerTick()));
     m_errorTimer.start(5000);
 }

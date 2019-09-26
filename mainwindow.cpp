@@ -129,6 +129,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tableWidget_measurments->setColumnCount(1);
     ui->tableWidget_measurments->setSelectionBehavior(QAbstractItemView::SelectRows );
+    ui->tableWidget_measurments->setToolTip(tr("Double-click an item to rescale the chart.\nRight-click an item to change color"));
+    ui->tableWidget_measurments->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tableWidget_measurments, &QTableWidget::customContextMenuRequested, this, &MainWindow::on_tableWidgetMeasurmentsContextMenu);
 
     style = "QGroupBox {border: 2px solid rgb(1, 178, 255); margin-top: 1ex;}"
             "QGroupBox::title {"
@@ -259,6 +262,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_presets->setTable(ui->tableWidget_presets);
 
     m_measurements = new Measurements (this);
+    connect(this, SIGNAL(isRangeChanged(bool)), m_measurements, SLOT(on_isRangeChanged(bool)));
     m_measurements->setWidgets(m_swrWidget,
                                m_phaseWidget,
                                m_rsWidget,
@@ -380,6 +384,8 @@ MainWindow::MainWindow(QWidget *parent) :
         m_userWidget->xAxis->setRange(range);
     }
     m_isRange = m_settings->value("isRange", false).toBool();
+    emit isRangeChanged(m_isRange);
+
     if(!m_isRange)
     {
         ui->limitsBtn->setChecked(true);
@@ -460,12 +466,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QTimer::singleShot(100, this, SLOT(updateGraph()));
 
 //#ifdef Q_OS_WIN
-    m_updater = new Updater();
-    connect(m_updater,SIGNAL(newVersionAvailable()), this, SLOT(on_newVersionAvailable()));
-    connect(m_updater,SIGNAL(progress(int)), this, SIGNAL(updateProgress(int)));
-    if(m_autoUpdateEnabled)
-    {
-        QTimer::singleShot(1000, m_updater, SLOT(on_checkUpdates()));
+    if (!g_developerMode) {
+        m_updater = new Updater();
+        connect(m_updater,SIGNAL(newVersionAvailable()), this, SLOT(on_newVersionAvailable()));
+        connect(m_updater,SIGNAL(progress(int)), this, SIGNAL(updateProgress(int)));
+        if(m_autoUpdateEnabled)
+        {
+            QTimer::singleShot(1000, m_updater, SLOT(on_checkUpdates()));
+        }
     }
 //#endif
 
@@ -534,18 +542,10 @@ MainWindow::~MainWindow()
     }
     m_BandsMap.clear();
 
-    if(m_calibration)
-    {
-        delete m_calibration;
-    }
-    if(m_updater)
-    {
-        delete m_updater;
-    }
-    if(m_updateDialog)
-    {
-        delete m_updateDialog;
-    }
+    delete m_calibration;
+    delete m_updater;
+    delete m_updateDialog;
+
     m_settings->beginGroup("MainWindow");
     m_settings->setValue("geometry", this->geometry());
     m_settings->setValue("fullScreen", this->isMaximized());
@@ -3805,6 +3805,8 @@ void MainWindow::on_settingsBtn_clicked()
 
     ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
     ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
+    ui->measurmentsDeleteBtn->setEnabled(!m_analyzer->isMeasuring());
+    ui->measurmentsClearBtn->setEnabled(!m_analyzer->isMeasuring());
 }
 
 void MainWindow::on_dotsNumberChanged(int number)
@@ -3828,7 +3830,11 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
 
     if(ui->tableWidget_measurments->rowCount() == 0)
     {
-        onFullRange(true);
+        //onFullRange(true);
+        qint64 from = m_lastEnteredFqFrom;
+        qint64 to =  m_lastEnteredFqTo;
+        qint64 range = (to - from);
+        on_dataChanged(from + range/2, range, m_dotsNumber);
 
         ui->measurmentsSaveBtn->setEnabled(false);
         ui->measurmentsDeleteBtn->setEnabled(false);
@@ -3938,6 +3944,37 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
         }
         updateGraph();
     }
+}
+
+void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int column)
+{
+    if (m_measurements->isEmpty())
+        return;
+    qint32 count = m_measurements->getMeasurementLength();
+    measurement* mm = m_measurements->getMeasurement(count - row - 1);
+    qint64 fq = mm->qint64Fq/1000;
+    qint64 sw = mm->qint64Sw/1000;
+    if(!m_isRange)
+    {
+        setFqFrom(fq);
+        setFqTo(sw);
+    }else
+    {
+        setFqFrom(fq - sw/2.0);
+        setFqTo(fq + sw/2.0);
+    }
+    QCPRange range;
+    range.lower = fq;
+    range.upper = sw;
+
+    m_swrWidget->xAxis->setRange(range);
+    m_phaseWidget->xAxis->setRange(range);
+    m_rsWidget->xAxis->setRange(range);
+    m_rpWidget->xAxis->setRange(range);
+    m_rlWidget->xAxis->setRange(range);
+    if (g_developerMode)
+        m_userWidget->xAxis->setRange(range);
+    updateGraph();
 }
 
 /*
@@ -4537,6 +4574,9 @@ void MainWindow::on_lineEdit_fqTo_editingFinished()
 
 void MainWindow::on_newVersionAvailable()
 {
+    if (g_developerMode)
+        return;
+
 #ifdef Q_OS_WIN
     if(m_updateDialog == NULL)
     {
@@ -4873,6 +4913,9 @@ void MainWindow::onFullRange(bool)
     qint64 to = maxFq[model].toULongLong();
     qint64 range = to - from;
 
+    m_lastEnteredFqFrom = from;
+    m_lastEnteredFqTo = to;
+
     if (CustomAnalyzer::customized()) {
         CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
         if (ca != nullptr) {
@@ -4999,4 +5042,35 @@ void MainWindow::showErrorPopup(QString text, int msDuration)
     });
 
     timer->start(msDuration);
+}
+
+void MainWindow::on_tableWidgetMeasurmentsContextMenu(const QPoint& pos)
+{
+    QTableWidgetItem *item = ui->tableWidget_measurments->itemAt(pos);
+    if (item != nullptr)
+    {
+        int row = item->row();
+        QPen pen = m_swrWidget->graph(row+1)->pen();
+        QColor color = QColorDialog::getColor(pen.color(), this );
+        if( color.isValid() )
+        {
+            changeMeasurmentsColor(row, color);
+        }
+    }
+}
+
+void MainWindow::changeMeasurmentsColor(int _row, QColor& _color)
+{
+    int count = m_swrWidget->graphCount();
+    if(count > 0)
+    {
+        int i=_row+1;
+        QPen pen = m_swrWidget->graph(i)->pen();
+        pen.setColor(_color);
+        m_swrWidget->graph(i)->setPen(pen);
+        m_phaseWidget->graph(i)->setPen(pen);
+        m_rlWidget->graph(i)->setPen(pen);
+        m_measurements->getMeasurement(count - 2 - (i-1))->smithCurve->setPen(pen);
+        updateGraph();
+    }
 }

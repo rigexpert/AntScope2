@@ -190,6 +190,7 @@ private:
     void changeFqTo(bool _backupValue=false);
     void autoCalibrate();
     void showErrorPopup(QString text, int msDuration);
+    void changeMeasurmentsColor(int _row, QColor& _color);
 
 signals:
     void measure(qint64,qint64,int);
@@ -265,6 +266,7 @@ private slots:
     void on_dotsNumberChanged(int number);
     void on_measurmentsDeleteBtn_clicked();
     void on_tableWidget_measurments_cellClicked(int row, int column);
+    void on_tableWidget_measurments_cellDoubleClicked(int row, int column);
     void on_screenshot_clicked();
     void on_printBtn_clicked();
     void on_measurmentsSaveBtn_clicked();
@@ -300,6 +302,7 @@ private slots:
     void on_importFinished(double _fqMin, double _fqMax);
     void onFullRange(bool);
     void onMeasurementError();
+    void on_tableWidgetMeasurmentsContextMenu(const QPoint& pos);
 };
 
 
