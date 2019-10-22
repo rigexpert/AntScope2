@@ -322,7 +322,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
                         break;
                     }
                 }
-            }else if(m_parseState == WAIT_DATA)
+            }else if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA)
             {
                 m_stringList.append(str);
                 retVal += str.length();
@@ -544,7 +544,7 @@ void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool 
         }
         FQ  = "FQ"  + QString::number(center) + 0x0D;
         SW  = "SW"  + QString::number(band) + 0x0D;
-        FRX = "FRX" + QString::number(dotsNumber) + 0x0D;
+        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + 0x0D;
         m_ok = false;
         sendData(FQ);
         m_sendTimer->start(10);
@@ -563,6 +563,7 @@ void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool 
         {
             m_ok = false;
             sendData(FRX);
+            m_parseState = m_isFRX ? WAIT_DATA : WAIT_USER_DATA;
             state = 1;
             m_sendTimer->stop();
         }
@@ -590,6 +591,13 @@ void comAnalyzer::timeoutChart()
         return;
     }
 
+    if (m_parseState == WAIT_USER_DATA)
+    {
+        timeoutChartUser();
+        return;
+    }
+
+
     len = m_stringList.length();
     if(len >=1)
     {
@@ -613,6 +621,56 @@ void comAnalyzer::timeoutChart()
         }
     }
 }
+
+void comAnalyzer::timeoutChartUser()
+{
+    quint32 len = m_stringList.length();
+    if(len >=1)
+    {
+        QString str = m_stringList.takeFirst();
+
+        bool isHeader = str[0] == '#';
+        str.replace('#', ' ');
+        QStringList fields = str.split(',');
+
+        if (isHeader) {
+            emit newUserDataHeader(fields);
+            return;
+        }
+
+        rawData rdata;
+        UserData udata;
+        bool ok;
+        QString field = fields.takeFirst();
+        rdata.fq = field.toDouble(&ok);
+        if (!ok) {
+            qDebug() << "***** ERROR: " << str;
+            return;
+        }
+        udata.fq = rdata.fq;
+        field = fields.takeFirst();
+        rdata.r = field.toDouble(&ok);
+        if (!ok) {
+            qDebug() << "***** ERROR: " << str;
+            return;
+        }
+        field = fields.takeFirst();
+        rdata.x = field.toDouble(&ok);
+        if (!ok) {
+            qDebug() << "***** ERROR: " << str;
+            return;
+        }
+        while (!fields.isEmpty()) {
+            udata.values.append(fields.takeFirst().toDouble(&ok));
+            if (!ok) {
+                qDebug() << "***** ERROR: " << str;
+                return;
+            }
+        }
+        emit newUserData(rdata, udata);
+    }
+}
+
 
 void comAnalyzer::continueMeasurement()
 {

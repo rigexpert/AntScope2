@@ -40,6 +40,8 @@ public:
     bool getContinuos(void){ return m_isContinuos;}
     void setAnalyzerModel (int model) {m_analyzerModel = model;}
     bool getAnalyzerModel (void) const { return m_analyzerModel;}
+    void setIsFRXMode(bool _mode=true) { m_isFRX = _mode;}
+    bool getIsFRXMode() { return m_isFRX; }
     qint64 sendData(QString data);
 
 private:
@@ -58,6 +60,7 @@ private:
 
     volatile bool m_isMeasuring;
     volatile bool m_isContinuos;
+    volatile bool m_isFRX = true;
 
     volatile bool m_ok;
     volatile bool m_updateOK;
@@ -79,6 +82,8 @@ signals:
     void analyzerFound (quint32);
     void analyzerDisconnected();
     void newData(rawData);
+    void newUserDataHeader(QStringList);
+    void newUserData(rawData, UserData);
     void analyzerDataStringArrived(QString);
     void analyzerScreenshotDataArrived(QByteArray);
     void updatePercentChanged(int);
@@ -91,6 +96,7 @@ public slots:
     void dataArrived();
     void searchAnalyzer();
     void timeoutChart();
+    void timeoutChartUser();
     void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool frx=true);
     void startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx=true);
     void stopMeasure();

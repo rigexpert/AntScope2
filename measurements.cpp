@@ -2853,17 +2853,25 @@ int Measurements::CalcTdr(QVector <rawData> *data)
     float *TdrReal = new float[TDR_MAXARRAY];
     float *TdrImag = new float[TDR_MAXARRAY];
 
+    //qDebug() << asize << " " << minfq << " " <<  maxfq << " " <<  m_iTdrFftSize << " " <<  m_tdrResolution << " " <<  m_tdrRange;
+
 #define Rdevice 50.0
 
     for (i=0; i<=m_iTdrFftSize/2; i++)
     {
+        double R=0;
+        double X=0;
+        double Gre=0;
+        double Gim=0;
+        double FQ=0;
         if (i < asize)
         {
-            double R = data->at(i).r;
-            double X = data->at(i).x;
+            FQ = data->at(i).fq;
+            R = data->at(i).r;
+            X = data->at(i).x;
 
-            double Gre = (R*R-Rdevice*Rdevice+X*X)/((R+Rdevice)*(R+Rdevice)+X*X);
-            double Gim = (2*Rdevice*X)/((R+Rdevice)*(R+Rdevice)+X*X);
+            Gre = (R*R-Rdevice*Rdevice+X*X)/((R+Rdevice)*(R+Rdevice)+X*X);
+            Gim = (2*Rdevice*X)/((R+Rdevice)*(R+Rdevice)+X*X);
 
             if ( i==0)
             {
@@ -3046,8 +3054,6 @@ void Measurements::on_changeMeasureSystemMetric (bool state)
 
 void Measurements::on_redrawGraphs()
 {
-    qint64 t0 = QDateTime::currentMSecsSinceEpoch();
-
     if(m_calibration == NULL)
     {
         return;
@@ -3886,12 +3892,7 @@ void Measurements::on_redrawGraphs()
             }
         }
     }
-    qint64 t1 = QDateTime::currentMSecsSinceEpoch();
-
     replot();
-
-    qint64 t2 = QDateTime::currentMSecsSinceEpoch();
-    qDebug() << "on_redrawGraphs: " << (t1-t0) << ", " << (t2-t1) << ", " << (t2-t0);
 }
 
 void Measurements::replot()

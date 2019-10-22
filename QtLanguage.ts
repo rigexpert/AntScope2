@@ -153,7 +153,7 @@ Please try later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/analyzer.cpp" line="626"/>
+        <location filename="analyzer/analyzer.cpp" line="631"/>
         <source>Updating, please wait...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -370,7 +370,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="107"/>
         <location filename="mainwindow.cpp" line="3683"/>
-        <location filename="mainwindow.cpp" line="4669"/>
+        <location filename="mainwindow.cpp" line="4709"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -382,7 +382,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="126"/>
         <location filename="mainwindow.cpp" line="3242"/>
-        <location filename="mainwindow.cpp" line="4665"/>
+        <location filename="mainwindow.cpp" line="4705"/>
         <source>Export</source>
         <translation type="unfinished"></translation>
     </message>
@@ -413,7 +413,7 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="180"/>
-        <location filename="mainwindow.cpp" line="4667"/>
+        <location filename="mainwindow.cpp" line="4707"/>
         <source>Screenshot</source>
         <translation type="unfinished"></translation>
     </message>
@@ -445,11 +445,11 @@ Please try later.</source>
         <location filename="mainwindow.cpp" line="766"/>
         <location filename="mainwindow.cpp" line="785"/>
         <location filename="mainwindow.cpp" line="837"/>
-        <location filename="mainwindow.cpp" line="4628"/>
-        <location filename="mainwindow.cpp" line="4630"/>
-        <location filename="mainwindow.cpp" line="4632"/>
-        <location filename="mainwindow.cpp" line="4634"/>
-        <location filename="mainwindow.cpp" line="4636"/>
+        <location filename="mainwindow.cpp" line="4668"/>
+        <location filename="mainwindow.cpp" line="4670"/>
+        <location filename="mainwindow.cpp" line="4672"/>
+        <location filename="mainwindow.cpp" line="4674"/>
+        <location filename="mainwindow.cpp" line="4676"/>
         <source>Frequency, kHz</source>
         <translation type="unfinished"></translation>
     </message>
@@ -475,18 +475,18 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="330"/>
-        <location filename="mainwindow.cpp" line="490"/>
-        <location filename="mainwindow.cpp" line="511"/>
-        <location filename="mainwindow.cpp" line="514"/>
-        <location filename="mainwindow.cpp" line="4323"/>
-        <location filename="mainwindow.cpp" line="4326"/>
+        <location filename="mainwindow.cpp" line="498"/>
+        <location filename="mainwindow.cpp" line="519"/>
+        <location filename="mainwindow.cpp" line="522"/>
+        <location filename="mainwindow.cpp" line="4360"/>
+        <location filename="mainwindow.cpp" line="4363"/>
         <source>Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="352"/>
-        <location filename="mainwindow.cpp" line="512"/>
-        <location filename="mainwindow.cpp" line="4324"/>
+        <location filename="mainwindow.cpp" line="520"/>
+        <location filename="mainwindow.cpp" line="4361"/>
         <source>Range (+/-)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -552,21 +552,21 @@ process in the settings menu!</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="653"/>
-        <location filename="mainwindow.cpp" line="481"/>
-        <location filename="mainwindow.cpp" line="518"/>
-        <location filename="mainwindow.cpp" line="521"/>
-        <location filename="mainwindow.cpp" line="4297"/>
-        <location filename="mainwindow.cpp" line="4300"/>
+        <location filename="mainwindow.cpp" line="489"/>
+        <location filename="mainwindow.cpp" line="526"/>
+        <location filename="mainwindow.cpp" line="529"/>
+        <location filename="mainwindow.cpp" line="4334"/>
+        <location filename="mainwindow.cpp" line="4337"/>
         <source>Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="658"/>
-        <location filename="mainwindow.cpp" line="482"/>
-        <location filename="mainwindow.cpp" line="519"/>
-        <location filename="mainwindow.cpp" line="522"/>
-        <location filename="mainwindow.cpp" line="4298"/>
-        <location filename="mainwindow.cpp" line="4301"/>
+        <location filename="mainwindow.cpp" line="490"/>
+        <location filename="mainwindow.cpp" line="527"/>
+        <location filename="mainwindow.cpp" line="530"/>
+        <location filename="mainwindow.cpp" line="4335"/>
+        <location filename="mainwindow.cpp" line="4338"/>
         <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>
@@ -647,158 +647,164 @@ process in the settings menu!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="291"/>
+        <location filename="mainwindow.cpp" line="132"/>
+        <source>Double-click an item to rescale the chart.
+Right-click an item to change color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="295"/>
         <location filename="mainwindow.cpp" line="2310"/>
         <source> - Analyzer not connected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="344"/>
+        <location filename="mainwindow.cpp" line="348"/>
         <source>File of AntScope2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="454"/>
-        <location filename="mainwindow.cpp" line="4652"/>
+        <location filename="mainwindow.cpp" line="460"/>
+        <location filename="mainwindow.cpp" line="4692"/>
         <source>Press F%1</source>
         <oldsource>Press(F%1)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="480"/>
-        <location filename="mainwindow.cpp" line="520"/>
-        <location filename="mainwindow.cpp" line="4299"/>
+        <location filename="mainwindow.cpp" line="488"/>
+        <location filename="mainwindow.cpp" line="528"/>
+        <location filename="mainwindow.cpp" line="4336"/>
         <source>Presets (limits), kHz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="489"/>
-        <location filename="mainwindow.cpp" line="513"/>
-        <location filename="mainwindow.cpp" line="4325"/>
+        <location filename="mainwindow.cpp" line="497"/>
+        <location filename="mainwindow.cpp" line="521"/>
+        <location filename="mainwindow.cpp" line="4362"/>
         <source>Presets (center, range), kHz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="491"/>
-        <location filename="mainwindow.cpp" line="515"/>
-        <location filename="mainwindow.cpp" line="4327"/>
+        <location filename="mainwindow.cpp" line="499"/>
+        <location filename="mainwindow.cpp" line="523"/>
+        <location filename="mainwindow.cpp" line="4364"/>
         <source>Range(+/-)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="695"/>
         <location filename="mainwindow.cpp" line="3006"/>
-        <location filename="mainwindow.cpp" line="4629"/>
-        <location filename="mainwindow.cpp" line="4640"/>
+        <location filename="mainwindow.cpp" line="4669"/>
+        <location filename="mainwindow.cpp" line="4680"/>
         <source>SWR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="727"/>
-        <location filename="mainwindow.cpp" line="4631"/>
+        <location filename="mainwindow.cpp" line="4671"/>
         <source>Angle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="747"/>
         <location filename="mainwindow.cpp" line="838"/>
-        <location filename="mainwindow.cpp" line="4633"/>
+        <location filename="mainwindow.cpp" line="4673"/>
         <source>Rs, Ohm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="767"/>
-        <location filename="mainwindow.cpp" line="4635"/>
+        <location filename="mainwindow.cpp" line="4675"/>
         <source>Rp, Ohm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="786"/>
-        <location filename="mainwindow.cpp" line="4637"/>
+        <location filename="mainwindow.cpp" line="4677"/>
         <source>RL, dB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="804"/>
-        <location filename="mainwindow.cpp" line="4638"/>
+        <location filename="mainwindow.cpp" line="4678"/>
         <source>Length, m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3027"/>
-        <location filename="mainwindow.cpp" line="4641"/>
+        <location filename="mainwindow.cpp" line="4681"/>
         <source>Phase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3048"/>
-        <location filename="mainwindow.cpp" line="4642"/>
+        <location filename="mainwindow.cpp" line="4682"/>
         <source>Z=R+jX</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3069"/>
-        <location filename="mainwindow.cpp" line="4643"/>
+        <location filename="mainwindow.cpp" line="4683"/>
         <source>Z=R||+jX</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3088"/>
-        <location filename="mainwindow.cpp" line="4644"/>
+        <location filename="mainwindow.cpp" line="4684"/>
         <source>RL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3109"/>
-        <location filename="mainwindow.cpp" line="4645"/>
+        <location filename="mainwindow.cpp" line="4685"/>
         <source>TDR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3130"/>
-        <location filename="mainwindow.cpp" line="4646"/>
+        <location filename="mainwindow.cpp" line="4686"/>
         <source>Smith</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3160"/>
-        <location filename="mainwindow.cpp" line="4648"/>
+        <location filename="mainwindow.cpp" line="4688"/>
         <source>User defined</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3169"/>
-        <location filename="mainwindow.cpp" line="4663"/>
+        <location filename="mainwindow.cpp" line="4703"/>
         <source>Frequency settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4562"/>
+        <location filename="mainwindow.cpp" line="4602"/>
         <source>New version of AntScope2 is available!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4563"/>
+        <location filename="mainwindow.cpp" line="4603"/>
         <source>Click to Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4564"/>
+        <location filename="mainwindow.cpp" line="4604"/>
         <source>AntScope2 update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4817"/>
+        <location filename="mainwindow.cpp" line="4857"/>
         <source>!!!!Calibration not performed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4818"/>
+        <location filename="mainwindow.cpp" line="4858"/>
         <source>Calibration not performed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4942"/>
+        <location filename="mainwindow.cpp" line="4985"/>
         <source>Measurement ERROR!</source>
         <translation type="unfinished"></translation>
     </message>
@@ -854,7 +860,7 @@ process in the settings menu!</source>
     <name>Measurements</name>
     <message>
         <location filename="measurements.cpp" line="59"/>
-        <location filename="measurements.cpp" line="4552"/>
+        <location filename="measurements.cpp" line="4542"/>
         <source>Frequency = 
 SWR = 
 RL = 
@@ -874,23 +880,35 @@ Cable: </source>
     </message>
     <message>
         <location filename="measurements.cpp" line="81"/>
-        <location filename="measurements.cpp" line="4565"/>
+        <location filename="measurements.cpp" line="4555"/>
         <source>BriefHint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="373"/>
+        <location filename="measurements.cpp" line="251"/>
+        <location filename="measurements.cpp" line="5139"/>
+        <source>FQ:%1kHz SW:%2kHz Points:%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="255"/>
+        <location filename="measurements.cpp" line="5143"/>
+        <source>Start:%1kHz Stop:%2kHz Points:%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="391"/>
         <source>Impulse response</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="375"/>
+        <location filename="measurements.cpp" line="393"/>
         <source>Step response</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1303"/>
-        <location filename="measurements.cpp" line="1870"/>
+        <location filename="measurements.cpp" line="1328"/>
+        <location filename="measurements.cpp" line="1895"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -904,8 +922,8 @@ Lpar = %10 nH
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1324"/>
-        <location filename="measurements.cpp" line="1891"/>
+        <location filename="measurements.cpp" line="1349"/>
+        <location filename="measurements.cpp" line="1916"/>
         <source>Frequency = %1 kHz
 SWR = %2
 RL = %3 dB
@@ -919,25 +937,25 @@ Cpar = %10 pF
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1351"/>
-        <location filename="measurements.cpp" line="1918"/>
+        <location filename="measurements.cpp" line="1376"/>
+        <location filename="measurements.cpp" line="1943"/>
         <source>m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1354"/>
-        <location filename="measurements.cpp" line="1921"/>
+        <location filename="measurements.cpp" line="1379"/>
+        <location filename="measurements.cpp" line="1946"/>
         <source>ft</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1366"/>
-        <location filename="measurements.cpp" line="1933"/>
+        <location filename="measurements.cpp" line="1391"/>
+        <location filename="measurements.cpp" line="1958"/>
         <source>Cable: length(1/4) = %1 %2, length(1/2) = %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="1517"/>
+        <location filename="measurements.cpp" line="1542"/>
         <source>Distance = %1 %2
 (distance in the air = %3 %4)
 Time = %5 ns
@@ -947,50 +965,50 @@ Step response = %7
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2101"/>
+        <location filename="measurements.cpp" line="2126"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2101"/>
+        <location filename="measurements.cpp" line="2126"/>
         <source>Couldn&apos;t open saved file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2121"/>
+        <location filename="measurements.cpp" line="2146"/>
         <source>Load measurement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2122"/>
-        <location filename="measurements.cpp" line="4594"/>
+        <location filename="measurements.cpp" line="2147"/>
+        <location filename="measurements.cpp" line="4584"/>
         <source>please wait ....</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="2137"/>
+        <location filename="measurements.cpp" line="2162"/>
         <source>loaded %1 dots, from %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="3014"/>
-        <location filename="measurements.cpp" line="4570"/>
+        <location filename="measurements.cpp" line="3047"/>
+        <location filename="measurements.cpp" line="4560"/>
         <source>Length, m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="3018"/>
-        <location filename="measurements.cpp" line="4570"/>
+        <location filename="measurements.cpp" line="3051"/>
+        <location filename="measurements.cpp" line="4560"/>
         <source>Length, feet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="4593"/>
+        <location filename="measurements.cpp" line="4583"/>
         <source>TDR measuring</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="4616"/>
+        <location filename="measurements.cpp" line="4606"/>
         <source>processed %1 dots, from %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1109,24 +1127,24 @@ Step response = %7
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="screenshot.cpp" line="96"/>
-        <location filename="screenshot.cpp" line="280"/>
+        <location filename="screenshot.cpp" line="97"/>
+        <location filename="screenshot.cpp" line="282"/>
         <source>Image added to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="screenshot.cpp" line="394"/>
-        <location filename="screenshot.cpp" line="404"/>
+        <location filename="screenshot.cpp" line="396"/>
+        <location filename="screenshot.cpp" line="406"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="screenshot.cpp" line="394"/>
+        <location filename="screenshot.cpp" line="396"/>
         <source>Screenshot not supported on this device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="screenshot.cpp" line="404"/>
+        <location filename="screenshot.cpp" line="406"/>
         <source>Error while make screenshot. Please try again.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1527,7 +1545,7 @@ Step response = %7
     </message>
     <message>
         <location filename="settings.cpp" line="76"/>
-        <location filename="settings.cpp" line="1016"/>
+        <location filename="settings.cpp" line="1030"/>
         <source>Change parameters or choose from list...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1683,92 +1701,92 @@ If you still want the program to talk to the analyzer, turn it on and enter the 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="761"/>
-        <location filename="analyzer/comanalyzer.cpp" line="838"/>
+        <location filename="analyzer/comanalyzer.cpp" line="819"/>
+        <location filename="analyzer/comanalyzer.cpp" line="896"/>
         <source>Finish</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="761"/>
-        <location filename="analyzer/comanalyzer.cpp" line="838"/>
+        <location filename="analyzer/comanalyzer.cpp" line="819"/>
+        <location filename="analyzer/comanalyzer.cpp" line="896"/>
         <source>Successfully updated!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="795"/>
+        <location filename="analyzer/comanalyzer.cpp" line="853"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="795"/>
+        <location filename="analyzer/comanalyzer.cpp" line="853"/>
         <source>Error while update, please try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="854"/>
+        <location filename="analyzer/comanalyzer.cpp" line="912"/>
         <source>Can not erase flash memory.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="861"/>
+        <location filename="analyzer/comanalyzer.cpp" line="919"/>
         <source>Can not write data to flash memory.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="867"/>
+        <location filename="analyzer/comanalyzer.cpp" line="925"/>
         <source>Firmware file has wrong length.
 Try to choose another file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="872"/>
+        <location filename="analyzer/comanalyzer.cpp" line="930"/>
         <source>Firmware has incorrect CRC.
 Try to choose another file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="877"/>
+        <location filename="analyzer/comanalyzer.cpp" line="935"/>
         <source>Serial flash has incorrect CRC.
 Try to choose another file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="882"/>
+        <location filename="analyzer/comanalyzer.cpp" line="940"/>
         <source>Timeout in the device.
 You should reconnect your analyzer,
 restart %1 and update firmware.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="888"/>
+        <location filename="analyzer/comanalyzer.cpp" line="946"/>
         <source>Firmware file has wrong format.
 Try to choose another file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="893"/>
+        <location filename="analyzer/comanalyzer.cpp" line="951"/>
         <source>Timeout.
 You should restart %1 and update firmware.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="898"/>
+        <location filename="analyzer/comanalyzer.cpp" line="956"/>
         <source>Can not open serial port.
 You should close application which uses this port.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="903"/>
+        <location filename="analyzer/comanalyzer.cpp" line="961"/>
         <source>Can not write data to serial port.
 You should restart %1 and update firmware.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="analyzer/comanalyzer.cpp" line="908"/>
+        <location filename="analyzer/comanalyzer.cpp" line="966"/>
         <source>Can not read data from serial port.
 You should restart %1 and update firmware.</source>
         <translation type="unfinished"></translation>

@@ -253,6 +253,7 @@ void Analyzer::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
         m_chartCounter = 0;
         if(m_comAnalyzerFound)
         {
+            m_comAnalyzer->setIsFRXMode(true);
             m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }else if (m_hidAnalyzerFound)
         {
@@ -300,6 +301,7 @@ void Analyzer::on_measureUser (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
         m_chartCounter = 0;
         if(m_comAnalyzerFound)
         {
+            m_comAnalyzer->setIsFRXMode(false);
             m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }else if (m_hidAnalyzerFound)
         {
@@ -319,6 +321,7 @@ void Analyzer::on_measureOneFq(QWidget* /*parent*/, qint64 fqFrom, qint32 /*dots
     m_chartCounter = 0;
     if(m_comAnalyzerFound)
     {
+        m_comAnalyzer->setIsFRXMode(true);
         m_comAnalyzer->startMeasureOneFq(fqFrom,m_dotsNumber);
     }else if (m_hidAnalyzerFound)
     {
@@ -403,6 +406,8 @@ void Analyzer::on_hidAnalyzerDisconnected ()
     {
         m_comAnalyzer = new comAnalyzer(this);
         connect(m_comAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
+        connect(m_comAnalyzer,SIGNAL(newUserData(rawData,UserData)),this,SLOT(on_newUserData(rawData,UserData)));
+        connect(m_comAnalyzer,SIGNAL(newUserDataHeader(QStringList)),this,SLOT(on_newUserDataHeader(QStringList)));
         connect(m_comAnalyzer,SIGNAL(analyzerFound(quint32)),this,SLOT(on_comAnalyzerFound(quint32)));
         connect(m_comAnalyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_comAnalyzerDisconnected()));
         connect(m_comAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));
@@ -711,6 +716,8 @@ void Analyzer::on_changedAutoDetectMode(bool state)
     {
         m_comAnalyzer = new comAnalyzer(this);
         connect(m_comAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
+        connect(m_comAnalyzer,SIGNAL(newUserData(rawData,UserData)),this,SLOT(on_newUserData(rawData,UserData)));
+        connect(m_comAnalyzer,SIGNAL(newUserDataHeader(QStringList)),this,SLOT(on_newUserDataHeader(QStringList)));
         connect(m_comAnalyzer,SIGNAL(analyzerFound(quint32)),this,SLOT(on_comAnalyzerFound(quint32)));
         connect(m_comAnalyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_comAnalyzerDisconnected()));
         connect(m_comAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));

@@ -2297,11 +2297,11 @@ void MainWindow::on_analyzerFound(QString name)
     ui->continuousStartBtn->setEnabled(true);
     ui->analyzerDataBtn->setEnabled(true);
     ui->screenshotAA->setEnabled(true);
-    if (g_developerMode) {
-        if (m_analyzer->getComAnalyzer() != nullptr) {
-            ui->tabWidget->removeTab(7);
-        }
-    }
+//    if (g_developerMode) {
+//        if (m_analyzer->getComAnalyzer() != nullptr) {
+//            ui->tabWidget->removeTab(7);
+//        }
+//    }
 }
 
 void MainWindow::on_analyzerDisconnected()
