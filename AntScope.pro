@@ -14,7 +14,7 @@ QT       += concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.16\\"'
+DEFINES += ANTSCOPE2VER='\\"1.0.17\\"'
 
 TARGET = AntScope2
 
@@ -80,7 +80,8 @@ SOURCES += main.cpp\
     analyzer/updater/hidfirmwareupdater.cpp \
     ProgressDlg.cpp \
     iprof.cpp \
-    onefqwidget.cpp
+    onefqwidget.cpp \
+    Notification.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -119,7 +120,8 @@ HEADERS  += mainwindow.h \
     ProgressDlg.h \
     iprof.h \
     htime.h \
-    onefqwidget.h
+    onefqwidget.h \
+    Notification.h
 
 # TODO these files dont exist and are not generated
 #        ui_mainwindow.h \

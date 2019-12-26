@@ -32,10 +32,12 @@ Export::~Export()
     delete ui;
 }
 
-void Export::setMeasurements(Measurements * _measurements, quint32 number)
+void Export::setMeasurements(Measurements * _measurements, quint32 number, bool _applyCable, QString _description)
 {
     m_measurements = _measurements;
     m_measureNumber = number;
+    m_bApplyCable = _applyCable;
+    m_description = _description;
 }
 
 void Export::on_csvBtn_clicked()
@@ -52,7 +54,7 @@ void Export::on_csvBtn_clicked()
         if(!path.isEmpty())
         {
             m_lastExportPath = path;
-            m_measurements->exportData(path, 0, m_measureNumber);
+            m_measurements->exportData(path, 0, m_measureNumber, m_bApplyCable);
         }
     }
 }
@@ -71,7 +73,7 @@ void Export::on_nwlBtn_clicked()
         if(!path.isEmpty())
         {
             m_lastExportPath = path;
-            m_measurements->exportData(path, 0, m_measureNumber);
+            m_measurements->exportData(path, 0, m_measureNumber, m_bApplyCable);
         }
     }
 }
@@ -90,7 +92,7 @@ void Export::on_zRiBtn_clicked()
         if(!path.isEmpty())
         {
             m_lastExportPath = path;
-            m_measurements->exportData(path, 0, m_measureNumber);
+            m_measurements->exportData(path, 0, m_measureNumber, m_bApplyCable, m_description);
         }
     }
 }
@@ -109,7 +111,7 @@ void Export::on_sRiBtn_clicked()
         if(!path.isEmpty())
         {
             m_lastExportPath = path;
-            m_measurements->exportData(path, 1, m_measureNumber);
+            m_measurements->exportData(path, 1, m_measureNumber, m_bApplyCable, m_description);
         }
     }
 }
@@ -128,7 +130,7 @@ void Export::on_sMaBtn_clicked()
         if(!path.isEmpty())
         {
             m_lastExportPath = path;
-            m_measurements->exportData(path, 2, m_measureNumber);
+            m_measurements->exportData(path, 2, m_measureNumber, m_bApplyCable, m_description);
         }
     }
 }

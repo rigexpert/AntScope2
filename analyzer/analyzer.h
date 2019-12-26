@@ -83,6 +83,7 @@ private:
 
     Downloader *m_downloader;
     UpdateDialog *m_updateDialog;
+    bool m_bManualUpdate = false;
 
     QByteArray  *m_pfw;
     qint32 m_INFOSIZE;
@@ -112,6 +113,7 @@ signals:
     void aa30bootFound();
     void aa30updateComplete();
     void signalMeasurementError();
+    void showNotification(QString msg, QString url);
 
 public slots:
     void searchAnalyzer();
@@ -138,6 +140,7 @@ public slots:
     void on_downloadInfoComplete();
     void on_downloadFileComplete();
     void on_checkUpdatesBtn_clicked();
+    void checkFirmwareUpdate();
     void setAutoCheckUpdate( bool state);
     void readFile(QString pathToFw);
     void on_internetUpdate();
@@ -148,6 +151,7 @@ public slots:
     void on_changedAutoDetectMode(bool state);
     void on_changedSerialPort(QString portName);
     void slotFullInfo(QString str);
+    bool needCheckForUpdate();
 };
 
 #endif // ANALYZER_H

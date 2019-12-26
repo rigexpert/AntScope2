@@ -226,7 +226,26 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                             break;
                         }
                     }
-                    break;                    
+                    break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA650_ZOOM)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-650 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
                 }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA230_STICK)
                 {
                     m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
@@ -238,7 +257,7 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     }
                     for(quint32 i = 0; i < QUANTITY; ++i)
                     {
-                        if(names[i] == "AA-230 Stick")
+                        if(names[i] == "Stick 230")
                         {
                             m_analyzerModel = i;
                             emit analyzerFound(i);
@@ -550,8 +569,8 @@ void hidAnalyzer::timeoutChart()
         {            
             bool ok;
             rawData data;
-            str = stringList.takeFirst();
 
+            str = stringList.takeFirst();
             data.fq = str.toDouble(&ok);
             if (!ok)
                 qDebug() << "***** ERROR: " << str;
@@ -637,6 +656,7 @@ void hidAnalyzer::hidRead (void)
             {
                 m_incomingBuffer.append(readBuff[i+2]);
             }
+
             int ret = parse(m_incomingBuffer);
             m_incomingBuffer.remove(0,ret);
         }
@@ -727,12 +747,18 @@ qint32 hidAnalyzer::parse (QByteArray arr)
                     //qDebug() << "FULLINFO: " << str;
                     emit signalFullInfo(str);
                     continue;
+                } else if (str.contains("NAME")) {
+                    // skip FULLINFO field `NAME` to keep version obtained in VER
+                    continue;
                 }
+
                 for(quint32 i = QUANTITY-1; i > 0; i--)
                 {
-                    if(str.indexOf(names[i]) >= 0 )
+                    QString analyzer = names[i];
+                    int namePos = str.indexOf(analyzer);
+                    if(namePos >= 0 )
                     {
-                        int pos = names[i].length() + 1;
+                        int pos = analyzer.length() + 1;
                         if(str.length() >= pos+3)
                         {
                             m_version.clear();
@@ -743,6 +769,7 @@ qint32 hidAnalyzer::parse (QByteArray arr)
                         pos = str.indexOf("REV ");
                         if(pos >= 0)
                         {
+                            //qDebug() << "FULLINFO: " << str;
                             pos += 4;
                             int revLen = str.length() - pos;
                             m_revision.clear();
@@ -797,7 +824,7 @@ void hidAnalyzer::makeScreenshot()
     nonblocking(true);
     m_incomingBuffer.clear();
     QString str = "screenshot\r";
-    qDebug() << "========== hidAnalyzer::makeScreenshot()";
+    //qDebug() << "========== hidAnalyzer::makeScreenshot()";
     sendData(str);
     //QThread::currentThread()->msleep(100);
 }

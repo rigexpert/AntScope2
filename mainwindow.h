@@ -257,6 +257,7 @@ public slots:
     void on_measurementComplete();
     void on_translate(int number);
     void on_startOneFq(quint64 fq, int dots);
+    void on_showNotification(QString msg, QString url);
 
 private slots:
     void on_analyzerDataBtn_clicked();

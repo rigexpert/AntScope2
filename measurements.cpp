@@ -1,5 +1,6 @@
 #include "measurements.h"
 #include "ProgressDlg.h"
+#include "export.h"
 
 extern bool g_developerMode;
 
@@ -434,25 +435,25 @@ void Measurements::on_newMeasurement(QString name)
     int tdrGraphCount = m_tdrWidget->graphCount();
 
     QPen rpen;
-    rpen.setColor(QColor(30, 40, 255, 150));
+    rpen.setColor(QColor(255, 30, 40, 150));
     rpen.setWidthF(3);
-    QPen gpen;
-    gpen.setColor(QColor(30, 255, 40, 150));
-    gpen.setWidthF(3);
-    QPen bpen;
-    bpen.setColor(QColor(255, 30, 40, 150));
-    bpen.setWidthF(3);
+    QPen xpen;
+    xpen.setColor(QColor(30, 255, 40, 150));
+    xpen.setWidthF(3);
+    QPen zpen;
+    zpen.setColor(QColor(30, 40, 255, 150));
+    zpen.setWidthF(3);
 
-    m_rsWidget->graph(rsGraphCount-3)->setPen(bpen);
-    m_rsWidget->graph(rsGraphCount-2)->setPen(gpen);
-    m_rsWidget->graph(rsGraphCount-1)->setPen(rpen);
+    m_rsWidget->graph(rsGraphCount-3)->setPen(rpen);
+    m_rsWidget->graph(rsGraphCount-2)->setPen(xpen);
+    m_rsWidget->graph(rsGraphCount-1)->setPen(zpen);
 
-    m_rpWidget->graph(rsGraphCount-3)->setPen(bpen);
-    m_rpWidget->graph(rsGraphCount-2)->setPen(gpen);
-    m_rpWidget->graph(rsGraphCount-1)->setPen(rpen);
+    m_rpWidget->graph(rsGraphCount-3)->setPen(rpen);
+    m_rpWidget->graph(rsGraphCount-2)->setPen(xpen);
+    m_rpWidget->graph(rsGraphCount-1)->setPen(zpen);
 
-    m_tdrWidget->graph(tdrGraphCount-2)->setPen(gpen);
-    m_tdrWidget->graph(tdrGraphCount-1)->setPen(rpen);
+    m_tdrWidget->graph(tdrGraphCount-2)->setPen(zpen);
+    m_tdrWidget->graph(tdrGraphCount-1)->setPen(xpen);
 }
 
 
@@ -734,6 +735,7 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
         {
             R = _rawData.r;
             X = _rawData.x;
+
             double Gre = (R*R-m_Z0*m_Z0+X*X)/((R+m_Z0)*(R+m_Z0)+X*X);
             double Gim = (2*m_Z0*X)/((R+m_Z0)*(R+m_Z0)+X*X);
 
@@ -901,6 +903,10 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
             //----------------------calc smith end---------------------------
         }
     }
+
+    if (isTDRMode())
+        return;
+
     if (_redraw) {
         if (g_developerMode) {
             if ((m_measurements.last().dataRX.length() % 10) == 0) {
@@ -1407,39 +1413,46 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
     {
         if(m_currentTab == "tab_6")
         {
-            QCPDataMap *tdrmap;
+            QCPDataMap *tdrmapImp;
+            QCPDataMap *tdrmapStep;
             double pdTdrImp;
             double pdTdrStep;
             if(m_farEndMeasurement == 1)
             {
                 if(m_measureSystemMetric)
                 {
-                    tdrmap = &(m_farEndMeasurementsSub[index].tdrImpGraph);
+                    tdrmapImp = &(m_farEndMeasurementsSub[index].tdrImpGraph);
+                    tdrmapStep = &(m_farEndMeasurementsSub[index].tdrStepGraph);
                 }else
                 {
-                    tdrmap = &(m_farEndMeasurementsSub[index].tdrImpGraphFeet);
+                    tdrmapImp = &(m_farEndMeasurementsSub[index].tdrImpGraphFeet);
+                    tdrmapStep = &(m_farEndMeasurementsSub[index].tdrStepGraphFeet);
                 }
             }else if(m_farEndMeasurement == 2)
             {
                 if(m_measureSystemMetric)
                 {
-                    tdrmap = &(m_farEndMeasurementsAdd[index].tdrImpGraph);
+                    tdrmapImp = &(m_farEndMeasurementsAdd[index].tdrImpGraph);
+                    tdrmapStep = &(m_farEndMeasurementsAdd[index].tdrStepGraph);
                 }else
                 {
-                    tdrmap = &(m_farEndMeasurementsAdd[index].tdrImpGraphFeet);
+                    tdrmapImp = &(m_farEndMeasurementsAdd[index].tdrImpGraphFeet);
+                    tdrmapStep = &(m_farEndMeasurementsAdd[index].tdrStepGraphFeet);
                 }
             }else
             {
                 if(m_measureSystemMetric)
                 {
-                    tdrmap = &(m_measurements[index].tdrImpGraph);
+                    tdrmapImp = &(m_measurements[index].tdrImpGraph);
+                    tdrmapStep = &(m_measurements[index].tdrStepGraph);
                 }else
                 {
-                    tdrmap = &(m_measurements[index].tdrImpGraphFeet);
+                    tdrmapImp = &(m_measurements[index].tdrImpGraphFeet);
+                    tdrmapStep = &(m_measurements[index].tdrStepGraphFeet);
                 }
             }
 
-            QList <double> tdrkeys = tdrmap->keys();
+            QList <double> tdrkeys = tdrmapImp->keys();
 
             bool res = false;
             int start = previousI-DELTA;
@@ -1487,6 +1500,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                             previousI = i;
                         }
 
+                        /*
                         if(m_farEndMeasurement == 1)
                         {
                             pdTdrImp = m_farEndMeasurementsSub[index].tdrImpGraph.value(place).value;
@@ -1500,6 +1514,9 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                             pdTdrImp = m_measurements[index].tdrImpGraph.value(place).value;
                             pdTdrStep = m_measurements[index].tdrStepGraph.value(place).value;
                         }
+                        */
+                        pdTdrImp = tdrmapImp->value(place).value;
+                        pdTdrStep = tdrmapStep->value(place).value;
 
                         if(!m_tdrLine)
                         {
@@ -1531,7 +1548,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         }else
                         {
                             lenUnits = "ft";
-                            timeNs = QString::number(airLen*FEETINMETER/0.299792458,'f',2);
+                            timeNs = QString::number(airLen/FEETINMETER/0.299792458,'f',2);
                         }
 
 
@@ -2007,11 +2024,11 @@ void Measurements::on_calibrationEnabled(bool enabled)
         QCPDataMap rlmap;
         QCPDataMap phasemap;
         QCPCurveDataMap smithmap;
-        int j = 1-1;
+        int j = i-1;
         if(enabled)
         {
             swrmap = m_measurements.at(j).swrGraphCalib;
-            phasemap = m_measurements.at(i-1).phaseGraphCalib;
+            phasemap = m_measurements.at(j).phaseGraphCalib;
 
             rszmap = m_measurements.at(j).rszGraphCalib;
             rsxmap = m_measurements.at(j).rsxGraphCalib;
@@ -2173,8 +2190,36 @@ void Measurements::loadData(QString path)
     on_redrawGraphs();
 }
 
-void Measurements::exportData(QString _name, int _type, int _number)
+void Measurements::exportData(QString _name, int _type, int _number, bool _applyCable, QString _description)
 {
+    if (_number < 0 || m_measurements.isEmpty() || (_number >= m_measurements.size()))
+        return;
+
+    bool calibr = (m_calibration != nullptr) && (m_calibration->getCalibrationEnabled());
+    QVector<rawData> vector;
+    if (_applyCable)
+    {
+        switch(m_farEndMeasurement) {
+        case 1:
+            vector = calibr ? m_farEndMeasurementsSub.at(_number).dataRXCalib : m_farEndMeasurementsSub.at(_number).dataRX;
+            break;
+        case 2:
+            vector = calibr ? m_farEndMeasurementsAdd.at(_number).dataRXCalib : m_farEndMeasurementsAdd.at(_number).dataRX;
+            break;
+        default:
+            vector = calibr ? m_measurements.at(_number).dataRXCalib : m_measurements.at(_number).dataRX;
+            break;
+        }
+    } else {
+        vector = calibr ? m_measurements.at(_number).dataRXCalib : m_measurements.at(_number).dataRX;
+    }
+    exportData(_name, _type, vector, _description);
+}
+
+void Measurements::exportData(QString _name, int _type, QVector<rawData>& vector, QString _description)
+{
+    int len = vector.length();;
+
     if(_name.indexOf(".s1p") >= 0 )
     {
         QFile file(_name);
@@ -2189,7 +2234,7 @@ void Measurements::exportData(QString _name, int _type, int _number)
         out << "! Touchstone file generated by AntScope2";
         out << "\n";
 
-        double Rswr = m_calibration->getZ0();
+        double Rswr = ((m_calibration != NULL) && (m_calibration->getCalibrationEnabled())) ? m_calibration->getZ0() : 50;
 
         if (_type == 0) // Z, RI
         {
@@ -2206,17 +2251,8 @@ void Measurements::exportData(QString _name, int _type, int _number)
             out << "! Format: Frequency S-magnitude S-angle (normalized to " << Rswr << " Ohm, angle in degrees)\n";
         }
 
-        // Data
-        int len = 0;
-        QVector<rawData> vector;
-        if((m_calibration != NULL) && (m_calibration->getCalibrationEnabled()))
-        {
-            vector = m_measurements.at(_number).dataRXCalib;
-        }else
-        {
-            vector = m_measurements.at(_number).dataRX;
-        }
-        len = vector.length();
+        if (!_description.isEmpty())
+            out << _description << "\n";
 
         for (int i = 0; i < len; ++i)
         {
@@ -2290,18 +2326,6 @@ void Measurements::exportData(QString _name, int _type, int _number)
             str = "#Frequency(MHz);R;X";
             file.write( str.toLocal8Bit(), str.length());
             file.write("\r\n", 2);
-
-            int len = 0;
-            QVector<rawData> vector;
-            if((m_calibration != NULL) && (m_calibration->getCalibrationEnabled()))
-            {
-                vector = m_measurements.at(_number).dataRXCalib;
-            }else
-            {
-                vector = m_measurements.at(_number).dataRX;
-            }
-            len = vector.length();
-
             for (int i = 0; i < len; ++i)
             {
                 str = QString::number(vector.at(i).fq, 'f', 6) +
@@ -2325,17 +2349,6 @@ void Measurements::exportData(QString _name, int _type, int _number)
             str = "/\"Freq(MHz)\" \"Rs\" \"Xs\"/";
             file.write( str.toLocal8Bit(), str.length());
             file.write("\r\n", 2);
-
-            int len = 0;
-            QVector<rawData> vector;
-            if((m_calibration != NULL) && (m_calibration->getCalibrationEnabled()))
-            {
-                vector = m_measurements.at(_number).dataRXCalib;
-            }else
-            {
-                vector = m_measurements.at(_number).dataRX;
-            }
-            len = vector.length();
 
             for (int i = 0; i < len; ++i)
             {
@@ -2850,6 +2863,9 @@ int Measurements::CalcTdr(QVector <rawData> *data)
 
     m_tdrRange = m_tdrResolution*m_iTdrFftSize/1000000;
 
+    if (!m_measureSystemMetric)
+        m_tdrRange *= FEETINMETER;
+
     float *TdrReal = new float[TDR_MAXARRAY];
     float *TdrImag = new float[TDR_MAXARRAY];
 
@@ -3068,34 +3084,18 @@ void Measurements::on_redrawGraphs()
     {
         calcFarEnd();
     }
+
+    if( m_currentTab == "tab_6") { //TDR
+
+        redrawTDR();
+        replot();
+        return;
+    }
+
     if(m_calibration->getCalibrationEnabled())
     {
         if( m_currentTab == "tab_1")//SWR
         {
-//            for(int i = 0; i < m_measurements.length(); ++i)
-//            {
-//                m_viewMeasurements[i].swrGraphCalib.clear();
-
-//                QCPDataMap map = m_measurements[i].swrGraphCalib;
-//                QList <double> list = map.keys();
-//                QCPData data;
-//                QCPData viewData;
-//                double maxSwr = m_swrWidget->yAxis->range().upper;
-//                for(int n = 0; n < list.length(); ++n)
-//                {
-//                    data.key = list.at(n);
-//                    viewData = map.value(list.at(n));
-//                    if( viewData.value > maxSwr || viewData.value < 1)
-//                    {
-//                        data.value = maxSwr;
-//                    }else
-//                    {
-//                        data.value = viewData.value;
-//                    }
-//                    m_viewMeasurements[i].swrGraphCalib.insert(data.key,data);
-//                }
-//                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraphCalib, true);
-//            }
             if(m_farEndMeasurement != 0)
             {
                 for(int i = 0; i < m_measurements.length(); ++i)
@@ -3299,124 +3299,6 @@ void Measurements::on_redrawGraphs()
             {
                 m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraphCalib, true);
             }
-        }else if(m_currentTab == "tab_6")//TDR
-        {
-            int len;
-            if(m_farEndMeasurement)
-            {
-                if(m_farEndMeasurement == 1)
-                {
-                    len = CalcTdr(&m_farEndMeasurementsSub.last().dataRXCalib);
-                    m_tdrWidget->xAxis->setRangeUpper(m_tdrRange);
-                    m_tdrWidget->xAxis->setRangeMax(m_tdrRange);
-                    double step = m_tdrRange/len;
-                    m_farEndMeasurementsSub.last().tdrImpGraph.clear();
-                    m_farEndMeasurementsSub.last().tdrStepGraph.clear();
-                    m_farEndMeasurementsSub.last().tdrImpGraphFeet.clear();
-                    m_farEndMeasurementsSub.last().tdrStepGraphFeet.clear();
-                    for(int i = 0; i < len; ++i)
-                    {
-                        int x = i;
-                        int y = m_pdTdrImp[i];
-                        QCPData data;
-                        data.key = x*step;
-                        data.value = y;
-                        m_farEndMeasurementsSub.last().tdrImpGraph.insert(data.key,data);
-                        data.value = m_pdTdrStep[i];
-                        m_farEndMeasurementsSub.last().tdrStepGraph.insert(data.key,data);
-
-                        QCPData dataFeet;
-                        dataFeet.key = x*step*FEETINMETER;
-                        dataFeet.value = y;
-                        m_farEndMeasurementsSub.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
-                        dataFeet.value = m_pdTdrStep[i];
-                        m_farEndMeasurementsSub.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
-                    }
-                    if(m_measureSystemMetric)
-                    {
-                        m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_farEndMeasurementsSub.last().tdrImpGraph, true);
-                        m_tdrWidget->graph()->setData(&m_farEndMeasurementsSub.last().tdrStepGraph, true);
-                    }else
-                    {
-                        m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_farEndMeasurementsSub.last().tdrImpGraphFeet, true);
-                        m_tdrWidget->graph()->setData(&m_farEndMeasurementsSub.last().tdrStepGraphFeet, true);
-                    }
-                }else if (m_farEndMeasurement == 2)
-                {
-                    len = CalcTdr(&m_farEndMeasurementsAdd.last().dataRXCalib);
-                    m_tdrWidget->xAxis->setRangeUpper(m_tdrRange);
-                    m_tdrWidget->xAxis->setRangeMax(m_tdrRange);
-                    double step = m_tdrRange/len;
-                    m_farEndMeasurementsAdd.last().tdrImpGraph.clear();
-                    m_farEndMeasurementsAdd.last().tdrStepGraph.clear();
-                    m_farEndMeasurementsAdd.last().tdrImpGraphFeet.clear();
-                    m_farEndMeasurementsAdd.last().tdrStepGraphFeet.clear();
-                    for(int i = 0; i < len; ++i)
-                    {
-                        int x = i;
-                        int y = m_pdTdrImp[i];
-                        QCPData data;
-                        data.key = x*step;
-                        data.value = y;
-                        m_farEndMeasurementsAdd.last().tdrImpGraph.insert(data.key,data);
-                        data.value = m_pdTdrStep[i];
-                        m_farEndMeasurementsAdd.last().tdrStepGraph.insert(data.key,data);
-
-                        QCPData dataFeet;
-                        dataFeet.key = x*step*FEETINMETER;
-                        dataFeet.value = y;
-                        m_farEndMeasurementsAdd.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
-                        dataFeet.value = m_pdTdrStep[i];
-                        m_farEndMeasurementsAdd.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
-                    }
-                    if(m_measureSystemMetric)
-                    {
-                        m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_farEndMeasurementsAdd.last().tdrImpGraph, true);
-                        m_tdrWidget->graph()->setData(&m_farEndMeasurementsAdd.last().tdrStepGraph, true);
-                    }else
-                    {
-                        m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_farEndMeasurementsAdd.last().tdrImpGraphFeet, true);
-                        m_tdrWidget->graph()->setData(&m_farEndMeasurementsAdd.last().tdrStepGraphFeet, true);
-                    }
-                }
-            }else
-            {
-                len = CalcTdr(&m_measurements.last().dataRXCalib);
-                m_tdrWidget->xAxis->setRangeUpper(m_tdrRange);
-                m_tdrWidget->xAxis->setRangeMax(m_tdrRange);
-                double step = m_tdrRange/len;
-                m_measurements.last().tdrImpGraph.clear();
-                m_measurements.last().tdrStepGraph.clear();
-                m_measurements.last().tdrImpGraphFeet.clear();
-                m_measurements.last().tdrStepGraphFeet.clear();
-                for(int i = 0; i < len; ++i)
-                {
-                    int x = i;
-                    int y = m_pdTdrImp[i];
-                    QCPData data;
-                    data.key = x*step;
-                    data.value = y;
-                    m_measurements.last().tdrImpGraph.insert(data.key,data);
-                    data.value = m_pdTdrStep[i];
-                    m_measurements.last().tdrStepGraph.insert(data.key,data);
-
-                    QCPData dataFeet;
-                    dataFeet.key = x*step*FEETINMETER;
-                    dataFeet.value = y;
-                    m_measurements.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
-                    dataFeet.value = m_pdTdrStep[i];
-                    m_measurements.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
-                }
-                if(m_measureSystemMetric)
-                {
-                    m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_measurements.last().tdrImpGraph, true);
-                    m_tdrWidget->graph()->setData(&m_measurements.last().tdrStepGraph, true);
-                }else
-                {
-                    m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_measurements.last().tdrImpGraphFeet, true);
-                    m_tdrWidget->graph()->setData(&m_measurements.last().tdrStepGraphFeet, true);
-                }
-            }
         }else if(m_currentTab == "tab_7")//Smith
         {
             if(m_farEndMeasurement)
@@ -3587,13 +3469,6 @@ void Measurements::on_redrawGraphs()
                 m_rsWidget->graph(i*3+3)->setData(&m_viewMeasurements[i].rszGraph, true);
                 m_rsWidget->graph(i*3+2)->setData(&m_viewMeasurements[i].rsxGraph, true);
                 m_rsWidget->graph(i*3+1)->setData(&m_viewMeasurements[i].rsrGraph, true);
-//                int count = m_rsWidget->legend->itemCount();
-//                if (count > 3) {
-//                    for (int i=3; i<count; i++ ) {
-//                        m_rsWidget->legend->removeItem(m_rsWidget->legend->itemCount()-1);
-//                    }
-//                }
-
             }
         }else if(m_currentTab == "tab_4")//RXpar
         {
@@ -3685,14 +3560,6 @@ void Measurements::on_redrawGraphs()
             }
         }else if(m_currentTab == "tab_5")//RL
         {
-//            if(m_farEndMeasurement)
-//            {
-//                calcFarEnd();
-//            }
-//            for(int i = 0; i < m_measurements.length(); ++i)
-//            {
-//                m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraph, true);
-//            }
             if(m_farEndMeasurement != 0)
             {
                 for(int i = 0; i < m_measurements.length(); ++i)
@@ -3707,126 +3574,6 @@ void Measurements::on_redrawGraphs()
                 for(int i = 0; i < m_measurements.length(); ++i)
                 {
                     m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraph, true);
-                }
-            }
-        }else if(m_currentTab == "tab_6")//TDR
-        {
-            int len;
-            if(m_farEndMeasurement)
-            {
-                if(m_farEndMeasurement == 1)
-                {
-                    len = CalcTdr(&m_farEndMeasurementsSub.last().dataRX);
-                    m_tdrWidget->xAxis->setRangeUpper(m_tdrRange);
-                    m_tdrWidget->xAxis->setRangeMax(m_tdrRange);
-                    double step = m_tdrRange/len;
-                    m_farEndMeasurementsSub.last().tdrImpGraph.clear();
-                    m_farEndMeasurementsSub.last().tdrStepGraph.clear();
-                    m_farEndMeasurementsSub.last().tdrImpGraphFeet.clear();
-                    m_farEndMeasurementsSub.last().tdrStepGraphFeet.clear();
-                    for(int i = 0; i < len; ++i)
-                    {
-                        int x = i;
-                        int y = m_pdTdrImp[i];
-                        QCPData data;
-                        data.key = x*step;
-                        data.value = y;
-                        m_farEndMeasurementsSub.last().tdrImpGraph.insert(data.key,data);
-                        data.value = m_pdTdrStep[i];
-                        m_farEndMeasurementsSub.last().tdrStepGraph.insert(data.key,data);
-
-                        QCPData dataFeet;
-                        //dataFeet.key = x*step/FEETINMETER;
-                        dataFeet.key = x*step*FEETINMETER;
-                        dataFeet.value = y;
-                        m_farEndMeasurementsSub.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
-                        dataFeet.value = m_pdTdrStep[i];
-                        m_farEndMeasurementsSub.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
-                    }
-                    if(m_measureSystemMetric)
-                    {
-                        m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_farEndMeasurementsSub.last().tdrImpGraph, true);
-                        m_tdrWidget->graph()->setData(&m_farEndMeasurementsSub.last().tdrStepGraph, true);
-                    }else
-                    {
-                        m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_farEndMeasurementsSub.last().tdrImpGraphFeet, true);
-                        m_tdrWidget->graph()->setData(&m_farEndMeasurementsSub.last().tdrStepGraphFeet, true);
-                    }
-                }else if (m_farEndMeasurement == 2)
-                {
-                    len = CalcTdr(&m_farEndMeasurementsAdd.last().dataRX);
-                    m_tdrWidget->xAxis->setRangeUpper(m_tdrRange);
-                    m_tdrWidget->xAxis->setRangeMax(m_tdrRange);
-                    double step = m_tdrRange/len;
-                    m_farEndMeasurementsAdd.last().tdrImpGraph.clear();
-                    m_farEndMeasurementsAdd.last().tdrStepGraph.clear();
-                    m_farEndMeasurementsAdd.last().tdrImpGraphFeet.clear();
-                    m_farEndMeasurementsAdd.last().tdrStepGraphFeet.clear();
-                    for(int i = 0; i < len; ++i)
-                    {
-                        int x = i;
-                        int y = m_pdTdrImp[i];
-                        QCPData data;
-                        data.key = x*step;
-                        data.value = y;
-                        m_farEndMeasurementsAdd.last().tdrImpGraph.insert(data.key,data);
-                        data.value = m_pdTdrStep[i];
-                        m_farEndMeasurementsAdd.last().tdrStepGraph.insert(data.key,data);
-
-                        QCPData dataFeet;
-                        //dataFeet.key = x*step/FEETINMETER;
-                        dataFeet.key = x*step*FEETINMETER;
-                        dataFeet.value = y;
-                        m_farEndMeasurementsAdd.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
-                        dataFeet.value = m_pdTdrStep[i];
-                        m_farEndMeasurementsAdd.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
-                    }
-                    if(m_measureSystemMetric)
-                    {
-                        m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_farEndMeasurementsAdd.last().tdrImpGraph, true);
-                        m_tdrWidget->graph()->setData(&m_farEndMeasurementsAdd.last().tdrStepGraph, true);
-                    }else
-                    {
-                        m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_farEndMeasurementsAdd.last().tdrImpGraphFeet, true);
-                        m_tdrWidget->graph()->setData(&m_farEndMeasurementsAdd.last().tdrStepGraphFeet, true);
-                    }
-                }
-            }else
-            {
-                len = CalcTdr(&m_measurements.last().dataRX);
-                m_tdrWidget->xAxis->setRangeMax(m_tdrRange);
-                m_tdrWidget->xAxis->setRangeUpper(m_tdrRange);
-                double step = m_tdrRange/len;
-                m_measurements.last().tdrImpGraph.clear();
-                m_measurements.last().tdrStepGraph.clear();
-                m_measurements.last().tdrImpGraphFeet.clear();
-                m_measurements.last().tdrStepGraphFeet.clear();
-                for(int i = 0; i < len; ++i)
-                {
-                    int x = i;
-                    QCPData data;
-                    data.key = x*step;
-                    data.value = m_pdTdrImp[i];
-                    m_measurements.last().tdrImpGraph.insert(data.key,data);
-                    data.value = m_pdTdrStep[i];
-                    m_measurements.last().tdrStepGraph.insert(data.key,data);
-
-                    QCPData dataFeet;
-                    //dataFeet.key = x*step/FEETINMETER;
-                    dataFeet.key = x*step*FEETINMETER;
-                    dataFeet.value = m_pdTdrImp[i];
-                    m_measurements.last().tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
-                    dataFeet.value = m_pdTdrStep[i];
-                    m_measurements.last().tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
-                }
-                if(m_measureSystemMetric)
-                {
-                    m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_measurements.last().tdrImpGraph, true);
-                    m_tdrWidget->graph()->setData(&m_measurements.last().tdrStepGraph, true);
-                }else
-                {
-                    m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_measurements.last().tdrImpGraphFeet, true);
-                    m_tdrWidget->graph()->setData(&m_measurements.last().tdrStepGraphFeet, true);
                 }
             }
         }else if(m_currentTab == "tab_7")//Smith
@@ -4595,6 +4342,7 @@ void Measurements::stopTDRProgress()
         delete m_tdrProgressDlg;
         m_tdrProgressDlg = nullptr;
     }
+    on_redrawGraphs();
 }
 
 void Measurements::updateTDRProgress(int dots)
@@ -4605,6 +4353,41 @@ void Measurements::updateTDRProgress(int dots)
             m_tdrProgressDlg->setValue(dots);
             m_tdrProgressDlg->updateStatusInfo(QString(tr("processed %1 dots, from %2")).arg(dots).arg(m_tdrDots));
         }
+    }
+}
+
+void Measurements::startAutocalibrateProgress(QWidget* _parent, int _dots)
+{
+    delete m_tdrProgressDlg;
+
+    m_tdrProgressDlg = new ProgressDlg(_parent);
+    m_tdrProgressDlg->setWindowModality(Qt::WindowModal);
+    m_tdrProgressDlg->setValue(0);
+    m_tdrProgressDlg->setProgressData(0, _dots, 1);
+    m_tdrProgressDlg->updateActionInfo(tr("Auto calibration"));
+    m_tdrProgressDlg->updateStatusInfo(tr("please wait ...."));
+    m_tdrProgressDlg->setCancelable();
+    connect(m_tdrProgressDlg, &ProgressDlg::canceled, this, &Measurements::interrupt);
+    m_tdrProgressDlg->show();
+}
+
+void Measurements::stopAutocalibrateProgress()
+{
+    if (m_tdrProgressDlg != nullptr)
+    {
+        m_tdrProgressDlg->hide();
+        delete m_tdrProgressDlg;
+        m_tdrProgressDlg = nullptr;
+    }
+}
+
+void Measurements::updateAutocalibrateProgress(int _dots, QString _msg)
+{
+    if (m_tdrProgressDlg != nullptr) {
+        m_tdrProgressDlg->setValue(_dots);
+        m_tdrProgressDlg->updateStatusInfo(QString(tr("Iteration %1. %2"))
+                                           .arg(_dots)
+                                           .arg(_msg));
     }
 }
 
@@ -4987,14 +4770,16 @@ rawData Measurements::calcFarEnd(const rawData& data, int idx, bool refreshGraph
 */
 QPair<double, double> Measurements::autoCalibrate()
 {
-    const double cable_length_min = 0.0;
-    const double cable_length_max = 0.02;
-    const double cable_length_steps = 100;
+    m_settings->beginGroup("Auto-calibration");
+    double cable_length_min = m_settings->value("cable_length_min", "0").toDouble();
+    double cable_length_max = m_settings->value("cable_length_max", "0.02").toDouble();
+    double cable_length_steps = m_settings->value("cable_length_steps", "100").toDouble();
+    double cable_res_min = m_settings->value("cable_res_min", "20").toDouble();
+    double cable_res_max = m_settings->value("cable_res_max", "40").toDouble();
+    double cable_res_steps = m_settings->value("cable_res_steps", "100").toDouble();
+    m_settings->endGroup();
 
-    const double cable_res_min = 20.0;
-    const double cable_res_max = 40.0;
-    const double cable_res_steps = 100;
-
+    startAutocalibrateProgress(nullptr, cable_length_steps * cable_res_steps);
     // backup settings
     double _cableResistance = m_cableResistance;
     double _cableLength = m_cableLength;
@@ -5021,14 +4806,17 @@ QPair<double, double> Measurements::autoCalibrate()
 
         //bKeypressDetected = FALSE;
 
+        int total = 0;
         double leStep = (cable_length_max-cable_length_min)/cable_length_steps;
         double reStep = (cable_res_max-cable_res_min)/cable_res_steps;
         for (double dLen = cable_length_min; dLen <cable_length_max; dLen += leStep)
         {
+            total++;
             m_cableLength = dLen;
 
             for (double dRes = cable_res_min; dRes <cable_res_max; dRes += reStep)
             {
+                total++;
                 m_cableResistance = dRes;
 
                 dSqrDist = 0;
@@ -5068,8 +4856,10 @@ QPair<double, double> Measurements::autoCalibrate()
                     }
                 }
 
+                bool update = false;
                 if (dSqrDist<dBestDistance)
                 {
+                    update = true;
                     dBestDistance = dSqrDist;
                     dBestLength = dLen;
                     dBestResistance = dRes;
@@ -5084,8 +4874,21 @@ QPair<double, double> Measurements::autoCalibrate()
 //                             << ", m_cableLength: " << m_cableLength
 //                             << ", dBestMaxSwrValue: " << dBestMaxSwrValue
 //                             << ", dBestMaxSwrFq: " << dBestMaxSwrFq;
+                    QString msg = QString("Connector compensation: SWR=%1 at Fq=%2 MHz: Rcable=%3, Lcable=%4")
+                            .arg(dBestMaxSwrValue)
+                            .arg(dBestMaxSwrFq)
+                            .arg(m_cableResistance)
+                            .arg(m_cableLength);
+                    updateAutocalibrateProgress(total, msg);
                 }
-
+                if (update || ((total%100)==0)) {
+                    QString msg = QString("Connector compensation: SWR=%1 at Fq=%2 MHz: Rcable=%3, Lcable=%4")
+                            .arg(dBestMaxSwrValue)
+                            .arg(dBestMaxSwrFq)
+                            .arg(m_cableResistance)
+                            .arg(m_cableLength);
+                    updateAutocalibrateProgress(total, msg);
+                }
                 QApplication::processEvents();
                 if (m_interrupted)
                     break;
@@ -5098,6 +4901,7 @@ QPair<double, double> Measurements::autoCalibrate()
 
         if (m_interrupted) {
             m_interrupted = false;
+            stopAutocalibrateProgress();
             return QPair<double, double>(_cableResistance, _cableLength);;
         }
 
@@ -5107,6 +4911,7 @@ QPair<double, double> Measurements::autoCalibrate()
         qDebug() << QString("Connector compensation: SWR=%1 at Fq=%2 MHz: Rcable=%3, Lcable=%4")
                     .arg(dBestMaxSwrValue).arg(dBestMaxSwrFq).arg(m_cableResistance).arg(m_cableLength);
 
+        stopAutocalibrateProgress();
         on_redrawGraphs();
     }
 
@@ -5150,4 +4955,190 @@ void Measurements::on_isRangeChanged(bool _range)
         item->setToolTip(tips);
     }
 }
+
+void Measurements::setZ0(double _Z0)
+{
+    m_Z0 = _Z0;
+}
+
+void Measurements::on_impedanceChanged(double _z0)
+{
+    m_Z0 = _z0;
+    qint32 len = getMeasurementLength();
+
+    m_currentIndex -= len;
+    if (m_currentIndex < 1)
+        m_currentIndex = 0;
+
+    QList<QTableWidgetItem*> selected = m_tableWidget->selectedItems();
+    for (int idx=0; idx<len; idx++) {
+        QString name = m_tableNames.takeFirst();
+        measurement mm = m_measurements.takeFirst();
+
+        delete mm.smithCurve;
+        delete m_viewMeasurements.takeFirst().smithCurve;
+        delete m_farEndMeasurementsAdd.takeFirst().smithCurve;
+        delete m_farEndMeasurementsSub.takeFirst().smithCurve;
+        m_swrWidget->removeGraph(1);
+        m_phaseWidget->removeGraph(1);
+        m_rsWidget->removeGraph(1);
+        m_rsWidget->removeGraph(1);
+        m_rsWidget->removeGraph(1);
+        m_rpWidget->removeGraph(1);
+        m_rpWidget->removeGraph(1);
+        m_rpWidget->removeGraph(1);
+        m_rlWidget->removeGraph(1);
+        m_tdrWidget->removeGraph(1);
+        m_tdrWidget->removeGraph(1);
+
+        on_newMeasurement(name, mm.qint64Fq, mm.qint64Sw, mm.qint64Dots);
+        for (int i=0; i<mm.dataRX.size(); i++) {
+            on_newData(mm.dataRX.at(i));
+        }
+
+        // restore user data
+        if (g_developerMode) {
+            int count = mm.userGraphs.size();
+            for (int i=0; i<count; i++)
+                m_userWidget->removeGraph(1);
+            on_newUserDataHeader(mm.fieldsUser);
+            for (int iu=0; iu<mm.dataUser.size(); iu++) {
+                UserData _userData = mm.dataUser.at(iu);
+                m_measurements.last().dataUser.append(_userData);
+                for (int idx=0; idx<_userData.values.size(); idx++) {
+                    QCPData qcpData;
+                    qcpData.key = _userData.fq*1000;
+                    qcpData.value = _userData.values.at(idx);
+                    QCPDataMap* map = m_measurements.last().userGraphs.at(idx);
+                    map->insert(qcpData.key,qcpData);
+                    QCPDataMap* vmap = m_viewMeasurements.last().userGraphs.at(idx);
+                    vmap->insert(qcpData.key,qcpData);
+                }
+                QVector <double> x,y;
+                x.append(_userData.fq*1000);
+                x.append(_userData.fq*1000);
+                y.append(m_userWidget->yAxis->getRangeLower());
+                y.append(m_userWidget->yAxis->getRangeUpper());
+                m_userWidget->graph(0)->setData(x,y);
+            }
+        }
+    }
+    if (!selected.isEmpty()) {
+        m_tableWidget->selectRow(selected.at(0)->row());
+        emit selectMeasurement(selected.at(0)->row(), selected.at(0)->column());
+    }
+}
+
+void Measurements::redrawTDR()
+{
+    int mode = m_farEndMeasurement;
+    for (int index=0; index<m_measurements.length(); index++) {
+        measurement& mm = (mode == 1)
+                ? m_farEndMeasurementsSub[index]
+                : ( (mode == 2) ? m_farEndMeasurementsAdd[index] : m_measurements[index] );
+
+        int len = CalcTdr(m_calibration->getCalibrationEnabled()
+                      ? &mm.dataRXCalib
+                      : &mm.dataRX);
+        m_tdrWidget->xAxis->setRangeUpper(m_tdrRange);
+        m_tdrWidget->xAxis->setRangeMax(m_tdrRange);
+        double step = m_tdrRange/len;
+        mm.tdrImpGraph.clear();
+        mm.tdrStepGraph.clear();
+        mm.tdrImpGraphFeet.clear();
+        mm.tdrStepGraphFeet.clear();
+        for(int i = 0; i < len; ++i)
+        {
+            double x = i;
+            double y = m_pdTdrImp[i];
+            QCPData data;
+            data.key = x*step;
+            data.value = y;
+            mm.tdrImpGraph.insert(data.key,data);
+            data.value = m_pdTdrStep[i];
+            mm.tdrStepGraph.insert(data.key,data);
+
+            QCPData dataFeet;
+            dataFeet.key = x*step;
+            dataFeet.value = y;
+            mm.tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
+            dataFeet.value = m_pdTdrStep[i];
+            mm.tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
+        }
+        m_tdrWidget->graph(index*2+1)->setData(
+                        m_measureSystemMetric ? &mm.tdrImpGraph : &mm.tdrImpGraphFeet, true);
+        m_tdrWidget->graph(index*2+2)->setData(
+                        m_measureSystemMetric ? &mm.tdrStepGraph : &mm.tdrStepGraphFeet, true);
+    } // for index
+}
+
+void Measurements::redrawSWR()
+{
+    if (m_calibration->getCalibrationEnabled())
+    {
+        if(m_farEndMeasurement != 0)
+        {
+            for(int i = 0; i < m_measurements.length(); ++i)
+            {
+                m_swrWidget->graph(i+1)->setData(m_farEndMeasurement == 1
+                                                 ? &m_farEndMeasurementsSub[i].swrGraph
+                                                 : &m_farEndMeasurementsAdd[i].swrGraph,
+                                                 true);
+            }
+        }else
+        {
+            for(int i = 0; i < m_measurements.length(); ++i)
+            {
+                m_swrWidget->graph(i+1)->setData(&m_measurements[i].swrGraphCalib, true);
+            }
+        }
+    } else {
+        for(int i = 0; i < m_measurements.length(); ++i)
+        {
+            m_viewMeasurements[i].swrGraph.clear();
+            QCPDataMap *map;
+            switch (m_farEndMeasurement) {
+            case 1:
+                map = &m_farEndMeasurementsSub[i].swrGraph;
+                break;
+            case 2:
+                map = &m_farEndMeasurementsAdd[i].swrGraph;
+                break;
+            default:
+                map = &m_measurements[i].swrGraph;
+                break;
+            }
+            QList <double> list = map->keys();
+            QCPData data;
+            QCPData viewData;
+            double maxSwr = MAX_SWR;//m_swrWidget->yAxis->range().upper;
+            for(int n = 0; n < list.length(); ++n)
+            {
+                data.key = list.at(n);
+                viewData = map->value(list.at(n));
+                if( viewData.value > maxSwr || viewData.value < 1)
+                {
+                    data.value = maxSwr;
+                }else
+                {
+                    data.value = viewData.value;
+                }
+                m_viewMeasurements[i].swrGraph.insert(data.key,data);
+            }
+            m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
+        }
+    }
+}
+
+
+void Measurements::on_exportCableSettings(QString _description)
+{
+    Export* exportDialog = new Export(m_tableWidget);
+    exportDialog->setAttribute(Qt::WA_DeleteOnClose);
+    exportDialog->setWindowTitle(tr("Export"));
+    exportDialog->setMeasurements(this, m_measurements.size()-1, true, _description);
+
+    exportDialog->exec();
+}
+
 

@@ -24,7 +24,7 @@ static double MIN_USER_RANGE = -2000;
 static double MAX_USER_RANGE = 2000;
 
 static int ABSOLUTE_MIN_FQ = 0;
-static int ABSOLUTE_MAX_FQ = 1400000;
+static int ABSOLUTE_MAX_FQ = 10000000;
 static int MAX_DOTS = 2000;
 
 enum {
@@ -44,6 +44,7 @@ enum {
     AA500,
     AA520,
     AA600,
+    AA650,
     AA700ZOOM,
     AA1000,
     AA1400,
@@ -63,10 +64,11 @@ static QString names[QUANTITY]={
     "AA-230",
     "AA-230PRO",
     "AA-230 ZOOM",
-    "AA-230 Stick",
+    "Stick 230",
     "AA-500",
     "AA-520",
     "AA-600",
+    "AA-650 ZOOM",
     "AA-700 ZOOM",
     "AA-1000",
     "AA-1400",
@@ -89,6 +91,7 @@ static QString minFq[QUANTITY]={//in kHz
     "100",  //AA-500
     "100",  //AA-520
     "100",  //AA-600
+    "100",  //AA-650ZOOM
     "100",  //AA-700ZOOM
     "100",  //AA-1000
     "100",  //AA-1400
@@ -111,6 +114,7 @@ static QString maxFq[QUANTITY]={//in kHz
     "500000",   //AA-500
     "520000",   //AA-520
     "600000",   //AA-600
+    "650000",   //AA-650ZOOM
     "700000",   //AA-700ZOOM
     "1000000",  //AA-1000
     "1400000",  //AA-1400
@@ -135,6 +139,7 @@ static int lcdHeight[QUANTITY]={//in kHz
     0,   //AA-500
     0,   //AA-520
     240,   //AA-600
+    240,   //AA-650ZOOM
     0,   //AA-700ZOOM
     240,  //AA-1000
     240,   //AA-1400
@@ -158,6 +163,7 @@ static int lcdWidth[QUANTITY]={//in kHz
     0,   //AA-500
     0,   //AA-520
     320,   //AA-600
+    320,   //AA-650ZOOM
     0,   //AA-700ZOOM
     320,  //AA-1000
     320,   //AA-1400

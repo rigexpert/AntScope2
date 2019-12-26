@@ -3996,7 +3996,7 @@ QCPAxis::QCPAxis(QCPAxisRect *parent, AxisType type) :
   QCPLayerable(parent->parentPlot(), QString(), parent),
   // axis base:
   m_rangeMin(0),
-  m_rangeMax(1400000),
+  m_rangeMax(10000000),
   mAxisType(type),
   mAxisRect(parent),
   mPadding(5),

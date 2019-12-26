@@ -5,7 +5,7 @@
 #include "analyzer/customanalyzer.h"
 
 bool g_developerMode = false;
-
+bool g_raspbian = false;
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -104,6 +104,8 @@ int main(int argc, char *argv[])
         g_developerMode = true;
         MAX_DOTS = 1000000;
     }
+
+    g_raspbian = QSysInfo::productType().contains("raspbian", Qt::CaseInsensitive);
 
     MainWindow w;
 

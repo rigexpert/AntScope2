@@ -53,12 +53,12 @@ public:
     void saveData(quint32 number, QString path);
     void loadData(QString path);
 
-    void exportData(QString _name, int _type, int _number);
+    void exportData(QString _name, int _type, int _number, bool _applyCable=false, QString _description=QString());
     void importData(QString _name);
     void importData(QString _name, bool user_format);
 
     double getZ0(void) const{ return m_Z0;}
-    void setZ0(double _Z0) { m_Z0 = _Z0;}
+    void setZ0(double _Z0);
 
     int CalcTdr(QVector<rawData> *data);
     void FFT(float real[], float imag[], int length, int Inverse = 0);
@@ -81,11 +81,15 @@ public:
     void startTDRProgress(QWidget* _parent, int _dots);
     void updateTDRProgress(int _dots);
     void stopTDRProgress();
+    void startAutocalibrateProgress(QWidget* _parent, int _dots);
+    void updateAutocalibrateProgress(int _dots, QString _msg);
+    void stopAutocalibrateProgress();
     bool isOneFqMode() { return m_oneFqMode; }
     void setAutoCalibration(int _mode) { m_autoCalibration=_mode; } // 0-NONE, 1-R,L(old AA-1400), 2-C,L(new AA-230 ZOOM)
     int  getAutoCalibration() { return m_autoCalibration; }
     QPair<double, double> autoCalibrate();
     void interrupt() { m_interrupted = true; }
+    bool isTDRMode() { return m_tdrProgressDlg != nullptr; }
 
 private:
 //    QVector <rawData> m_rawDataVector;
@@ -177,12 +181,16 @@ private:
     void calcFarEnd(void);
     rawData calcFarEnd(const rawData& data, int idx, bool refreshGraphs=true);
     void prepareGraphs(rawData _rawData, GraphData& data, GraphData& calibData);
+    void redrawTDR();
+    void redrawSWR();
+    void exportData(QString _name, int _type, QVector<rawData>& vector, QString _description=QString());
 
 signals:
     void calibrationChanged();
     void import_finished(double _fqMin_khz, double _fqMax_khz);
     void measurementCanceled();
     void oneFqCanceled();
+    void selectMeasurement(int row, int col);
 
 public slots:
     void on_newDataRedraw(rawData _rawData);
@@ -213,6 +221,8 @@ public slots:
     void updateOneFqWidget(GraphData& _data);
     void hideOneFqWidget(bool dummy=false);
     void on_isRangeChanged(bool);
+    void on_impedanceChanged(double _z0);
+    void on_exportCableSettings(QString _description);
 };
 
 #endif // MEASUREMENTS_H

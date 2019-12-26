@@ -56,6 +56,7 @@ public:
 
     static QString programDataPath(QString _fileName);
     static QString localDataPath(QString _fileName);
+    static QString languageDataFolder();
     static QString setIniFile();
 
     void setFirmwareAutoUpdate(bool checked);
@@ -136,6 +137,7 @@ signals:
 
     void languageChanged(int);
     void bandChanged(QString);
+    void exportCableSettings(QString _description);
 
 private slots:
     void on_browseBtn_clicked();
@@ -184,7 +186,8 @@ private slots:
     void on_fqMinFinished();
     void on_fqMaxFinished();
     void on_PointsFinished();
-
+    void on_systemImpedance();
+    void on_exportCableSettings();
 };
 
 #endif // SETTINGS_H

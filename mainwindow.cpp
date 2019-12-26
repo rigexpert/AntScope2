@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "popupindicator.h"
 #include "analyzer/customanalyzer.h"
+#include "Notification.h"
 
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
@@ -168,7 +169,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_rlWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_rl(QMouseEvent*)));
 
     connect(m_tdrWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_tdr(QMouseEvent*)));
-    //connect(m_tdrWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_tdr(QWheelEvent*)));
+    connect(m_tdrWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_tdr(QWheelEvent*)));
 
     connect(m_smithWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_smith(QMouseEvent*)));
     if (g_developerMode) {
@@ -185,6 +186,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this,SIGNAL(stopMeasure()), m_analyzer, SLOT(on_stopMeasure()));
     connect(this,&MainWindow::measureOneFq, m_analyzer,&Analyzer::on_measureOneFq);
     connect(m_analyzer, &Analyzer::signalMeasurementError, this, &MainWindow::onMeasurementError);
+    connect(m_analyzer, &Analyzer::showNotification, this, &MainWindow::on_showNotification);
 
     QShortcut *shortF1 = new QShortcut(QKeySequence("F1"),this);
     connect(shortF1,SIGNAL(activated()),this,SLOT(on_pressF1()));
@@ -290,6 +292,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_measurements, &Measurements::import_finished, this, &MainWindow::on_importFinished);
     connect(m_measurements, &Measurements::measurementCanceled, this, &MainWindow::stopMeasure);
     connect(m_measurements, &Measurements::oneFqCanceled, this, &MainWindow::on_pressEsc);
+    connect(m_measurements, &Measurements::selectMeasurement, this, &MainWindow::on_tableWidget_measurments_cellClicked);
 
     QString name = "AntScope2 v." + QString(ANTSCOPE2VER);
     name += tr(" - Analyzer not connected");
@@ -809,7 +812,7 @@ void MainWindow::setWidgetsSettings()
     m_tdrWidget->yAxis->setRange(-1,1);
     m_tdrWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     m_tdrWidget->axisRect()->setRangeZoom(Qt::Horizontal);
-    m_tdrWidget->axisRect()->setRangeDrag(Qt::Horizontal);
+    m_tdrWidget->axisRect()->setRangeDrag(Qt::Horizontal | Qt::Vertical);
     m_tdrWidget->xAxis->setTickLabelFont(fontTickLabel);
     m_tdrWidget->yAxis->setTickLabelFont(fontTickLabel);
     m_tdrWidget->xAxis->setLabelFont(fontLabel);
@@ -2800,41 +2803,40 @@ void MainWindow::on_mouseMove_rl(QMouseEvent *e)
 
 void MainWindow::on_mouseWheel_tdr(QWheelEvent* e)
 {
-    static int state = 10;
+    static int state = 0;
+    //qDebug() << "MainWindow::on_mouseWheel_tdr: state" << state << ", lo " << m_tdrWidget->yAxis->getRangeLower() << ", up " << m_tdrWidget->yAxis->getRangeUpper();
     if (e->modifiers() == Qt::ControlModifier)
     {
-        if(m_measurements)
-        {
-            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
-        }
-        double up = m_tdrWidget->yAxis->getRangeUpper();
-        double lo = m_tdrWidget->yAxis->getRangeLower();
+//        if(m_measurements)
+//        {
+//            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+//        }
+//        double up = m_tdrWidget->yAxis->getRangeUpper();
+//        double lo = m_tdrWidget->yAxis->getRangeLower();
 
-        double diff = (up - lo)*0.1;
         if(e->delta() < 0)
         {
-            //if(state <= 9)
+            if(state <= 30)
             {
-                diff *= -1;
                 ++state;
-//                m_tdrWidget->yAxis->setRangeUpper(up + up*0.1 );
-//                m_tdrWidget->yAxis->setRangeLower(lo - lo*0.1);
-//                m_tdrWidget->replot();
+//                m_tdrWidget->yAxis->setRangeUpper(up+0.1);//(up + up*0.1 );
+//                m_tdrWidget->yAxis->setRangeLower(lo-0.1);//(lo - lo*0.1);
+                m_tdrWidget->yAxis->scaleRange(1.1, 0);
+                m_tdrWidget->replot();
             }
         } else {
-            //if(state > 1)
+            if(state > -30)
             {
                 --state;
-//                m_tdrWidget->yAxis->setRangeUpper(up - up*0.1 );
-//                m_tdrWidget->yAxis->setRangeLower(lo + lo*0.1);
-//                m_tdrWidget->replot();
+//                m_tdrWidget->yAxis->setRangeUpper(up-0.1);//(up - up*0.1 );
+//                m_tdrWidget->yAxis->setRangeLower(lo+0.1);//(lo + lo*0.1);
+                m_tdrWidget->yAxis->scaleRange(0.9, 0);
+                m_tdrWidget->replot();
             }
         }
-        m_tdrWidget->yAxis->moveRange(diff);
-        m_tdrWidget->replot();
         QTimer::singleShot(5, m_markers, SLOT(redraw()));
+        //emit rescale();
     }
-    emit rescale();
 }
 
 void MainWindow::on_mouseMove_tdr(QMouseEvent * e)
@@ -3565,10 +3567,11 @@ void MainWindow::on_measurementComplete()
 
     int autoCalibration = m_measurements->getAutoCalibration();
     if (autoCalibration != 0) {
+        m_measurements->stopTDRProgress();
         autoCalibrate();
+    } else {
+        m_measurements->stopTDRProgress();
     }
-
-    m_measurements->stopTDRProgress();
     m_tdrWidget->xAxis->setRangeLower(0);
 
     QTimer::singleShot(5, m_markers, SLOT(redraw()));
@@ -3716,6 +3719,8 @@ void MainWindow::on_settingsBtn_clicked()
                 m_measurements,SLOT(setGraphHintEnabled(bool)));
         connect(m_settingsDialog, SIGNAL(graphBriefHintChecked(bool)),
                 m_measurements,SLOT(setGraphBriefHintEnabled(bool)));
+        connect(m_settingsDialog, &Settings::exportCableSettings,
+                m_measurements, &Measurements::on_exportCableSettings);
     }
 
     if(m_markers)
@@ -3948,6 +3953,8 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
 
 void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int column)
 {
+    Q_UNUSED(column);
+
     if (m_measurements->isEmpty())
         return;
     qint32 count = m_measurements->getMeasurementLength();
@@ -4053,7 +4060,7 @@ void MainWindow::on_printBtn_clicked()
         m_print->setRange(m_swrWidget->xAxis->range(),m_swrWidget->yAxis->range());
         m_print->setLabel(m_swrWidget->xAxis->label(), m_swrWidget->yAxis->label());
         int cnt = m_swrWidget->graphCount();
-        for(int i = 1; i < m_swrWidget->graphCount(); ++i)
+        for(int i = 1; i < cnt; ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
                     index( i-1, 0, QModelIndex());
@@ -4216,7 +4223,6 @@ void MainWindow::on_importBtn_clicked()
     QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastOpenPath,  "S1p (*.s1p);;"
                                                                                     "Csv (*.csv);;"
                                                                                     "Nwl (*.nwl);;"
-                                                                                    "AntScope1 (*.antdata);;"
                                                                                     "AntScope2 (*.asd )");
     m_measurements->loadData(path);
     ui->measurmentsSaveBtn->setEnabled(true);
@@ -4235,6 +4241,9 @@ void MainWindow::on_Z0Changed(double _Z0)
     m_Z0 = _Z0;
     m_calibration->setZ0(m_Z0);
     m_measurements->setZ0(m_Z0);
+
+    m_measurements->on_impedanceChanged(m_Z0);
+    qDebug() << "MainWindow::on_Z0Changed " << m_Z0;
 }
 
 void MainWindow::updateGraph ()
@@ -4661,7 +4670,7 @@ void MainWindow::on_changedSerialPort(QString portName)
 bool MainWindow::loadLanguage(QString locale)
 { //locale: en, ukr, ru, ja, etc.
     QString title = windowTitle();
-    bool res = m_qtLanguageTranslator->load("QtLanguage_" + locale, QCoreApplication::applicationDirPath());
+    bool res = m_qtLanguageTranslator->load("QtLanguage_" + locale, Settings::languageDataFolder());
     qApp->installTranslator(m_qtLanguageTranslator);
     ui->retranslateUi(this);
 
@@ -4884,9 +4893,14 @@ void MainWindow::on_dataChanged(qint64 _center_khz, qint64 _range_khz, qint32 _d
 
 void MainWindow::on_importFinished(double _fqMin_khz, double _fqMax_khz)
 {
-    qint64 _range = (qint64)(_fqMax_khz - _fqMin_khz);
-    qint64 _center = (qint64)(_fqMin_khz + _range / 2);
-    on_dataChanged(_center, _range, ui->spinBoxPoints->value());
+    double _range = (_fqMax_khz - _fqMin_khz);
+    double _center = (_fqMin_khz + _range / 2);
+
+    measurement* mm = m_measurements->getMeasurement(m_measurements->getMeasurementLength() - 1);
+    if (mm != nullptr)
+        mm->set(_center*1000, _range*1000, mm->dataRX.size()-1);
+
+    on_dataChanged((qint64)_center, (qint64)_range, ui->spinBoxPoints->value());
 
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);
@@ -5074,3 +5088,11 @@ void MainWindow::changeMeasurmentsColor(int _row, QColor& _color)
         updateGraph();
     }
 }
+
+void MainWindow::on_showNotification(QString msg, QString url)
+{
+    QRect rn(0, 0, rect().width(), 40);
+    Notification::showMessage(msg, url, rn, 5000, ui->tabWidget->currentWidget());
+}
+
+

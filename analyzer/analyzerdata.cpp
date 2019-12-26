@@ -39,7 +39,7 @@ void AnalyzerData::on_listWidget_itemDoubleClicked(QListWidgetItem *item)
 
     int div = 1;
     QString model = names[m_model];
-    if (model == "AA-230 ZOOM" || model == "AA-55 ZOOM")
+    if (model == "AA-230 ZOOM" || model == "AA-55 ZOOM" || model == "AA-650 ZOOM")
         div = 1000;
     // center, range, dots
     emit dataChanged(list[1].toULongLong()/div, list[2].toULongLong()/div, list2[0].toInt());

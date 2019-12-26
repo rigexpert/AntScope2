@@ -181,7 +181,7 @@ void Screenshot::on_newData(QByteArray data)
             }
         }
     }
-    else if (model == "AA-230 Stick") {
+    else if (model == "Stick 230") {
         while (!m_inputData.isEmpty()) {
             unsigned char data = m_inputData.takeFirst();
             //if (data != 0)
@@ -255,7 +255,7 @@ void Screenshot::on_newData(QByteArray data)
             m_imageVector.clear();
             repaint();
         }
-    } else if (model == "AA-230 Stick") {
+    } else if (model == "Stick 230") {
         //qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
         {

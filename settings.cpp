@@ -73,6 +73,8 @@ Settings::Settings(QWidget *parent) :
 
     m_settings->endGroup();
 
+    connect(ui->lineEdit_systemImpedance, &QLineEdit::editingFinished, this, &Settings::on_systemImpedance);
+
     ui->cableComboBox->addItem(tr("Change parameters or choose from list..."));
     ui->cableComboBox->setStyleSheet("QComboBox { combobox-popup: 0; }");
     ui->cableComboBox->setMaxVisibleItems(20);
@@ -82,6 +84,7 @@ Settings::Settings(QWidget *parent) :
 
     ui->lineEditPoints->setText("500");
     connect(ui->lineEditPoints, &QLineEdit::editingFinished, this, &Settings::on_PointsFinished);
+    connect(ui->exportBtn, &QPushButton::clicked, this, &Settings::on_exportCableSettings);
 
     //{
     // TODO Bug #2247: update doesn't work from Antscope2
@@ -106,7 +109,6 @@ Settings::Settings(QWidget *parent) :
 
 Settings::~Settings()
 {
-    emit paramsChanged();
     double Z0 = ui->lineEdit_systemImpedance->text().toDouble();
     if((Z0 > 0) && (Z0 <= 1000))
     {
@@ -124,6 +126,16 @@ Settings::~Settings()
     m_settings->setValue("currentIndex",ui->tabWidget->currentIndex());
     m_settings->endGroup();
 
+    // auto calibration
+    m_settings->beginGroup("Auto-calibration");
+    m_settings->setValue("cable_length_min", ui->lineEditMinLength->text());
+    m_settings->setValue("cable_length_max", ui->lineEditMaxLength->text());
+    m_settings->setValue("cable_length_steps", ui->lineEditStepLength->text());
+    m_settings->setValue("cable_res_min", ui->lineEditMinR->text());
+    m_settings->setValue("cable_res_max", ui->lineEditMaxR->text());
+    m_settings->setValue("cable_res_steps", ui->lineEditStepR->text());
+    m_settings->endGroup();
+
     if(m_analyzer != NULL)
     {
         m_analyzer->setIsMeasuring(false);
@@ -135,6 +147,8 @@ Settings::~Settings()
         delete m_generalTimer;
         m_generalTimer = NULL;
     }
+    emit paramsChanged();
+
     delete ui;
 }
 
@@ -858,6 +872,11 @@ QString Settings::localDataPath(QString _fileName)
 #endif
 // Linux
 #ifdef Q_OS_LINUX
+    extern bool g_raspbian;
+    if (g_raspbian)
+    {
+        return "/usr/share/RigExpert/AntScope2/" + _fileName;
+    }
     QDir dir_ini2 = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     return dir_ini2.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
 #endif
@@ -868,6 +887,17 @@ QString Settings::localDataPath(QString _fileName)
 #endif
   qDebug("TODO Settings::localDataPath");
   return QString();
+}
+
+
+QString Settings::languageDataFolder()
+{
+    extern bool g_raspbian;
+    if (g_raspbian)
+    {
+        return "/usr/share/RigExpert/AntScope2";
+    }
+    return QCoreApplication::applicationDirPath();
 }
 
 QString Settings::programDataPath(QString _fileName)
@@ -896,6 +926,12 @@ QString Settings::programDataPath(QString _fileName)
   //qDebug("TODO Settings::programDataPath");
 // Linux
 #ifdef Q_OS_LINUX
+    extern bool g_raspbian;
+    if (g_raspbian)
+    {
+        return "/usr/share/RigExpert/AntScope2";
+    }
+
     QDir dir = QCoreApplication::applicationDirPath();
     QString name = dir.absoluteFilePath("Resources/" + _fileName);
     return name;
@@ -1110,6 +1146,16 @@ void Settings::initCustomizeTab()
     ui->comboBoxName->blockSignals(false);
     ui->comboBoxPrototype->blockSignals(false);
     on_enableCustomizeControls(CustomAnalyzer::customized());
+
+    // auto calibration
+    m_settings->beginGroup("Auto-calibration");
+    ui->lineEditMinLength->setText(m_settings->value("cable_length_min", "0").toString());
+    ui->lineEditMaxLength->setText(m_settings->value("cable_length_max", "0.02").toString());
+    ui->lineEditStepLength->setText(m_settings->value("cable_length_steps", "100").toString());
+    ui->lineEditMinR->setText(m_settings->value("cable_res_min", "20").toString());
+    ui->lineEditMaxR->setText(m_settings->value("cable_res_max", "40").toString());
+    ui->lineEditStepR->setText(m_settings->value("cable_res_steps", "100").toString());
+    m_settings->endGroup();
 }
 
 void Settings::on_enableCustomizeControls(bool enable)
@@ -1206,5 +1252,49 @@ void Settings::on_PointsFinished()
 {
     QString str = ui->lineEditPoints->text();
     m_calibration->setDotsNumber(str.toInt());
+}
+
+void Settings::on_systemImpedance()
+{
+    qDebug() << "Settings::on_systemImpedance";
+    double Z0 = ui->lineEdit_systemImpedance->text().toDouble();
+    if((Z0 > 0) && (Z0 <= 1000))
+    {
+        emit Z0Changed(Z0);
+    }
+}
+
+void Settings::on_exportCableSettings()
+{
+    QString desc;
+    if (m_farEndMeasurement != 0) {
+        QString units="dB/100ft";
+        int index = ui->cableLossComboBox->currentIndex();//(paramsList.at(5).toInt());//6. Loss units (0=dB/100ft, 1=dB/ft, 2=dB/100m, 3=dB/m)
+        switch(index) {
+            case 1: units="dB/ft"; break;
+            case 2: units="dB/100m"; break;
+            case 3: units="dB/m"; break;
+        }
+        QString fq = ui->anyFq->isChecked() ? "any frequency" : (ui->atMHz->text() + " MHz");
+
+        desc += QString("! %1 cable:\n")
+                .arg(m_farEndMeasurement==1?"Subtract":"Add");
+        desc += QString("! Velocity factor %1\n")
+                .arg(ui->velocityFactor->text().toDouble(), 0, 'f', 6, QChar(' '));
+        desc += QString("! Length %1, R0 %2\n")
+                .arg(ui->cableLen->text().toDouble(), 0, 'f', 6, QChar(' '))
+                .arg(ui->cableR0->text().toDouble(), 0, 'f', 2, QChar(' '));
+        desc += QString("! Conductive loss %1 %2 at %3\n")
+                .arg(ui->conductiveLoss->text().toDouble(), 0, 'f', 6, QChar(' '))
+                .arg(units)
+                .arg(fq);
+        desc += QString("! Dielectric loss %1 %2 at %3")
+                .arg(ui->dielectricLoss->text().toDouble(), 0, 'f', 6, QChar(' '))
+                .arg(units)
+                .arg(fq);
+    } else {
+        desc = "! Ignore cable";
+    }
+    emit exportCableSettings(desc);
 }
 

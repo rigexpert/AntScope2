@@ -1,7 +1,7 @@
 #include "analyzer.h"
 #include "popupindicator.h"
 #include "customanalyzer.h"
-
+#include <QDateTime>
 
 Analyzer::Analyzer(QObject *parent) : QObject(parent),
     m_hidAnalyzer(nullptr),
@@ -62,27 +62,74 @@ double Analyzer::getVersion() const
 void Analyzer::on_downloadInfoComplete()
 {
     QString ver = m_downloader->version();
-    if(ver.isEmpty())
+    if (m_bManualUpdate)
     {
-        QMessageBox::information(nullptr, tr("Latest version"),
-                             tr("Can not get the latest version.\nPlease try later."));
-    }else
-    {
-        double internetVersion = ver.toDouble();//ver.remove(".").toInt();
-        m_updateDialog = new UpdateDialog();
-        m_updateDialog->setAttribute(Qt::WA_DeleteOnClose);
-        m_updateDialog->setWindowTitle(tr("Updating"));
-        connect(m_updateDialog,SIGNAL(update()),this,SLOT(on_internetUpdate()));
-        connect(this, SIGNAL(updatePercentChanged(int)),m_updateDialog,SLOT(on_percentChanged(qint32)));
-        if(internetVersion > getVersion())
+        if(ver.isEmpty())
         {
-            m_updateDialog->setMainText(tr("New version of firmware is available now!"));
+            QMessageBox::information(nullptr, tr("Latest version"),
+                                 tr("Can not get the latest version.\nPlease try later."));
         }else
         {
-            m_updateDialog->setMainText(tr("You have the latest version of firmware."));
+            double internetVersion = ver.toDouble();//ver.remove(".").toInt();
+            m_updateDialog = new UpdateDialog();
+            m_updateDialog->setAttribute(Qt::WA_DeleteOnClose);
+            m_updateDialog->setWindowTitle(tr("Updating"));
+            connect(m_updateDialog,SIGNAL(update()),this,SLOT(on_internetUpdate()));
+            connect(this, SIGNAL(updatePercentChanged(int)),m_updateDialog,SLOT(on_percentChanged(qint32)));
+            if(internetVersion > getVersion())
+            {
+                m_updateDialog->setMainText(tr("New version of firmware is available now!"));
+            }else
+            {
+                m_updateDialog->setMainText(tr("You have the latest version of firmware."));
+            }
+            m_updateDialog->exec();
         }
-        m_updateDialog->exec();
+    } else {  // auto check for new firmvare
+        if (!ver.isEmpty())
+        {
+            double internetVersion = ver.toDouble();
+            if(internetVersion > getVersion())
+            {
+                const qint64 interval = 24*60*60;
+                QString serialNumber = getSerialNumber();
+                QString key = "firmware_" + serialNumber;
+
+                QSettings settings(Settings::setIniFile(), QSettings::IniFormat);
+                settings.beginGroup("Update");
+                qint64 last_notify = settings.value(key, 0).toLongLong();
+
+                QDateTime last_dt;
+                last_dt.setMSecsSinceEpoch(last_notify);
+                QDateTime current_dt = QDateTime::currentDateTime();
+                if (last_dt.secsTo(current_dt) > interval)
+                {
+                    settings.setValue(key, QDateTime::currentMSecsSinceEpoch());
+                    emit showNotification(
+                                QString(tr("New version of firmware is available now!")),
+                                m_downloader->downloadLink());
+                }
+                settings.endGroup();
+            }
+        }
     }
+}
+
+bool Analyzer::needCheckForUpdate()
+{
+    const qint64 interval = 24*60*60;
+    QString serialNumber = getSerialNumber();
+    QString key = "firmware_" + serialNumber;
+
+    QSettings settings(Settings::setIniFile(), QSettings::IniFormat);
+    settings.beginGroup("Update");
+    qint64 last_notify = settings.value(key, 0).toLongLong();
+
+    QDateTime last_dt;
+    last_dt.setMSecsSinceEpoch(last_notify);
+    QDateTime current_dt = QDateTime::currentDateTime();
+
+    return last_dt.secsTo(current_dt) > interval;
 }
 
 void Analyzer::on_downloadFileComplete()
@@ -173,6 +220,7 @@ bool Analyzer::checkFile(QString path)
 
     QString prototype = CustomAnalyzer::currentPrototype();
     if(((names[getAnalyzerModel()] == "AA-230 ZOOM" || prototype == "AA-230 ZOOM") && (magic == m_MAGICAA230Z)) ||
+            ((names[getAnalyzerModel()] == "AA-650 ZOOM" || prototype == "AA-650 ZOOM") && (magic == m_MAGICAA230Z)) ||
             ((names[getAnalyzerModel()] == "AA-55 ZOOM" || prototype == "AA-55 ZOOM") && (magic == m_MAGICHID)) ||
             ((names[getAnalyzerModel()] == "AA-35 ZOOM" || prototype == "AA-35 ZOOM") && (magic == m_MAGICHID)) ||
             ((names[getAnalyzerModel()] == "AA-30 ZERO" || prototype == "AA-30 ZERO") && (magic == m_MAGICAA30ZERO)) ||
@@ -385,19 +433,18 @@ void Analyzer::on_hidAnalyzerFound (quint32 analyzerNumber)
     }
     m_hidAnalyzerFound = true;
     m_analyzerModel = analyzerNumber;
+
     QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentAlias() : names[m_analyzerModel];
     emit analyzerFound(str);
 
     //if(m_autoCheckUpdate)
-//    {
-//        QString url = "https://www.rigexpert.com/getfirmware?model=";
-//        url += names[m_analyzerModel].toLower().remove(" ").remove("-");
-//        url += "&sn=";
-//        url += m_hidAnalyzer->getSerial();
-//        url += "&revision=";
-//        url += "1";
-//        m_downloader->startDownloadInfo(QUrl(url));
-//    }
+    extern bool g_developerMode;
+    if (!g_developerMode)
+    {
+        QTimer::singleShot(5000, [this]() {
+            this->checkFirmwareUpdate();
+        });
+    }
 }
 
 void Analyzer::on_hidAnalyzerDisconnected ()
@@ -447,6 +494,15 @@ void Analyzer::on_comAnalyzerFound (quint32 analyzerNumber)
 //        url += "1";
 //        m_downloader->startDownloadInfo(QUrl(url));
 //    }
+    //if(m_autoCheckUpdate)
+    extern bool g_developerMode;
+    if (!g_developerMode)
+    {
+        QTimer::singleShot(5000, [this]() {
+            this->checkFirmwareUpdate();
+        });
+    }
+
 }
 
 void Analyzer::on_comAnalyzerDisconnected ()
@@ -583,8 +639,18 @@ void Analyzer::on_updatePercentChanged(int number)
     emit updatePercentChanged(number);
 }
 
+void Analyzer::checkFirmwareUpdate()
+{
+    if (needCheckForUpdate())
+    {
+        on_checkUpdatesBtn_clicked();
+        m_bManualUpdate = false;
+    }
+}
+
 void Analyzer::on_checkUpdatesBtn_clicked()
 {
+    m_bManualUpdate = true;
     if(m_downloader == nullptr)
     {
         m_downloader = new Downloader();
@@ -667,8 +733,8 @@ void Analyzer::on_measureCalib(int dotsNumber)
     if (CustomAnalyzer::customized()) {
         CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
         if (ca != nullptr) {
-            minFq_ = ca->minFq().toULongLong();
-            maxFq_ = ca->maxFq().toULongLong();
+            minFq_ = ca->minFq().toULongLong()*1000;
+            maxFq_ = ca->maxFq().toULongLong()*1000;
         }
     }
     if(m_comAnalyzerFound)
@@ -763,7 +829,7 @@ void Analyzer::slotFullInfo(QString str)
     QStringList list = str.split("\t");
     if (list.size() < 2)
         return;
-    m_mapFullInfo.insert(list[0], list[1]);
+    m_mapFullInfo.insert(list[0], list[1]);    
 }
 
 void Analyzer::searchAnalyzer()
