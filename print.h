@@ -25,7 +25,7 @@ public:
     void setData(QCPDataMap *m, QPen pen, QString name);
     void setSmithData(QCPCurveDataMap *map, QPen pen, QString name);
 
-    void drawBands(double y1, double y2);
+    void drawBands(QStringList* _bands, double y1, double y2);
     void addBand (double x1, double x2, double y1, double y2);
     void setHead(QString string);
 
@@ -46,7 +46,6 @@ private:
     Ui::Print *ui;
     QSettings * m_settings;
     QString m_lastPath;
-
 
 //    QGridLayout m_layout;
 

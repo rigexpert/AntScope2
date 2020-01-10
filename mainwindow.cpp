@@ -6,6 +6,7 @@
 
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
+extern int g_maxMeasurements; // see measurements.cpp
 extern void setAbsoluteFqMaximum();
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -66,6 +67,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_settings->endGroup();
     m_settings->beginGroup("Settings");
     m_fqRestrict = g_developerMode ? m_settings->value("restrictFq", true).toBool() : true;
+    g_maxMeasurements = m_settings->value("maxMeasurements", MAX_MEASUREMENTS).toInt();
     m_settings->endGroup();
 
     if (g_developerMode)
@@ -588,6 +590,11 @@ MainWindow::~MainWindow()
 
     m_settings->setValue("languageNumber", m_languageNumber);
 
+    m_settings->endGroup();
+
+    m_settings->beginGroup("Settings");
+    m_settings->setValue("restrictFq", m_fqRestrict);
+    m_settings->setValue("maxMeasurements", g_maxMeasurements);
     m_settings->endGroup();
 
     m_settings->beginGroup("Cable");
@@ -4045,6 +4052,15 @@ void MainWindow::on_printBtn_clicked()
         m_print->addRowText(lst.at(i));
     }
 
+    m_settings->beginGroup("Settings");
+    QString band = m_settings->value("current_band", "ITU Region 1 - Europe, Africa").toString();
+    m_settings->endGroup();
+    QStringList* bands = nullptr;
+    if (m_BandsMap.contains(band))
+    {
+        bands = m_BandsMap[band];
+    }
+
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzer->getModel()];
     QString name = ui->tabWidget->currentWidget()->objectName();
@@ -4056,7 +4072,7 @@ void MainWindow::on_printBtn_clicked()
     if(name == "tab_1")
     {
         string += "SWR graph";
-        m_print->drawBands( MIN_SWR, MAX_SWR);
+        m_print->drawBands(bands, MIN_SWR, MAX_SWR);
         m_print->setRange(m_swrWidget->xAxis->range(),m_swrWidget->yAxis->range());
         m_print->setLabel(m_swrWidget->xAxis->label(), m_swrWidget->yAxis->label());
         int cnt = m_swrWidget->graphCount();
@@ -4071,7 +4087,7 @@ void MainWindow::on_printBtn_clicked()
     }else if(name == "tab_2")
     {
         string += "Phase graph";
-        m_print->drawBands( m_phaseWidget->yAxis->range().lower, m_phaseWidget->yAxis->range().upper);
+        m_print->drawBands(bands, m_phaseWidget->yAxis->range().lower, m_phaseWidget->yAxis->range().upper);
         m_print->setRange(m_phaseWidget->xAxis->range(),m_phaseWidget->yAxis->range());
         m_print->setLabel(m_phaseWidget->xAxis->label(), m_phaseWidget->yAxis->label());
         for(int i = 1; i < m_phaseWidget->graphCount(); ++i)
@@ -4085,7 +4101,7 @@ void MainWindow::on_printBtn_clicked()
     }else if(name == "tab_3")
     {
         string += "RXZ graph";
-        m_print->drawBands( m_rsWidget->yAxis->range().lower, m_rsWidget->yAxis->range().upper);
+        m_print->drawBands(bands, m_rsWidget->yAxis->range().lower, m_rsWidget->yAxis->range().upper);
         m_print->setRange(m_rsWidget->xAxis->range(),m_rsWidget->yAxis->range());
         m_print->setLabel(m_rsWidget->xAxis->label(), m_rsWidget->yAxis->label());
         for(int i = 1; i < m_rsWidget->graphCount(); ++i)
@@ -4097,7 +4113,7 @@ void MainWindow::on_printBtn_clicked()
     }else if(name == "tab_4")
     {
         string += "RXZ parallel graph";
-        m_print->drawBands( m_rpWidget->yAxis->range().lower, m_rpWidget->yAxis->range().upper);
+        m_print->drawBands(bands, m_rpWidget->yAxis->range().lower, m_rpWidget->yAxis->range().upper);
         m_print->setRange(m_rpWidget->xAxis->range(),m_rpWidget->yAxis->range());
         m_print->setLabel(m_rpWidget->xAxis->label(), m_rpWidget->yAxis->label());
         for(int i = 1; i < m_rpWidget->graphCount(); ++i)
@@ -4109,7 +4125,7 @@ void MainWindow::on_printBtn_clicked()
     }else if(name == "tab_5")
     {
         string += "RL graph";
-        m_print->drawBands( m_rlWidget->yAxis->range().lower, m_rlWidget->yAxis->range().upper);
+        m_print->drawBands(bands, m_rlWidget->yAxis->range().lower, m_rlWidget->yAxis->range().upper);
         m_print->setRange(m_rlWidget->xAxis->range(),m_rlWidget->yAxis->range());
         m_print->setLabel(m_rlWidget->xAxis->label(), m_rlWidget->yAxis->label());
         for(int i = 1; i < m_rlWidget->graphCount(); ++i)
@@ -4123,7 +4139,7 @@ void MainWindow::on_printBtn_clicked()
     }else if(name == "tab_6")
     {
         string += "TDR graph";
-        m_print->drawBands( m_tdrWidget->yAxis->range().lower, m_tdrWidget->yAxis->range().upper);
+        m_print->drawBands(bands, m_tdrWidget->yAxis->range().lower, m_tdrWidget->yAxis->range().upper);
         m_print->setRange(m_tdrWidget->xAxis->range(),m_tdrWidget->yAxis->range());
         m_print->setLabel(m_tdrWidget->xAxis->label(), m_tdrWidget->yAxis->label());
         for(int i = 1; i < m_tdrWidget->graphCount(); ++i)
@@ -4150,7 +4166,7 @@ void MainWindow::on_printBtn_clicked()
     }else if(name == "tab_8")
     {
         string += "User defined";
-        m_print->drawBands( m_userWidget->yAxis->range().lower, m_userWidget->yAxis->range().upper);
+        m_print->drawBands(bands, m_userWidget->yAxis->range().lower, m_userWidget->yAxis->range().upper);
         m_print->setRange(m_userWidget->xAxis->range(),m_userWidget->yAxis->range());
         m_print->setLabel(m_userWidget->xAxis->label(), m_userWidget->yAxis->label());
         for(int i = 1; i < m_userWidget->graphCount(); ++i)

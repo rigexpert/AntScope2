@@ -41,7 +41,7 @@
     </sizepolicy>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="General">
     <attribute name="title">
@@ -52,208 +52,263 @@
       <rect>
        <x>18</x>
        <y>26</y>
-       <width>436</width>
-       <height>210</height>
+       <width>478</width>
+       <height>266</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_26">
+     <layout class="QVBoxLayout" name="verticalLayout_16">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_15">
+       <layout class="QHBoxLayout" name="horizontalLayout_26">
         <item>
-         <widget class="QGroupBox" name="groupBox_7">
-          <property name="title">
-           <string>Measurement system</string>
-          </property>
-          <layout class="QFormLayout" name="formLayout_3">
-           <item row="0" column="0">
-            <widget class="QCheckBox" name="measureSystemMetric">
-             <property name="text">
-              <string>Metric</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QCheckBox" name="measureSystemAmerican">
-             <property name="text">
-              <string>American</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
+         <layout class="QVBoxLayout" name="verticalLayout_15">
+          <item>
+           <widget class="QGroupBox" name="groupBox_7">
+            <property name="title">
+             <string>Measurement system</string>
+            </property>
+            <layout class="QFormLayout" name="formLayout_3">
+             <item row="0" column="0">
+              <widget class="QCheckBox" name="measureSystemMetric">
+               <property name="text">
+                <string>Metric</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QCheckBox" name="measureSystemAmerican">
+               <property name="text">
+                <string>American</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <layout class="QHBoxLayout" name="horizontalLayout_36">
+               <item>
+                <widget class="QSpinBox" name="spinBoxMeasurements">
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>15</number>
+                 </property>
+                 <property name="value">
+                  <number>5</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_33">
+                 <property name="text">
+                  <string>Max measurements</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_12">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="title">
+             <string>Analyzer detection</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_14">
+             <item>
+              <widget class="QCheckBox" name="autoDetect">
+               <property name="text">
+                <string>Auto</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="manualDetect">
+               <property name="text">
+                <string>Manual</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_15">
+               <property name="text">
+                <string>Serial port:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="serialPortComboBox">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>24</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QGroupBox" name="groupBox_12">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="title">
-           <string>Analyzer detection</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_14">
-           <item>
-            <widget class="QCheckBox" name="autoDetect">
-             <property name="text">
-              <string>Auto</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="manualDetect">
-             <property name="text">
-              <string>Manual</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_15">
-             <property name="text">
-              <string>Serial port:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="serialPortComboBox">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>24</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
+         <layout class="QVBoxLayout" name="verticalLayout_9">
+          <item>
+           <widget class="QCheckBox" name="graphHintCheckBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Show graph hint</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="markersHintCheckBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Show markers hint</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="graphBriefHintCheckBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Show brief params under cursor</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="fqRestrictCheckBox">
+            <property name="text">
+             <string>Don't restrict frequency</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>System impedance:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_29">
+            <item>
+             <widget class="QLineEdit" name="lineEdit_systemImpedance">
+              <property name="maxLength">
+               <number>4</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Ohm</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>Bands highlighting:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="bandsCombobox"/>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_30">
+            <item>
+             <widget class="QLabel" name="languageLabel">
+              <property name="text">
+               <string>Language:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="languageComboBox"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
         </item>
        </layout>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_9">
+       <layout class="QHBoxLayout" name="horizontalLayout_35">
         <item>
-         <widget class="QCheckBox" name="graphHintCheckBox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+         <widget class="QPushButton" name="licencesBtn">
           <property name="text">
-           <string>Show graph hint</string>
+           <string>Licenses...</string>
           </property>
-          <property name="checked">
-           <bool>true</bool>
+          <property name="autoDefault">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="markersHintCheckBox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+         <spacer name="horizontalSpacer_8">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <property name="text">
-           <string>Show markers hint</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="graphBriefHintCheckBox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
+          <property name="sizeHint" stdset="0">
            <size>
-            <width>300</width>
-            <height>0</height>
+            <width>40</width>
+            <height>20</height>
            </size>
           </property>
-          <property name="text">
-           <string>Show brief params under cursor</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="fqRestrictCheckBox">
-          <property name="text">
-           <string>Don't restrict frequency</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>System impedance:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_29">
-          <item>
-           <widget class="QLineEdit" name="lineEdit_systemImpedance">
-            <property name="maxLength">
-             <number>4</number>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>Ohm</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_4">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_17">
-          <property name="text">
-           <string>Bands highlighting:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="bandsCombobox"/>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_30">
-          <item>
-           <widget class="QLabel" name="languageLabel">
-            <property name="text">
-             <string>Language:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="languageComboBox"/>
-          </item>
-         </layout>
+         </spacer>
         </item>
        </layout>
       </item>
@@ -1410,6 +1465,68 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>closeBtn</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>measureSystemMetric</tabstop>
+  <tabstop>measureSystemAmerican</tabstop>
+  <tabstop>autoDetect</tabstop>
+  <tabstop>manualDetect</tabstop>
+  <tabstop>serialPortComboBox</tabstop>
+  <tabstop>graphHintCheckBox</tabstop>
+  <tabstop>markersHintCheckBox</tabstop>
+  <tabstop>graphBriefHintCheckBox</tabstop>
+  <tabstop>fqRestrictCheckBox</tabstop>
+  <tabstop>lineEdit_systemImpedance</tabstop>
+  <tabstop>bandsCombobox</tabstop>
+  <tabstop>languageComboBox</tabstop>
+  <tabstop>licencesBtn</tabstop>
+  <tabstop>calibWizard</tabstop>
+  <tabstop>lineEditPoints</tabstop>
+  <tabstop>openOpenFileBtn</tabstop>
+  <tabstop>openCalibBtn</tabstop>
+  <tabstop>shortOpenFileBtn</tabstop>
+  <tabstop>shortCalibBtn</tabstop>
+  <tabstop>loadOpenFileBtn</tabstop>
+  <tabstop>loadCalibBtn</tabstop>
+  <tabstop>velocityFactor</tabstop>
+  <tabstop>cableLen</tabstop>
+  <tabstop>cableR0</tabstop>
+  <tabstop>conductiveLoss</tabstop>
+  <tabstop>dielectricLoss</tabstop>
+  <tabstop>cableLossComboBox</tabstop>
+  <tabstop>anyFq</tabstop>
+  <tabstop>atFq</tabstop>
+  <tabstop>atMHz</tabstop>
+  <tabstop>doNothingBtn</tabstop>
+  <tabstop>subtractCableBtn</tabstop>
+  <tabstop>addCableBtn</tabstop>
+  <tabstop>cableComboBox</tabstop>
+  <tabstop>exportBtn</tabstop>
+  <tabstop>updateGraphsBtn</tabstop>
+  <tabstop>customizeCheckBox</tabstop>
+  <tabstop>comboBoxName</tabstop>
+  <tabstop>comboBoxPrototype</tabstop>
+  <tabstop>lineEditMin</tabstop>
+  <tabstop>lineEditMax</tabstop>
+  <tabstop>spinBoxWidth</tabstop>
+  <tabstop>spinBoxHeight</tabstop>
+  <tabstop>btnAdd</tabstop>
+  <tabstop>btnRemove</tabstop>
+  <tabstop>btnAply</tabstop>
+  <tabstop>lineEditMinLength</tabstop>
+  <tabstop>lineEditMaxLength</tabstop>
+  <tabstop>lineEditStepLength</tabstop>
+  <tabstop>lineEditMinR</tabstop>
+  <tabstop>lineEditMaxR</tabstop>
+  <tabstop>lineEditStepR</tabstop>
+  <tabstop>browseLine</tabstop>
+  <tabstop>browseBtn</tabstop>
+  <tabstop>updateBtn</tabstop>
+  <tabstop>autoUpdatesCheckBox</tabstop>
+  <tabstop>checkUpdatesBtn</tabstop>
+  <tabstop>checkBox_AntScopeAutoUpdate</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -856,3 +856,46 @@ bool Analyzer::sendCommand(QString cmd)
     }
     return ret;
 }
+
+void Analyzer::setParseState(int _state)
+{
+    if (getHidAnalyzer() != 0) {
+        getHidAnalyzer()->setParseState(_state);
+    } else if (getComAnalyzer() != 0) {
+        getComAnalyzer()->setParseState(_state);
+    }
+}
+
+int Analyzer::getParseState()
+{
+    int ret = WAIT_NO;
+    if (getHidAnalyzer() != 0) {
+        getHidAnalyzer()->getParseState();
+    } else if (getComAnalyzer() != 0) {
+        getComAnalyzer()->getParseState();
+    }
+    return ret;
+}
+
+void Analyzer::on_getLicenses()
+{
+    QString cmd = "LLIC\r\n";
+    setParseState(WAIT_LICENSE_LIST);
+    sendCommand(cmd);
+}
+
+void Analyzer::on_generateLicence()
+{
+    QString cmd = "GLIC\r\n";
+    setParseState(WAIT_LICENSE_REQUEST);
+    sendCommand(cmd);
+}
+
+void Analyzer::on_applyLicense(QString& _license)
+{
+    if (getHidAnalyzer() != 0) {
+        getHidAnalyzer()->applyLicense(_license);
+    } else if (getComAnalyzer() != 0) {
+        getComAnalyzer()->applyLicense(_license);
+    }
+}

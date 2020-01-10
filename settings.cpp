@@ -3,8 +3,10 @@
 #include "popupindicator.h"
 #include "analyzer/customanalyzer.h"
 #include "fqinputvalidator.h"
+#include "licensesdialog.h"
 
 extern bool g_developerMode;
+extern int g_maxMeasurements; // see measurements.cpp
 extern QString appendSpaces(const QString& number);
 
 QString Settings::iniFilePath;
@@ -36,6 +38,7 @@ Settings::Settings(QWidget *parent) :
     ui->loadOpenFileBtn->setStyleSheet(style);
     ui->loadCalibBtn->setStyleSheet(style);
     ui->calibWizard->setStyleSheet(style);
+    ui->licencesBtn->setStyleSheet(style);
 
     style = "QGroupBox {border: 2px solid rgb(100,100,100); margin-top: 1ex;}";
     style += "QGroupBox::title {color: rgb(1, 178, 255);}";
@@ -64,13 +67,13 @@ Settings::Settings(QWidget *parent) :
     ui->graphHintCheckBox->setChecked(m_graphHintEnabled);
     ui->graphBriefHintCheckBox->setChecked(m_graphBriefHintEnabled);
 
+    ui->spinBoxMeasurements->setValue(g_maxMeasurements);
     // TODO developer(?)
     ui->fqRestrictCheckBox->setChecked(g_developerMode ? m_restrictFq : true);
     //if (!g_developerMode) {
         ui->fqRestrictCheckBox->setVisible(false);
     //}
     // ///
-
     m_settings->endGroup();
 
     connect(ui->lineEdit_systemImpedance, &QLineEdit::editingFinished, this, &Settings::on_systemImpedance);
@@ -105,6 +108,10 @@ Settings::Settings(QWidget *parent) :
         ui->serialPortComboBox->addItem(info.portName());
     }
     connect(ui->closeBtn, SIGNAL(pressed()), this, SLOT(close()));
+    ui->closeBtn->setFocus();
+
+    // TODO not implemented yet
+    ui->licencesBtn->setVisible(false);
 }
 
 Settings::~Settings()
@@ -117,11 +124,14 @@ Settings::~Settings()
 
     CustomAnalyzer::save();
 
+    g_maxMeasurements = ui->spinBoxMeasurements->value();
+
     m_settings->beginGroup("Settings");
     m_settings->setValue("markersHintEnabled", m_markersHintEnabled);
     m_settings->setValue("graphHintEnabled", m_graphHintEnabled);
     m_settings->setValue("graphBriefHintEnabled", m_graphBriefHintEnabled);
     m_settings->setValue("restrictFq", m_restrictFq);
+    m_settings->setValue("maxMeasurements", g_maxMeasurements);
 
     m_settings->setValue("currentIndex",ui->tabWidget->currentIndex());
     m_settings->endGroup();
@@ -238,6 +248,9 @@ void Settings::setAnalyzer(Analyzer * analyzer)
     if(analyzer)
     {
         m_analyzer = analyzer;
+
+        connect(ui->licencesBtn, &QPushButton::pressed, this, &Settings::on_licensesBtnPressed);
+
         qint32 num =  m_analyzer->getModel();
         if(num != 0)
         {
@@ -1076,7 +1089,7 @@ void Settings::on_closeButton_clicked()
     accept();
 }
 
-void Settings::on_bandsComboBox_currentIndexChanged(int index)
+void Settings::onBandsComboBox_currentIndexChanged(int index)
 {
     QString band = ui->bandsCombobox->itemText(index);
 
@@ -1096,7 +1109,7 @@ void Settings::setBands(QList<QString> list)
     m_settings->beginGroup("Settings");
     QString current_band = m_settings->value("current_band", "").toString();
     m_settings->endGroup();
-    connect(ui->bandsCombobox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_bandsComboBox_currentIndexChanged(int)));
+    connect(ui->bandsCombobox, SIGNAL(currentIndexChanged(int)), this, SLOT(onBandsComboBox_currentIndexChanged(int)));
     ui->bandsCombobox->setCurrentText(current_band);
 }
 
@@ -1298,3 +1311,11 @@ void Settings::on_exportCableSettings()
     emit exportCableSettings(desc);
 }
 
+
+void Settings::on_licensesBtnPressed()
+{
+    LicensesDialog* dlg = new LicensesDialog(m_analyzer, nullptr);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setWindowTitle(tr("Licenses"));
+    dlg->exec();
+}

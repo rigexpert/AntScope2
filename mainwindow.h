@@ -120,6 +120,7 @@ private:
 
     bool m_measureSystemMetric;
     double m_Z0;
+    int m_maxMeasurements=5;
 
 //    QTimer *m_redrawTimer;
     QTimer *m_1secTimer;

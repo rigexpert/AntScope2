@@ -64,6 +64,8 @@ public:
     QString getSerialNumber(void) const;
     int getDots() { return m_dotsNumber; }
     bool sendCommand(QString cmd);
+    void setParseState(int _state); // analyzerparameters.h: enum parse{}
+    int getParseState();
 
 private:
 //    void send (char* byte);
@@ -114,6 +116,9 @@ signals:
     void aa30updateComplete();
     void signalMeasurementError();
     void showNotification(QString msg, QString url);
+    void licensesList(QString& _licenses);
+    void licenseRequest(QString& _request);
+    void licenseApplyResult(QString& _result);
 
 public slots:
     void searchAnalyzer();
@@ -152,6 +157,11 @@ public slots:
     void on_changedSerialPort(QString portName);
     void slotFullInfo(QString str);
     bool needCheckForUpdate();
+
+    void on_getLicenses();
+    void on_generateLicence();
+    void on_applyLicense(QString& _license);
+
 };
 
 #endif // ANALYZER_H

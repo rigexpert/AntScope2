@@ -2,7 +2,7 @@
 #include "customanalyzer.h"
 #include <QtConcurrent/QtConcurrentRun>
 #include <QThread>
-
+#include "analyzer.h"
 
 QString hidError(hid_device* _device)
 {
@@ -389,7 +389,7 @@ bool hidAnalyzer::connect(quint32 vid, quint32 pid)
     if(m_hidDevice != nullptr)
     {
         hid_set_nonblocking(m_hidDevice, 1);
-        m_parseState = VER;
+        m_parseState = WAIT_VER;
         sendData("VER\r\n");
         sendData("FULLINFO\r\n");
         return true;
@@ -666,9 +666,51 @@ void hidAnalyzer::hidRead (void)
 
 qint32 hidAnalyzer::parse (QByteArray arr)
 {
-    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+    //qDebug() << "hidAnalyzer::parse() " << arr;
     quint32 retVal = 0;
-    if(m_parseState == WAIT_SCREENSHOT_DATA)
+    if (getParseState() == WAIT_LICENSE_LIST)
+    {
+        int pos = arr.indexOf("\r\n");
+        QString result = arr.left(pos);
+        if (result == "OK") {
+            setParseState(WAIT_NO);
+            return 4;
+        }
+        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+        if (analyzer != nullptr) {
+            emit analyzer->licensesList(result);
+        }
+        return result.length()+2;
+    } else if (getParseState() == WAIT_LICENSE_REQUEST)
+    {
+        int pos = arr.indexOf("\r\n");
+        QString result = arr.left(pos);
+        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+        if (analyzer != nullptr) {
+            emit analyzer->licenseRequest(result);
+        }
+        setParseState(WAIT_NO);
+        return result.length()+2;
+    } else if (getParseState() == WAIT_LICENSE_APPLY1)
+    {
+        setParseState(WAIT_LICENSE_APPLY2);
+        QString cmd = "ALICS-" + m_license.mid(m_license.length()/2);
+        sendData(cmd);
+        retVal += arr.length();
+        return retVal;
+    } else if (getParseState() == WAIT_LICENSE_APPLY2)
+    {
+        setParseState(WAIT_NO);
+        int pos = arr.indexOf("\r\n");
+        QString result = arr.left(pos);
+        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+        if (analyzer != nullptr) {
+            m_license.clear();
+            emit analyzer->licenseApplyResult(result);
+        }
+        retVal += arr.length();
+        return retVal;
+    } else if(m_parseState == WAIT_SCREENSHOT_DATA)
     {
         int pos = arr.indexOf("screencomp: ");
         if(pos == 0)
@@ -710,18 +752,8 @@ qint32 hidAnalyzer::parse (QByteArray arr)
         for(int i = 0; i < stringList.length(); ++i)
         {
             QString str = stringList.at(i);
-//            int r = str.indexOf('\r');
-//            if(r != -1)
-//            {
-//                str.remove(r,1);
-//                retVal++;
-//            }
-            int r = -1;
-            while ((r=str.indexOf('\r')) != -1)
-            {
-                str.remove(r,1);
-                retVal++;
-            }
+            retVal += str.length();
+            str.replace("\r", "");
             if(str.isEmpty())
             {
                 continue;
@@ -737,14 +769,12 @@ qint32 hidAnalyzer::parse (QByteArray arr)
 //                    emit signalMeasurementError();
                 continue;
             }
-            if(m_parseState == VER)
+            if(m_parseState == WAIT_VER)
             {
                 if (str.indexOf("MAC\t") == 0) {
-                    //qDebug() << "FULLINFO: " << str;
                     emit signalFullInfo(str);
                     continue;
                 } else if (str.indexOf("SN\t") == 0) {
-                    //qDebug() << "FULLINFO: " << str;
                     emit signalFullInfo(str);
                     continue;
                 } else if (str.contains("NAME")) {
@@ -782,19 +812,16 @@ qint32 hidAnalyzer::parse (QByteArray arr)
                             m_revision.clear();
                             m_revision.append('1');
                         }
-                        retVal += str.length();
                         break;
                     }
                 }
             }else if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA)
             {
                 m_stringList.append(str);
-                retVal += str.length();
                 str.clear();
             }else if(m_parseState == WAIT_ANALYZER_DATA)
             {
                 emit analyzerDataStringArrived(str);
-                retVal += str.length();
                 str.clear();
             }
         }
@@ -1013,3 +1040,13 @@ void hidAnalyzer::refreshReady()
         m_mutexSearch.unlock();
     }
 }
+
+void hidAnalyzer::applyLicense(QString _license)
+{
+    m_license = _license;
+    setParseState(WAIT_LICENSE_APPLY1);
+    QString cmd = "ALICF-" + _license.left(_license.length()/2) + "\r\n";;
+    sendData(cmd);
+}
+
+

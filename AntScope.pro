@@ -81,7 +81,8 @@ SOURCES += main.cpp\
     ProgressDlg.cpp \
     iprof.cpp \
     onefqwidget.cpp \
-    Notification.cpp
+    Notification.cpp \
+    licensesdialog.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -121,7 +122,8 @@ HEADERS  += mainwindow.h \
     iprof.h \
     htime.h \
     onefqwidget.h \
-    Notification.h
+    Notification.h \
+    licensesdialog.h
 
 # TODO these files dont exist and are not generated
 #        ui_mainwindow.h \
@@ -140,7 +142,8 @@ FORMS    += mainwindow.ui \
         print.ui \
         export.ui \
         antscopeupdatedialog.ui \
-    ProgressDlg.ui
+    ProgressDlg.ui \
+    licensesdialog.ui
 
 INCLUDEPATH +=  $$PWD/analyzer \
             $$PWD/analyzer/updater

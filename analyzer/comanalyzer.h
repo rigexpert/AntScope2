@@ -43,6 +43,9 @@ public:
     void setIsFRXMode(bool _mode=true) { m_isFRX = _mode;}
     bool getIsFRXMode() { return m_isFRX; }
     qint64 sendData(QString data);
+    void setParseState(int _state) { m_parseState=_state; } // analyzerparameters.h: enum parse{}
+    int getParseState() { return m_parseState; }
+    void applyLicense(QString _license);
 
 private:
     QSerialPort * m_comPort;
@@ -70,6 +73,7 @@ private:
 
     bool m_autoDetectMode;
     QString m_serialPortName;
+    QString m_license;
 
     qint32 parse (QByteArray arr);
     quint32 compareStrings(QString arr, QString arr1);

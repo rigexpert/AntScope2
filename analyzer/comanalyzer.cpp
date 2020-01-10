@@ -1,6 +1,7 @@
 #include "comanalyzer.h"
 #include "customanalyzer.h"
 #include <qserialport.h>
+#include "analyzer.h"
 
 static const unsigned char crc8_table[256] = {
     0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F,
@@ -141,7 +142,49 @@ qint32 comAnalyzer::parse (QByteArray arr)
 {
     quint32 retVal = 0;
     QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
-    if(m_parseState == WAIT_SCREENSHOT_DATA)
+    if (getParseState() == WAIT_LICENSE_LIST)
+    {
+        int pos = arr.indexOf("\r\n");
+        QString result = arr.left(pos);
+        if (result == "OK") {
+            setParseState(WAIT_NO);
+            return 4;
+        }
+        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+        if (analyzer != nullptr) {
+            emit analyzer->licensesList(result);
+        }
+        return result.length()+2;
+    } else if (getParseState() == WAIT_LICENSE_REQUEST)
+    {
+        int pos = arr.indexOf("\r\n");
+        QString result = arr.left(pos);
+        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+        if (analyzer != nullptr) {
+            emit analyzer->licenseRequest(result);
+        }
+        setParseState(WAIT_NO);
+        return result.length()+2;
+    } else if (getParseState() == WAIT_LICENSE_APPLY1)
+    {
+        setParseState(WAIT_LICENSE_APPLY2);
+        QString cmd = "ALICS-" + m_license.mid(m_license.length()/2);
+        sendData(cmd);
+        retVal += arr.length();
+        return retVal;
+    } else if (getParseState() == WAIT_LICENSE_APPLY2)
+    {
+        setParseState(WAIT_NO);
+        int pos = arr.indexOf("\r\n");
+        QString result = arr.left(pos);
+        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+        if (analyzer != nullptr) {
+            m_license.clear();
+            emit analyzer->licenseApplyResult(result);
+        }
+        retVal += arr.length();
+        return retVal;
+    } else if(m_parseState == WAIT_SCREENSHOT_DATA)
     {
         int pos = arr.indexOf("screencomp: ");
         if(pos == 0 || pos == 2)
@@ -250,12 +293,8 @@ qint32 comAnalyzer::parse (QByteArray arr)
         for(int i = 0; i < stringList.length(); ++i)
         {
             QString str = stringList.at(i);
-            int r = str.indexOf('\r');
-            if(r != -1)
-            {
-                str.remove(r,1);
-                retVal++;
-            }
+            retVal += str.length();
+            str.replace("\r", "");
             if(str.isEmpty())
             {
                 continue;
@@ -272,7 +311,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
                     emit signalMeasurementError();
                 continue;
             }
-            if(m_parseState == VER)
+            if(m_parseState == WAIT_VER)
             {
                 if (str.indexOf("MAC\t") == 0) {
                     emit signalFullInfo(str);
@@ -317,7 +356,6 @@ qint32 comAnalyzer::parse (QByteArray arr)
                             }
                             emit analyzerFound (m_analyzerModel);
                             QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
-                            retVal += str.length();
                         }
                         break;
                     }
@@ -325,12 +363,10 @@ qint32 comAnalyzer::parse (QByteArray arr)
             }else if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA)
             {
                 m_stringList.append(str);
-                retVal += str.length();
                 str.clear();
             }else if(m_parseState == WAIT_ANALYZER_DATA)
             {
                 emit analyzerDataStringArrived(str);
-                retVal += str.length();
                 str.clear();
             }
         }
@@ -463,7 +499,7 @@ void comAnalyzer::checkAnalyzer()
         if(state == 0)
         {
             m_analyzerPresent = false;
-            m_parseState = VER;
+            m_parseState = WAIT_VER;
             versionRequest();
             state++;
             QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
@@ -471,7 +507,7 @@ void comAnalyzer::checkAnalyzer()
         {
             if(m_analyzerPresent == false)
             {
-                m_parseState = VER;
+                m_parseState = WAIT_VER;
                 versionRequest();
                 //sendData("FULLINFO\r\n");
                 state++;
@@ -1008,3 +1044,12 @@ void comAnalyzer::versionRequest()
     //sendData("\r\nVER\r\n");
     sendData("VER\n");
 }
+
+void comAnalyzer::applyLicense(QString _license)
+{
+    m_license = _license;
+    setParseState(WAIT_LICENSE_APPLY1);
+    QString cmd = "ALICF-" + _license.left(_license.length()/2) + "\r\n";
+    sendData(cmd);
+}
+

@@ -63,6 +63,9 @@ public:
     void setIsFRXMode(bool _mode=true) { m_isFRX = _mode;}
     bool getIsFRXMode() { return m_isFRX; }
     void sendData(QString data);
+    void setParseState(int _state) { m_parseState=_state; } // analyzerparameters.h: enum parse{}
+    int getParseState() { return m_parseState; }
+    void applyLicense(QString _license);
 
 private:
     hid_device *m_hidDevice;
@@ -103,6 +106,7 @@ private:
     bool waitAnswer();
     QFuture<struct hid_device_info*> *m_futureRefresh;
     QFutureWatcher<struct hid_device_info*> *m_watcherRefresh;
+    QString m_license;
 
 signals:
     void analyzerFound (quint32);

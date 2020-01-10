@@ -88,6 +88,7 @@ private:
 
     bool m_metricChecked;
     bool m_americanChecked;
+    int  m_maxMeasurements = 5;
 
     bool m_manualDetectChecked;
     bool m_autoDetectChecked;
@@ -176,7 +177,7 @@ private slots:
     void on_serialPortComboBox_activated(const QString &arg1);
     void on_languageComboBox_currentIndexChanged(int index);    
     void on_closeButton_clicked();
-    void on_bandsComboBox_currentIndexChanged(int index);
+    void onBandsComboBox_currentIndexChanged(int index);
     void on_enableCustomizeControls(bool enable);
     void on_addButton();
     void on_removeButton();
@@ -188,6 +189,7 @@ private slots:
     void on_PointsFinished();
     void on_systemImpedance();
     void on_exportCableSettings();
+    void on_licensesBtnPressed();
 };
 
 #endif // SETTINGS_H

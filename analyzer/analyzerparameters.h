@@ -171,13 +171,18 @@ static int lcdWidth[QUANTITY]={//in kHz
 };
 
 enum parse{
-    VER = 1,
+    WAIT_NO=0,
+    WAIT_VER,
     WAIT_DATA,
     WAIT_ANALYZER_DATA,
     WAIT_SCREENSHOT_DATA,
     WAIT_ANALYZER_UPDATE,
-    FULLINFO,
-    WAIT_USER_DATA
+    WAIT_FULLINFO,
+    WAIT_USER_DATA,
+    WAIT_LICENSE_LIST,
+    WAIT_LICENSE_REQUEST,
+    WAIT_LICENSE_APPLY1,
+    WAIT_LICENSE_APPLY2
 };
 
 struct rawData{

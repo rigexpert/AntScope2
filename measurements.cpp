@@ -3,6 +3,7 @@
 #include "export.h"
 
 extern bool g_developerMode;
+int g_maxMeasurements = MAX_MEASUREMENTS;
 
 QVector<QColor> generateColors(int number) {
     const int MAX_COLOR = 360;
@@ -297,7 +298,7 @@ void Measurements::on_newMeasurement(QString name)
             nextName = QString("%1> %2").arg(next, 2, 10, QChar('0')).arg(name.mid(2));
         }
         m_tableNames.append(nextName);
-        if(m_tableNames.length() == MAX_MEASUREMENTS+1)
+        if(m_tableNames.length() == g_maxMeasurements+1)
         {
             m_tableNames.remove(0,1);
         }
@@ -327,7 +328,7 @@ void Measurements::on_newMeasurement(QString name)
         m_tableWidget->scrollToBottom();
     }
 
-    if(m_measurements.length() == MAX_MEASUREMENTS)
+    if(m_measurements.length() == g_maxMeasurements)
     {
         measurement mm = m_measurements.takeFirst();
         delete mm.smithCurve;
@@ -398,7 +399,7 @@ void Measurements::on_newMeasurement(QString name)
     m_farEndMeasurementsAdd.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_farEndMeasurementsSub.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
 
-    if(++m_currentIndex == MAX_MEASUREMENTS+1)
+    if(++m_currentIndex == g_maxMeasurements+1)
     {
         m_currentIndex = 1;
     }
