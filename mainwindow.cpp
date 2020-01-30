@@ -4239,7 +4239,8 @@ void MainWindow::on_importBtn_clicked()
     QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastOpenPath,  "S1p (*.s1p);;"
                                                                                     "Csv (*.csv);;"
                                                                                     "Nwl (*.nwl);;"
-                                                                                    "AntScope2 (*.asd )");
+                                                                                    "AntScope2 (*.asd );;"
+                                                                                    "All files (*.*)");
     m_measurements->loadData(path);
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);

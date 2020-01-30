@@ -85,6 +85,9 @@
               <layout class="QHBoxLayout" name="horizontalLayout_36">
                <item>
                 <widget class="QSpinBox" name="spinBoxMeasurements">
+                 <property name="toolTip">
+                  <string>The maximum number of simultaneously displayed measurements</string>
+                 </property>
                  <property name="minimum">
                   <number>1</number>
                  </property>
@@ -98,6 +101,9 @@
                </item>
                <item>
                 <widget class="QLabel" name="label_33">
+                 <property name="toolTip">
+                  <string>The maximum number of simultaneously displayed measurements</string>
+                 </property>
                  <property name="text">
                   <string>Max measurements</string>
                  </property>

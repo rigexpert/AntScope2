@@ -413,7 +413,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="107"/>
         <location filename="mainwindow.cpp" line="3693"/>
-        <location filename="mainwindow.cpp" line="4725"/>
+        <location filename="mainwindow.cpp" line="4735"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
@@ -425,7 +425,7 @@ Please try later.</source>
     <message>
         <location filename="mainwindow.ui" line="126"/>
         <location filename="mainwindow.cpp" line="3251"/>
-        <location filename="mainwindow.cpp" line="4721"/>
+        <location filename="mainwindow.cpp" line="4731"/>
         <source>Export</source>
         <translation>書出し</translation>
     </message>
@@ -456,7 +456,7 @@ Please try later.</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="180"/>
-        <location filename="mainwindow.cpp" line="4723"/>
+        <location filename="mainwindow.cpp" line="4733"/>
         <source>Screenshot</source>
         <translation>スクリーンショット</translation>
     </message>
@@ -488,11 +488,11 @@ Please try later.</source>
         <location filename="mainwindow.cpp" line="776"/>
         <location filename="mainwindow.cpp" line="795"/>
         <location filename="mainwindow.cpp" line="847"/>
-        <location filename="mainwindow.cpp" line="4684"/>
-        <location filename="mainwindow.cpp" line="4686"/>
-        <location filename="mainwindow.cpp" line="4688"/>
-        <location filename="mainwindow.cpp" line="4690"/>
-        <location filename="mainwindow.cpp" line="4692"/>
+        <location filename="mainwindow.cpp" line="4694"/>
+        <location filename="mainwindow.cpp" line="4696"/>
+        <location filename="mainwindow.cpp" line="4698"/>
+        <location filename="mainwindow.cpp" line="4700"/>
+        <location filename="mainwindow.cpp" line="4702"/>
         <source>Frequency, kHz</source>
         <translation>周波数, KHz</translation>
     </message>
@@ -521,15 +521,15 @@ Please try later.</source>
         <location filename="mainwindow.cpp" line="503"/>
         <location filename="mainwindow.cpp" line="524"/>
         <location filename="mainwindow.cpp" line="527"/>
-        <location filename="mainwindow.cpp" line="4376"/>
-        <location filename="mainwindow.cpp" line="4379"/>
+        <location filename="mainwindow.cpp" line="4386"/>
+        <location filename="mainwindow.cpp" line="4389"/>
         <source>Center</source>
         <translation>中心</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="352"/>
         <location filename="mainwindow.cpp" line="525"/>
-        <location filename="mainwindow.cpp" line="4377"/>
+        <location filename="mainwindow.cpp" line="4387"/>
         <source>Range (+/-)</source>
         <translation>範囲 (+/-)</translation>
     </message>
@@ -598,8 +598,8 @@ process in the settings menu!</source>
         <location filename="mainwindow.cpp" line="494"/>
         <location filename="mainwindow.cpp" line="531"/>
         <location filename="mainwindow.cpp" line="534"/>
-        <location filename="mainwindow.cpp" line="4350"/>
-        <location filename="mainwindow.cpp" line="4353"/>
+        <location filename="mainwindow.cpp" line="4360"/>
+        <location filename="mainwindow.cpp" line="4363"/>
         <source>Start</source>
         <translation>開始</translation>
     </message>
@@ -608,8 +608,8 @@ process in the settings menu!</source>
         <location filename="mainwindow.cpp" line="495"/>
         <location filename="mainwindow.cpp" line="532"/>
         <location filename="mainwindow.cpp" line="535"/>
-        <location filename="mainwindow.cpp" line="4351"/>
-        <location filename="mainwindow.cpp" line="4354"/>
+        <location filename="mainwindow.cpp" line="4361"/>
+        <location filename="mainwindow.cpp" line="4364"/>
         <source>Stop</source>
         <translation>終止</translation>
     </message>
@@ -708,7 +708,7 @@ Right-click an item to change color</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="465"/>
-        <location filename="mainwindow.cpp" line="4708"/>
+        <location filename="mainwindow.cpp" line="4718"/>
         <source>Press F%1</source>
         <oldsource>Press(F%1)</oldsource>
         <translation type="unfinished">Press F%1</translation>
@@ -716,138 +716,138 @@ Right-click an item to change color</source>
     <message>
         <location filename="mainwindow.cpp" line="493"/>
         <location filename="mainwindow.cpp" line="533"/>
-        <location filename="mainwindow.cpp" line="4352"/>
+        <location filename="mainwindow.cpp" line="4362"/>
         <source>Presets (limits), kHz</source>
         <translation type="unfinished">Presets (limits), kHz</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="502"/>
         <location filename="mainwindow.cpp" line="526"/>
-        <location filename="mainwindow.cpp" line="4378"/>
+        <location filename="mainwindow.cpp" line="4388"/>
         <source>Presets (center, range), kHz</source>
         <translation type="unfinished">Presets (center, range), kHz</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="504"/>
         <location filename="mainwindow.cpp" line="528"/>
-        <location filename="mainwindow.cpp" line="4380"/>
+        <location filename="mainwindow.cpp" line="4390"/>
         <source>Range(+/-)</source>
         <translation type="unfinished">Range(+/-)</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="705"/>
         <location filename="mainwindow.cpp" line="3015"/>
-        <location filename="mainwindow.cpp" line="4685"/>
-        <location filename="mainwindow.cpp" line="4696"/>
+        <location filename="mainwindow.cpp" line="4695"/>
+        <location filename="mainwindow.cpp" line="4706"/>
         <source>SWR</source>
         <translation type="unfinished">SWR</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="737"/>
-        <location filename="mainwindow.cpp" line="4687"/>
+        <location filename="mainwindow.cpp" line="4697"/>
         <source>Angle</source>
         <translation>角度</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="757"/>
         <location filename="mainwindow.cpp" line="848"/>
-        <location filename="mainwindow.cpp" line="4689"/>
+        <location filename="mainwindow.cpp" line="4699"/>
         <source>Rs, Ohm</source>
         <translation>Rs, Ω</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="777"/>
-        <location filename="mainwindow.cpp" line="4691"/>
+        <location filename="mainwindow.cpp" line="4701"/>
         <source>Rp, Ohm</source>
         <translation>Rp, Ω</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="796"/>
-        <location filename="mainwindow.cpp" line="4693"/>
+        <location filename="mainwindow.cpp" line="4703"/>
         <source>RL, dB</source>
         <translation type="unfinished">RL, dB</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="814"/>
-        <location filename="mainwindow.cpp" line="4694"/>
+        <location filename="mainwindow.cpp" line="4704"/>
         <source>Length, m</source>
         <translation>長さ、ｍ</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3036"/>
-        <location filename="mainwindow.cpp" line="4697"/>
+        <location filename="mainwindow.cpp" line="4707"/>
         <source>Phase</source>
         <translation>位相</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3057"/>
-        <location filename="mainwindow.cpp" line="4698"/>
+        <location filename="mainwindow.cpp" line="4708"/>
         <source>Z=R+jX</source>
         <translation type="unfinished">Z=R+jX</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3078"/>
-        <location filename="mainwindow.cpp" line="4699"/>
+        <location filename="mainwindow.cpp" line="4709"/>
         <source>Z=R||+jX</source>
         <translation>R||+jX</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3097"/>
-        <location filename="mainwindow.cpp" line="4700"/>
+        <location filename="mainwindow.cpp" line="4710"/>
         <source>RL</source>
         <translation type="unfinished">RL</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3118"/>
-        <location filename="mainwindow.cpp" line="4701"/>
+        <location filename="mainwindow.cpp" line="4711"/>
         <source>TDR</source>
         <translation type="unfinished">TDR</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3139"/>
-        <location filename="mainwindow.cpp" line="4702"/>
+        <location filename="mainwindow.cpp" line="4712"/>
         <source>Smith</source>
         <translation>スミス</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3169"/>
-        <location filename="mainwindow.cpp" line="4704"/>
+        <location filename="mainwindow.cpp" line="4714"/>
         <source>User defined</source>
         <translation type="unfinished">User defined</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3178"/>
-        <location filename="mainwindow.cpp" line="4719"/>
+        <location filename="mainwindow.cpp" line="4729"/>
         <source>Frequency settings</source>
         <translation>周波数設定</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4618"/>
+        <location filename="mainwindow.cpp" line="4628"/>
         <source>New version of AntScope2 is available!</source>
         <translation type="unfinished">New version of AntScope2 is available!</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4619"/>
+        <location filename="mainwindow.cpp" line="4629"/>
         <source>Click to Download</source>
         <translation type="unfinished">Click to Download</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4620"/>
+        <location filename="mainwindow.cpp" line="4630"/>
         <source>AntScope2 update</source>
         <translation type="unfinished">AntScope2 update</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4873"/>
+        <location filename="mainwindow.cpp" line="4883"/>
         <source>!!!!Calibration not performed</source>
         <translation type="unfinished">!!!!Calibration not performed</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4874"/>
+        <location filename="mainwindow.cpp" line="4884"/>
         <source>Calibration not performed.</source>
         <translation>較正は未実行。</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5006"/>
+        <location filename="mainwindow.cpp" line="5016"/>
         <source>Measurement ERROR!</source>
         <translation type="unfinished">Measurement ERROR!</translation>
     </message>
@@ -903,7 +903,7 @@ Right-click an item to change color</source>
     <name>Measurements</name>
     <message>
         <location filename="measurements.cpp" line="61"/>
-        <location filename="measurements.cpp" line="4290"/>
+        <location filename="measurements.cpp" line="4295"/>
         <source>Frequency = 
 SWR = 
 RL = 
@@ -932,19 +932,19 @@ C並列 =
     </message>
     <message>
         <location filename="measurements.cpp" line="83"/>
-        <location filename="measurements.cpp" line="4303"/>
+        <location filename="measurements.cpp" line="4308"/>
         <source>BriefHint</source>
         <translation>簡潔なヒント</translation>
     </message>
     <message>
         <location filename="measurements.cpp" line="253"/>
-        <location filename="measurements.cpp" line="4945"/>
+        <location filename="measurements.cpp" line="4950"/>
         <source>FQ:%1kHz SW:%2kHz Points:%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="measurements.cpp" line="257"/>
-        <location filename="measurements.cpp" line="4949"/>
+        <location filename="measurements.cpp" line="4954"/>
         <source>Start:%1kHz Stop:%2kHz Points:%3</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1054,8 +1054,8 @@ Step response = %7
     </message>
     <message>
         <location filename="measurements.cpp" line="2165"/>
-        <location filename="measurements.cpp" line="4332"/>
-        <location filename="measurements.cpp" line="4369"/>
+        <location filename="measurements.cpp" line="4337"/>
+        <location filename="measurements.cpp" line="4374"/>
         <source>please wait ....</source>
         <translation type="unfinished">please wait ....</translation>
     </message>
@@ -1065,39 +1065,49 @@ Step response = %7
         <translation type="unfinished">loaded %1 dots, from %2</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="3064"/>
-        <location filename="measurements.cpp" line="4308"/>
+        <location filename="measurements.cpp" line="2778"/>
+        <source>Load data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="2778"/>
+        <source>Oops, this format is not supported!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="measurements.cpp" line="3069"/>
+        <location filename="measurements.cpp" line="4313"/>
         <source>Length, m</source>
         <translation>長さ、m</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="3068"/>
-        <location filename="measurements.cpp" line="4308"/>
+        <location filename="measurements.cpp" line="3073"/>
+        <location filename="measurements.cpp" line="4313"/>
         <source>Length, feet</source>
         <translation>長さ、フィート</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="4331"/>
+        <location filename="measurements.cpp" line="4336"/>
         <source>TDR measuring</source>
         <translation type="unfinished">TDR measuring</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="4355"/>
+        <location filename="measurements.cpp" line="4360"/>
         <source>processed %1 dots, from %2</source>
         <translation type="unfinished">processed %1 dots, from %2</translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="4368"/>
+        <location filename="measurements.cpp" line="4373"/>
         <source>Auto calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="4389"/>
+        <location filename="measurements.cpp" line="4394"/>
         <source>Iteration %1. %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="measurements.cpp" line="5139"/>
+        <location filename="measurements.cpp" line="5144"/>
         <source>Export</source>
         <translation type="unfinished">書出し</translation>
     </message>
@@ -1268,403 +1278,409 @@ Step response = %7
         <translation>フートポンド法</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="120"/>
+        <location filename="settings.ui" line="126"/>
         <source>Analyzer detection</source>
         <translation>アナライザー検出</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="126"/>
+        <location filename="settings.ui" line="132"/>
         <source>Auto</source>
         <translation>自動</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="133"/>
+        <location filename="settings.ui" line="139"/>
         <source>Manual</source>
         <translation>手動</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="140"/>
+        <location filename="settings.ui" line="146"/>
         <source>Serial port:</source>
         <translation>シリアルポート</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="225"/>
+        <location filename="settings.ui" line="231"/>
         <source>System impedance:</source>
         <translation>システム インピーダンス</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="241"/>
-        <location filename="settings.ui" line="625"/>
+        <location filename="settings.ui" line="247"/>
+        <location filename="settings.ui" line="631"/>
         <source>Ohm</source>
         <translation>Ω</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="263"/>
+        <location filename="settings.ui" line="269"/>
         <source>Bands highlighting:</source>
         <translation type="unfinished">Bands highlighting:</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="275"/>
+        <location filename="settings.ui" line="281"/>
         <source>Language:</source>
         <translation>言語</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1188"/>
+        <location filename="settings.ui" line="1194"/>
         <source>Updates</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1200"/>
+        <location filename="settings.ui" line="1206"/>
         <source>Analyzer</source>
         <translation>アナライザー</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1216"/>
+        <location filename="settings.ui" line="1222"/>
         <source>Info</source>
         <translation>情報</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1226"/>
+        <location filename="settings.ui" line="1232"/>
         <source>Analyzer model:</source>
         <translation>アナライザー名</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1268"/>
+        <location filename="settings.ui" line="1274"/>
         <source>Serial number:</source>
         <translation>シリアル番号</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1292"/>
+        <location filename="settings.ui" line="1298"/>
         <source>Update from file</source>
         <translation>ファイルで更新</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1305"/>
+        <location filename="settings.ui" line="1311"/>
         <source>Browse</source>
         <translation>検索</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1326"/>
+        <location filename="settings.ui" line="1332"/>
         <source>Update</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1347"/>
-        <location filename="settings.ui" line="1421"/>
+        <location filename="settings.ui" line="1353"/>
+        <location filename="settings.ui" line="1427"/>
         <source>Auto check updates</source>
         <translation>更新の自動チェック</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1354"/>
+        <location filename="settings.ui" line="1360"/>
         <location filename="settings.cpp" line="216"/>
         <source>Check Updates</source>
         <translation>更新チェック</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1374"/>
+        <location filename="settings.ui" line="1380"/>
         <source>AntScope2</source>
         <translation type="unfinished">AntScope2</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1387"/>
+        <location filename="settings.ui" line="1393"/>
         <source>Version:</source>
         <translation>バージョン</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="320"/>
+        <location filename="settings.ui" line="326"/>
         <source>OSL Calibration</source>
         <translation>OSL較正</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="335"/>
+        <location filename="settings.ui" line="341"/>
         <source>Calibration Wizard</source>
         <translation>較正ウィザード</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="347"/>
+        <location filename="settings.ui" line="353"/>
         <source>Start</source>
         <translation>開始</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="396"/>
+        <location filename="settings.ui" line="402"/>
         <location filename="settings.cpp" line="413"/>
         <location filename="settings.cpp" line="482"/>
         <source>Open</source>
         <translation>開放</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="170"/>
+        <location filename="settings.ui" line="176"/>
         <source>Show graph hint</source>
         <translation type="unfinished">Show graph hint</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="186"/>
+        <location filename="settings.ui" line="192"/>
         <source>Show markers hint</source>
         <translation type="unfinished">Show markers hint</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="208"/>
+        <location filename="settings.ui" line="214"/>
         <source>Show brief params under cursor</source>
         <translation type="unfinished">Show brief params under cursor</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1247"/>
+        <location filename="settings.ui" line="1253"/>
         <source>Firmware version:</source>
         <translation type="unfinished">Firmware version:</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="367"/>
+        <location filename="settings.ui" line="373"/>
         <source>Points</source>
         <translation type="unfinished">Points</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="102"/>
+        <location filename="settings.ui" line="89"/>
+        <location filename="settings.ui" line="105"/>
+        <source>The maximum number of simultaneously displayed measurements</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.ui" line="108"/>
         <source>Max measurements</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="218"/>
+        <location filename="settings.ui" line="224"/>
         <source>Don&apos;t restrict frequency</source>
         <translation type="unfinished">Don&apos;t restrict frequency</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="293"/>
+        <location filename="settings.ui" line="299"/>
         <source>Licenses...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="402"/>
-        <location filename="settings.ui" line="460"/>
-        <location filename="settings.ui" line="515"/>
+        <location filename="settings.ui" line="408"/>
+        <location filename="settings.ui" line="466"/>
+        <location filename="settings.ui" line="521"/>
         <source>Not chosen</source>
         <translation type="unfinished">Not chosen</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="431"/>
-        <location filename="settings.ui" line="486"/>
-        <location filename="settings.ui" line="541"/>
+        <location filename="settings.ui" line="437"/>
+        <location filename="settings.ui" line="492"/>
+        <location filename="settings.ui" line="547"/>
         <source>Open file</source>
         <translation>ファイル選択</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="444"/>
+        <location filename="settings.ui" line="450"/>
         <source>Start Open Calibration</source>
         <translation>開放較正の開始</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="454"/>
+        <location filename="settings.ui" line="460"/>
         <location filename="settings.cpp" line="491"/>
         <source>Short</source>
         <translation>短絡</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="499"/>
+        <location filename="settings.ui" line="505"/>
         <source>Start Short Calibration</source>
         <translation>短絡較正の開始</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="509"/>
+        <location filename="settings.ui" line="515"/>
         <location filename="settings.cpp" line="500"/>
         <source>Load</source>
         <translation>負荷</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="554"/>
+        <location filename="settings.ui" line="560"/>
         <source>Start Load Calibration</source>
         <translation>負荷較正の開始</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="566"/>
+        <location filename="settings.ui" line="572"/>
         <source>Cable</source>
         <translation>ケーブル</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="583"/>
+        <location filename="settings.ui" line="589"/>
         <source>Velocity factor</source>
         <translation>速度係数</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="597"/>
+        <location filename="settings.ui" line="603"/>
         <source>Cable length</source>
         <translation>ケーブル長</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="611"/>
+        <location filename="settings.ui" line="617"/>
         <source>Cable R0</source>
         <translation>ケーブル R0</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="634"/>
+        <location filename="settings.ui" line="640"/>
         <source>Cable loss</source>
         <translation>ケーブル損失</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="646"/>
+        <location filename="settings.ui" line="652"/>
         <source>Conductive loss</source>
         <translation>導体損失</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="670"/>
+        <location filename="settings.ui" line="676"/>
         <source>Dielectric loss</source>
         <translation>誘電体損失</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="703"/>
+        <location filename="settings.ui" line="709"/>
         <source>dB/100feet</source>
         <translation>dB/100フィート</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="708"/>
+        <location filename="settings.ui" line="714"/>
         <source>dB/feet</source>
         <translation>dB/フィート</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="713"/>
+        <location filename="settings.ui" line="719"/>
         <source>dB/100m</source>
         <translation>dB/100メータ</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="718"/>
+        <location filename="settings.ui" line="724"/>
         <source>dB/m</source>
         <translation>dB/メータ</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="726"/>
+        <location filename="settings.ui" line="732"/>
         <source>at</source>
         <translation type="unfinished">at</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="737"/>
+        <location filename="settings.ui" line="743"/>
         <source>any frequency</source>
         <translation>全周波数</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="772"/>
+        <location filename="settings.ui" line="778"/>
         <source>MHz</source>
         <translation type="unfinished">MHz</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="788"/>
+        <location filename="settings.ui" line="794"/>
         <source>Transmission line options</source>
         <translation>電送線オプション</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="800"/>
+        <location filename="settings.ui" line="806"/>
         <source>Do nothing</source>
         <translation>何もしない</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="816"/>
+        <location filename="settings.ui" line="822"/>
         <source>Subtract cable</source>
         <translation>ケーブル値を引く</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="832"/>
+        <location filename="settings.ui" line="838"/>
         <source>Add cable</source>
         <translation>ケーブル値を加える</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="863"/>
+        <location filename="settings.ui" line="869"/>
         <source>Export</source>
         <translation type="unfinished">書出し</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="870"/>
+        <location filename="settings.ui" line="876"/>
         <source>Update graphs</source>
         <translation>グラフ更新&quot;</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="881"/>
+        <location filename="settings.ui" line="887"/>
         <source>Customize</source>
         <translation type="unfinished">Customize</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="900"/>
+        <location filename="settings.ui" line="906"/>
         <source>Use customized analyzer</source>
         <translation type="unfinished">Use customized analyzer</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="909"/>
+        <location filename="settings.ui" line="915"/>
         <source>Name</source>
         <translation type="unfinished">Name</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="933"/>
+        <location filename="settings.ui" line="939"/>
         <source>Prototype</source>
         <translation type="unfinished">Prototype</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="954"/>
+        <location filename="settings.ui" line="960"/>
         <source>Frequency(kHz)</source>
         <translation type="unfinished">Frequency(kHz)</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="963"/>
-        <location filename="settings.ui" line="1110"/>
-        <location filename="settings.ui" line="1151"/>
+        <location filename="settings.ui" line="969"/>
+        <location filename="settings.ui" line="1116"/>
+        <location filename="settings.ui" line="1157"/>
         <source>Min</source>
         <translation type="unfinished">Min</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="970"/>
-        <location filename="settings.ui" line="1120"/>
-        <location filename="settings.ui" line="1161"/>
+        <location filename="settings.ui" line="976"/>
+        <location filename="settings.ui" line="1126"/>
+        <location filename="settings.ui" line="1167"/>
         <source>Max</source>
         <translation type="unfinished">Max</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="986"/>
+        <location filename="settings.ui" line="992"/>
         <source>LCD screen</source>
         <translation type="unfinished">LCD screen</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="995"/>
+        <location filename="settings.ui" line="1001"/>
         <source>Width</source>
         <translation type="unfinished">Width</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1015"/>
+        <location filename="settings.ui" line="1021"/>
         <source>Height</source>
         <translation type="unfinished">Height</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1044"/>
+        <location filename="settings.ui" line="1050"/>
         <source>New</source>
         <translation type="unfinished">New</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1051"/>
+        <location filename="settings.ui" line="1057"/>
         <source>Remove</source>
         <translation type="unfinished">Remove</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1071"/>
+        <location filename="settings.ui" line="1077"/>
         <source>Apply</source>
         <translation type="unfinished">Apply</translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1095"/>
+        <location filename="settings.ui" line="1101"/>
         <source>Auto calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1103"/>
+        <location filename="settings.ui" line="1109"/>
         <source>Length</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1130"/>
-        <location filename="settings.ui" line="1171"/>
+        <location filename="settings.ui" line="1136"/>
+        <location filename="settings.ui" line="1177"/>
         <source>Steps</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1144"/>
+        <location filename="settings.ui" line="1150"/>
         <source>Resistance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.ui" line="1461"/>
+        <location filename="settings.ui" line="1467"/>
         <source>Close</source>
         <translation type="unfinished">Close</translation>
     </message>

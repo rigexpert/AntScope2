@@ -297,12 +297,12 @@ void Measurements::on_newMeasurement(QString name)
 
             nextName = QString("%1> %2").arg(next, 2, 10, QChar('0')).arg(name.mid(2));
         }
-        m_tableNames.append(nextName);
-        if(m_tableNames.length() == g_maxMeasurements+1)
+        while(m_tableNames.length() >= g_maxMeasurements)
         {
             m_tableNames.remove(0,1);
         }
-        if(m_tableNames.length() > m_tableWidget->rowCount())
+        m_tableNames.append(nextName);
+        //if(m_tableNames.length() > m_tableWidget->rowCount())
         {
             m_tableWidget->setRowCount(m_tableNames.length());
         }
@@ -328,7 +328,7 @@ void Measurements::on_newMeasurement(QString name)
         m_tableWidget->scrollToBottom();
     }
 
-    if(m_measurements.length() == g_maxMeasurements)
+    while(m_measurements.length() >= g_maxMeasurements)
     {
         measurement mm = m_measurements.takeFirst();
         delete mm.smithCurve;
@@ -399,7 +399,7 @@ void Measurements::on_newMeasurement(QString name)
     m_farEndMeasurementsAdd.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_farEndMeasurementsSub.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
 
-    if(++m_currentIndex == g_maxMeasurements+1)
+    if(++m_currentIndex >= g_maxMeasurements+1)
     {
         m_currentIndex = 1;
     }
@@ -2774,7 +2774,11 @@ void Measurements::importData(QString _name)
             }
             emit import_finished(fqMin*1000, fqMax*1000);
         }
-    } else if (_name.indexOf(".antdata") >= 0) {
+    } else {
+        QMessageBox::information(nullptr, tr("Load data"), tr("Oops, this format is not supported!"), QMessageBox::Close);
+    }
+    /*
+    if (_name.indexOf(".antdata") >= 0) {
         QStringList list;
         list = _name.split("/");
         if(list.length() == 1)
@@ -2820,6 +2824,7 @@ void Measurements::importData(QString _name)
             emit import_finished(minFq*1000, maxFq*1000);
         }
     }
+    */
 }
 
 int Measurements::CalcTdr(QVector <rawData> *data)
