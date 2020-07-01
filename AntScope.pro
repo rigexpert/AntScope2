@@ -9,23 +9,24 @@ QT       += printsupport
 QT       += serialport
 QT       += network
 QT       += xml
-#QT       += quick
 QT       += concurrent
+QT       += opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.0.17\\"'
+DEFINES += ANTSCOPE2VER='\\"1.1.2\\"'
+DEFINES += OLD_TDR
 
 TARGET = AntScope2
+
+CONFIG -= debug
+CONFIG += release
 
 TRANSLATIONS += QtLanguage.ts
 TRANSLATIONS += QtLanguage_uk.ts
 TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_ja.ts
 CODECFORSRC   = UTF-8
-
-CONFIG -= debug
-CONFIG += release
 
 CONFIG(release) {
     DESTDIR = $${PWD}/build/release
@@ -82,7 +83,12 @@ SOURCES += main.cpp\
     iprof.cpp \
     onefqwidget.cpp \
     Notification.cpp \
-    licensesdialog.cpp
+    licensesdialog.cpp \
+    glwidget.cpp \
+    CustomPlot.cpp \
+    customgraph.cpp \
+    analyzer/nanovna_analyzer.cpp \
+    tdrprogressdialog.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -123,7 +129,12 @@ HEADERS  += mainwindow.h \
     htime.h \
     onefqwidget.h \
     Notification.h \
-    licensesdialog.h
+    licensesdialog.h \
+    glwidget.h \
+    CustomPlot.h \
+    customgraph.h \
+    analyzer/nanovna_analyzer.h \
+    tdrprogressdialog.h
 
 # TODO these files dont exist and are not generated
 #        ui_mainwindow.h \
@@ -143,7 +154,8 @@ FORMS    += mainwindow.ui \
         export.ui \
         antscopeupdatedialog.ui \
     ProgressDlg.ui \
-    licensesdialog.ui
+    licensesdialog.ui \
+    tdrprogressdialog.ui
 
 INCLUDEPATH +=  $$PWD/analyzer \
             $$PWD/analyzer/updater

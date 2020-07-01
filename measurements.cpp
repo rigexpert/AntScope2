@@ -1,6 +1,10 @@
 #include "measurements.h"
 #include "ProgressDlg.h"
 #include "export.h"
+#include "mainwindow.h"
+#include "CustomPlot.h"
+#include "customgraph.h"
+#include "glwidget.h"
 
 extern bool g_developerMode;
 int g_maxMeasurements = MAX_MEASUREMENTS;
@@ -17,6 +21,26 @@ QVector<QColor> generateColors(int number) {
     return colors;
 }
 
+QColor getColor(int _index)
+{
+    static QColor colors[] = {
+        QColor(30, 40, 255, 150),
+        QColor(30, 255, 40, 150),
+        QColor(255, 30, 40, 150),
+        QColor(255, 127, 0, 255),
+        QColor(255, 40, 255, 150)
+    };
+    if (_index >=0 && _index < 5)
+        return colors[_index];
+
+    int colorCount = g_maxMeasurements-4;
+    const int MAX_COLOR = 360;
+    const int MIN_COLOR = 0;
+    double jump = (MAX_COLOR-MIN_COLOR) / (colorCount*1.0);
+    int h = (int)(MIN_COLOR + (jump*(_index-5)));
+
+    return QColor::fromHsv(h, 255, 255);
+}
 
 Measurements::Measurements(QObject *parent) : QObject(parent),
     m_currentIndex(0),
@@ -58,6 +82,12 @@ Measurements::Measurements(QObject *parent) : QObject(parent),
     {
         m_graphHint = new PopUp();
         m_graphHint->setHiding(false);
+        m_settings->beginGroup("Settings");
+        bool darkTheme = m_settings->value("darkColorTheme", true).toBool();
+        m_settings->endGroup();
+
+        changeColorTheme(darkTheme);
+
         m_graphHint->setPopupText(tr("Frequency = \n"
                                      "SWR = \n"
                                      "RL = \n"
@@ -232,7 +262,6 @@ void Measurements::deleteRow(int row)
 
         }
     }
-    replot();
     m_tableWidget->setRowCount(m_tableNames.length());
 }
 
@@ -262,6 +291,8 @@ void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 
             .arg(dots);
     QTableWidgetItem *item = m_tableWidget->item(m_tableWidget->rowCount()-1,0);
     item->setToolTip(tips);
+    m_measuringInProgress = true;
+    qDebug() << "Measurements::on_newMeasurement";
 }
 
 void Measurements::on_newMeasurement(QString name)
@@ -381,7 +412,8 @@ void Measurements::on_newMeasurement(QString name)
     m_rsWidget->addGraph();
     m_rsWidget->graph()->setName("|Z|");
     m_rpWidget->setAutoAddPlottableToLegend(m_rpWidget->legend->itemCount() < 3);
-    m_rpWidget->addGraph();
+    //m_rpWidget->addGraph();
+    qobject_cast<CustomPlot*>(m_rpWidget)->addGraph();
     m_rpWidget->graph()->setName("Rp");
     m_rpWidget->addGraph();
     m_rpWidget->graph()->setName("Xp");
@@ -403,25 +435,26 @@ void Measurements::on_newMeasurement(QString name)
     {
         m_currentIndex = 1;
     }
-    switch (m_currentIndex) {
-    case 1:
-        pen.setColor(QColor(30, 40, 255, 150));
-        break;
-    case 2:
-        pen.setColor(QColor(30, 255, 40, 150));
-        break;
-    case 3:
-        pen.setColor(QColor(255, 30, 40, 150));
-        break;
-    case 4:
-        pen.setColor(QColor(255, 127, 0, 255));
-        break;
-    case 5:
-        pen.setColor(QColor(255, 40, 255, 150));
-        break;
-    default:
-        break;
-    }
+//    switch (m_currentIndex) {
+//    case 1:
+//        pen.setColor(QColor(30, 40, 255, 150));
+//        break;
+//    case 2:
+//        pen.setColor(QColor(30, 255, 40, 150));
+//        break;
+//    case 3:
+//        pen.setColor(QColor(255, 30, 40, 150));
+//        break;
+//    case 4:
+//        pen.setColor(QColor(255, 127, 0, 255));
+//        break;
+//    case 5:
+//        pen.setColor(QColor(255, 40, 255, 150));
+//        break;
+//    default:
+//        break;
+//    }
+    pen.setColor(getColor(m_currentIndex));
     pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
 
     m_swrWidget->setBackgroundScaled(true);
@@ -464,12 +497,17 @@ void Measurements::on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots)
     Q_UNUSED (sw);
     Q_UNUSED (dots);
 
+    qDebug() << "Measurements::on_continueMeasurement" << fq << sw << dots;
+
+    m_isContinuing = true;
+    m_currentPoint = 0;
+
     delete m_measurements.last().smithCurve;
     delete m_viewMeasurements.last().smithCurve;
     delete m_farEndMeasurementsAdd.last().smithCurve;
     delete m_farEndMeasurementsSub.last().smithCurve;
-    m_measurements.last().dataRX.clear();
-    m_measurements.last().dataRXCalib.clear();
+    //m_measurements.last().dataRX.clear();
+    //m_measurements.last().dataRXCalib.clear();
     m_viewMeasurements.last().dataRX.clear();
     m_viewMeasurements.last().dataRXCalib.clear();
     m_farEndMeasurementsAdd.last().dataRX.clear();
@@ -481,6 +519,11 @@ void Measurements::on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots)
     m_viewMeasurements.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_farEndMeasurementsAdd.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_farEndMeasurementsSub.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
+}
+
+void Measurements::on_newAnalyzerData(rawData _rawData)
+{
+    on_newData(_rawData, false);
 }
 
 void Measurements::on_newDataRedraw(rawData _rawData)
@@ -530,7 +573,7 @@ void Measurements::on_newUserData(rawData _rawData, UserData _userData)
     y.append(m_userWidget->yAxis->getRangeUpper());
     m_userWidget->graph(0)->setData(x,y);
 
-    on_redrawGraphs();
+    on_redrawGraphs(true);
 }
 
 void Measurements::on_newData(rawData _rawData, bool _redraw)
@@ -548,7 +591,16 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
         return;
     }
 
-    m_measurements.last().dataRX.append(_rawData);
+    // fix popup hint bug
+    if (m_isContinuing) {
+        if (m_currentPoint < m_measurements.last().dataRX.size()) {
+            m_measurements.last().dataRX[m_currentPoint] = _rawData;
+        } else {
+            m_measurements.last().dataRX.append(_rawData);
+        }
+    } else {
+        m_measurements.last().dataRX.append(_rawData);
+    }
 
     updateTDRProgress(m_measurements.last().dataRX.size());
 
@@ -778,7 +830,18 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
             rawData rawDataCalib = _rawData;
             rawDataCalib.r = calR;
             rawDataCalib.x = calX;
-            m_measurements.last().dataRXCalib.append(rawDataCalib);
+
+            //m_measurements.last().dataRXCalib.append(rawDataCalib);
+            if (m_isContinuing) {
+                if (m_currentPoint < m_measurements.last().dataRXCalib.size()) {
+                    m_measurements.last().dataRXCalib[m_currentPoint] = rawDataCalib;
+                } else {
+                    m_measurements.last().dataRXCalib.append(rawDataCalib);
+                }
+            } else {
+                m_measurements.last().dataRXCalib.append(rawDataCalib);
+            }
+
             computeSWR(_rawData.fq, m_Z0, calR, calX,&VSWR,&RL);
 
             data.value = VSWR;
@@ -904,19 +967,15 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
             //----------------------calc smith end---------------------------
         }
     }
-
+    m_currentPoint++;
     if (isTDRMode())
         return;
 
-    if (_redraw) {
-        if (g_developerMode) {
-            if ((m_measurements.last().dataRX.length() % 10) == 0) {
-                on_redrawGraphs();
-            }
-        } else {
-            on_redrawGraphs();
-        }
-    }
+    //qint64 t1 = QDateTime::currentMSecsSinceEpoch();
+    if (!_redraw)
+        return;
+    on_redrawGraphs(m_measuringInProgress && !m_isContinuing);
+    //qDebug() << "on_newData: calc " << (t1-t0) << " msec, draw " << (QDateTime::currentMSecsSinceEpoch()-t1) << " msec";
 }
 
 void Measurements::prepareGraphs(rawData _rawData, GraphData& _data, GraphData& _calibData)
@@ -1409,7 +1468,6 @@ void Measurements::on_newCursorSmithPos (double x, double y, int index)
 void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
 {
 #define DELTA 5
-    static int previousI = 0;
     if(m_graphHint)
     {
         if(m_currentTab == "tab_6")
@@ -1456,12 +1514,12 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
             QList <double> tdrkeys = tdrmapImp->keys();
 
             bool res = false;
-            int start = previousI-DELTA;
+            int start = m_previousI-DELTA;
             if(start < 0)
             {
                 start = 0;
             }
-            int stop = previousI+DELTA;
+            int stop = m_previousI+DELTA;
             if (stop > tdrkeys.length()-1)
             {
                 stop = tdrkeys.length()-1;
@@ -1485,20 +1543,20 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         double center = (tdrkeys.at(i) + tdrkeys.at(i+1))/2;
                         if( xPos > center )
                         {
-                            if(previousI == i+1)
+                            if(m_previousI == i+1)
                             {
                                 return;
                             }
                             place = tdrkeys.at(i+1);
-                            previousI = i+1;
+                            m_previousI = i+1;
                         }else
                         {
-                            if(previousI == i)
+                            if(m_previousI == i)
                             {
                                 return;
                             }
                             place = tdrkeys.at(i);
-                            previousI = i;
+                            m_previousI = i;
                         }
 
                         /*
@@ -1613,12 +1671,12 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
             QString zString;
             QString zparString;
             bool res = false;
-            int start = previousI-DELTA;
+            int start = m_previousI-DELTA;
             if(start < 0)
             {
                 start = 0;
             }
-            int stop = previousI+DELTA;
+            int stop = m_previousI+DELTA;
             if (stop > swrkeys.length()-1)
             {
                 stop = swrkeys.length()-1;
@@ -1641,21 +1699,23 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         double center = (swrkeys.at(i) + swrkeys.at(i+1))/2;
                         if( xPos > center )
                         {
-                            if(previousI == i+1)
+                            if(m_previousI == i+1)
                             {
                                 return;
                             }
                             frequency = swrkeys.at(i+1);
-                            previousI = i+1;
+                            m_previousI = i+1;
                         }else
                         {
-                            if(previousI == i)
+                            if(m_previousI == i)
                             {
                                 return;
                             }
                             frequency = swrkeys.at(i);
-                            previousI = i;
+                            m_previousI = i;
                         }
+
+                        int dataSize = m_measurements.at(index).dataRX.size();
 
                         if(m_calibration->getCalibrationEnabled())
                         {
@@ -1681,8 +1741,12 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                                 rl = m_measurements.at(index).rlGraphCalib.value(frequency).value;
                                 rho = m_measurements.at(index).rhoGraph.value(frequency).value;
                                 phase = m_measurements.at(index).phaseGraphCalib.value(frequency).value;
-                                r = m_measurements.at(index).dataRXCalib.at(previousI).r;
-                                x = m_measurements.at(index).dataRXCalib.at(previousI).x;
+                                if (m_previousI < 0 || m_previousI >=dataSize)
+                                    return;
+                                r = m_measurements.at(index).dataRXCalib.at(m_previousI).r;
+                                if (m_previousI < 0 || m_previousI >=dataSize)
+                                    return;
+                                x = m_measurements.at(index).dataRXCalib.at(m_previousI).x;
                             }
                             //swr = m_measurements.at(index).swrGraphCalib.value(frequency).value;
                             //rl = m_measurements.at(index).rlGraphCalib.value(frequency).value;
@@ -1713,8 +1777,12 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                                 rl = m_measurements.at(index).rlGraph.value(frequency).value;
                                 rho = m_measurements.at(index).rhoGraph.value(frequency).value;
                                 phase = m_measurements.at(index).phaseGraph.value(frequency).value;
-                                r = m_measurements.at(index).dataRX.at(previousI).r;
-                                x = m_measurements.at(index).dataRX.at(previousI).x;
+                                if (m_previousI < 0 || m_previousI >=dataSize)
+                                    return;
+                                r = m_measurements.at(index).dataRX.at(m_previousI).r;
+                                if (m_previousI < 0 || m_previousI >=dataSize)
+                                    return;
+                                x = m_measurements.at(index).dataRX.at(m_previousI).x;
                             }
                             //swr = m_measurements.at(index).swrGraph.value(frequency).value;
                             //rl = m_measurements.at(index).rlGraph.value(frequency).value;
@@ -1759,8 +1827,8 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         {
                             QString str;
                             str = QString::number(frequency);
-                            int index = str.indexOf(".");
-                            if(index < 0)
+                            int idx = str.indexOf(".");
+                            if(idx < 0)
                             {
                                 if(str.length() > 6)
                                 {
@@ -1772,7 +1840,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                                 }
                             }else
                             {
-                                int len = str.length() - index;
+                                int len = str.length() - idx;
                                 if((str.length()-len) > 6)
                                 {
                                     str.insert(str.length()-len-6," ");
@@ -1883,8 +1951,8 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
             }
 
             QString str = QString::number(frequency);
-            int index = str.indexOf(".");
-            if(index < 0)
+            int idx = str.indexOf(".");
+            if(idx < 0)
             {
                 if(str.length() > 6)
                 {
@@ -1896,7 +1964,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                 }
             }else
             {
-                int len = str.length() - index;
+                int len = str.length() - idx;
                 if((str.length()-len) > 6)
                 {
                     str.insert(str.length()-len-6," ");
@@ -2079,6 +2147,9 @@ void Measurements::on_calibrationEnabled(bool enabled)
 
 void Measurements::saveData(quint32 number, QString path)
 {
+    if (number >= (quint32)g_maxMeasurements)
+        number = g_maxMeasurements-1;
+
     if(path.indexOf(".asd") >= 0 )
     {
         QFile saveFile(path);
@@ -2324,6 +2395,8 @@ void Measurements::exportData(QString _name, int _type, QVector<rawData>& vector
         bool result = file.open(QFile::ReadWrite);
         if(result)
         {
+            extern bool g_developerMode;
+            int rxWidth = g_developerMode ? 6 : 2;
             str = "#Frequency(MHz);R;X";
             file.write( str.toLocal8Bit(), str.length());
             file.write("\r\n", 2);
@@ -2331,9 +2404,9 @@ void Measurements::exportData(QString _name, int _type, QVector<rawData>& vector
             {
                 str = QString::number(vector.at(i).fq, 'f', 6) +
                 "," +//";" +
-                QString::number(vector.at(i).r,'f',2) +
+                QString::number(vector.at(i).r,'f',rxWidth) +
                 "," +//";" +
-                QString::number(vector.at(i).x,'f',2);
+                QString::number(vector.at(i).x,'f',rxWidth);
 
                 file.write( str.toLocal8Bit(), str.length());
                 file.write("\r\n", 2);
@@ -2827,6 +2900,48 @@ void Measurements::importData(QString _name)
     */
 }
 
+int Measurements::calcTdrDist(QVector<rawData> *data)
+{
+    if (data == nullptr || data->length() == 0)
+        return 0;
+
+    int asize = data->length();
+
+    double minfq = data->at(0).fq;
+    if ( minfq > 0.1 )
+    {
+        return 0; // Wrong fq
+    }
+
+    double maxfq = data->at(asize-1).fq;
+    int iTdrFftSize = 0;
+
+    int i;
+    for (i=0; ; i++)
+    {
+        iTdrFftSize = (1<<i);
+        if ( (iTdrFftSize/2) >= (asize-1) )
+            break;
+
+        if (i==14)
+            return 0; // bug
+    }
+
+    iTdrFftSize *= 8;
+
+    if (iTdrFftSize > TDR_MAXARRAY)
+            return 0; // bug
+
+    double tdrResolution = 1.0/(maxfq-minfq)/4*299792458*m_cableVelFactor / (iTdrFftSize/2) * (asize-1);
+
+    double tdrRange = tdrResolution*iTdrFftSize/1000000;
+
+    if (!m_measureSystemMetric)
+        tdrRange *= FEETINMETER;
+
+    return tdrRange;
+}
+
 int Measurements::CalcTdr(QVector <rawData> *data)
 {
     if (data == nullptr || data->length() == 0)
@@ -2871,6 +2986,22 @@ int Measurements::CalcTdr(QVector <rawData> *data)
 
     if (!m_measureSystemMetric)
         m_tdrRange *= FEETINMETER;
+
+#if 0
+    ///////////////////////
+    const int dots = 1024;
+    const int iTdrFftSize = 16384;
+    const int iTdrFftSize2 = 8192;
+    const double coeff = 1.0/4*299792458;
+
+
+    double cableLength = 1500;
+    double fqMin = minfq;
+    double resolution = cableLength * 1000000.0/iTdrFftSize;
+    double fqMax = fqMin +  coeff * m_cableVelFactor / iTdrFftSize2 * (dots-1) / resolution;
+    fqMin = fqMax - coeff * m_cableVelFactor / iTdrFftSize2 * (dots-1) / resolution;
+    ///
+#endif
 
     float *TdrReal = new float[TDR_MAXARRAY];
     float *TdrImag = new float[TDR_MAXARRAY];
@@ -3074,7 +3205,7 @@ void Measurements::on_changeMeasureSystemMetric (bool state)
     }
 }
 
-void Measurements::on_redrawGraphs()
+void Measurements::on_redrawGraphs(bool _incrementally)
 {
     if(m_calibration == NULL)
     {
@@ -3088,568 +3219,49 @@ void Measurements::on_redrawGraphs()
 
     if(m_farEndMeasurement)
     {
-        calcFarEnd();
+        calcFarEnd(_incrementally);
     }
 
-    if( m_currentTab == "tab_6") { //TDR
-
+    if( m_currentTab == "tab_1")//SWR
+    {
+        redrawSWR(_incrementally);
+    } else if( m_currentTab == "tab_2")//Phase
+    {
+        redrawPhase(_incrementally);
+    } else if( m_currentTab == "tab_3")//Rs
+    {
+        redrawRs(_incrementally);
+    } else if( m_currentTab == "tab_4")//Rp
+    {
+        redrawRp(_incrementally);
+    } else if( m_currentTab == "tab_5")//Rl
+    {
+        redrawRl(_incrementally);
+    } else if( m_currentTab == "tab_6")//TDR
+    {
         redrawTDR();
-        replot();
-        return;
-    }
-
-    if(m_calibration->getCalibrationEnabled())
+    } else if( m_currentTab == "tab_7")//Smith
     {
-        if( m_currentTab == "tab_1")//SWR
-        {
-            if(m_farEndMeasurement != 0)
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_swrWidget->graph(i+1)->setData(m_farEndMeasurement == 1
-                                                       ? &m_farEndMeasurementsSub[i].swrGraph
-                                                       : &m_farEndMeasurementsAdd[i].swrGraph,
-                                                       true);
-                }
-            }else
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_swrWidget->graph(i+1)->setData(&m_measurements[i].swrGraphCalib, true);
-                }
-            }
-        }else if(m_currentTab == "tab_2")//Phase
-        {            
-            if(m_farEndMeasurement != 0)
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    if (m_farEndMeasurement == 1)
-                        m_phaseWidget->graph(i+1)->setData(&m_farEndMeasurementsSub[i].phaseGraph, true);
-                    else
-                        m_phaseWidget->graph(i+1)->setData(&m_farEndMeasurementsAdd[i].phaseGraph, true);
-                }
-            } else {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_phaseWidget->graph(i+1)->setData(&m_measurements[i].phaseGraphCalib, true);
-                }
-            }
-        }else if(m_currentTab == "tab_3")//RX
-        {
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                QCPDataMap mapr;
-                QCPDataMap mapx;
-                QCPDataMap mapz;
-                m_viewMeasurements[i].rsrGraph.clear();
-                m_viewMeasurements[i].rsxGraph.clear();
-                m_viewMeasurements[i].rszGraph.clear();
-                QCPData data;
-                QCPData value;
-                double maxVal = m_rsWidget->yAxis->range().upper;
-                double minVal = m_rsWidget->yAxis->range().lower;
-
-                QList <double> listr;
-                QList <double> listx;
-                QList <double> listz;
-                if(m_farEndMeasurement != 0)
-                {
-                    QList <measurement>& _farEndMeasurements =
-                            m_farEndMeasurement == 1 ? m_farEndMeasurementsSub : m_farEndMeasurementsAdd;
-                    mapr = _farEndMeasurements.at(i).rsrGraph;
-                    mapx = _farEndMeasurements.at(i).rsxGraph;
-                    mapz = _farEndMeasurements.at(i).rszGraph;
-                }else
-                {
-                    mapr = m_measurements.at(i).rsrGraphCalib;
-                    mapx = m_measurements.at(i).rsxGraphCalib;
-                    mapz = m_measurements.at(i).rszGraphCalib;
-                }
-                listr = mapr.keys();
-                listx = mapx.keys();
-                listz = mapz.keys();
-                for(int n = 0; n < listr.length(); ++n)
-                {
-                    data.key = listr.at(n);
-                    value = mapr.value(listr.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rsrGraph.insertMulti(data.key,data);
-
-                    data.key = listx.at(n);
-                    value = mapx.value(listx.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rsxGraph.insertMulti(data.key,data);
-
-                    data.key = listz.at(n);
-                    value = mapz.value(listz.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rszGraph.insertMulti(data.key,data);
-                }
-                m_rsWidget->graph(i*3+3)->setData(&m_viewMeasurements[i].rszGraph, true);
-                m_rsWidget->graph(i*3+2)->setData(&m_viewMeasurements[i].rsxGraph, true);
-                m_rsWidget->graph(i*3+1)->setData(&m_viewMeasurements[i].rsrGraph, true);
-            }
-        }else if(m_currentTab == "tab_4")//RXpar
-        {
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                QCPDataMap mapr;
-                QCPDataMap mapx;
-                QCPDataMap mapz;
-                m_viewMeasurements[i].rprGraph.clear();
-                m_viewMeasurements[i].rpxGraph.clear();
-                m_viewMeasurements[i].rpzGraph.clear();
-                QCPData data;
-                QCPData value;
-                double maxVal = m_rpWidget->yAxis->range().upper;
-                double minVal = m_rpWidget->yAxis->range().lower;
-
-                QList <double> listr;
-                QList <double> listx;
-                QList <double> listz;
-                if(m_farEndMeasurement != 0)
-                {
-                    QList <measurement>& _farEndMeasurements =
-                            m_farEndMeasurement == 1 ? m_farEndMeasurementsSub : m_farEndMeasurementsAdd;
-                    mapr = _farEndMeasurements.at(i).rprGraph;
-                    mapx = _farEndMeasurements.at(i).rpxGraph;
-                    mapz = _farEndMeasurements.at(i).rpzGraph;
-                }else
-                {
-                    mapr = m_measurements.at(i).rprGraphCalib;
-                    mapx = m_measurements.at(i).rpxGraphCalib;
-                    mapz = m_measurements.at(i).rpzGraphCalib;
-                }
-                listr = mapr.keys();
-                listx = mapx.keys();
-                listz = mapz.keys();
-                for(int n = 0; n < listr.length(); ++n)
-                {
-                    data.key = listr.at(n);
-                    value = mapr.value(listr.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rprGraph.insert(data.key,data);
-
-                    data.key = listx.at(n);
-                    value = mapx.value(listx.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rpxGraph.insert(data.key,data);
-
-                    data.key = listz.at(n);
-                    value = mapz.value(listz.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rpzGraph.insert(data.key,data);
-                }
-                m_rpWidget->graph(i*3+3)->setData(&m_viewMeasurements[i].rpzGraph, true);
-                m_rpWidget->graph(i*3+2)->setData(&m_viewMeasurements[i].rpxGraph, true);
-                m_rpWidget->graph(i*3+1)->setData(&m_viewMeasurements[i].rprGraph, true);
-            }
-        }else if(m_currentTab == "tab_5")//RL
-        {
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraphCalib, true);
-            }
-        }else if(m_currentTab == "tab_7")//Smith
-        {
-            if(m_farEndMeasurement)
-            {
-                if(m_farEndMeasurement == 1)
-                {
-                    for(int i = 0; i < m_measurements.length(); ++i)
-                    {
-                        m_measurements[i].smithCurve->setData(&m_farEndMeasurementsSub[i].smithGraphCalib,true);
-                    }
-                }else if(m_farEndMeasurement == 2)
-                {
-                    for(int i = 0; i < m_measurements.length(); ++i)
-                    {
-                        m_measurements[i].smithCurve->setData(&m_farEndMeasurementsAdd[i].smithGraphCalib,true);
-                    }
-                }
-            }else
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_measurements[i].smithCurve->setData(&m_measurements[i].smithGraphViewCalib,true);
-                }
-            }
-        }
-    }else
+        redrawSmith(_incrementally);
+    } else if( m_currentTab == "tab_8")//User
     {
-        if( m_currentTab == "tab_1")//SWR
-        {
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                m_viewMeasurements[i].swrGraph.clear();
-                QCPDataMap *map;
-                switch (m_farEndMeasurement) {
-                case 1:
-                    map = &m_farEndMeasurementsSub[i].swrGraph;
-                    break;
-                case 2:
-                    map = &m_farEndMeasurementsAdd[i].swrGraph;
-                    break;
-                default:
-                    map = &m_measurements[i].swrGraph;
-                    break;
-                }
-                QList <double> list = map->keys();
-                QCPData data;
-                QCPData viewData;
-                double maxSwr = MAX_SWR;//m_swrWidget->yAxis->range().upper;
-                for(int n = 0; n < list.length(); ++n)
-                {
-                    data.key = list.at(n);
-                    viewData = map->value(list.at(n));
-                    if( viewData.value > maxSwr || viewData.value < 1)
-                    {
-                        data.value = maxSwr;
-                    }else
-                    {
-                        data.value = viewData.value;
-                    }
-                    m_viewMeasurements[i].swrGraph.insert(data.key,data);
-                }
-                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
-            }
-
-        }else if(m_currentTab == "tab_2")//Phase
-        {            
-            if(m_farEndMeasurement != 0)
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_phaseWidget->graph(i+1)->setData(m_farEndMeasurement == 1
-                                                       ? &m_farEndMeasurementsSub[i].phaseGraph
-                                                       : &m_farEndMeasurementsAdd[i].phaseGraph,
-                                                       true);
-                }
-            }else
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_phaseWidget->graph(i+1)->setData(&m_measurements[i].phaseGraph, true);
-                }
-            }
-        }else if(m_currentTab == "tab_3")//RX
-        {
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                QCPDataMap mapr;
-                QCPDataMap mapx;
-                QCPDataMap mapz;
-                m_viewMeasurements[i].rsrGraph.clear();
-                m_viewMeasurements[i].rsxGraph.clear();
-                m_viewMeasurements[i].rszGraph.clear();
-                QCPData data;
-                QCPData value;
-                double maxVal = m_rsWidget->yAxis->range().upper;
-                double minVal = m_rsWidget->yAxis->range().lower;
-
-                QList <double> listr;
-                QList <double> listx;
-                QList <double> listz;
-                if(m_farEndMeasurement)
-                {
-                    if(m_farEndMeasurement == 1)
-                    {
-                        mapr = m_farEndMeasurementsSub.at(i).rsrGraph;
-                        mapx = m_farEndMeasurementsSub.at(i).rsxGraph;
-                        mapz = m_farEndMeasurementsSub.at(i).rszGraph;
-                    }else if (m_farEndMeasurement == 2)
-                    {
-                        mapr = m_farEndMeasurementsAdd.at(i).rsrGraph;
-                        mapx = m_farEndMeasurementsAdd.at(i).rsxGraph;
-                        mapz = m_farEndMeasurementsAdd.at(i).rszGraph;
-                    }
-                }else
-                {
-                    mapr = m_measurements.at(i).rsrGraph;
-                    mapx = m_measurements.at(i).rsxGraph;
-                    mapz = m_measurements.at(i).rszGraph;
-                }
-
-                listr = mapr.keys();
-                listx = mapx.keys();
-                listz = mapz.keys();
-                for(int n = 0; n < listr.length(); ++n)
-                {
-                    data.key = listr.at(n);
-                    value = mapr.value(listr.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rsrGraph.insert(data.key,data);
-
-                    data.key = listx.at(n);
-                    value = mapx.value(listx.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rsxGraph.insertMulti(data.key,data);
-
-                    data.key = listz.at(n);
-                    value = mapz.value(listz.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rszGraph.insertMulti(data.key,data);
-                }
-                m_rsWidget->graph(i*3+3)->setData(&m_viewMeasurements[i].rszGraph, true);
-                m_rsWidget->graph(i*3+2)->setData(&m_viewMeasurements[i].rsxGraph, true);
-                m_rsWidget->graph(i*3+1)->setData(&m_viewMeasurements[i].rsrGraph, true);
-            }
-        }else if(m_currentTab == "tab_4")//RXpar
-        {
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                QCPDataMap rMap;
-                QCPDataMap xMap;
-                QCPDataMap zMap;
-                m_viewMeasurements[i].rprGraph.clear();
-                m_viewMeasurements[i].rpxGraph.clear();
-                m_viewMeasurements[i].rpzGraph.clear();
-                QCPData data;
-                QCPData value;
-                double maxVal = m_rpWidget->yAxis->range().upper;
-                double minVal = m_rpWidget->yAxis->range().lower;
-
-                QList <double> rKeys;
-                QList <double> xKeys;
-                QList <double> zKeys;
-                if(m_farEndMeasurement)
-                {
-                    if(m_farEndMeasurement == 1)
-                    {
-                        rMap = m_farEndMeasurementsSub.at(i).rprGraph;
-                        xMap = m_farEndMeasurementsSub.at(i).rpxGraph;
-                        zMap = m_farEndMeasurementsSub.at(i).rpzGraph;
-                    }else if (m_farEndMeasurement == 2)
-                    {
-                        rMap = m_farEndMeasurementsAdd.at(i).rprGraph;
-                        xMap = m_farEndMeasurementsAdd.at(i).rpxGraph;
-                        zMap = m_farEndMeasurementsAdd.at(i).rpzGraph;
-                    }
-                }else
-                {
-                    rMap = m_measurements.at(i).rprGraph;
-                    xMap = m_measurements.at(i).rpxGraph;
-                    zMap = m_measurements.at(i).rpzGraph;
-                }
-                rKeys = rMap.keys();
-                xKeys = xMap.keys();
-                zKeys = zMap.keys();
-                for(int n = 0; n < rKeys.length(); ++n)
-                {
-                    data.key = rKeys.at(n);
-                    value = rMap.value(rKeys.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rprGraph.insert(data.key,data);
-
-                    data.key = xKeys.at(n);
-                    value = xMap.value(xKeys.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rpxGraph.insert(data.key,data);
-
-                    data.key = zKeys.at(n);
-                    value = zMap.value(zKeys.at(n));
-                    if( value.value > maxVal)
-                    {
-                        data.value = maxVal;
-                    }else if(value.value < minVal)
-                    {
-                        data.value = minVal;
-                    }else
-                    {
-                        data.value = value.value;
-                    }
-                    m_viewMeasurements[i].rpzGraph.insert(data.key,data);
-                }
-                m_rpWidget->graph(i*3+3)->setData(&m_viewMeasurements[i].rpzGraph, true);
-                m_rpWidget->graph(i*3+2)->setData(&m_viewMeasurements[i].rpxGraph, true);
-                m_rpWidget->graph(i*3+1)->setData(&m_viewMeasurements[i].rprGraph, true);
-            }
-        }else if(m_currentTab == "tab_5")//RL
-        {
-            if(m_farEndMeasurement != 0)
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_rlWidget->graph(i+1)->setData(m_farEndMeasurement == 1
-                                                       ? &m_farEndMeasurementsSub[i].rlGraph
-                                                       : &m_farEndMeasurementsAdd[i].rlGraph,
-                                                       true);
-                }
-            }else
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_rlWidget->graph(i+1)->setData(&m_measurements[i].rlGraph, true);
-                }
-            }
-        }else if(m_currentTab == "tab_7")//Smith
-        {
-            if(m_farEndMeasurement)
-            {
-                if(m_farEndMeasurement == 1)
-                {
-                    for(int i = 0; i < m_measurements.length(); ++i)
-                    {
-                        m_measurements[i].smithCurve->setData(&m_farEndMeasurementsSub[i].smithGraph,true);
-                    }
-                }else if(m_farEndMeasurement == 2)
-                {
-                    for(int i = 0; i < m_measurements.length(); ++i)
-                    {
-                        m_measurements[i].smithCurve->setData(&m_farEndMeasurementsAdd[i].smithGraph,true);
-                    }
-                }
-            }else
-            {
-                for(int i = 0; i < m_measurements.length(); ++i)
-                {
-                    m_measurements[i].smithCurve->setData(&m_measurements[i].smithGraphView,true);
-                }
-            }
-        }else if(m_currentTab == "tab_8")//user
-        {
-            for(int i = 0; i < m_measurements.length(); ++i)
-            {
-                int count = m_viewMeasurements[i].userGraphs.size();
-                for (int idx=0; idx<count; idx++) {
-                    m_viewMeasurements[i].userGraphs[idx]->clear();
-
-                    QCPData data;
-                    QCPData value;
-                    double maxVal = m_userWidget->yAxis->range().upper;
-                    double minVal = m_userWidget->yAxis->range().lower;
-
-                    QCPDataMap* map = m_measurements[i].userGraphs.at(idx);
-                    QCPDataMap* vmap = m_viewMeasurements[i].userGraphs.at(idx);
-
-                    QList <double> list = map->keys();
-                    for(int n = 0; n < list.length(); ++n)
-                    {
-                        data.key = list.at(n);
-                        value = map->value(list.at(n));
-                        if( value.value > maxVal)
-                        {
-                            data.value = maxVal;
-                        }else if(value.value < minVal)
-                        {
-                            data.value = minVal;
-                        }else
-                        {
-                            data.value = value.value;
-                        }
-                        vmap->insertMulti(data.key,data);
-                    }
-                    int index = getBaseUserGraphIndex(i)+idx;
-                    m_userWidget->graph(index)->setData(m_viewMeasurements[i].userGraphs[idx], true);
-                }
-            }
-        }
+        redrawUser(_incrementally);
     }
-    replot();
+}
+
+
+void Measurements::restrictData(qreal _min, qreal _max, QCPData& _data)
+{
+    _data.value = (_data.value > _max) ? _max : ((_data.value < _min) ? _min : _data.value);
 }
 
 void Measurements::replot()
 {
+    if (m_measuringInProgress && !m_isContinuing) {
+        on_drawPoint();
+        return;
+    }
+
     if(m_currentTab == "tab_1")
     {
         m_swrWidget->replot();
@@ -3675,6 +3287,10 @@ void Measurements::replot()
     {
         m_userWidget->replot();
     }
+//    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+//    QTabWidget* tabWidget = mainWindow->tabWidget();
+//    QWidget* tab = tabWidget->currentWidget();
+//    tab->repaint();
 }
 
 void Measurements::NormRXtoSmithPoint(double Rnorm, double Xnorm, double &x, double &y)
@@ -3963,15 +3579,15 @@ void Measurements::setCableFarEndMeasurement(int value)
     m_farEndMeasurement = value;
 }
 
-void Measurements::calcFarEnd(void)
+void Measurements::calcFarEnd(bool _incrementally)
 {
     //if(m_calibration != NULL)
     {
         int count = m_measurements.length();
         int dataCount;
         QVector <rawData> data;
-
-        for(int i = 0; i < count; ++i)
+        int i = _incrementally ? (count-1) : 0;
+        for( ; i < count; ++i)
         {
             if(m_calibration != nullptr && m_calibration->getCalibrationEnabled())
             {
@@ -3982,37 +3598,40 @@ void Measurements::calcFarEnd(void)
                 dataCount = m_measurements.at(i).dataRX.length();
                 data = m_measurements.at(i).dataRX;
             }
-
-            if(m_farEndMeasurement==1) // subtract cable
+            if (! _incrementally)
             {
-                m_farEndMeasurementsSub[i].dataRX.clear();
-                m_farEndMeasurementsSub[i].swrGraph.clear();
-                m_farEndMeasurementsSub[i].rlGraph.clear();
-                m_farEndMeasurementsSub[i].rsrGraph.clear();
-                m_farEndMeasurementsSub[i].rsxGraph.clear();
-                m_farEndMeasurementsSub[i].rszGraph.clear();
-                m_farEndMeasurementsSub[i].rprGraph.clear();
-                m_farEndMeasurementsSub[i].rpxGraph.clear();
-                m_farEndMeasurementsSub[i].rpzGraph.clear();
-                m_farEndMeasurementsSub[i].phaseGraph.clear();
-                m_farEndMeasurementsSub[i].rhoGraph.clear();
-                m_farEndMeasurementsSub[i].smithGraph.clear();
-            }else if(m_farEndMeasurement==2) // add cable
-            {
-                m_farEndMeasurementsAdd[i].dataRX.clear();
-                m_farEndMeasurementsAdd[i].swrGraph.clear();
-                m_farEndMeasurementsAdd[i].rlGraph.clear();
-                m_farEndMeasurementsAdd[i].rsrGraph.clear();
-                m_farEndMeasurementsAdd[i].rsxGraph.clear();
-                m_farEndMeasurementsAdd[i].rszGraph.clear();
-                m_farEndMeasurementsAdd[i].rprGraph.clear();
-                m_farEndMeasurementsAdd[i].rpxGraph.clear();
-                m_farEndMeasurementsAdd[i].rpzGraph.clear();
-                m_farEndMeasurementsAdd[i].phaseGraph.clear();
-                m_farEndMeasurementsAdd[i].rhoGraph.clear();
-                m_farEndMeasurementsAdd[i].smithGraph.clear();
+                if(m_farEndMeasurement==1) // subtract cable
+                {
+                    m_farEndMeasurementsSub[i].dataRX.clear();
+                    m_farEndMeasurementsSub[i].swrGraph.clear();
+                    m_farEndMeasurementsSub[i].rlGraph.clear();
+                    m_farEndMeasurementsSub[i].rsrGraph.clear();
+                    m_farEndMeasurementsSub[i].rsxGraph.clear();
+                    m_farEndMeasurementsSub[i].rszGraph.clear();
+                    m_farEndMeasurementsSub[i].rprGraph.clear();
+                    m_farEndMeasurementsSub[i].rpxGraph.clear();
+                    m_farEndMeasurementsSub[i].rpzGraph.clear();
+                    m_farEndMeasurementsSub[i].phaseGraph.clear();
+                    m_farEndMeasurementsSub[i].rhoGraph.clear();
+                    m_farEndMeasurementsSub[i].smithGraph.clear();
+                }else if(m_farEndMeasurement==2) // add cable
+                {
+                    m_farEndMeasurementsAdd[i].dataRX.clear();
+                    m_farEndMeasurementsAdd[i].swrGraph.clear();
+                    m_farEndMeasurementsAdd[i].rlGraph.clear();
+                    m_farEndMeasurementsAdd[i].rsrGraph.clear();
+                    m_farEndMeasurementsAdd[i].rsxGraph.clear();
+                    m_farEndMeasurementsAdd[i].rszGraph.clear();
+                    m_farEndMeasurementsAdd[i].rprGraph.clear();
+                    m_farEndMeasurementsAdd[i].rpxGraph.clear();
+                    m_farEndMeasurementsAdd[i].rpzGraph.clear();
+                    m_farEndMeasurementsAdd[i].phaseGraph.clear();
+                    m_farEndMeasurementsAdd[i].rhoGraph.clear();
+                    m_farEndMeasurementsAdd[i].smithGraph.clear();
+                }
             }
-            for(int ii = 0; ii < dataCount; ++ii)
+            int ii = _incrementally ? (dataCount-1) : 0;
+            for( ; ii < dataCount; ++ii)
             {
                 calcFarEnd(data.at(ii), i);
             }
@@ -4324,6 +3943,7 @@ int Measurements::getBaseUserGraphIndex(int row)
     return idx;
 }
 
+#ifdef OLD_TDR
 void Measurements::startTDRProgress(QWidget* _parent, int _dots)
 {
     m_tdrDots = _dots;
@@ -4339,6 +3959,25 @@ void Measurements::startTDRProgress(QWidget* _parent, int _dots)
     connect(m_tdrProgressDlg, &ProgressDlg::canceled, this, &Measurements::measurementCanceled);
     m_tdrProgressDlg->show();
 }
+#else
+void Measurements::startTDRProgress(Analyzer* _analyzer, QWidget* _parent)
+{
+    m_tdrDots = 1024;
+    if (m_tdrProgressDlg != nullptr)
+        disconnect(m_tdrProgressDlg);
+
+    delete m_tdrProgressDlg;
+
+    m_tdrProgressDlg = new TDRProgressDialog(_analyzer, _parent);
+    m_tdrProgressDlg->setCableVelFactor(m_cableVelFactor);
+    m_tdrProgressDlg->setWindowModality(Qt::WindowModal);
+    m_tdrProgressDlg->setValue(0);
+    m_tdrProgressDlg->updateActionInfo(tr("TDR measuring"));
+    m_tdrProgressDlg->updateStatusInfo(tr("Set cable  length and press Start"));
+    connect(m_tdrProgressDlg, &TDRProgressDialog::canceled, this, &Measurements::measurementCanceled);
+    m_tdrProgressDlg->show();
+}
+#endif
 
 void Measurements::stopTDRProgress()
 {
@@ -4364,37 +4003,38 @@ void Measurements::updateTDRProgress(int dots)
 
 void Measurements::startAutocalibrateProgress(QWidget* _parent, int _dots)
 {
-    delete m_tdrProgressDlg;
+    delete m_autoCalibrateProgressDlg;
 
-    m_tdrProgressDlg = new ProgressDlg(_parent);
-    m_tdrProgressDlg->setWindowModality(Qt::WindowModal);
-    m_tdrProgressDlg->setValue(0);
-    m_tdrProgressDlg->setProgressData(0, _dots, 1);
-    m_tdrProgressDlg->updateActionInfo(tr("Auto calibration"));
-    m_tdrProgressDlg->updateStatusInfo(tr("please wait ...."));
-    m_tdrProgressDlg->setCancelable();
-    connect(m_tdrProgressDlg, &ProgressDlg::canceled, this, &Measurements::interrupt);
-    m_tdrProgressDlg->show();
+    m_autoCalibrateProgressDlg = new ProgressDlg(_parent);
+    m_autoCalibrateProgressDlg->setWindowModality(Qt::WindowModal);
+    m_autoCalibrateProgressDlg->setValue(0);
+    m_autoCalibrateProgressDlg->setProgressData(0, _dots, 1);
+    m_autoCalibrateProgressDlg->updateActionInfo(tr("Auto calibration"));
+    m_autoCalibrateProgressDlg->updateStatusInfo(tr("please wait ...."));
+    m_autoCalibrateProgressDlg->setCancelable();
+    connect(m_autoCalibrateProgressDlg, &ProgressDlg::canceled, this, &Measurements::interrupt);
+    m_autoCalibrateProgressDlg->show();
+    QApplication::processEvents();
 }
 
 void Measurements::stopAutocalibrateProgress()
 {
-    if (m_tdrProgressDlg != nullptr)
+    if (m_autoCalibrateProgressDlg != nullptr)
     {
-        m_tdrProgressDlg->hide();
-        delete m_tdrProgressDlg;
-        m_tdrProgressDlg = nullptr;
+        m_autoCalibrateProgressDlg->hide();
+        m_autoCalibrateProgressDlg->deleteLater();
+        m_autoCalibrateProgressDlg = nullptr;
     }
 }
 
 void Measurements::updateAutocalibrateProgress(int _dots, QString _msg)
 {
-    if (m_tdrProgressDlg != nullptr) {
-        m_tdrProgressDlg->setValue(_dots);
-        m_tdrProgressDlg->updateStatusInfo(QString(tr("Iteration %1. %2"))
-                                           .arg(_dots)
-                                           .arg(_msg));
-    }
+    if (m_autoCalibrateProgressDlg == nullptr)
+        return;
+    m_autoCalibrateProgressDlg->setValue(_dots);
+    m_autoCalibrateProgressDlg->updateStatusInfo(QString(tr("Iteration %1. %2"))
+                                       .arg(_dots)
+                                       .arg(_msg));
 }
 
 void Measurements::showOneFqWidget(QWidget* _parent, int _dots)
@@ -4777,12 +4417,12 @@ rawData Measurements::calcFarEnd(const rawData& data, int idx, bool refreshGraph
 QPair<double, double> Measurements::autoCalibrate()
 {
     m_settings->beginGroup("Auto-calibration");
-    double cable_length_min = m_settings->value("cable_length_min", "0").toDouble();
-    double cable_length_max = m_settings->value("cable_length_max", "0.02").toDouble();
-    double cable_length_steps = m_settings->value("cable_length_steps", "100").toDouble();
-    double cable_res_min = m_settings->value("cable_res_min", "20").toDouble();
-    double cable_res_max = m_settings->value("cable_res_max", "40").toDouble();
-    double cable_res_steps = m_settings->value("cable_res_steps", "100").toDouble();
+    double cable_length_min = m_settings->value("cable_length_min", 0).toDouble();
+    double cable_length_max = m_settings->value("cable_length_max", 0.02).toDouble();
+    double cable_length_steps = m_settings->value("cable_length_steps", 100).toDouble();
+    double cable_res_min = m_settings->value("cable_res_min", 20).toDouble();
+    double cable_res_max = m_settings->value("cable_res_max", 40).toDouble();
+    double cable_res_steps = m_settings->value("cable_res_steps", 100).toDouble();
     m_settings->endGroup();
 
     startAutocalibrateProgress(nullptr, cable_length_steps * cable_res_steps);
@@ -4834,8 +4474,10 @@ QPair<double, double> Measurements::autoCalibrate()
                     return QPair<double, double>(_cableResistance, _cableLength);
                 }
                 measurement* mm = getMeasurement(count-1);
+                m_farEndMeasurementsSub[count-1].dataRX.clear();
                 const QVector<rawData>& data = mm->dataRX;
 
+//                double dSqrDist0 = 0;
                 for (int i=0; i<data.size(); i++) {
                     const rawData& inData = data.at(i);
                     if (inData.fq*1000 > 10000)
@@ -4852,6 +4494,16 @@ QPair<double, double> Measurements::autoCalibrate()
                         double tmpSWR;
                         int ret = computeSWR(inData.fq*1000.0, getZ0(), R, X, &tmpSWR, nullptr);
                         if (ret != 0) {
+
+//                            if (i == 0) {
+//                                dSqrDist0 = tmpSWR*tmpSWR;
+//                                dSqrDist = dSqrDist0;
+//                            }
+//                            else
+//                            {
+//                                dSqrDist += (tmpSWR - dSqrDist0)*(tmpSWR - dSqrDist0);
+//                            }
+
                             double tmpFQ = inData.fq;
                             if (tmpSWR > dMaxSwrValue)
                             {
@@ -5029,16 +4681,19 @@ void Measurements::on_impedanceChanged(double _z0)
             }
         }
     }
+    m_measuringInProgress = false;
     if (!selected.isEmpty()) {
         m_tableWidget->selectRow(selected.at(0)->row());
         emit selectMeasurement(selected.at(0)->row(), selected.at(0)->column());
     }
 }
 
-void Measurements::redrawTDR()
+void Measurements::redrawTDR(int _index)
 {
     int mode = m_farEndMeasurement;
-    for (int index=0; index<m_measurements.length(); index++) {
+    int begin = _index < 0 ? 0 : _index;
+    int end = _index < 0 ? m_measurements.length() : (_index+1);
+    for (int index=begin; index<end; index++) {
         measurement& mm = (mode == 1)
                 ? m_farEndMeasurementsSub[index]
                 : ( (mode == 2) ? m_farEndMeasurementsAdd[index] : m_measurements[index] );
@@ -5076,15 +4731,19 @@ void Measurements::redrawTDR()
         m_tdrWidget->graph(index*2+2)->setData(
                         m_measureSystemMetric ? &mm.tdrStepGraph : &mm.tdrStepGraphFeet, true);
     } // for index
+    replot();
 }
 
-void Measurements::redrawSWR()
+void Measurements::redrawSWR(bool _incrementally)
 {
+    if (m_measurements.isEmpty())
+        return;
+    int i = _incrementally ? (m_measurements.length()-1) : 0;
     if (m_calibration->getCalibrationEnabled())
     {
         if(m_farEndMeasurement != 0)
         {
-            for(int i = 0; i < m_measurements.length(); ++i)
+            for(; i < m_measurements.length(); ++i)
             {
                 m_swrWidget->graph(i+1)->setData(m_farEndMeasurement == 1
                                                  ? &m_farEndMeasurementsSub[i].swrGraph
@@ -5093,15 +4752,17 @@ void Measurements::redrawSWR()
             }
         }else
         {
-            for(int i = 0; i < m_measurements.length(); ++i)
+            for(; i < m_measurements.length(); ++i)
             {
                 m_swrWidget->graph(i+1)->setData(&m_measurements[i].swrGraphCalib, true);
             }
         }
     } else {
-        for(int i = 0; i < m_measurements.length(); ++i)
+        for(; i < m_measurements.length(); ++i)
         {
-            m_viewMeasurements[i].swrGraph.clear();
+            if (!_incrementally)
+                m_viewMeasurements[i].swrGraph.clear();
+
             QCPDataMap *map;
             switch (m_farEndMeasurement) {
             case 1:
@@ -5115,10 +4776,13 @@ void Measurements::redrawSWR()
                 break;
             }
             QList <double> list = map->keys();
+            if (list.isEmpty())
+                continue;
             QCPData data;
             QCPData viewData;
             double maxSwr = MAX_SWR;//m_swrWidget->yAxis->range().upper;
-            for(int n = 0; n < list.length(); ++n)
+            int n = _incrementally ? (list.length()-1) : 0;
+            for(; n < list.length(); ++n)
             {
                 data.key = list.at(n);
                 viewData = map->value(list.at(n));
@@ -5131,11 +4795,298 @@ void Measurements::redrawSWR()
                 }
                 m_viewMeasurements[i].swrGraph.insert(data.key,data);
             }
-            m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
+            if (!_incrementally) {
+                m_swrWidget->graph(i+1)->setData(&m_viewMeasurements[i].swrGraph, true);
+            } else {
+                m_swrWidget->graph(i+1)->addData(m_viewMeasurements[i].swrGraph.last());
+            }
+        }
+    }
+    replot();
+}
+
+
+
+void Measurements::redrawPhase(bool _incrementally)
+{
+    if (m_measurements.isEmpty())
+        return;
+    bool calibr = m_calibration->getCalibrationEnabled();
+    int i = _incrementally ? (m_measurements.length()-1) : 0;
+
+    if(m_farEndMeasurement != 0)
+    {
+        for(; i < m_measurements.length(); ++i)
+        {
+            m_phaseWidget->graph(i+1)->setData(m_farEndMeasurement == 1
+                                               ? &m_farEndMeasurementsSub[i].phaseGraph
+                                               : &m_farEndMeasurementsAdd[i].phaseGraph,
+                                               true);
+        }
+    }else
+    {
+        for(; i < m_measurements.length(); ++i)
+        {
+            m_phaseWidget->graph(i+1)->setData(calibr
+                                               ? &m_measurements[i].phaseGraphCalib
+                                               : &m_measurements[i].phaseGraph, true);
+        }
+    }
+    replot();
+}
+
+void Measurements::redrawRs(bool _incrementally)
+{
+    if (m_measurements.isEmpty())
+        return;
+    bool calibr = m_calibration->getCalibrationEnabled();
+    int i = _incrementally ? (m_measurements.length()-1) : 0;
+
+    double maxVal = m_rsWidget->yAxis->range().upper;
+    double minVal = m_rsWidget->yAxis->range().lower;
+
+    QCPDataMap rMap;
+    QCPDataMap xMap;
+    QCPDataMap zMap;
+    for (; i<m_measurements.length(); i++) {
+        if (!_incrementally) {
+            m_viewMeasurements[i].rsrGraph.clear();
+            m_viewMeasurements[i].rsxGraph.clear();
+            m_viewMeasurements[i].rszGraph.clear();
+        }
+
+        if(m_farEndMeasurement)
+        {
+            if(m_farEndMeasurement == 1)
+            {
+                rMap = m_farEndMeasurementsSub[i].rsrGraph;
+                xMap = m_farEndMeasurementsSub[i].rsxGraph;
+                zMap = m_farEndMeasurementsSub[i].rszGraph;
+            }else if (m_farEndMeasurement == 2)
+            {
+                rMap = m_farEndMeasurementsAdd[i].rsrGraph;
+                xMap = m_farEndMeasurementsAdd[i].rsxGraph;
+                zMap = m_farEndMeasurementsAdd[i].rszGraph;
+            }
+        }else
+        {
+            rMap = calibr ? m_measurements[i].rsrGraphCalib : m_measurements[i].rsrGraph;
+            xMap = calibr ? m_measurements[i].rsxGraphCalib : m_measurements[i].rsxGraph;
+            zMap = calibr ? m_measurements[i].rszGraphCalib : m_measurements[i].rszGraph;
+        }
+        QList <double> rKeys = rMap.keys();
+        QList <double> xKeys = xMap.keys();
+        QList <double> zKeys = zMap.keys();
+
+        if (rKeys.isEmpty())
+            continue;
+        QCPData data;
+        int n = _incrementally ? (rKeys.length()-1) : 0;
+        for( ; n < rKeys.length(); ++n)
+        {
+            data = rMap.value(rKeys.at(n));
+            restrictData(minVal, maxVal, data);
+            m_viewMeasurements[i].rsrGraph.insert(data.key, data);
+
+            data = xMap.value(xKeys.at(n));
+            restrictData(minVal, maxVal, data);
+            m_viewMeasurements[i].rsxGraph.insert(data.key, data);
+
+            data = zMap.value(zKeys.at(n));
+            restrictData(minVal, maxVal, data);
+            m_viewMeasurements[i].rszGraph.insert(data.key, data);
+        }
+        if (!_incrementally) {
+            m_rsWidget->graph(i*3+3)->setData(&m_viewMeasurements[i].rszGraph, true);
+            m_rsWidget->graph(i*3+2)->setData(&m_viewMeasurements[i].rsxGraph, true);
+            m_rsWidget->graph(i*3+1)->setData(&m_viewMeasurements[i].rsrGraph, true);
+        } else {
+            m_rsWidget->graph(i*3+3)->addData(m_viewMeasurements[i].rszGraph.last());
+            m_rsWidget->graph(i*3+2)->addData(m_viewMeasurements[i].rsxGraph.last());
+            m_rsWidget->graph(i*3+1)->addData(m_viewMeasurements[i].rsrGraph.last());
+        }
+    }
+    replot();
+}
+
+void Measurements::redrawRp(bool _incrementally)
+{
+    if (m_measurements.isEmpty())
+        return;
+
+    bool calibr = m_calibration->getCalibrationEnabled();
+    int i = _incrementally ? (m_measurements.length()-1) : 0;
+
+    double maxVal = m_rpWidget->yAxis->range().upper;
+    double minVal = m_rpWidget->yAxis->range().lower;
+
+    QCPDataMap rMap;
+    QCPDataMap xMap;
+    QCPDataMap zMap;
+    for (; i<m_measurements.length(); i++) {
+        if (!_incrementally) {
+            m_viewMeasurements[i].rprGraph.clear();
+            m_viewMeasurements[i].rpxGraph.clear();
+            m_viewMeasurements[i].rpzGraph.clear();
+        }
+
+        if(m_farEndMeasurement)
+        {
+            if(m_farEndMeasurement == 1)
+            {
+                rMap = m_farEndMeasurementsSub[i].rprGraph;
+                xMap = m_farEndMeasurementsSub[i].rpxGraph;
+                zMap = m_farEndMeasurementsSub[i].rpzGraph;
+            }else if (m_farEndMeasurement == 2)
+            {
+                rMap = m_farEndMeasurementsAdd[i].rprGraph;
+                xMap = m_farEndMeasurementsAdd[i].rpxGraph;
+                zMap = m_farEndMeasurementsAdd[i].rpzGraph;
+            }
+        }else
+        {
+            rMap = calibr ? m_measurements[i].rprGraphCalib : m_measurements[i].rprGraph;
+            xMap = calibr ? m_measurements[i].rpxGraphCalib : m_measurements[i].rpxGraph;
+            zMap = calibr ? m_measurements[i].rpzGraphCalib : m_measurements[i].rpzGraph;
+        }
+        QList <double> rKeys = rMap.keys();
+        QList <double> xKeys = xMap.keys();
+        QList <double> zKeys = zMap.keys();
+
+        if (rKeys.isEmpty())
+            continue;
+        QCPData data;
+        int n = _incrementally ? (rKeys.length()-1) : 0;
+        for( ; n < rKeys.length(); ++n)
+        {
+            data = rMap.value(rKeys.at(n));
+            restrictData(minVal, maxVal, data);
+            m_viewMeasurements[i].rprGraph.insert(data.key, data);
+
+            data = xMap.value(xKeys.at(n));
+            restrictData(minVal, maxVal, data);
+            m_viewMeasurements[i].rpxGraph.insert(data.key, data);
+
+            data = zMap.value(zKeys.at(n));
+            restrictData(minVal, maxVal, data);
+            m_viewMeasurements[i].rpzGraph.insert(data.key, data);
+        }
+        if (!_incrementally) {
+            m_rpWidget->graph(i*3+3)->setData(&m_viewMeasurements[i].rpzGraph, true);
+            m_rpWidget->graph(i*3+2)->setData(&m_viewMeasurements[i].rpxGraph, true);
+            m_rpWidget->graph(i*3+1)->setData(&m_viewMeasurements[i].rprGraph, true);
+        } else {
+            m_rpWidget->graph(i*3+3)->addData(m_viewMeasurements[i].rpzGraph.last());
+            m_rpWidget->graph(i*3+2)->addData(m_viewMeasurements[i].rpxGraph.last());
+            m_rpWidget->graph(i*3+1)->addData(m_viewMeasurements[i].rprGraph.last());
+        }
+    }
+    replot();
+}
+
+void Measurements::redrawRl(bool _incrementally)
+{
+    if (m_measurements.isEmpty())
+        return;
+    bool calibr = m_calibration->getCalibrationEnabled();
+    int i = _incrementally ? (m_measurements.length()-1) : 0;
+
+    if(m_farEndMeasurement != 0)
+    {
+        for(; i < m_measurements.length(); ++i)
+        {
+            m_rlWidget->graph(i+1)->setData(m_farEndMeasurement == 1
+                                               ? &m_farEndMeasurementsSub[i].rlGraph
+                                               : &m_farEndMeasurementsAdd[i].rlGraph,
+                                               true);
+        }
+    }else
+    {
+        for(; i < m_measurements.length(); ++i)
+        {
+            m_rlWidget->graph(i+1)->setData(calibr
+                                            ? &m_measurements[i].rlGraphCalib
+                                            : &m_measurements[i].rlGraph, true);
+        }
+    }
+    replot();
+}
+
+void Measurements::redrawSmith(bool _incrementally)
+{
+    if (m_measurements.isEmpty())
+        return;
+    bool calibr = m_calibration->getCalibrationEnabled();
+    int i = _incrementally ? (m_measurements.length()-1) : 0;
+
+    if(m_farEndMeasurement)
+    {
+        if(m_farEndMeasurement == 1)
+        {
+            for(; i < m_measurements.length(); ++i)
+            {
+                m_measurements[i].smithCurve->setData(calibr
+                                                      ? &m_farEndMeasurementsSub[i].smithGraphCalib
+                                                      : &m_farEndMeasurementsSub[i].smithGraph,true);
+            }
+        }else if(m_farEndMeasurement == 2)
+        {
+            for(; i < m_measurements.length(); ++i)
+            {
+                m_measurements[i].smithCurve->setData(calibr
+                                                      ? &m_farEndMeasurementsAdd[i].smithGraphCalib
+                                                      : &m_farEndMeasurementsAdd[i].smithGraph,true);
+            }
+        }
+    }else
+    {
+        for(; i < m_measurements.length(); ++i)
+        {
+            m_measurements[i].smithCurve->setData(&m_measurements[i].smithGraphViewCalib,true);
+            m_measurements[i].smithCurve->setData(calibr
+                                                  ? &m_measurements[i].smithGraphViewCalib
+                                                  : &m_measurements[i].smithGraphView,true);
+        }
+    }
+    replot();
+}
+
+void Measurements::redrawUser(bool _incrementally)
+{
+    if (m_measurements.isEmpty())
+        return;
+    int i = _incrementally ? (m_measurements.length()-1) : 0;
+
+    for( ; i < m_measurements.length(); ++i)
+    {
+        int count = m_viewMeasurements[i].userGraphs.size();
+        for (int idx=0; idx<count; idx++) {
+            if (!_incrementally)
+                m_viewMeasurements[i].userGraphs[idx]->clear();
+
+            QCPData data;
+            QCPData value;
+            double maxVal = m_userWidget->yAxis->range().upper;
+            double minVal = m_userWidget->yAxis->range().lower;
+
+            QCPDataMap* map = m_measurements[i].userGraphs.at(idx);
+            QCPDataMap* vmap = m_viewMeasurements[i].userGraphs.at(idx);
+
+            QList <double> list = map->keys();
+            if (list.isEmpty())
+                continue;
+            int n = _incrementally ? (list.length()-1) : 0;
+            for( ; n < list.length(); ++n)
+            {
+                QCPData data = map->value(list.at(n));
+                restrictData(minVal, maxVal, data);
+                vmap->insertMulti(data.key,data);
+            }
+            int index = getBaseUserGraphIndex(i)+idx;
+            m_userWidget->graph(index)->setData(m_viewMeasurements[i].userGraphs[idx], true);
         }
     }
 }
-
 
 void Measurements::on_exportCableSettings(QString _description)
 {
@@ -5147,4 +5098,103 @@ void Measurements::on_exportCableSettings(QString _description)
     exportDialog->exec();
 }
 
+
+void Measurements::on_drawPoint()
+{
+    //qint64 t0 = QDateTime::currentMSecsSinceEpoch();
+
+    CustomPlot* plot = qobject_cast<CustomPlot*>(m_rpWidget);
+    if(m_currentTab == "tab_1")
+    {
+        plot = qobject_cast<CustomPlot*>(m_swrWidget);
+    }else if(m_currentTab == "tab_2")
+    {
+        plot = qobject_cast<CustomPlot*>(m_phaseWidget);
+    }else if(m_currentTab == "tab_3")
+    {
+        plot = qobject_cast<CustomPlot*>(m_rsWidget);
+    }else if(m_currentTab == "tab_4")
+    {
+        plot = qobject_cast<CustomPlot*>(m_rpWidget);
+    }else if(m_currentTab == "tab_5")
+    {
+        plot = qobject_cast<CustomPlot*>(m_rlWidget);
+    }else if(m_currentTab == "tab_6")
+    {
+        plot = qobject_cast<CustomPlot*>(m_tdrWidget);
+    }else if(m_currentTab == "tab_7")
+    {
+        plot = qobject_cast<CustomPlot*>(m_smithWidget);
+        plot->replot();
+        return;
+    }else if(m_currentTab == "tab_8")
+    {
+        plot = qobject_cast<CustomPlot*>(m_userWidget);
+    }
+
+    plot->drawIncrementally();
+//    QCPPainter painter;
+//    painter.begin(&plot->paintBuffer());
+
+//    plot->setIncremental(true);
+//    plot->draw(&painter);
+//    plot->setIncremental(false);
+
+//    painter.end();
+
+//    QRect _clip = plot->getClipRect();
+//    plot->update(_clip);
+
+//    qDebug() << "Measurements::on_drawPoint()" << (QDateTime::currentMSecsSinceEpoch()-t0);
+}
+
+CustomPlot* Measurements::activePlot()
+{
+    QCustomPlot* plot = m_swrWidget;
+    if(m_currentTab == "tab_1")
+    {
+        plot = m_swrWidget;
+    }else if(m_currentTab == "tab_2")
+    {
+        plot = m_phaseWidget;
+    }else if(m_currentTab == "tab_3")
+    {
+        plot = m_rsWidget;
+    }else if(m_currentTab == "tab_4")
+    {
+        plot = m_rpWidget;
+    }else if(m_currentTab == "tab_5")
+    {
+        plot = m_rlWidget;
+    }else if(m_currentTab == "tab_6")
+    {
+        plot = m_tdrWidget;
+    }else if(m_currentTab == "tab_7")
+    {
+        plot = m_smithWidget;
+    }else if(m_currentTab == "tab_8")
+    {
+        plot = m_userWidget;
+    }
+    return qobject_cast<CustomPlot*>(plot);
+}
+
+void Measurements::on_measurementComplete()
+{
+    qDebug() << "Measurements::on_measurementComplete()";
+    m_previousI = 0;
+    m_measuringInProgress = false;
+    m_isContinuing = false;
+}
+
+void Measurements::changeColorTheme(bool _dark)
+{
+    if (!_dark) {
+        m_graphHint->setBackgroundColor(QColor(127,127,127,64 ));
+        m_graphHint->setTextColor("#010101");
+    } else {
+        m_graphHint->setBackgroundColor(QColor(0,0,0,180 ));
+        m_graphHint->setTextColor("#01b2ff");
+    }
+}
 

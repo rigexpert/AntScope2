@@ -2,6 +2,7 @@
 #include "popupindicator.h"
 #include "customanalyzer.h"
 #include <QDateTime>
+#include "Notification.h"
 
 Analyzer::Analyzer(QObject *parent) : QObject(parent),
     m_hidAnalyzer(nullptr),
@@ -9,6 +10,7 @@ Analyzer::Analyzer(QObject *parent) : QObject(parent),
     m_analyzerModel(0),
     m_comAnalyzerFound(false),
     m_hidAnalyzerFound(false),
+    m_nanovnaAnalyzerFound(false),
     m_chartCounter(0),
     m_isMeasuring(false),
     m_isContinuos(false),
@@ -278,10 +280,10 @@ quint32 Analyzer::getHidModel( void )
 
 QString Analyzer::getSerialNumber(void) const
 {
-    if(m_hidAnalyzerFound)
+    if(m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
     {
         return m_hidAnalyzer->getSerial();
-    }else if(m_comAnalyzerFound)
+    }else if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         return m_comAnalyzer->getSerial();
     }
@@ -290,6 +292,7 @@ QString Analyzer::getSerialNumber(void) const
 
 void Analyzer::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
 {
+    m_getAnalyzerData = false;
     if(!m_isMeasuring)
     {
         m_isMeasuring = true;
@@ -299,14 +302,18 @@ void Analyzer::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
         //emit newMeasurement(name);
         m_dotsNumber = dotsNumber;
         m_chartCounter = 0;
-        if(m_comAnalyzerFound)
+        if (m_nanovnaAnalyzerFound && m_NanovnaAnalyzer != nullptr)
+        {
+          m_dotsNumber = 101;
+          m_NanovnaAnalyzer->startMeasure(fqFrom, fqTo, m_dotsNumber);
+        } else  if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
         {
             m_comAnalyzer->setIsFRXMode(true);
-            m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
-        }else if (m_hidAnalyzerFound)
+            m_comAnalyzer->startMeasure(fqFrom,fqTo,m_dotsNumber);
+        }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
         {
             m_hidAnalyzer->setIsFRXMode(true);
-            m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
+            m_hidAnalyzer->startMeasure(fqFrom,fqTo,m_dotsNumber);
         }
         PopUpIndicator::setIndicatorVisible(true);
     } else {
@@ -318,21 +325,28 @@ void Analyzer::on_measureContinuous(qint64 fqFrom, qint64 fqTo, qint32 dotsNumbe
 {
     if(!m_isMeasuring)
     {
+
+        qDebug() << "Analyzer::on_measureContinuous" << fqFrom << fqTo << dotsNumber;
+
         m_isMeasuring = true;
         //QThread::msleep(500);
         emit continueMeasurement(fqFrom, fqTo, dotsNumber);
         m_dotsNumber = dotsNumber;
         m_chartCounter = 0;
-        if(m_comAnalyzerFound)
+        if (m_nanovnaAnalyzerFound && m_NanovnaAnalyzer != nullptr)
+        {
+          //m_NanovnaAnalyzer->startMeasure(fqFrom, fqTo, dotsNumber);
+        } else  if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
         {
             m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
-        }else if (m_hidAnalyzerFound)
+        }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
         {
             //m_hidAnalyzer->setIsFRXMode(true);
             m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
         }
         PopUpIndicator::setIndicatorVisible(true);
     } else {
+        qDebug() << "Analyzer::on_measureContinuous  STOP";
         on_stopMeasure();
     }
 }
@@ -347,11 +361,11 @@ void Analyzer::on_measureUser (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
         emit newMeasurement(name, fqFrom, fqTo, dotsNumber);
         m_dotsNumber = dotsNumber;
         m_chartCounter = 0;
-        if(m_comAnalyzerFound)
+        if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
         {
             m_comAnalyzer->setIsFRXMode(false);
             m_comAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
-        }else if (m_hidAnalyzerFound)
+        }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
         {
             m_hidAnalyzer->setIsFRXMode(false);
             m_hidAnalyzer->startMeasure(fqFrom,fqTo,dotsNumber);
@@ -367,11 +381,11 @@ void Analyzer::on_measureOneFq(QWidget* /*parent*/, qint64 fqFrom, qint32 /*dots
     m_isMeasuring = true;
     m_dotsNumber = 100000;
     m_chartCounter = 0;
-    if(m_comAnalyzerFound)
+    if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->setIsFRXMode(true);
         m_comAnalyzer->startMeasureOneFq(fqFrom,m_dotsNumber);
-    }else if (m_hidAnalyzerFound)
+    }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
     {
         m_hidAnalyzer->setIsFRXMode(true);
         m_hidAnalyzer->startMeasureOneFq(fqFrom,m_dotsNumber);
@@ -383,10 +397,13 @@ void Analyzer::on_stopMeasure()
     PopUpIndicator::setIndicatorVisible(false);
     m_isMeasuring = false;
     m_chartCounter = 0;
-    if(m_comAnalyzerFound)
+    if (m_nanovnaAnalyzerFound && m_NanovnaAnalyzer != nullptr)
+    {
+        m_NanovnaAnalyzer->stopMeasure();
+    } else if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->stopMeasure();
-    }else if (m_hidAnalyzerFound)
+    }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
     {
         m_hidAnalyzer->stopMeasure();
     }
@@ -395,10 +412,10 @@ void Analyzer::on_stopMeasure()
 
 void Analyzer::updateFirmware (QIODevice *fw)
 {
-    if(m_comAnalyzerFound)
+    if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->update(fw);
-    }else if (m_hidAnalyzerFound)
+    }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
     {
         m_hidAnalyzer->update(fw);
     }
@@ -413,10 +430,10 @@ void Analyzer::makeScreenshot()
 {
     if(!m_isMeasuring)
     {
-        if(m_comAnalyzerFound)
+        if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
         {
             QTimer::singleShot(100, m_comAnalyzer, SLOT(makeScreenshot()));
-        }else if (m_hidAnalyzerFound)
+        }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
         {
             QTimer::singleShot(100, m_hidAnalyzer, SLOT(makeScreenshot()));
         }
@@ -461,7 +478,7 @@ void Analyzer::on_hidAnalyzerDisconnected ()
         connect(m_comAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
         connect(m_comAnalyzer,SIGNAL(updatePercentChanged(int)),this,SLOT(on_updatePercentChanged(int)));
         connect(this, SIGNAL(screenshotComplete()),m_comAnalyzer,SLOT(on_screenshotComplete()));
-        connect(this, SIGNAL(measurementComplete()), m_comAnalyzer, SLOT(on_measurementComplete()), Qt::QueuedConnection);
+        connect(this, SIGNAL(measurementComplete()), m_comAnalyzer, SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
         connect(m_comAnalyzer,SIGNAL(aa30bootFound()),this,SIGNAL(aa30bootFound()));
         connect(m_comAnalyzer, SIGNAL(aa30updateComplete()), this, SIGNAL(aa30updateComplete()));
         connect(m_comAnalyzer, &comAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
@@ -518,7 +535,7 @@ void Analyzer::on_comAnalyzerDisconnected ()
         connect(m_hidAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));
         connect(m_hidAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
         connect(this, SIGNAL(screenshotComplete()),m_hidAnalyzer,SLOT(on_screenshotComplete()));
-        connect(this, SIGNAL(measurementComplete()), m_hidAnalyzer, SLOT(on_measurementComplete()), Qt::QueuedConnection);
+        connect(this, SIGNAL(measurementComplete()), m_hidAnalyzer, SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
         connect(m_hidAnalyzer, &hidAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
         connect(m_hidAnalyzer, &hidAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
     }
@@ -531,11 +548,80 @@ void Analyzer::on_comAnalyzerDisconnected ()
     emit analyzerDisconnected();
 }
 
+void Analyzer::on_nanovnaAnalyzerFound (QString name)
+{
+    if(m_hidAnalyzer)
+    {
+        delete m_hidAnalyzer;
+        m_hidAnalyzer = nullptr;
+    }
+    if(m_comAnalyzer)
+    {
+        delete m_comAnalyzer;
+        m_comAnalyzer = nullptr;
+    }
+    m_hidAnalyzerFound = false;
+    m_comAnalyzerFound = false;
+    m_nanovnaAnalyzerFound = true;
+    for (int i=0; i<QUANTITY; i++) {
+        if (names[i] == "NanoVNA") {
+            m_analyzerModel = i;
+            break;
+        }
+    }
+    emit analyzerFound(name);
+}
+
+void Analyzer::on_nanovnaAnalyzerDisconnected()
+{
+    if(!m_comAnalyzer)
+    {
+        m_comAnalyzer = new comAnalyzer(this);
+        connect(m_comAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
+        connect(m_comAnalyzer,SIGNAL(newUserData(rawData,UserData)),this,SLOT(on_newUserData(rawData,UserData)));
+        connect(m_comAnalyzer,SIGNAL(newUserDataHeader(QStringList)),this,SLOT(on_newUserDataHeader(QStringList)));
+        connect(m_comAnalyzer,SIGNAL(analyzerFound(quint32)),this,SLOT(on_comAnalyzerFound(quint32)));
+        connect(m_comAnalyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_comAnalyzerDisconnected()));
+        connect(m_comAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));
+        connect(m_comAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
+        connect(m_comAnalyzer,SIGNAL(updatePercentChanged(int)),this,SLOT(on_updatePercentChanged(int)));
+        connect(this, SIGNAL(screenshotComplete()),m_comAnalyzer,SLOT(on_screenshotComplete()));
+        connect(this, SIGNAL(measurementComplete()), m_comAnalyzer, SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
+        connect(m_comAnalyzer,SIGNAL(aa30bootFound()),this,SIGNAL(aa30bootFound()));
+        connect(m_comAnalyzer, SIGNAL(aa30updateComplete()), this, SIGNAL(aa30updateComplete()));
+        connect(m_comAnalyzer, &comAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
+        connect(m_comAnalyzer, &comAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
+    }
+    if(!m_hidAnalyzer)
+    {
+        m_hidAnalyzer = new hidAnalyzer(this);
+        connect(m_hidAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
+        connect(m_hidAnalyzer,SIGNAL(newUserData(rawData,UserData)),this,SLOT(on_newUserData(rawData,UserData)));
+        connect(m_hidAnalyzer,SIGNAL(newUserDataHeader(QStringList)),this,SLOT(on_newUserDataHeader(QStringList)));
+        connect(m_hidAnalyzer,SIGNAL(analyzerFound(quint32)),this,SLOT(on_hidAnalyzerFound(quint32)));
+        connect(m_hidAnalyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_hidAnalyzerDisconnected()));
+        connect(m_hidAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));
+        connect(m_hidAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
+        connect(this, SIGNAL(screenshotComplete()),m_hidAnalyzer,SLOT(on_screenshotComplete()));
+        connect(this, SIGNAL(measurementComplete()), m_hidAnalyzer, SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
+        connect(m_hidAnalyzer, &hidAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
+        connect(m_hidAnalyzer, &hidAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
+    }
+    m_nanovnaAnalyzerFound = false;
+    m_analyzerModel = 0;
+    emit analyzerDisconnected();
+}
+
 void Analyzer::on_newData(rawData _rawData)
 {
+    if (m_getAnalyzerData) {
+        emit newAnalyzerData (_rawData);
+    } else {
+        emit newData (_rawData);
+    }
+
     if(++m_chartCounter >= m_dotsNumber+1 || !m_isMeasuring)
     {
-        emit newData (_rawData);
         m_isMeasuring = false;
         m_chartCounter = 0;
         PopUpIndicator::setIndicatorVisible(false);
@@ -543,9 +629,6 @@ void Analyzer::on_newData(rawData _rawData)
         {
             emit measurementComplete();
         }
-    }else
-    {
-        emit newData (_rawData);
     }
 }
 
@@ -581,10 +664,10 @@ void Analyzer::getAnalyzerData()
 {
     if(!m_isMeasuring)
     {
-        if(m_comAnalyzerFound)
+        if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
         {
             QTimer::singleShot(100, m_comAnalyzer, SLOT(getAnalyzerData()));
-        }else if (m_hidAnalyzerFound)
+        }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
         {
             QTimer::singleShot(100, m_hidAnalyzer, SLOT(getAnalyzerData()));
         }
@@ -597,13 +680,14 @@ void Analyzer::on_itemDoubleClick(QString number, QString dotsNumber, QString na
     if (name.trimmed().isEmpty()) {
         name = number;
     }
-    if(m_comAnalyzerFound)
+    m_getAnalyzerData = true;
+    if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         m_chartCounter = 0;
         m_dotsNumber = dotsNumber.toInt();
         emit newMeasurement(name);
         m_comAnalyzer->getAnalyzerData(number);
-    }else if (m_hidAnalyzerFound)
+    }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
     {
         m_chartCounter = 0;
         m_dotsNumber = dotsNumber.toInt();
@@ -666,12 +750,12 @@ void Analyzer::on_checkUpdatesBtn_clicked()
     //url += names[m_analyzerModel].toLower().remove(" ").remove("-");
     url += prototype.toLower().remove(" ").remove("-");
     url += "&sn=";
-    if(m_hidAnalyzerFound)
+    if(m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
     {
         url += m_hidAnalyzer->getSerial();
         url += "&revision=";
         url += m_hidAnalyzer->getRevision();
-    }else if (m_comAnalyzerFound)
+    }else if (m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         url += m_comAnalyzer->getSerial();
         url += "&revision=";
@@ -703,7 +787,7 @@ void Analyzer::on_progress(qint64 downloaded,qint64 total)
 
 bool Analyzer::openComPort(const QString& portName, quint32 portSpeed)
 {
-    return m_comAnalyzer->openComPort(portName, portSpeed);
+    return (m_comAnalyzer == nullptr ? false : m_comAnalyzer->openComPort(portName, portSpeed));
 }
 
 void Analyzer::closeComPort()
@@ -716,7 +800,7 @@ void Analyzer::closeComPort()
 
 void Analyzer::setAnalyzerModel (int model)
 {
-    if(m_comAnalyzerFound)
+    if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         m_analyzerModel = model;
         m_comAnalyzer->setAnalyzerModel(model);
@@ -737,10 +821,10 @@ void Analyzer::on_measureCalib(int dotsNumber)
             maxFq_ = ca->maxFq().toULongLong()*1000;
         }
     }
-    if(m_comAnalyzerFound)
+    if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->startMeasure(minFq_, maxFq_, dotsNumber);
-    }else if (m_hidAnalyzerFound)
+    }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
     {
         m_hidAnalyzer->startMeasure(minFq_, maxFq_, dotsNumber);
     }
@@ -766,6 +850,8 @@ void Analyzer::on_changedAutoDetectMode(bool state)
             connect(m_hidAnalyzer,SIGNAL(analyzerDataStringArrived(QString)),this,SLOT(on_analyzerDataStringArrived(QString)));
             connect(m_hidAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
             connect(m_hidAnalyzer,SIGNAL(updatePercentChanged(int)),this,SLOT(on_updatePercentChanged(int)));
+            connect(this, SIGNAL(screenshotComplete()),m_hidAnalyzer,SLOT(on_screenshotComplete()));
+            connect(this, SIGNAL(measurementComplete()), m_hidAnalyzer, SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
             connect(m_hidAnalyzer, &hidAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
             connect(m_hidAnalyzer, &hidAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
         }
@@ -790,7 +876,7 @@ void Analyzer::on_changedAutoDetectMode(bool state)
         connect(m_comAnalyzer,SIGNAL(analyzerScreenshotDataArrived(QByteArray)),this,SLOT(on_analyzerScreenshotDataArrived(QByteArray)));
         connect(m_comAnalyzer,SIGNAL(updatePercentChanged(int)),this,SLOT(on_updatePercentChanged(int)));
         connect(this, SIGNAL(screenshotComplete()),m_comAnalyzer,SLOT(on_screenshotComplete()));
-        connect(this, SIGNAL(measurementComplete()), m_comAnalyzer, SLOT(on_measurementComplete()), Qt::QueuedConnection);
+        connect(this, SIGNAL(measurementComplete()), m_comAnalyzer, SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
         connect(m_comAnalyzer, SIGNAL(aa30bootFound()), this, SIGNAL(aa30bootFound()));
         connect(m_comAnalyzer, SIGNAL(aa30updateComplete()), this, SIGNAL(aa30updateComplete()));
         connect(m_comAnalyzer, &comAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
@@ -820,6 +906,10 @@ void Analyzer::setIsMeasuring (bool _isMeasuring)
     if(m_hidAnalyzer != nullptr)
     {
         m_hidAnalyzer->setIsMeasuring(_isMeasuring);
+    }
+    if(m_NanovnaAnalyzer != nullptr)
+    {
+        m_NanovnaAnalyzer->setIsMeasuring(_isMeasuring);
     }
     PopUpIndicator::setIndicatorVisible(m_isMeasuring);
 }
@@ -899,3 +989,51 @@ void Analyzer::on_applyLicense(QString& _license)
         getComAnalyzer()->applyLicense(_license);
     }
 }
+
+void Analyzer::on_disconnectNanoNVA()
+{
+    if (m_NanovnaAnalyzer != nullptr) {
+        m_NanovnaAnalyzer->closeComPort();
+        m_NanovnaAnalyzer->disconnect();
+        m_NanovnaAnalyzer->deleteLater();
+        m_NanovnaAnalyzer = nullptr;
+    }
+}
+
+void Analyzer::on_connectNanoNVA()
+{
+    // TODO disconnect all
+    // ...
+
+//    if (m_NanovnaAnalyzer == nullptr) {
+//        delete m_NanovnaAnalyzer;
+//        m_NanovnaAnalyzer = nullptr;
+//    }
+
+    if (NanovnaAnalyzer::portsCount() == 0) {
+        return;
+    }
+
+    int portIndex = 0;
+    if (NanovnaAnalyzer::portsCount() > 1) {
+        // TODO select comport
+    }
+    QString portName = NanovnaAnalyzer::availablePorts().at(portIndex).portName();
+
+    m_NanovnaAnalyzer = new NanovnaAnalyzer(this);
+    bool connected = m_NanovnaAnalyzer->openComPort(portName);
+    if (connected) {
+        connect(m_NanovnaAnalyzer,SIGNAL(analyzerFound(QString)),this,SLOT(on_nanovnaAnalyzerFound(QString)));
+        connect(m_NanovnaAnalyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_nanovnaAnalyzerDisconnected()));
+        connect(this, SIGNAL(measurementComplete()), m_NanovnaAnalyzer, SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
+        connect(m_NanovnaAnalyzer, &NanovnaAnalyzer::signalFullInfo, this, &Analyzer::slotFullInfo);
+        connect(m_NanovnaAnalyzer, &NanovnaAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
+        connect(m_NanovnaAnalyzer,SIGNAL(newData(rawData)),this,SLOT(on_newData(rawData)));
+        connect(m_NanovnaAnalyzer, &NanovnaAnalyzer::completeMeasurement, this, [=](){
+           emit measurementCompleteNano();
+        });
+
+        m_NanovnaAnalyzer->checkAnalyzer();
+    }
+}
+

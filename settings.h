@@ -139,6 +139,8 @@ signals:
     void languageChanged(int);
     void bandChanged(QString);
     void exportCableSettings(QString _description);
+    void connectNanoVNA();
+    void disconnectNanoVNA();
 
 private slots:
     void on_browseBtn_clicked();
@@ -190,6 +192,7 @@ private slots:
     void on_systemImpedance();
     void on_exportCableSettings();
     void on_licensesBtnPressed();
+    void on_connectNanovna();
 };
 
 #endif // SETTINGS_H

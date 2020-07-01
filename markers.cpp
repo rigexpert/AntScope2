@@ -609,3 +609,14 @@ void Markers::on_translate()
         m_markersHint->on_translate();
     }
 }
+
+void Markers::changeColorTheme(bool _dark)
+{
+    if (!_dark) {
+        m_markersHint->setBackgroundColor(QColor(127,127,127,64 ));
+        m_markersHint->setTextColor("#010101");
+    } else {
+        m_markersHint->setBackgroundColor(QColor(0,0,0,180 ));
+        m_markersHint->setTextColor("#01b2ff");
+    }
+}

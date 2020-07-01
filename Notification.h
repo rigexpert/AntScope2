@@ -17,6 +17,7 @@ public:
     virtual ~Notification();
 
 public:
+    void setTextColor(QColor& color) { m_textColor = color; }
     void showImmediatly();
     void run();
 
@@ -30,6 +31,7 @@ public:
     static void showMessage(const QString& message, QString& url, QRect rect, int milliseconds, QWidget* parent);
     static void showMessage(const QString& message, const QFont& font, QWidget* parent);
     static void showMessage(const QString& message, const QFont& font, int milliseconds, QWidget* parent);
+    static void showMessage(const QString& message, QColor color, QRect rect, int milliseconds, QWidget* parent);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -41,4 +43,5 @@ private:
     int m_milliseconds;
     QString m_url;
     QPropertyAnimation* m_animation;
+    QColor m_textColor;
 };

@@ -27,6 +27,8 @@
 #include <updater.h>
 #include <antscopeupdatedialog.h>
 #include "ProgressDlg.h"
+#include <QTabWidget>
+#include <qserialport.h>
 
 namespace Ui {
 class MainWindow;
@@ -59,11 +61,14 @@ public:
     ~MainWindow();
 
     void openFile(QString path);
-    QString lastSavePath() { return m_lastSavePath; }
+    QString& lastSavePath() { return m_lastSaveOpenPath; }
     Analyzer* analyzer() { return m_analyzer; }
     bool isMeasuring() { return analyzer()->isMeasuring(); }
+    QTabWidget* tabWidget();
 
 private:
+
+    QDateTime dtStartMeasurement;
 
     Ui::MainWindow *ui;
     AnalyzerData *m_analyzerData;
@@ -115,8 +120,8 @@ private:
     quint64 m_lastEnteredFqTo=0;
     bool m_fqRestrict = true;
 
-    QString m_lastSavePath;
-    QString m_lastOpenPath;
+    QString m_lastSaveOpenPath;
+    QString m_lastExportImportPath;
 
     bool m_measureSystemMetric;
     double m_Z0;
@@ -167,6 +172,8 @@ private:
     bool m_isMouseClick;
     bool m_bInterrupted;
     QMap<QString, QStringList*> m_BandsMap;
+    bool m_darkColorTheme = true;
+    QPalette m_lightPalette;
 
     void setWidgetsSettings();
     bool loadBands();
@@ -192,6 +199,7 @@ private:
     void autoCalibrate();
     void showErrorPopup(QString text, int msDuration);
     void changeMeasurmentsColor(int _row, QColor& _color);
+    void changeColorTheme(bool _dark);
 
 signals:
     void measure(qint64,qint64,int);
@@ -230,6 +238,7 @@ public slots:
     void on_pressRight();
     void on_pressCtrlC();
     void on_presssCtrlAltShiftM();
+    void on_presssCtrlAltShiftN();
     void on_analyzerFound(QString name);
     void on_analyzerDisconnected();
     void on_mouseWheel_swr(QWheelEvent *e);
@@ -256,6 +265,7 @@ public slots:
     void on_pressetsUpBtn_clicked();
     void on_exportBtn_clicked();
     void on_measurementComplete();
+    void on_measurementCompleteNano();
     void on_translate(int number);
     void on_startOneFq(quint64 fq, int dots);
     void on_showNotification(QString msg, QString url);
@@ -292,7 +302,7 @@ private slots:
     void on_changedAutoDetectMode(bool state);
     void on_changedSerialPort(QString portName);
     void on_calibrationChanged();
-    void on_SaveFile(QString path);
+    void on_SaveFile(int row, QString path);
     void on_mouseDoubleClick(QMouseEvent* e);
     void onCustomContextMenuRequested(const QPoint&);
     void onCreateMarker(const QPoint& pos);

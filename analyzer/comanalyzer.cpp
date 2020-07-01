@@ -739,11 +739,14 @@ void comAnalyzer::makeScreenshot()
     {
         QString str = "screenshot\r";
         sendData(str);
+    } else {
+        QMessageBox::warning(nullptr, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
     }
 }
 
 void comAnalyzer::on_screenshotComplete()
 {
+    m_parseState = WAIT_NO;
     setIsMeasuring(false);
 }
 

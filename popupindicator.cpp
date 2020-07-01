@@ -44,7 +44,7 @@ void PopUpIndicator::hideIndicator(QWidget* parent)
     if (m_popUpIndicator == nullptr)
         m_popUpIndicator = new PopUpIndicator(parent);
     QApplication::restoreOverrideCursor();
-    m_popUpIndicator->hide();
+    m_popUpIndicator->hideAnimation();
 }
 
 void PopUpIndicator::setIndicatorVisible(bool visible)
@@ -55,3 +55,15 @@ void PopUpIndicator::setIndicatorVisible(bool visible)
         hideIndicator();
 }
 
+void PopUpIndicator::show()
+{
+    setWindowOpacity(0.0);
+
+    animation.setDuration(150);
+    animation.setStartValue(0.0);
+    animation.setEndValue(1.0);
+
+    QWidget::show();
+
+    animation.start();
+}

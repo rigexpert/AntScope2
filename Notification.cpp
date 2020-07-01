@@ -18,6 +18,7 @@ namespace
     const int DISPLAY_TIME = 1500;
 }
 
+
 Notification::Notification(const QString& text, QWidget* parent)
     : Notification(text, FONT, DISPLAY_TIME, parent)
 {}
@@ -29,7 +30,7 @@ Notification::Notification(const QString& text, const QFont& font, int milliseco
     , m_milliseconds(milliseconds)
 {
     setFont(font);
-
+    m_textColor = TEXT_COLOR;
     m_label.prepare(QTransform(), font);
     setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 
@@ -51,12 +52,12 @@ void Notification::mouseReleaseEvent(QMouseEvent *event)
         if (!m_url.isEmpty())
         {
             QDesktopServices::openUrl(QUrl::fromUserInput(m_url));
-            fadeOut();
             event->accept();
         }
     } else {
-        QWidget::mousePressEvent(event);
+        QWidget::mouseReleaseEvent(event);
     }
+    fadeOut();
 }
 
 void Notification::showImmediatly()
@@ -94,6 +95,14 @@ qreal Notification::opacity() const
     return m_opacity;
 }
 
+void Notification::showMessage(const QString& message, QColor textColor, QRect rect, int milliseconds, QWidget* parent)
+{
+    Notification* notification = new Notification(message, FONT, milliseconds, parent);
+    notification->setTextColor(textColor);
+    notification->setGeometry(rect);
+    notification->run();
+}
+
 void Notification::showMessage(const QString& message, const QFont& font, int milliseconds, QWidget* parent)
 {
     (new Notification(message, font, milliseconds, parent))->run();
@@ -123,11 +132,11 @@ void Notification::paintEvent(QPaintEvent* event)
 
     p.setOpacity(m_opacity);
     p.fillRect(event->rect(), FILL_COLOR);
-    p.setPen(TEXT_COLOR);
+    p.setPen(m_textColor);
     p.drawRect(event->rect().adjusted(0, 0, -1, -1));
     p.setFont(font());
 
     QSize halfSize = m_label.size().toSize() / 2;
-    p.drawStaticText(rect().center() -= QPoint(halfSize.width(), halfSize.height()), m_label);
+    p.drawStaticText(rect().center() - QPoint(halfSize.width(), halfSize.height()), m_label);
 }
 

@@ -11,9 +11,11 @@ bool g_raspbian = false;
 #include <windows.h>
 #include <dbt.h>
 
+//#define LOG_TO_FILE
 
+#ifdef LOG_TO_FILE
 QString logFilePath = "antscope2-debug.log";
-bool logToFile = false;
+bool logToFile = true;
 void customMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     QHash<QtMsgType, QString> msgLevelHash({{QtDebugMsg, "Debug"}, {QtInfoMsg, "Info"}, {QtWarningMsg, "Warning"}, {QtCriticalMsg, "Critical"}, {QtFatalMsg, "Fatal"}});
@@ -40,7 +42,7 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext &context, cons
         fflush(stderr);
     }
 }
-
+#endif
 
 class MyNativeEventFilter : public QAbstractNativeEventFilter {
 public :
@@ -90,9 +92,14 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QStringList args = a.arguments();
 
-    //{ TODO log to file support
-    //qInstallMessageHandler(customMessageOutput);
-    //}
+#ifdef LOG_TO_FILE
+    qInstallMessageHandler(customMessageOutput);
+    if (logToFile) {
+        qDebug() << "                                                         ";
+        qDebug() << "*********************************************************";
+        qDebug() << "  AntScope2 STARTED";
+    }
+#endif
 
 #ifdef Q_OS_WIN
     // TODO DEBUG: catch attach/detach device event

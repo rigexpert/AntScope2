@@ -26,7 +26,7 @@ static double MAX_USER_RANGE = 2000;
 static int ABSOLUTE_MIN_FQ = 0;
 static int ABSOLUTE_MAX_FQ = 10000000;
 static int MAX_DOTS = 2000;
-
+/*
 enum {
     AANONE = 0,
     AA30,
@@ -51,6 +51,15 @@ enum {
     AA2000,
     QUANTITY
 };
+*/
+
+// !!! change it if add new model
+
+#define QUANTITY 24
+
+// !!!
+
+
 static QString names[QUANTITY]={
     "NONE",
     "AA-30",
@@ -65,6 +74,7 @@ static QString names[QUANTITY]={
     "AA-230PRO",
     "AA-230 ZOOM",
     "Stick 230",
+    "StickPro",
     "AA-500",
     "AA-520",
     "AA-600",
@@ -72,7 +82,9 @@ static QString names[QUANTITY]={
     "AA-700 ZOOM",
     "AA-1000",
     "AA-1400",
-    "AA-2000"
+    "AA-1500 ZOOM",
+    "AA-2000",
+    "NanoVNA"
 };
 static QString minFq[QUANTITY]={//in kHz
     "NONE",
@@ -87,7 +99,8 @@ static QString minFq[QUANTITY]={//in kHz
     "100",  //AA-230
     "100",  //AA-230PRO
     "100",  //AA-230ZOOM
-    "100",  //AA-230STICK
+    "100",  //STICK 230
+    "100",  //STICK PRO
     "100",  //AA-500
     "100",  //AA-520
     "100",  //AA-600
@@ -95,7 +108,9 @@ static QString minFq[QUANTITY]={//in kHz
     "100",  //AA-700ZOOM
     "100",  //AA-1000
     "100",  //AA-1400
-    "0"   //AA-2000
+    "100",  //AA-1500
+    "0",   //AA-2000
+    "1"    //NanoVNA
 };
 static QString maxFq[QUANTITY]={//in kHz
     "NONE",
@@ -110,7 +125,9 @@ static QString maxFq[QUANTITY]={//in kHz
     "230000",   //AA-230
     "230000",   //AA-230PRO
     "230000",   //AA-230ZOOM
-    "230000",  //AA-230STICK
+    "230000",   //STICK 230
+                                //"670000",   //STICK PRO
+                                "600000",   //STICK PRO
     "500000",   //AA-500
     "520000",   //AA-520
     "600000",   //AA-600
@@ -118,8 +135,9 @@ static QString maxFq[QUANTITY]={//in kHz
     "700000",   //AA-700ZOOM
     "1000000",  //AA-1000
     "1400000",  //AA-1400
-//                                "6000000"   //AA-2000
-                                "3500000"   //AA-2000
+    "1500000",  //AA-1500
+    "3500000",   //AA-2000
+    "1000000"   //NanoVNA
 };
 
 static int lcdHeight[QUANTITY]={//in kHz
@@ -135,7 +153,8 @@ static int lcdHeight[QUANTITY]={//in kHz
     0,   //AA-230
     0,   //AA-230PRO
     220,   //AA-230ZOOM
-    200,   //AA-230STICK
+    200,   //STICK 230
+    220,   //STICK PRO
     0,   //AA-500
     0,   //AA-520
     240,   //AA-600
@@ -143,7 +162,9 @@ static int lcdHeight[QUANTITY]={//in kHz
     0,   //AA-700ZOOM
     240,  //AA-1000
     240,   //AA-1400
-    480   //AA-2000
+    240,   //AA-1500
+    480,   //AA-2000
+    0     // NanoVNA
 };
 
 static int lcdWidth[QUANTITY]={//in kHz
@@ -159,7 +180,8 @@ static int lcdWidth[QUANTITY]={//in kHz
     0,   //AA-230
     0,   //AA-230PRO
     290,   //AA-230ZOOM
-    200,   //AA-230STICK
+    200,   //STICK 230
+    220,   //STICK PRO
     0,   //AA-500
     0,   //AA-520
     320,   //AA-600
@@ -167,7 +189,9 @@ static int lcdWidth[QUANTITY]={//in kHz
     0,   //AA-700ZOOM
     320,  //AA-1000
     320,   //AA-1400
-    800   //AA-2000
+    320,   //AA-1500
+    800,   //AA-2000
+    0   // NanoVNA
 };
 
 enum parse{
@@ -182,7 +206,9 @@ enum parse{
     WAIT_LICENSE_LIST,
     WAIT_LICENSE_REQUEST,
     WAIT_LICENSE_APPLY1,
-    WAIT_LICENSE_APPLY2
+    WAIT_LICENSE_APPLY2,
+    WAIT_CALFIVEKOHM_START,
+    WAIT_CALFIVEKOHM
 };
 
 struct rawData{

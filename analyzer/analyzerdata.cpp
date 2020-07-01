@@ -4,7 +4,7 @@
 #include "mainwindow.h"
 #include <QCoreApplication>
 #include <iostream>
-
+#include "Notification.h"
 
 AnalyzerData::AnalyzerData(int _model, QWidget *parent) :
     QDialog(parent),
@@ -68,6 +68,8 @@ void AnalyzerData::on_btnReadAll_clicked()
     if (strSaveDir.isEmpty())
         return;
 
+    mainWindow->lastSavePath() = strSaveDir;
+
     connect(mainWindow->analyzer(), &Analyzer::measurementComplete, this, &AnalyzerData::on_complete);
 
     progressDialog = new QProgressDialog("Reading data...", "Abort", 0, ui->listWidget->count(), this);
@@ -92,7 +94,7 @@ void AnalyzerData::on_complete()
 {
     QDir dir = strSaveDir;
     QString path = dir.absoluteFilePath(strItemName+".asd");
-    emit signalSaveFile(path);
+    emit signalSaveFile(progressSteps, path);
     QCoreApplication::processEvents();
 
     //QTimer::singleShot(5000, this, SLOT(nextStep()));

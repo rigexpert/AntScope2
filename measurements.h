@@ -13,13 +13,34 @@
 #include <ctime>
 #include <complex>
 #include <settings.h>
+#include <float.h>
 #include "ProgressDlg.h"
 #include "onefqwidget.h"
-#define MAX_MEASUREMENTS 5
-#define TDR_MAXARRAY 20000
+#include "CustomPlot.h"
+#include "tdrprogressdialog.h"
 
+#define MAX_MEASUREMENTS 5
+
+#define TDR_MINPOINTS 200
+
+#define TDR_MAXARRAY 20000
+#define TDR_MAXPOINTS 1000
+
+//#define TDR_MAXARRAY 32768
+//#define TDR_MAXPOINTS 2000
+
+//#define TDR_MAXARRAY 65536
+//#define TDR_MAXPOINTS 4000
+
+
+#ifndef SPEEDOFLIGHT
 #define SPEEDOFLIGHT 299792458.0
+#endif
+
+#ifndef FEETINMETER
 #define FEETINMETER 3.2808399
+#endif
+
 #ifndef DBL_MAX
 #define DBL_MAX 1.797693134862315e+308
 #endif
@@ -52,6 +73,7 @@ public:
     bool getGraphHintEnabled(void);
     void saveData(quint32 number, QString path);
     void loadData(QString path);
+    void changeColorTheme(bool _dark);
 
     void exportData(QString _name, int _type, int _number, bool _applyCable=false, QString _description=QString());
     void importData(QString _name);
@@ -62,6 +84,7 @@ public:
 
     int CalcTdr(QVector<rawData> *data);
     void FFT(float real[], float imag[], int length, int Inverse = 0);
+    int calcTdrDist(QVector<rawData> *data);
 
     int CalcTdr2(QVector <rawData> *data);
     qint16 DTF_FindRadix2Length(qint16 length, int *log2N);
@@ -78,7 +101,11 @@ public:
     void setCableFarEndMeasurement(int value);
     void on_translate();
     int getBaseUserGraphIndex(int row);
+#ifdef OLD_TDR
     void startTDRProgress(QWidget* _parent, int _dots);
+#else
+    void startTDRProgress(Analyzer* _analyzer, QWidget* _parent);
+#endif
     void updateTDRProgress(int _dots);
     void stopTDRProgress();
     void startAutocalibrateProgress(QWidget* _parent, int _dots);
@@ -90,6 +117,10 @@ public:
     QPair<double, double> autoCalibrate();
     void interrupt() { m_interrupted = true; }
     bool isTDRMode() { return m_tdrProgressDlg != nullptr; }
+    CustomPlot* activePlot();
+    void setContinuous(bool _state) { m_isContinuing = _state; m_currentPoint = 0; }
+    ProgressDlg* progressDlg() { return m_autoCalibrateProgressDlg; }
+    void redrawTDR(int _index=-1);
 
 private:
 //    QVector <rawData> m_rawDataVector;
@@ -144,8 +175,13 @@ private:
 
     double m_tdrResolution;
     double m_tdrRange;
+#ifdef OLD_TDR
     ProgressDlg* m_tdrProgressDlg = nullptr;
+#else
+    TDRProgressDialog* m_tdrProgressDlg = nullptr;
+#endif
 
+    ProgressDlg* m_autoCalibrateProgressDlg = nullptr;
     qint32 m_dotsNumber=0;
     quint32 m_tdrDots=0;
 
@@ -172,17 +208,27 @@ private:
     int m_autoCalibration = 0; // 1-R,L(old AA-1400), 2-C,L(new AA-230 ZOOM)
     bool m_interrupted = false;
     bool m_RangeMode = false;
+    bool m_measuringInProgress = false;
+    bool m_isContinuing = false;
+    int m_previousI = 0;
+    int m_currentPoint = 0;
 
     quint32 computeSWR(double freq, double Z0, double R, double X, double *VSWR, double *RL);
     double computeZ (double R, double X);
 
     void NormRXtoSmithPoint(double Rnorm, double Xnorm, double &x, double &y);    
     void drawSmithImage(void);
-    void calcFarEnd(void);
+    void calcFarEnd(bool _incrementally=false);
     rawData calcFarEnd(const rawData& data, int idx, bool refreshGraphs=true);
     void prepareGraphs(rawData _rawData, GraphData& data, GraphData& calibData);
-    void redrawTDR();
-    void redrawSWR();
+    void restrictData(qreal _min, qreal _max, QCPData& _data);
+    void redrawSWR(bool _incrementally);
+    void redrawPhase(bool _incrementally);
+    void redrawRs(bool _incrementally);
+    void redrawRp(bool _incrementally);
+    void redrawRl(bool _incrementally);
+    void redrawSmith(bool _incrementally);
+    void redrawUser(bool _incrementally);
     void exportData(QString _name, int _type, QVector<rawData>& vector, QString _description=QString());
 
 signals:
@@ -193,6 +239,7 @@ signals:
     void selectMeasurement(int row, int col);
 
 public slots:
+    void on_newAnalyzerData(rawData _rawData);
     void on_newDataRedraw(rawData _rawData);
     void on_newData(rawData _rawData, bool _redraw=false);
     void on_newUserDataHeader(QStringList);
@@ -214,7 +261,7 @@ public slots:
     void setCalibrationMode(bool enabled);
     void on_calibrationEnabled(bool enabled);
     void on_dotsNumberChanged(int number);
-    void on_redrawGraphs();
+    void on_redrawGraphs(bool _incrementally=false);
     void on_changeMeasureSystemMetric (bool state);
     void replot();
     void showOneFqWidget(QWidget* parent, int _dots);
@@ -223,6 +270,9 @@ public slots:
     void on_isRangeChanged(bool);
     void on_impedanceChanged(double _z0);
     void on_exportCableSettings(QString _description);
+
+    void on_drawPoint();
+    void on_measurementComplete();
 };
 
 #endif // MEASUREMENTS_H

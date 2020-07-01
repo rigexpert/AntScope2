@@ -72,6 +72,7 @@ public:
     marker getMarker( quint32 number);
     void repaint();
     void on_translate();
+    void changeColorTheme(bool _dark);
 
 private:
     QCustomPlot *m_swrWidget;

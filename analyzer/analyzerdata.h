@@ -31,7 +31,7 @@ private:
 signals:
     void itemDoubleClick(QString, QString, QString);
     void dialogClosed(void);
-    void signalSaveFile(QString path);
+    void signalSaveFile(int row, QString path);
     void dataChanged(qint64 _center, qint64 _range, qint32 _dots);
 
 public slots:

@@ -18,6 +18,9 @@ protected:
     void mouseMoveEvent(QMouseEvent *) {}
 
 private:
+
+public slots:
+    void show();
 };
 
 

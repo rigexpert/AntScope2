@@ -63,8 +63,12 @@ void ProgressDlg::reject()
     // to skip ESC
 }
 
-void ProgressDlg::setCancelable()
+void ProgressDlg::setCancelable(bool _cancelable)
 {
-    stopButton->show();
-    connect(stopButton, &QPushButton::clicked, this, &ProgressDlg::canceled);
+    if (_cancelable) {
+        stopButton->show();
+        connect(stopButton, &QPushButton::clicked, this, &ProgressDlg::canceled);
+    } else {
+        stopButton->hide();
+    }
 }

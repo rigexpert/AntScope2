@@ -194,6 +194,36 @@ void Screenshot::on_newData(QByteArray data)
                 mask >>= 1;
             }
         }
+    }else if (model == "StickPro") {
+        // TODO not implemented yet
+        while(m_inputData.length() > 3)
+        {
+            int data = (((int)m_inputData.takeFirst())<<8);
+            data += (int)m_inputData.takeFirst();
+            int quantity = (int)m_inputData.takeFirst();
+
+            if (quantity == 0)
+                continue;
+
+            int blue = data&0x1F;
+            int green = (data>>5)&0x3F;
+            int red = (data>>11)&0x1F;
+
+//            if (model == "AA-2000") {
+//                int tmp = red;
+//                red = blue;
+//                blue = tmp;
+//            }
+            red = (red<<3) + ( (red&0x10) ? 0x07 : 0 );
+            green = (green<<2) + ( (green&0x20) ? 0x03 : 0 );
+            blue = (blue<<3)+ ( (blue&0x10) ? 0x07 : 0 );
+
+            QRgb rgb = qRgb(red,green,blue);
+            for(int i = 0; i < quantity; ++i)
+            {
+                m_imageVector.append(rgb);
+            }
+        }
     }else
     {
         while(m_inputData.length() > 3)
@@ -256,6 +286,25 @@ void Screenshot::on_newData(QByteArray data)
             repaint();
         }
     } else if (model == "Stick 230") {
+        //qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
+        if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
+        {
+            int x,y;
+            int i = 0;
+            for (y = 0; y < m_lcdHeight; ++y)
+            {
+                for (x = 0; x < m_lcdWidth; ++x)
+                {
+                    m_image->setPixel (x, y, m_imageVector.at(i));
+                    i++;
+                }
+            }
+            m_inputData.clear();
+            m_imageVector.clear();
+            repaint();
+        }
+    } else if (model == "StickPro") {
+        // TODO not implemented yet
         //qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
         {

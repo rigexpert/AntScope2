@@ -1,10 +1,10 @@
 # if defined(UNDER_CE)
 #  include <winbase.h>
 # else
-#  include <winver.h>
+#  include <windows.h>
 # endif
 
-IDI_ICON1	ICON	DISCARDABLE	"D:\\Git\\AntScope2\\AntScope2.ico"
+IDI_ICON1	ICON	DISCARDABLE	"C:\\Projects\\AntScope2\\AntScope2.ico"
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION 0,0,0,0

@@ -3,6 +3,9 @@
 #include "popupindicator.h"
 #include "analyzer/customanalyzer.h"
 #include "Notification.h"
+#include "glwidget.h"
+#include "CustomPlot.h"
+
 
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
@@ -63,11 +66,12 @@ MainWindow::MainWindow(QWidget *parent) :
     m_tdrZoomState = m_settings->value("tdrZoomState", 10).toInt();
     m_smithZoomState = m_settings->value("smithZoomState", 10).toInt();
     m_userZoomState = m_settings->value("userZoomState", 10).toInt();
-
     m_settings->endGroup();
+
     m_settings->beginGroup("Settings");
     m_fqRestrict = g_developerMode ? m_settings->value("restrictFq", true).toBool() : true;
     g_maxMeasurements = m_settings->value("maxMeasurements", MAX_MEASUREMENTS).toInt();
+    m_darkColorTheme = m_settings->value("darkColorTheme", true).toBool();
     m_settings->endGroup();
 
     if (g_developerMode)
@@ -87,63 +91,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->measurmentsClearBtn->setEnabled(false);
     ui->exportBtn->setEnabled(false);
 
-
-    qApp->setStyle(QStyleFactory::create("fusion"));
-    QPalette asPalette;
-    asPalette.setColor(QPalette::Foreground, QColor(1,178,255));
-    asPalette.setColor(QPalette::Button, QColor(89, 89, 89));
-    asPalette.setColor(QPalette::ButtonText, QColor(255,255,255));
-    asPalette.setColor(QPalette::Highlight, QColor(1,178,255));
-    asPalette.setColor(QPalette::Background, QColor(79, 79, 79));
-    asPalette.setColor(QPalette::Dark, QColor(1,178,255));
-    asPalette.setColor(QPalette::Light, QColor(1,178,255));
-
-    qApp->setPalette(asPalette);
-
-    QString style = "QPushButton:checked{"
-    "background-color: rgb(1, 178, 255);}";
-
-    ui->limitsBtn->setStyleSheet(style);
-    ui->rangeBtn->setStyleSheet(style);
-
-    style = "QPushButton:disabled{"
-            "background-color: rgb(59, 59, 59);"
-            "color: rgb(119, 119, 119);}";
-
-    ui->exportBtn->setStyleSheet(style);
-    ui->printBtn->setStyleSheet(style);
-    ui->screenshotAA->setStyleSheet(style);
-    ui->analyzerDataBtn->setStyleSheet(style);
-
-    ui->measurmentsSaveBtn->setStyleSheet(style);
-    ui->measurmentsDeleteBtn->setStyleSheet(style);
-
-    ui->presetsDeleteBtn->setStyleSheet(style);
-    ui->measurmentsClearBtn->setStyleSheet(style);
-
-
-    style = "QPushButton:disabled{"
-            "background-color: rgb(59, 59, 59);"
-            "color: rgb(119, 119, 119);}"
-            "QPushButton:checked{"
-            "background-color: rgb(1, 178, 255);}";
-    ui->singleStart->setStyleSheet(style);
-    ui->continuousStartBtn->setStyleSheet(style);
+    m_lightPalette = qApp->palette();
 
     ui->tableWidget_measurments->setColumnCount(1);
     ui->tableWidget_measurments->setSelectionBehavior(QAbstractItemView::SelectRows );
     ui->tableWidget_measurments->setToolTip(tr("Double-click an item to rescale the chart.\nRight-click an item to change color"));
     ui->tableWidget_measurments->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableWidget_measurments, &QTableWidget::customContextMenuRequested, this, &MainWindow::on_tableWidgetMeasurmentsContextMenu);
-
-    style = "QGroupBox {border: 2px solid rgb(1, 178, 255); margin-top: 1ex;}"
-            "QGroupBox::title {"
-            "subcontrol-origin: margin;"
-            "subcontrol-position: top center;" /* position at the top center */
-            "padding: 0 3px;}"
-            "QGroupBox::title {color: white;}";
-
-    ui->groupBox_Run->setStyleSheet(style);
 
     setWidgetsSettings();
 
@@ -184,7 +138,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this,SIGNAL(measure(qint64,qint64,int)),m_analyzer,SLOT(on_measure(qint64,qint64,int)));
     connect(this,SIGNAL(measureUser(qint64,qint64,int)),m_analyzer,SLOT(on_measureUser(qint64,qint64,int)));
     connect(this,SIGNAL(measureContinuous(qint64,qint64,int)),m_analyzer,SLOT(on_measureContinuous(qint64,qint64,int)));
-    connect(m_analyzer,SIGNAL(measurementComplete()),this,SLOT(on_measurementComplete()), Qt::QueuedConnection);
+    connect(m_analyzer,SIGNAL(measurementComplete()),this,SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
+    connect(m_analyzer,SIGNAL(measurementCompleteNano()),this,SLOT(on_measurementCompleteNano()));//, Qt::QueuedConnection);
     connect(this,SIGNAL(stopMeasure()), m_analyzer, SLOT(on_stopMeasure()));
     connect(this,&MainWindow::measureOneFq, m_analyzer,&Analyzer::on_measureOneFq);
     connect(m_analyzer, &Analyzer::signalMeasurementError, this, &MainWindow::onMeasurementError);
@@ -261,6 +216,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QShortcut *shortCtrlAltShiftM = new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::ALT + Qt::Key_M),this);
     connect(shortCtrlAltShiftM,SIGNAL(activated()),this,SLOT(on_presssCtrlAltShiftM()));
 
+    QShortcut *shortCtrlAltShiftN = new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::ALT + Qt::Key_N),this);
+    connect(shortCtrlAltShiftN,SIGNAL(activated()),this,SLOT(on_presssCtrlAltShiftN()));
+
     m_presets = new Presets(this);
     connect(this, SIGNAL(isRangeChanged(bool)), m_presets, SLOT(on_isRangeChanged(bool)));
     m_presets->setTable(ui->tableWidget_presets);
@@ -279,6 +237,7 @@ MainWindow::MainWindow(QWidget *parent) :
         m_measurements->setUserWidget(m_userWidget);
 
     connect(m_analyzer, SIGNAL(newData(rawData)), m_measurements, SLOT(on_newDataRedraw(rawData)));
+    connect(m_analyzer, SIGNAL(newAnalyzerData(rawData)), m_measurements, SLOT(on_newAnalyzerData(rawData)));
     connect(m_analyzer, SIGNAL(newUserData(rawData,UserData)), m_measurements, SLOT(on_newUserData(rawData,UserData)));
     connect(m_analyzer, SIGNAL(newUserDataHeader(QStringList)), m_measurements, SLOT(on_newUserDataHeader(QStringList)));
     connect(m_analyzer, SIGNAL(newMeasurement(QString)), m_measurements, SLOT(on_newMeasurement(QString)));
@@ -300,7 +259,6 @@ MainWindow::MainWindow(QWidget *parent) :
     name += tr(" - Analyzer not connected");
     setWindowTitle(name);
 
-
     if(m_markers == NULL)
     {
         m_markers = new Markers(this);
@@ -320,6 +278,7 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(m_analyzer, SIGNAL(measurementComplete()), m_markers, SLOT(on_measurementComplete()));
     }
 
+    changeColorTheme(m_darkColorTheme);
 
     m_calibration = new Calibration();
     m_calibration->setAnalyzer(m_analyzer);
@@ -330,11 +289,7 @@ MainWindow::MainWindow(QWidget *parent) :
             m_measurements,SLOT(setCalibrationMode(bool)));
     m_measurements->setCalibration(m_calibration);
 
-    style = "QCheckBox:disabled{"
-            "color: rgb(119, 119, 119);}";
-
     ui->checkBoxCalibration->blockSignals(true);
-    ui->checkBoxCalibration->setStyleSheet(style);
     ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
     ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
     connect(ui->checkBoxCalibration, &QCheckBox::toggled, this, &MainWindow::calibrationToggled);
@@ -356,8 +311,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     m_settings->beginGroup("MainWindow");
-    m_lastOpenPath = m_settings->value("lastOpenPath", "").toString();
-    m_lastSavePath = m_settings->value("lastSavePath", "").toString();
+    m_lastSaveOpenPath = m_settings->value("lastSavePath", "").toString();
     if( m_settings->value("fullScreen", this->isFullScreen()).toBool())
     {
         this->showMaximized();
@@ -470,17 +424,11 @@ MainWindow::MainWindow(QWidget *parent) :
     emit currentTab (str);
     QTimer::singleShot(100, this, SLOT(updateGraph()));
 
-//#ifdef Q_OS_WIN
     if (!g_developerMode) {
         m_updater = new Updater();
         connect(m_updater,SIGNAL(newVersionAvailable()), this, SLOT(on_newVersionAvailable()));
         connect(m_updater,SIGNAL(progress(int)), this, SIGNAL(updateProgress(int)));
-        if(m_autoUpdateEnabled)
-        {
-            QTimer::singleShot(1000, m_updater, SLOT(on_checkUpdates()));
-        }
     }
-//#endif
 
     m_1secTimer = new QTimer(this);
     connect(m_1secTimer, SIGNAL(timeout()), this, SLOT(on_1secTimerTick()));
@@ -493,21 +441,13 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->groupBox_Presets->setTitle(tr("Presets (limits), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Start"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
-//        ui->startLabel->setText(tr("Start"));
-//        ui->stopLabel->setText(tr("Stop"));
-//        ui->startLabel->update();
-//        ui->stopLabel->update();
     }else
     {
         ui->groupBox_Presets->setTitle(tr("Presets (center, range), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Center"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
-//        ui->startLabel->setText(tr("Center"));
-//        ui->stopLabel->setText(tr("Range (+/-)"));
-//        ui->startLabel->update();
-//        ui->stopLabel->update();
     }
-    //PopUpIndicator::hideIndicator(ui->tabWidget);
+
     PopUpIndicator::hideIndicator(m_swrWidget);
 
     QWidget* w = ui->checkBoxCalibration;
@@ -535,7 +475,6 @@ MainWindow::MainWindow(QWidget *parent) :
             this->ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
         }
     });
-
 }
 
 MainWindow::~MainWindow()
@@ -556,8 +495,7 @@ MainWindow::~MainWindow()
     m_settings->setValue("fullScreen", this->isMaximized());
     m_settings->setValue("dotsNumber", this->m_dotsNumber);
 
-    m_settings->setValue("lastOpenPath", m_lastOpenPath);
-    m_settings->setValue("lastSavePath", m_lastSavePath);
+    m_settings->setValue("lastSavePath", m_lastSaveOpenPath);
     m_settings->setValue("measureSystemMetric", m_measureSystemMetric);
     m_settings->setValue("isRange", m_isRange);
 
@@ -674,7 +612,7 @@ bool MainWindow::event(QEvent * e)
 void MainWindow::setWidgetsSettings()
 {
     QPen pen;
-    pen.setColor(QColor(0, 0, 0, 150));
+    pen.setColor(QColor(255, 255, 255, 150));
     pen.setWidthF(INACTIVE_GRAPH_PEN_WIDTH);
 
     QFont fontTickLabel = m_swrWidget->xAxis->tickLabelFont();
@@ -697,9 +635,8 @@ void MainWindow::setWidgetsSettings()
     }
 
     //-------SWR Widget---------------------------------------------
-    m_swrWidget->addGraph();//graph(0) - SWR
+    qobject_cast<CustomPlot*>(m_swrWidget)->addGraph();//graph(0) - SWR
     setBands(m_swrWidget, bands, MIN_SWR, MAX_SWR);
-
     m_swrWidget->graph(0)->setPen(pen);
     m_swrWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_swrWidget->yAxis->setLabel(tr("SWR"));
@@ -708,7 +645,6 @@ void MainWindow::setWidgetsSettings()
     m_swrWidget->yAxis->setRangeMax(MAX_SWR);
     m_swrWidget->yAxis->setRangeLower(MIN_SWR);
     m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
-    //m_swrWidget->yAxis->setRangeUpper(MAX_SWR);
     m_swrWidget->yAxis->setNumberPrecision(2);
     m_swrWidget->yAxis->setAutoTicks(true);
     m_swrWidget->yAxis->setAutoSubTicks(true);
@@ -729,10 +665,9 @@ void MainWindow::setWidgetsSettings()
     m_swrWidget->replot();
 
     //-------Phase Widget---------------------------------------------
-    m_phaseWidget->addGraph();//graph(0)
+    qobject_cast<CustomPlot*>(m_phaseWidget)->addGraph();//graph(0)
     setBands(m_phaseWidget, bands, -180, 180);
     m_phaseWidget->graph(0)->setPen(pen);
-    //ui->swr_widget->axisRect()->setBackground(Qt::black);
     m_phaseWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_phaseWidget->yAxis->setLabel(tr("Angle"));
     m_phaseWidget->xAxis->setRange(0,1400000);
@@ -749,8 +684,8 @@ void MainWindow::setWidgetsSettings()
     m_phaseWidget->replot();
 
     //-------RSeries Widget------------------------------------------------
+    qobject_cast<CustomPlot*>(m_rsWidget)->addGraph();//graph(0)
     m_rsWidget->setAutoAddPlottableToLegend(false);
-    m_rsWidget->addGraph();//graph(0)
     setBands(m_rsWidget, bands, -2000, 2000);
     m_rsWidget->graph(0)->setPen(pen);
     m_rsWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -769,8 +704,8 @@ void MainWindow::setWidgetsSettings()
     m_rsWidget->replot();
 
     //-------RParallel Widget------------------------------------------------
+    qobject_cast<CustomPlot*>(m_rpWidget)->addGraph();//graph(0)
     m_rpWidget->setAutoAddPlottableToLegend(false);
-    m_rpWidget->addGraph();//graph(0)
     setBands(m_rpWidget, bands, -2000, 2000);
     m_rpWidget->graph(0)->setPen(pen);
     m_rpWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -789,7 +724,7 @@ void MainWindow::setWidgetsSettings()
     m_rpWidget->replot();
 
     //-------RL Widget---------------------------------------------
-    m_rlWidget->addGraph();//graph(0)
+    qobject_cast<CustomPlot*>(m_rlWidget)->addGraph();//graph(0)
     setBands(m_rlWidget, bands, 0, 50);
     m_rlWidget->graph(0)->setPen(pen);
     m_rlWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -808,8 +743,8 @@ void MainWindow::setWidgetsSettings()
     m_rlWidget->replot();
 
     //-------TDR Widget------------------------------------------------
+    qobject_cast<CustomPlot*>(m_tdrWidget)->addGraph();//graph(0)
     m_tdrWidget->setAutoAddPlottableToLegend(false);
-    m_tdrWidget->addGraph();//graph(0)
     m_tdrWidget->graph(0)->setPen(pen);
     m_tdrWidget->xAxis->setLabel(tr("Length, m"));
     m_tdrWidget->xAxis->setRangeLower(0);
@@ -840,8 +775,7 @@ void MainWindow::setWidgetsSettings()
     //---------User defined
     if (g_developerMode) {
         m_userWidget->setAutoAddPlottableToLegend(false);
-        m_userWidget->addGraph();//graph(0)
-        // TODO
+        qobject_cast<CustomPlot*>(m_userWidget)->addGraph();//graph(0)
         setBands(m_userWidget, bands, MIN_USER_RANGE, MAX_USER_RANGE);
         m_userWidget->graph(0)->setPen(pen);
         m_userWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -966,11 +900,15 @@ void MainWindow::on_pressEsc ()
 
 void MainWindow::on_pressF9 ()
 {
+    if (!ui->singleStart->isEnabled())
+        return;
     emit on_singleStart_clicked();
 }
 
 void MainWindow::on_pressF10 ()
 {
+    if (!ui->continuousStartBtn->isEnabled())
+        return;
     emit on_continuousStartBtn_clicked(!ui->continuousStartBtn->isChecked());
     ui->continuousStartBtn->setChecked(!ui->continuousStartBtn->isChecked());
 }
@@ -2301,17 +2239,16 @@ void MainWindow::on_analyzerFound(QString name)
 {
     QString name1 = "AntScope2 v." + QString(ANTSCOPE2VER);
     setWindowTitle(name1 + " - " + name);
-//    quint32 model = m_analyzer->getModel();
 
     ui->singleStart->setEnabled(true);
     ui->continuousStartBtn->setEnabled(true);
-    ui->analyzerDataBtn->setEnabled(true);
-    ui->screenshotAA->setEnabled(true);
-//    if (g_developerMode) {
-//        if (m_analyzer->getComAnalyzer() != nullptr) {
-//            ui->tabWidget->removeTab(7);
-//        }
-//    }
+    if (!NanovnaAnalyzer::isConnected()) {
+        ui->analyzerDataBtn->setEnabled(true);
+        ui->screenshotAA->setEnabled(true);
+    } else {
+        ui->analyzerDataBtn->setEnabled(false);
+        ui->screenshotAA->setEnabled(false);
+    }
 }
 
 void MainWindow::on_analyzerDisconnected()
@@ -2993,19 +2930,15 @@ void MainWindow::createTabs (QString sequence)
         switch(byte)
         {
         case 0:
-            m_tab_1 = new QWidget();
+            m_tab_1 = new GLWidget();
             m_tab_1->setObjectName(QStringLiteral("tab_1"));
             m_horizontalLayout_1 = new QHBoxLayout(m_tab_1);
             m_horizontalLayout_1->setSpacing(6);
             m_horizontalLayout_1->setContentsMargins(11, 11, 11, 11);
             m_horizontalLayout_1->setObjectName(QStringLiteral("horizontalLayout_1"));
-            m_swrWidget = new QCustomPlot(m_tab_1);
+            m_swrWidget = new CustomPlot(1, m_tab_1);
+            qobject_cast<GLWidget*>(m_tab_1)->setPlotter(m_swrWidget);
             m_swrWidget->setObjectName(QStringLiteral("swr_widget"));
-//            m_swrWidget->yAxis->setScaleType(QCPAxis::stLogarithmic);
-//            m_swrWidget->yAxis->setNumberFormat("b");
-//            m_swrWidget->yAxis->setNumberPrecision(2);
-//            m_swrWidget->yAxis->setTickStep(0.1);
-
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
             sizePolicy.setHeightForWidth(m_swrWidget->sizePolicy().hasHeightForWidth());
@@ -3016,14 +2949,15 @@ void MainWindow::createTabs (QString sequence)
             m_mapWidgets.insert(QStringLiteral("swr_widget"), m_swrWidget);
             break;
         case 1:
-            m_tab_2 = new QWidget();
+            m_tab_2 = new GLWidget();
             m_tab_2->setObjectName(QStringLiteral("tab_2"));
 
             m_horizontalLayout_2 = new QHBoxLayout(m_tab_2);
             m_horizontalLayout_2->setSpacing(6);
             m_horizontalLayout_2->setContentsMargins(11, 11, 11, 11);
             m_horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
-            m_phaseWidget = new QCustomPlot(m_tab_2);
+            m_phaseWidget = new CustomPlot(1, m_tab_2);
+            qobject_cast<GLWidget*>(m_tab_2)->setPlotter(m_phaseWidget);
             m_phaseWidget->setObjectName(QStringLiteral("phase_widget"));
 
             sizePolicy.setHorizontalStretch(0);
@@ -3037,14 +2971,23 @@ void MainWindow::createTabs (QString sequence)
             m_mapWidgets.insert(QStringLiteral("phase_widget"), m_phaseWidget);
             break;
         case 2:
-            m_tab_3 = new QWidget();
+            m_tab_3 = new GLWidget();
             m_tab_3->setObjectName(QStringLiteral("tab_3"));
 
             m_horizontalLayout_3 = new QHBoxLayout(m_tab_3);
             m_horizontalLayout_3->setSpacing(6);
             m_horizontalLayout_3->setContentsMargins(11, 11, 11, 11);
             m_horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
-            m_rsWidget = new QCustomPlot(m_tab_3);
+            m_rsWidget = new CustomPlot(3, m_tab_3);
+
+            // TODO in the construction: show/hide chart Z by click
+//            connect(m_rsWidget, &QCustomPlot::legendClick, this, [this] (QCPLegend *legend,  QCPAbstractLegendItem *item, QMouseEvent *event) {
+//                qDebug() <<  "QCustomPlot::legendClick";
+//                m_rsWidget->graph()->setVisible(!m_rsWidget->graph()->visible());
+//                m_rsWidget->replot();
+//            });
+
+            qobject_cast<GLWidget*>(m_tab_3)->setPlotter(m_rsWidget);
             m_rsWidget->setObjectName(QStringLiteral("rs_widget"));
 
             sizePolicy.setHorizontalStretch(0);
@@ -3058,14 +3001,15 @@ void MainWindow::createTabs (QString sequence)
             m_mapWidgets.insert(QStringLiteral("rs_widget"), m_rsWidget);
             break;
         case 3:
-            m_tab_4 = new QWidget();
+            m_tab_4 = new GLWidget();
             m_tab_4->setObjectName(QStringLiteral("tab_4"));
 
             m_horizontalLayout_4 = new QHBoxLayout(m_tab_4);
             m_horizontalLayout_4->setSpacing(6);
             m_horizontalLayout_4->setContentsMargins(11, 11, 11, 11);
             m_horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
-            m_rpWidget = new QCustomPlot(m_tab_4);
+            m_rpWidget = new CustomPlot(3, m_tab_4);
+            qobject_cast<GLWidget*>(m_tab_4)->setPlotter(m_rpWidget);
             m_rpWidget->setObjectName(QStringLiteral("rp_widget"));
 
             sizePolicy.setHorizontalStretch(0);
@@ -3079,13 +3023,14 @@ void MainWindow::createTabs (QString sequence)
             m_mapWidgets.insert(QStringLiteral("rp_widget"), m_rpWidget);
             break;
         case 4:
-            m_tab_5 = new QWidget();
+            m_tab_5 = new GLWidget();
             m_tab_5->setObjectName(QStringLiteral("tab_5"));
             m_horizontalLayout_5 = new QHBoxLayout(m_tab_5);
             m_horizontalLayout_5->setSpacing(6);
             m_horizontalLayout_5->setContentsMargins(11, 11, 11, 11);
             m_horizontalLayout_5->setObjectName(QStringLiteral("horizontalLayout_2"));
-            m_rlWidget = new QCustomPlot(m_tab_5);
+            m_rlWidget = new CustomPlot(1, m_tab_5);
+            qobject_cast<GLWidget*>(m_tab_5)->setPlotter(m_rlWidget);
             m_rlWidget->setObjectName(QStringLiteral("rl_widget"));
 
             sizePolicy.setHorizontalStretch(0);
@@ -3098,14 +3043,15 @@ void MainWindow::createTabs (QString sequence)
             m_mapWidgets.insert(QStringLiteral("rl_widget"), m_rlWidget);
             break;
         case 5:
-            m_tab_6 = new QWidget();
+            m_tab_6 = new GLWidget();
             m_tab_6->setObjectName(QStringLiteral("tab_6"));
 
             m_horizontalLayout_6 = new QHBoxLayout(m_tab_6);
             m_horizontalLayout_6->setSpacing(6);
             m_horizontalLayout_6->setContentsMargins(11, 11, 11, 11);
             m_horizontalLayout_6->setObjectName(QStringLiteral("horizontalLayout_6"));
-            m_tdrWidget = new QCustomPlot(m_tab_6);
+            m_tdrWidget = new CustomPlot(2, m_tab_6);
+            qobject_cast<GLWidget*>(m_tab_6)->setPlotter(m_tdrWidget);
             m_tdrWidget->setObjectName(QStringLiteral("tdr_widget"));
 
             sizePolicy.setHorizontalStretch(0);
@@ -3119,14 +3065,15 @@ void MainWindow::createTabs (QString sequence)
             m_mapWidgets.insert(QStringLiteral("tdr_widget"), m_tdrWidget);
             break;
         case 6:
-            m_tab_7 = new QWidget();
+            m_tab_7 = new GLWidget();
             m_tab_7->setObjectName(QStringLiteral("tab_7"));
 
             m_horizontalLayout_7 = new QHBoxLayout(m_tab_7);
             m_horizontalLayout_7->setSpacing(6);
             m_horizontalLayout_7->setContentsMargins(11, 11, 11, 11);
             m_horizontalLayout_7->setObjectName(QStringLiteral("horizontalLayout_7"));
-            m_smithWidget = new QCustomPlot(m_tab_7);
+            m_smithWidget = new CustomPlot(1, m_tab_7);
+            qobject_cast<GLWidget*>(m_tab_7)->setPlotter(m_smithWidget);
             m_smithWidget->setObjectName(QStringLiteral("smith_widget"));
 
             sizePolicy.setHorizontalStretch(0);
@@ -3149,14 +3096,15 @@ void MainWindow::createTabs (QString sequence)
         }
     }
     if (g_developerMode) {
-        m_tab_8 = new QWidget();
+        m_tab_8 = new GLWidget();
         m_tab_8->setObjectName(QStringLiteral("tab_8"));
 
         m_horizontalLayout_8 = new QHBoxLayout(m_tab_8);
         m_horizontalLayout_8->setSpacing(6);
         m_horizontalLayout_8->setContentsMargins(11, 11, 11, 11);
         m_horizontalLayout_8->setObjectName(QStringLiteral("horizontalLayout_8"));
-        m_userWidget = new QCustomPlot(m_tab_8);
+        m_userWidget = new CustomPlot(1, m_tab_8);
+        qobject_cast<GLWidget*>(m_tab_8)->setPlotter(m_userWidget);
         m_userWidget->setObjectName(QStringLiteral("user_widget"));
 
         sizePolicy.setHorizontalStretch(0);
@@ -3261,7 +3209,7 @@ void MainWindow::on_analyzerDataBtn_clicked()
     m_analyzer->getAnalyzerData();
     connect(m_analyzer,SIGNAL(analyzerDataStringArrived(QString)),m_analyzerData,SLOT(on_analyzerDataStringArrived(QString)));
     connect(m_analyzerData,SIGNAL(itemDoubleClick(QString,QString,QString)),m_analyzer,SLOT(on_itemDoubleClick(QString,QString,QString)));
-    connect(m_analyzerData,SIGNAL(signalSaveFile(QString)),this,SLOT(on_SaveFile(QString)));
+    connect(m_analyzerData,&AnalyzerData::signalSaveFile,this,&MainWindow::on_SaveFile);
     connect(m_analyzerData, &AnalyzerData::dataChanged, this, &MainWindow::on_dataChanged);
     //connect(m_analyzerData,SIGNAL(dialogClosed()),m_analyzer,SLOT(on_dialogClosed()));
     m_analyzerData->exec();
@@ -3303,6 +3251,8 @@ void MainWindow::on_screenshotAA_clicked()
 
 void MainWindow::on_singleStart_clicked()
 {
+    m_measurements->setContinuous(false);
+
     bool use_min_max = isMeasuring() && m_fqRestrict;
     if (isMeasuring())
     {
@@ -3407,6 +3357,7 @@ void MainWindow::on_singleStart_clicked()
 
     if(ui->tabWidget->currentWidget()->objectName() == "tab_6")
     {
+#ifdef OLD_TDR
         qint64 minFq_ = minFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
         qint64 maxFq_ = maxFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
         if (CustomAnalyzer::customized()) {
@@ -3416,11 +3367,17 @@ void MainWindow::on_singleStart_clicked()
                 maxFq_ = ca->maxFq().toULongLong();
             }
         }
-        int dots = qMax(m_dotsNumber, 200);
+        int dots = m_dotsNumber;
+        if(dots < TDR_MINPOINTS)
+            dots = TDR_MINPOINTS;
+        if(dots > TDR_MAXPOINTS)
+            dots = TDR_MAXPOINTS;
 
         emit measure(minFq_, maxFq_, dots);
-
         m_measurements->startTDRProgress(this, dots);
+#else
+        m_measurements->startTDRProgress(analyzer(), this);
+#endif
     }
     else if(ui->tabWidget->currentWidget()->objectName() == "tab_8")
     {
@@ -3434,6 +3391,8 @@ void MainWindow::on_singleStart_clicked()
     ui->exportBtn->setEnabled(true);
     ui->measurmentsDeleteBtn->setEnabled(!m_analyzer->isMeasuring());
     ui->measurmentsClearBtn->setEnabled(!m_analyzer->isMeasuring());
+
+    dtStartMeasurement = QDateTime::currentDateTime();
 }
 
 void MainWindow::on_continuousStartBtn_clicked(bool checked)
@@ -3445,6 +3404,8 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         ui->singleStart->setChecked(false);
         ui->continuousStartBtn->setChecked(false);
         m_isContinuos = false;
+        m_measurements->setContinuous(false);
+
         if (g_developerMode) {
             m_measurements->hideOneFqWidget();
         }
@@ -3547,12 +3508,14 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         m_bInterrupted = true;
         m_analyzer->setContinuos(false);
     }
+    m_measurements->setContinuous(m_isContinuos);
 }
 
 void MainWindow::on_startOneFq(quint64 _fq, int _dots)
 {
     m_isContinuos = true;
     m_analyzer->setContinuos(m_isContinuos);
+    m_measurements->setContinuous(m_isContinuos);
 
     emit measureOneFq(this, _fq*1000, _dots);
 
@@ -3563,8 +3526,10 @@ void MainWindow::on_startOneFq(quint64 _fq, int _dots)
 }
 
 void MainWindow::on_measurementComplete()
-{    
-
+{
+    if (m_analyzer->isNanovna())
+        return;
+    qDebug() << "MainWindow::on_measurementComplete() " << dtStartMeasurement.secsTo(QDateTime::currentDateTime());
     if (g_developerMode) {
         if (m_measurements->isOneFqMode()) {
             on_continuousStartBtn_clicked(false);
@@ -3572,6 +3537,8 @@ void MainWindow::on_measurementComplete()
         }
     }
 
+//{ TODO should be checked for autoclibration
+#if 0
     int autoCalibration = m_measurements->getAutoCalibration();
     if (autoCalibration != 0) {
         m_measurements->stopTDRProgress();
@@ -3579,11 +3546,23 @@ void MainWindow::on_measurementComplete()
     } else {
         m_measurements->stopTDRProgress();
     }
+#endif
+    int autoCalibration = m_measurements->getAutoCalibration();
+    if (autoCalibration != 0) {
+        m_measurements->stopAutocalibrateProgress();
+        autoCalibrate();
+    } else {
+        m_measurements->stopTDRProgress();
+    }
+//}
+
     m_tdrWidget->xAxis->setRangeLower(0);
 
     QTimer::singleShot(5, m_markers, SLOT(redraw()));
     if(m_isContinuos)
     {
+        ui->singleStart->setChecked(false);
+
         double start;
         double stop;
 
@@ -3633,6 +3612,7 @@ void MainWindow::on_measurementComplete()
             m_userWidget->xAxis->setRange(range);
         if (!m_bInterrupted)
         {
+            qDebug() << "MainWindow::on_measurementComplete emit measureContinuous " << start*1000 << stop*1000 << m_dotsNumber;
             emit measureContinuous(start*1000, stop*1000, m_dotsNumber);
         } else {
             m_bInterrupted = true;
@@ -3641,10 +3621,70 @@ void MainWindow::on_measurementComplete()
             m_analyzer->setContinuos(false);
             m_analyzer->setIsMeasuring(false);
             PopUpIndicator::setIndicatorVisible(false);
+            ui->continuousStartBtn->setChecked(false);
         }
+        m_measurements->setContinuous(m_isContinuos);
     } else {
-        m_bInterrupted = true;
         ui->singleStart->setChecked(false);
+        ui->continuousStartBtn->setChecked(false);
+        m_measurements->on_measurementComplete();
+        m_bInterrupted = true;
+        ui->measurmentsDeleteBtn->setEnabled(true);
+        ui->measurmentsClearBtn->setEnabled(true);
+        ui->exportBtn->setEnabled(true);
+        ui->measurmentsSaveBtn->setEnabled(true);
+        m_analyzer->setContinuos(false);
+        m_analyzer->setIsMeasuring(false);
+        PopUpIndicator::setIndicatorVisible(false);
+    }
+}
+
+void MainWindow::on_measurementCompleteNano()
+{
+//{ TODO should be checked for autoclibration
+#if 0
+    int autoCalibration = m_measurements->getAutoCalibration();
+    if (autoCalibration != 0) {
+        m_measurements->stopTDRProgress();
+        autoCalibrate();
+    } else {
+        m_measurements->stopTDRProgress();
+    }
+#endif
+    int autoCalibration = m_measurements->getAutoCalibration();
+    if (autoCalibration != 0) {
+        m_measurements->stopAutocalibrateProgress();
+        autoCalibrate();
+    } else {
+        m_measurements->stopTDRProgress();
+    }
+//}
+
+    m_tdrWidget->xAxis->setRangeLower(0);
+
+    QTimer::singleShot(5, m_markers, SLOT(redraw()));
+    if(m_isContinuos)
+    {
+        ui->singleStart->setChecked(false);
+        if (!m_bInterrupted)
+        {
+            // frequencies were saved by nanjkAnalyzer
+            emit measureContinuous(0, 0, m_dotsNumber);
+        } else {
+            m_bInterrupted = true;
+            ui->measurmentsDeleteBtn->setEnabled(true);
+            ui->measurmentsClearBtn->setEnabled(true);
+            m_analyzer->setContinuos(false);
+            m_analyzer->setIsMeasuring(false);
+            PopUpIndicator::setIndicatorVisible(false);
+            ui->continuousStartBtn->setChecked(false);
+        }
+        m_measurements->setContinuous(m_isContinuos);
+    } else { // single mode
+        ui->singleStart->setChecked(false);
+        ui->continuousStartBtn->setChecked(false);
+        m_measurements->on_measurementComplete();
+        m_bInterrupted = true;
         ui->measurmentsDeleteBtn->setEnabled(true);
         ui->measurmentsClearBtn->setEnabled(true);
         ui->exportBtn->setEnabled(true);
@@ -3688,6 +3728,11 @@ void MainWindow::resizeWnd(void)
 void MainWindow::on_settingsBtn_clicked()
 {
     m_analyzer->setIsMeasuring(false);
+    ui->singleStart->setChecked(false);
+    ui->continuousStartBtn->setChecked(false);
+    m_measurements->setContinuous(false);
+    m_bInterrupted = true;
+    emit stopMeasure();
     m_settingsDialog = new Settings(this);
     m_settingsDialog->setAttribute(Qt::WA_DeleteOnClose);
     m_settingsDialog->setWindowTitle(tr("Settings"));
@@ -3742,6 +3787,10 @@ void MainWindow::on_settingsBtn_clicked()
             m_analyzer,SLOT(setAutoCheckUpdate(bool)));
     connect(m_settingsDialog, SIGNAL(updateBtn(QString)),
             m_analyzer,SLOT(readFile(QString)));
+    connect(m_settingsDialog, &Settings::connectNanoVNA,
+            m_analyzer, &Analyzer::on_connectNanoNVA);
+    connect(m_settingsDialog, &Settings::disconnectNanoVNA,
+            m_analyzer, &Analyzer::on_disconnectNanoNVA);
 
     connect(m_settingsDialog,SIGNAL(startCalibration()),
             m_calibration,SLOT(on_startCalibration()));
@@ -3806,6 +3855,13 @@ void MainWindow::on_settingsBtn_clicked()
 
     m_settingsDialog->exec();
 
+    m_settings->beginGroup("Settings");
+    bool dark = m_settings->value("darkColorTheme", m_darkColorTheme).toBool();
+    m_settings->endGroup();
+
+    if (m_darkColorTheme != dark)
+        changeColorTheme(dark);
+
     if (CustomAnalyzer::customized()) {
         CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
         if (ca != nullptr) {
@@ -3819,6 +3875,8 @@ void MainWindow::on_settingsBtn_clicked()
     ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
     ui->measurmentsDeleteBtn->setEnabled(!m_analyzer->isMeasuring());
     ui->measurmentsClearBtn->setEnabled(!m_analyzer->isMeasuring());
+    m_measurements->on_redrawGraphs(false);
+    updateGraph();
 }
 
 void MainWindow::on_dotsNumberChanged(int number)
@@ -3862,6 +3920,7 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
         m_markers->repaint();
         m_markers->redraw();
     }
+    m_measurements->replot();
 }
 
 
@@ -3872,6 +3931,7 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
         return;
     }
 
+    m_measurements->on_measurementComplete();
     while(ui->tableWidget_measurments->rowCount() != 0)
     {
         QTableWidgetItem * item = ui->tableWidget_measurments->item(0, 0);
@@ -3899,6 +3959,7 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
         m_markers->repaint();
         m_markers->redraw();
     }
+    m_measurements->replot();
 }
 
 void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
@@ -3988,6 +4049,19 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
     m_rlWidget->xAxis->setRange(range);
     if (g_developerMode)
         m_userWidget->xAxis->setRange(range);
+
+    QString str = ui->tabWidget->currentWidget()->objectName();
+    if (str == "tab_6") {
+        int dist = m_measurements->calcTdrDist(&mm->dataRX);
+        if (dist != 0) {
+            range.lower = 0;
+            range.upper = dist;
+            QWidget::setCursor(Qt::WaitCursor);
+            m_measurements->redrawTDR(count - row - 1);
+            QWidget::setCursor(Qt::ArrowCursor);
+        }
+    }
+
     updateGraph();
 }
 
@@ -4195,15 +4269,15 @@ void MainWindow::on_measurmentsSaveBtn_clicked()
 
     if(!list.isEmpty())
     {
-        if(m_lastSavePath.indexOf('.') >= 0)
+        if(m_lastSaveOpenPath.indexOf('.') >= 0)
         {
-            m_lastSavePath.remove(m_lastSavePath.indexOf('.'),4);
-            m_lastSavePath.append(".asd");
+            m_lastSaveOpenPath.remove(m_lastSaveOpenPath.indexOf('.'),4);
+            m_lastSaveOpenPath.append(".asd");
         }
-        QString path = QFileDialog::getSaveFileName(this, "Save file", m_lastSavePath, "AntScope2 (*.asd )");
+        QString path = QFileDialog::getSaveFileName(this, "Save file", m_lastSaveOpenPath, "AntScope2 (*.asd )");
         if(!path.isEmpty())
         {
-            m_lastSavePath = path;
+            m_lastSaveOpenPath = path;
             QTableWidgetItem * item = list.at(0);
             m_measurements->saveData(item->row(), path);
         }
@@ -4212,10 +4286,10 @@ void MainWindow::on_measurmentsSaveBtn_clicked()
 
 void MainWindow::on_measurementsOpenBtn_clicked()
 {
-    QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastOpenPath, "AntScope2 (*.asd )");
+    QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastSaveOpenPath, "AntScope2 (*.asd )");
     if(!path.isEmpty())
     {
-        m_lastSavePath = path;
+        m_lastSaveOpenPath = path;
 
         m_measurements->loadData( path );
         ui->measurmentsSaveBtn->setEnabled(true);
@@ -4236,16 +4310,30 @@ void MainWindow::openFile(QString path)
 
 void MainWindow::on_importBtn_clicked()
 {
-    QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastOpenPath,  "S1p (*.s1p);;"
+    if (m_lastExportImportPath.isEmpty()) {
+        m_settings->beginGroup("Export");
+        m_lastExportImportPath = m_settings->value("lastExportPath", "").toString();
+        m_settings->endGroup();
+    }
+    if (m_lastExportImportPath.isEmpty()) {
+        m_lastExportImportPath = m_lastSaveOpenPath;
+    }
+
+    QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastExportImportPath,  "S1p (*.s1p);;"
                                                                                     "Csv (*.csv);;"
                                                                                     "Nwl (*.nwl);;"
                                                                                     "AntScope2 (*.asd );;"
+
                                                                                     "All files (*.*)");
+    if (path.isEmpty())
+        return;
+
     m_measurements->loadData(path);
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);
     ui->measurmentsDeleteBtn->setEnabled(true);
     ui->measurmentsClearBtn->setEnabled(true);
+    m_lastExportImportPath = path;
 }
 
 void MainWindow::on_changeMeasureSystemMetric (bool state)
@@ -4755,10 +4843,10 @@ void MainWindow::on_calibrationChanged()
     }
 }
 
-void MainWindow::on_SaveFile(QString path)
+void MainWindow::on_SaveFile(int row, QString path)
 {
     //int row = ui->tableWidget_measurments->rowCount() - 1;
-    saveFile(0, path);
+    saveFile(row, path);
     ui->measurmentsSaveBtn->setEnabled(true);
 }
 
@@ -4963,6 +5051,9 @@ void MainWindow::on_presssCtrlAltShiftM()
     if (!g_developerMode)
         return;
 
+    if (!ui->singleStart->isEnabled())
+        return;
+
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
     on_measurementsClearBtn_clicked(true);
@@ -5008,12 +5099,20 @@ void MainWindow::autoCalibrate()
             "background-color: rgb(1, 178, 255);}";
     ui->singleStart->setStyleSheet(style);
     QApplication::restoreOverrideCursor();
+
+    QString notify = QString("Autocalibration: CableResistance=%1, CableLength=%2")
+            .arg((double)calibr.first, 0, 'f', 1, QLatin1Char(' '))
+            .arg((double)calibr.second, 0, 'f', 3, QLatin1Char(' '));
+    QRect rn(0, 0, rect().width(), 40);
+    Notification::showMessage(notify, QColor(Qt::white), rn, 5000, ui->tabWidget->currentWidget());
+    return;
+
 }
 
 void MainWindow::onMeasurementError()
 {
     QApplication::beep();
-    showErrorPopup(tr("Measurement ERROR!"), 2000);
+    //showErrorPopup(tr("Measurement ERROR!"), 2000);
     on_pressEsc();
 }
 
@@ -5112,4 +5211,123 @@ void MainWindow::on_showNotification(QString msg, QString url)
     Notification::showMessage(msg, url, rn, 5000, ui->tabWidget->currentWidget());
 }
 
+QTabWidget* MainWindow::tabWidget()
+{
+    return ui->tabWidget;
+}
 
+void MainWindow::on_presssCtrlAltShiftN()
+{
+    if (!g_developerMode)
+        return;
+
+    if (!ui->singleStart->isEnabled())
+        return;
+
+    connect(m_analyzer, &Analyzer::updateAutocalibrate5, this, [this](int _dots, QString _msg){
+        if (_msg.contains("START")) {
+            m_measurements->startAutocalibrateProgress(this, _dots);
+            m_measurements->progressDlg()->updateActionInfo("Adjustment of signal scaling factor");
+            m_measurements->progressDlg()->setCancelable(false);
+            m_measurements->progressDlg()->setValue(0);
+        } else {
+            int _max = m_measurements->progressDlg()->maxValue();
+            m_measurements->progressDlg()->setValue(_max - _dots);
+            m_measurements->progressDlg()->updateStatusInfo(QString(tr("Remains %1").arg(_dots)));
+        }
+    });
+    QObject::connect(m_analyzer, &Analyzer::stopAutocalibrate5, this, [this]() {
+        QObject::disconnect(m_analyzer, &Analyzer::stopAutocalibrate5, this, nullptr);
+        QObject::disconnect(m_analyzer, &Analyzer::updateAutocalibrate5, this, nullptr);
+        m_measurements->stopAutocalibrateProgress();
+    });
+
+    m_analyzer->setParseState(WAIT_CALFIVEKOHM_START);
+    m_analyzer->sendCommand("CALFIVEKOHM\r");
+}
+
+void MainWindow::changeColorTheme(bool _dark)
+{
+    m_darkColorTheme = _dark;
+
+    QString style;
+    if (m_darkColorTheme) {
+        qApp->setStyle(QStyleFactory::create("fusion"));
+        QPalette asPalette;
+        asPalette.setColor(QPalette::Foreground, QColor(1,178,255));
+        asPalette.setColor(QPalette::Button, QColor(89, 89, 89));
+        asPalette.setColor(QPalette::ButtonText, QColor(255,255,255));
+        asPalette.setColor(QPalette::Highlight, QColor(1,178,255));
+        asPalette.setColor(QPalette::Background, QColor(79, 79, 79));
+        asPalette.setColor(QPalette::Dark, QColor(1,178,255));
+        asPalette.setColor(QPalette::Light, QColor(1,178,255));
+
+        qApp->setPalette(asPalette);
+
+        style = "QPushButton:checked{"
+                "background-color: rgb(1, 178, 255);}";
+
+        ui->limitsBtn->setStyleSheet(style);
+        ui->rangeBtn->setStyleSheet(style);
+
+        style = "QPushButton:disabled{"
+                "background-color: rgb(59, 59, 59);"
+                "color: rgb(119, 119, 119);}";
+
+        ui->exportBtn->setStyleSheet(style);
+        ui->printBtn->setStyleSheet(style);
+        ui->screenshotAA->setStyleSheet(style);
+        ui->analyzerDataBtn->setStyleSheet(style);
+
+        ui->measurmentsSaveBtn->setStyleSheet(style);
+        ui->measurmentsDeleteBtn->setStyleSheet(style);
+
+        ui->presetsDeleteBtn->setStyleSheet(style);
+        ui->measurmentsClearBtn->setStyleSheet(style);
+
+
+        style = "QPushButton:disabled{"
+                "background-color: rgb(59, 59, 59);"
+                "color: rgb(119, 119, 119);}"
+                "QPushButton:checked{"
+                "background-color: rgb(1, 178, 255);}";
+        ui->singleStart->setStyleSheet(style);
+        ui->continuousStartBtn->setStyleSheet(style);
+
+        style = "QGroupBox {border: 2px solid rgb(1, 178, 255); margin-top: 1ex;}"
+                "QGroupBox::title {"
+                "subcontrol-origin: margin;"
+                "subcontrol-position: top center;" /* position at the top center */
+                "padding: 0 3px;}"
+                "QGroupBox::title {color: white;}";
+
+        ui->groupBox_Run->setStyleSheet(style);
+
+        style = "QCheckBox:disabled{"
+                "color: rgb(119, 119, 119);}";
+        ui->checkBoxCalibration->setStyleSheet(style);
+    } else {
+        qApp->setPalette(m_lightPalette);
+
+        style = "";
+        ui->limitsBtn->setStyleSheet(style);
+        ui->rangeBtn->setStyleSheet(style);
+        ui->exportBtn->setStyleSheet(style);
+        ui->printBtn->setStyleSheet(style);
+        ui->screenshotAA->setStyleSheet(style);
+        ui->analyzerDataBtn->setStyleSheet(style);
+        ui->measurmentsSaveBtn->setStyleSheet(style);
+        ui->measurmentsDeleteBtn->setStyleSheet(style);
+        ui->presetsDeleteBtn->setStyleSheet(style);
+        ui->measurmentsClearBtn->setStyleSheet(style);
+        ui->singleStart->setStyleSheet(style);
+        ui->continuousStartBtn->setStyleSheet(style);
+        ui->groupBox_Run->setStyleSheet(style);
+        ui->checkBoxCalibration->setStyleSheet(style);
+    }
+    if (m_markers != NULL)
+        m_markers->changeColorTheme(m_darkColorTheme);
+
+    m_measurements->changeColorTheme(m_darkColorTheme);
+    m_measurements->on_redrawGraphs();
+}

@@ -10,16 +10,18 @@ Export::Export(QWidget *parent) :
     QString path = Settings::setIniFile();
     m_settings = new QSettings(path, QSettings::IniFormat);
     m_settings->beginGroup("Export");
-
     m_lastExportPath = m_settings->value("lastExportPath", "").toString();
-
     QRect rect = m_settings->value("geometry", 0).toRect();
-    if(rect.x() != 0)
-    {
+    if(rect.x() != 0) {
         this->setGeometry(rect);
     }
-
     m_settings->endGroup();
+
+    if (m_lastExportPath.isEmpty()) {
+        m_settings->beginGroup("MainWindow");
+        m_lastExportPath = m_settings->value("lastSavePath", "").toString();
+        m_settings->endGroup();
+    }
 }
 
 Export::~Export()

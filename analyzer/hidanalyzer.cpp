@@ -31,7 +31,7 @@ hidAnalyzer::hidAnalyzer(QObject *parent) : QObject(parent),
 
     m_chartTimer = new QTimer(this);
     QObject::connect(m_chartTimer, SIGNAL(timeout()), this, SLOT(timeoutChart()));
-    m_chartTimer->start(30);
+    m_chartTimer->start(5);
 
     m_sendTimer = new QTimer(this);
     QObject::connect(m_sendTimer, SIGNAL(timeout()), this, SLOT(continueMeasurement()));
@@ -166,6 +166,9 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
             if( cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID)
             {
                 QString number = QString::fromWCharArray(cur_dev->serial_number);
+//                if (number.isEmpty()) {
+//                    number = "165000011";
+//                }
                 number.remove(4,5);
                 int serialNumber = number.toInt();
                 if((serialNumber == PREFIX_SERIAL_NUMBER_AA35) ||
@@ -246,6 +249,25 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                         }
                     }
                     break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA1500_ZOOM)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-1500 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
                 }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA230_STICK)
                 {
                     m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
@@ -258,6 +280,25 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     for(quint32 i = 0; i < QUANTITY; ++i)
                     {
                         if(names[i] == "Stick 230")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_STICK_PRO)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "StickPro")
                         {
                             m_analyzerModel = i;
                             emit analyzerFound(i);
@@ -425,6 +466,7 @@ void hidAnalyzer::checkTimerTick ()
 
 void hidAnalyzer::on_screenshotComplete()
 {
+    m_parseState = WAIT_NO;
     m_isMeasuring = false;
 }
 
@@ -668,7 +710,32 @@ qint32 hidAnalyzer::parse (QByteArray arr)
 {
     //qDebug() << "hidAnalyzer::parse() " << arr;
     quint32 retVal = 0;
-    if (getParseState() == WAIT_LICENSE_LIST)
+    if (getParseState() == WAIT_CALFIVEKOHM_START)
+    {
+        setParseState(WAIT_CALFIVEKOHM);
+        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+        int pos = arr.indexOf("\r\n");
+        QString result = arr.left(pos);
+        int num = result.toInt();
+        result = " START";
+        emit analyzer->updateAutocalibrate5(num, result);
+        return (result.length()+2);
+    } else if (getParseState() == WAIT_CALFIVEKOHM)
+    {
+        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+        int pos = arr.indexOf("\r\n");
+        QString result = arr.left(pos);
+        if (result.contains("OK") || result.contains("ERROR")) {
+            setParseState(WAIT_NO);
+            emit analyzer->stopAutocalibrate5();
+        } else {
+            int num = result.toInt();
+            Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
+            emit analyzer->updateAutocalibrate5(num, result);
+        }
+        return (result.length()+2);
+
+    } else if (getParseState() == WAIT_LICENSE_LIST)
     {
         int pos = arr.indexOf("\r\n");
         QString result = arr.left(pos);

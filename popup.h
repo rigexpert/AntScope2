@@ -67,7 +67,7 @@ public slots:
     void focusShow();
     void focusHide();
 
-private slots:
+protected slots:
     void hideAnimation();                   // Слот для запуска анимации скрытия
 
 
@@ -76,7 +76,7 @@ protected:
     QColor m_penColor;
     QString m_textColor;
 
-private:
+protected:
     QLabel label;           // Label с сообщением
 //    QPushButton button;     // Кнопка сворачивания
 //    QGridLayout layout;     // Размещение для лейбла

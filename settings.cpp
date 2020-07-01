@@ -4,6 +4,7 @@
 #include "analyzer/customanalyzer.h"
 #include "fqinputvalidator.h"
 #include "licensesdialog.h"
+#include "analyzer/nanovna_analyzer.h"
 
 extern bool g_developerMode;
 extern int g_maxMeasurements; // see measurements.cpp
@@ -40,6 +41,17 @@ Settings::Settings(QWidget *parent) :
     ui->calibWizard->setStyleSheet(style);
     ui->licencesBtn->setStyleSheet(style);
 
+    // NanoVNA support
+    NanovnaAnalyzer::detectPorts();
+    ui->connectNanovnaBtn->setStyleSheet(style);
+    ui->connectNanovnaBtn->setVisible(NanovnaAnalyzer::portsCount() != 0);
+    if (NanovnaAnalyzer::isConnected()) {
+        ui->connectNanovnaBtn->setText(tr("Disconnect NanoVNA"));
+    } else {
+        ui->connectNanovnaBtn->setText(tr("Connect NanoVNA"));
+    }
+    connect(ui->connectNanovnaBtn, &QPushButton::clicked, this, &Settings::on_connectNanovna);
+
     style = "QGroupBox {border: 2px solid rgb(100,100,100); margin-top: 1ex;}";
     style += "QGroupBox::title {color: rgb(1, 178, 255);}";
     ui->groupBox_10->setStyleSheet(style);
@@ -61,6 +73,18 @@ Settings::Settings(QWidget *parent) :
     m_graphHintEnabled = m_settings->value("graphHintEnabled", true).toBool();
     m_graphBriefHintEnabled = m_settings->value("graphBriefHintEnabled", true).toBool();
     m_restrictFq = m_settings->value("restrictFq", true).toBool();
+
+    bool dark = m_settings->value("darkColorTheme", true).toBool();
+    if (dark)
+        ui->radioButtonDark->setChecked(true);
+    else
+        ui->radioButtonLight->setChecked(true);
+    connect(ui->radioButtonDark, &QRadioButton::toggled, this, [this](bool checked) {
+        m_settings->beginGroup("Settings");
+        m_settings->setValue("darkColorTheme", checked);
+        m_settings->endGroup();
+        //QMessageBox::warning(this, tr("Color Theme"), tr("You must reload the program to change the color theme."), QMessageBox::Ok);
+    });
 
     ui->tabWidget->setCurrentIndex(m_settings->value("currentIndex",0).toInt());
     ui->markersHintCheckBox->setChecked(m_markersHintEnabled);
@@ -132,18 +156,23 @@ Settings::~Settings()
     m_settings->setValue("graphBriefHintEnabled", m_graphBriefHintEnabled);
     m_settings->setValue("restrictFq", m_restrictFq);
     m_settings->setValue("maxMeasurements", g_maxMeasurements);
+    m_settings->setValue("darkColorTheme", ui->radioButtonDark->isChecked());
 
     m_settings->setValue("currentIndex",ui->tabWidget->currentIndex());
     m_settings->endGroup();
 
     // auto calibration
     m_settings->beginGroup("Auto-calibration");
-    m_settings->setValue("cable_length_min", ui->lineEditMinLength->text());
-    m_settings->setValue("cable_length_max", ui->lineEditMaxLength->text());
-    m_settings->setValue("cable_length_steps", ui->lineEditStepLength->text());
-    m_settings->setValue("cable_res_min", ui->lineEditMinR->text());
-    m_settings->setValue("cable_res_max", ui->lineEditMaxR->text());
-    m_settings->setValue("cable_res_steps", ui->lineEditStepR->text());
+    m_settings->setValue("cable_length_min", ui->lineEditMinLength->text().toDouble());
+    m_settings->setValue("cable_length_max", ui->lineEditMaxLength->text().toDouble());
+    m_settings->setValue("cable_length_steps", ui->lineEditStepLength->text().toDouble());
+    m_settings->setValue("cable_res_min", ui->lineEditMinR->text().toDouble());
+    m_settings->setValue("cable_res_max", ui->lineEditMaxR->text().toDouble());
+    m_settings->setValue("cable_res_steps", ui->lineEditStepR->text().toDouble());
+    m_settings->endGroup();
+
+    m_settings->beginGroup("MainWindow");
+    m_settings->setValue("measureSystemMetric", m_metricChecked);
     m_settings->endGroup();
 
     if(m_analyzer != NULL)
@@ -1115,14 +1144,15 @@ void Settings::setBands(QList<QString> list)
 
 void Settings::initCustomizeTab()
 {
+    ui->comboBoxName->blockSignals(true);
+    ui->comboBoxPrototype->blockSignals(true);
+
     ui->comboBoxPrototype->hide();
     ui->label_19->hide();
 
     ui->comboBoxPrototype->clear();
     ui->comboBoxName->clear();
 
-    ui->comboBoxName->blockSignals(true);
-    ui->comboBoxPrototype->blockSignals(true);
 
     //CustomAnalyzer::load(m_settings);
     QString curAlias = CustomAnalyzer::currentAlias();
@@ -1162,12 +1192,12 @@ void Settings::initCustomizeTab()
 
     // auto calibration
     m_settings->beginGroup("Auto-calibration");
-    ui->lineEditMinLength->setText(m_settings->value("cable_length_min", "0").toString());
-    ui->lineEditMaxLength->setText(m_settings->value("cable_length_max", "0.02").toString());
-    ui->lineEditStepLength->setText(m_settings->value("cable_length_steps", "100").toString());
-    ui->lineEditMinR->setText(m_settings->value("cable_res_min", "20").toString());
-    ui->lineEditMaxR->setText(m_settings->value("cable_res_max", "40").toString());
-    ui->lineEditStepR->setText(m_settings->value("cable_res_steps", "100").toString());
+    ui->lineEditMinLength->setText(QString::number(m_settings->value("cable_length_min", 0).toDouble()));
+    ui->lineEditMaxLength->setText(QString::number(m_settings->value("cable_length_max", 0.02).toDouble()));
+    ui->lineEditStepLength->setText(QString::number(m_settings->value("cable_length_steps", 100).toDouble()));
+    ui->lineEditMinR->setText(QString::number(m_settings->value("cable_res_min", 20).toDouble()));
+    ui->lineEditMaxR->setText(QString::number(m_settings->value("cable_res_max", 40).toDouble()));
+    ui->lineEditStepR->setText(QString::number(m_settings->value("cable_res_steps", 100).toDouble()));
     m_settings->endGroup();
 }
 
@@ -1186,6 +1216,8 @@ void Settings::on_enableCustomizeControls(bool enable)
 
 void Settings::on_comboBoxPrototype_currentIndexChanged(int index)
 {
+    if (index < 0)
+        return;
     ui->lineEditMin->setText(minFq[index]);
     ui->lineEditMax->setText(maxFq[index]);
     ui->spinBoxWidth->setValue(lcdWidth[index]);
@@ -1224,6 +1256,16 @@ void Settings::onApplyButton()
     CustomAnalyzer::add(ca);
     CustomAnalyzer::setCurrent(ca.alias());
     CustomAnalyzer::save();
+
+    // auto calibration
+    m_settings->beginGroup("Auto-calibration");
+    m_settings->setValue("cable_length_min", ui->lineEditMinLength->text().toDouble());
+    m_settings->setValue("cable_length_max", ui->lineEditMaxLength->text().toDouble());
+    m_settings->setValue("cable_length_steps", ui->lineEditStepLength->text().toDouble());
+    m_settings->setValue("cable_res_min", ui->lineEditMinR->text().toDouble());
+    m_settings->setValue("cable_res_max", ui->lineEditMaxR->text().toDouble());
+    m_settings->setValue("cable_res_steps", ui->lineEditStepR->text().toDouble());
+    m_settings->endGroup();
 
     initCustomizeTab();
 }
@@ -1319,3 +1361,16 @@ void Settings::on_licensesBtnPressed()
     dlg->setWindowTitle(tr("Licenses"));
     dlg->exec();
 }
+
+void Settings::on_connectNanovna()
+{
+    if (NanovnaAnalyzer::isConnected())
+        emit disconnectNanoVNA();
+    else
+        emit connectNanoVNA();
+
+    close();
+    //QMessageBox::warning(this, "Connect NanoVNA", "Not implemented yet!", QMessageBox::Ok);
+}
+
+
