@@ -2562,21 +2562,22 @@ void Measurements::importData(QString _name)
             if ( (line.length() > 2) && (line[0] == '#')) // Option line
             {
                 line.remove(0,1);
+                line = line.toUpper();
                 int ns = sscanf(line.toLocal8Bit(), "%s %s %s %s %s", strn[0], strn[1], strn[2], strn[3], strn[4]);
                 for (int i=0; i<ns; i++)
                 {
                     // Frequency unit
 
-                    if (!strcmp(strn[i], "GHz"))
+                    if (!strcmp(strn[i], "GHZ"))
                         fqmul = 1000.0;
                     else
-                    if (!strcmp(strn[i], "MHz"))
+                    if (!strcmp(strn[i], "MHZ"))
                         fqmul = 1.0;
                     else
-                    if (!strcmp(strn[i], "KHz"))
+                    if (!strcmp(strn[i], "KHZ"))
                         fqmul = 0.001;
                     else
-                    if (!strcmp(strn[i], "Hz"))
+                    if (!strcmp(strn[i], "HZ"))
                         fqmul = 0.000001;
                     else
 
