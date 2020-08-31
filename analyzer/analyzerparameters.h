@@ -109,7 +109,7 @@ static QString minFq[QUANTITY]={//in kHz
     "100",  //AA-1000
     "100",  //AA-1400
     "100",  //AA-1500
-    "0",   //AA-2000
+    "100",   //AA-2000
     "1"    //NanoVNA
 };
 static QString maxFq[QUANTITY]={//in kHz
@@ -136,7 +136,7 @@ static QString maxFq[QUANTITY]={//in kHz
     "1000000",  //AA-1000
     "1400000",  //AA-1400
     "1500000",  //AA-1500
-    "3500000",   //AA-2000
+    "2000000",   //AA-2000
     "1000000"   //NanoVNA
 };
 
@@ -250,8 +250,10 @@ struct UserData {
 };
 
 
-struct measurement{
-
+struct measurement
+{
+    QString name;
+    bool visible = true;
     qint64 qint64Fq;
     qint64 qint64Sw;
     qint64 qint64Dots;

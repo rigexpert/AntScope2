@@ -30,6 +30,15 @@
 #include <QTabWidget>
 #include <qserialport.h>
 
+
+#define MEASUREMENTS_TABLE_COLUMNS 2
+enum {
+    COL_VISIBLE,
+    COL_NAME,
+    COL_MENU
+
+};
+
 namespace Ui {
 class MainWindow;
 }

@@ -26,6 +26,8 @@
 #include "qcustomplot.h"
 
 
+#include "CustomPlot.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////// QCPPainter
@@ -13027,6 +13029,22 @@ void QCPPlottableLegendItem::draw(QCPPainter *painter)
   painter->save();
   painter->setClipRect(iconRect, Qt::IntersectClip);
   mPlottable->drawLegendIcon(painter, iconRect);
+
+  // SERG
+#if 0
+  QSizeF sz(16, 16);
+  QRectF rect(iconRect);
+  QPointF pt(rect.left()-sz.width()-4, rect.center().y()-sz.height()/2);
+  QRectF rr(pt, sz);
+  painter->setClipRect(rr.adjusted(-1, -1, 1, 1));
+  painter->setPen(Qt::black);
+  QBrush brush;
+  brush.setColor(mPlottable->visible() ? Qt::black : Qt::NoBrush);
+  painter->setBrush(brush);
+  painter->fillRect(rr.adjusted(3, 3, -3, -3), brush.color());
+  painter->drawRect(rr);
+#endif
+
   painter->restore();
   // draw icon border:
   if (getIconBorderPen().style() != Qt::NoPen)

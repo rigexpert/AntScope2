@@ -181,34 +181,8 @@ bool Measurements::getCalibrationEnabled(void)
 
 void Measurements::deleteRow(int row)
 {
-    m_tableNames.remove(row, 1);
     m_tableWidget->removeRow(row);
 
-    for(int j = 0; j < 5; ++j)
-    {
-        if(m_tableNames.length() > j)
-        {
-            QTableWidgetItem *item = m_tableWidget->item(j,0);
-            if(item == NULL)
-            {
-                item = new QTableWidgetItem();
-                QString str = m_tableNames.at(j);
-                item->setText(str);
-                m_tableWidget->setItem(j,0, item);
-            }else
-            {
-                QString str = m_tableNames.at(j);
-                item->setText(str);
-            }
-        }else
-        {
-            QTableWidgetItem *item = m_tableWidget->item(j,0);
-            if(item != NULL)
-            {
-                delete item;
-            }
-        }
-    }
     int count = m_swrWidget->graphCount();
     if(count)
     {
@@ -238,31 +212,28 @@ void Measurements::deleteRow(int row)
                 m_userWidget->removeGraph(index);
         }
 
-        if(row == m_tableNames.length())
-        {
-            QModelIndex myIndex = m_tableWidget->model()->index( row-1, 0,
-                                                                 QModelIndex());
-            m_tableWidget->selectionModel()->select(myIndex,
-                                                    QItemSelectionModel::Select);
+        // repair legend
+        if (row_ == 1 && count > 2) {
+            m_rsWidget->legend->addItem(new QCPPlottableLegendItem(m_rsWidget->legend, m_rsWidget->graph(1)));
+            m_rsWidget->legend->addItem(new QCPPlottableLegendItem(m_rsWidget->legend, m_rsWidget->graph(2)));
+            m_rsWidget->legend->addItem(new QCPPlottableLegendItem(m_rsWidget->legend, m_rsWidget->graph(3)));
 
-            myIndex = m_tableWidget->model()->index( row-1, 1, QModelIndex());
-            m_tableWidget->selectionModel()->select(myIndex,
-                                                    QItemSelectionModel::Select);
+            m_rpWidget->legend->addItem(new QCPPlottableLegendItem(m_rpWidget->legend, m_rpWidget->graph(1)));
+            m_rpWidget->legend->addItem(new QCPPlottableLegendItem(m_rpWidget->legend, m_rpWidget->graph(2)));
+            m_rpWidget->legend->addItem(new QCPPlottableLegendItem(m_rpWidget->legend, m_rpWidget->graph(3)));
 
-        }else
-        {
-            QModelIndex myIndex = m_tableWidget->model()->index( row, 0,
-                                                                 QModelIndex());
-            m_tableWidget->selectionModel()->select(myIndex,
-                                                    QItemSelectionModel::Select);
-
-            myIndex = m_tableWidget->model()->index( row, 1, QModelIndex());
-            m_tableWidget->selectionModel()->select(myIndex,
-                                                    QItemSelectionModel::Select);
-
+            m_tdrWidget->legend->addItem(new QCPPlottableLegendItem(m_tdrWidget->legend, m_tdrWidget->graph(1)));
+            m_tdrWidget->legend->addItem(new QCPPlottableLegendItem(m_tdrWidget->legend, m_tdrWidget->graph(2)));
         }
+        int selRow = (row >= m_measurements.length()) ? (row-1) : row;
+        QModelIndex myIndex = m_tableWidget->model()->index( selRow, 0,
+                                                             QModelIndex());
+        m_tableWidget->selectionModel()->select(myIndex,
+                                    QItemSelectionModel::Select | QItemSelectionModel::Rows);
     }
-    m_tableWidget->setRowCount(m_tableNames.length());
+
+
+    m_tableWidget->setRowCount(m_measurements.length());
 }
 
 void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 dots)
@@ -289,7 +260,9 @@ void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 
             .arg((long)(center/1000))
             .arg((long)(range/1000))
             .arg(dots);
-    QTableWidgetItem *item = m_tableWidget->item(m_tableWidget->rowCount()-1,0);
+
+    int row = m_tableWidget->rowCount()-1;
+    QTableWidgetItem *item = m_tableWidget->item(row,COL_NAME);
     item->setToolTip(tips);
     m_measuringInProgress = true;
     qDebug() << "Measurements::on_newMeasurement";
@@ -298,66 +271,6 @@ void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 
 void Measurements::on_newMeasurement(QString name)
 {
     m_interrupted = false;
-    // name.isEmpty -> singlePoint measurement
-    if (!name.isEmpty())
-    {
-        if(m_graphBriefHintEnabled)
-        {
-            m_graphBriefHint->show();
-        }
-
-        QString nextName = name;
-        if (name.indexOf("##") == 0)
-        {
-            int next = 0;
-            for (int idx=0; idx<m_tableNames.size(); idx++)
-            {
-                QString existed = m_tableNames[idx];
-                if (existed.indexOf('>') == 2) {
-                    QString num = existed.left(2);
-                    bool ok = false;
-                    int prefix = num.toInt(&ok);
-                    if (ok) {
-                        next = qMax(next, prefix);
-                    }
-                }
-            }
-            next++;
-            if (next > 99)
-                next = 1;
-
-            nextName = QString("%1> %2").arg(next, 2, 10, QChar('0')).arg(name.mid(2));
-        }
-        while(m_tableNames.length() >= g_maxMeasurements)
-        {
-            m_tableNames.remove(0,1);
-        }
-        m_tableNames.append(nextName);
-        //if(m_tableNames.length() > m_tableWidget->rowCount())
-        {
-            m_tableWidget->setRowCount(m_tableNames.length());
-        }
-        for(int i = 0; i < m_tableNames.length(); ++i)
-        {
-            QTableWidgetItem *item = m_tableWidget->item(i,0);
-            if(item == NULL)
-            {
-                item = new QTableWidgetItem();
-                QString str = m_tableNames.at(i);
-                item->setText(str);
-                m_tableWidget->setItem(i,0, item);
-            }else
-            {
-                QString str = m_tableNames.at(i);
-                item->setText(str);
-            }
-        }
-
-        m_tableWidget->reset();
-        QModelIndex myIndex = m_tableWidget->model()->index( m_tableNames.size()-1, 0, QModelIndex());
-        m_tableWidget->selectionModel()->select(myIndex,QItemSelectionModel::Select);
-        m_tableWidget->scrollToBottom();
-    }
 
     while(m_measurements.length() >= g_maxMeasurements)
     {
@@ -412,15 +325,15 @@ void Measurements::on_newMeasurement(QString name)
     m_rsWidget->addGraph();
     m_rsWidget->graph()->setName("|Z|");
     m_rpWidget->setAutoAddPlottableToLegend(m_rpWidget->legend->itemCount() < 3);
-    //m_rpWidget->addGraph();
-    qobject_cast<CustomPlot*>(m_rpWidget)->addGraph();
+    m_rpWidget->addGraph();
+    //qobject_cast<CustomPlot*>(m_rpWidget)->addGraph();
     m_rpWidget->graph()->setName("Rp");
     m_rpWidget->addGraph();
     m_rpWidget->graph()->setName("Xp");
     m_rpWidget->addGraph();
     m_rpWidget->graph()->setName("|Zp|");
     m_rlWidget->addGraph();
-    m_tdrWidget->setAutoAddPlottableToLegend(m_tdrWidget->legend->itemCount() < 2);
+    //m_tdrWidget->setAutoAddPlottableToLegend(m_tdrWidget->legend->itemCount() < 2);
     m_tdrWidget->addGraph();
     m_tdrWidget->graph()->setName(tr("Impulse response"));
     m_tdrWidget->addGraph();
@@ -435,25 +348,6 @@ void Measurements::on_newMeasurement(QString name)
     {
         m_currentIndex = 1;
     }
-//    switch (m_currentIndex) {
-//    case 1:
-//        pen.setColor(QColor(30, 40, 255, 150));
-//        break;
-//    case 2:
-//        pen.setColor(QColor(30, 255, 40, 150));
-//        break;
-//    case 3:
-//        pen.setColor(QColor(255, 30, 40, 150));
-//        break;
-//    case 4:
-//        pen.setColor(QColor(255, 127, 0, 255));
-//        break;
-//    case 5:
-//        pen.setColor(QColor(255, 40, 255, 150));
-//        break;
-//    default:
-//        break;
-//    }
     pen.setColor(getColor(m_currentIndex));
     pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
 
@@ -488,6 +382,63 @@ void Measurements::on_newMeasurement(QString name)
 
     m_tdrWidget->graph(tdrGraphCount-2)->setPen(zpen);
     m_tdrWidget->graph(tdrGraphCount-1)->setPen(xpen);
+
+    // name.isEmpty -> singlePoint measurement
+    if (!name.isEmpty())
+    {
+        if(m_graphBriefHintEnabled)
+        {
+            m_graphBriefHint->show();
+        }
+
+        QString nextName = name;
+        if (name.indexOf("##") == 0)
+        {
+            int next = 0;
+            for (int idx=0; idx<m_measurements.size(); idx++)
+            {
+                QString existed = m_measurements[idx].name;
+                if (existed.indexOf('>') == 2) {
+                    QString num = existed.left(2);
+                    bool ok = false;
+                    int prefix = num.toInt(&ok);
+                    if (ok) {
+                        next = qMax(next, prefix);
+                    }
+                }
+            }
+            next++;
+            if (next > 99)
+                next = 1;
+
+            nextName = QString("%1> %2").arg(next, 2, 10, QChar('0')).arg(name.mid(2));
+        }
+        m_measurements.last().name = nextName;
+        m_tableWidget->setRowCount(0);
+
+        m_tableWidget->setColumnCount(MEASUREMENTS_TABLE_COLUMNS);
+       // m_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        m_tableWidget->setRowCount(m_measurements.length());
+        for(int i = 0; i < m_measurements.length(); ++i)
+        {
+            const measurement& mm = m_measurements.at(i);
+            QTableWidgetItem *item;
+// DEBUG uncomment
+            item = new QTableWidgetItem();
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+            item->setCheckState(mm.visible ? Qt::Checked : Qt::Unchecked);
+            m_tableWidget->setItem(i,COL_VISIBLE, item);
+
+            item = new QTableWidgetItem();
+            QString str = mm.name;
+            item->setText(str);
+            m_tableWidget->setItem(i,COL_NAME, item);
+        }
+        m_tableWidget->reset();
+        QModelIndex myIndex = m_tableWidget->model()->index( m_measurements.size()-1, 0, QModelIndex());
+        m_tableWidget->selectionModel()->select(myIndex,QItemSelectionModel::Select | QItemSelectionModel::Rows);
+        m_tableWidget->scrollToBottom();
+    }
 }
 
 
@@ -4609,7 +4560,7 @@ void Measurements::on_isRangeChanged(bool _range)
                 .arg((long)(center/1000))
                 .arg((long)(range/1000))
                 .arg(mm->qint64Dots);
-        QTableWidgetItem *item = m_tableWidget->item(i,0);
+        QTableWidgetItem *item = m_tableWidget->item(i,COL_NAME);
         item->setToolTip(tips);
     }
 }
@@ -4629,9 +4580,11 @@ void Measurements::on_impedanceChanged(double _z0)
         m_currentIndex = 0;
 
     QList<QTableWidgetItem*> selected = m_tableWidget->selectedItems();
+    int selectedRow = selected.isEmpty() ? -1 : selected.at(0)->row();
+
     for (int idx=0; idx<len; idx++) {
-        QString name = m_tableNames.takeFirst();
         measurement mm = m_measurements.takeFirst();
+        QString name = mm.name;
 
         delete mm.smithCurve;
         delete m_viewMeasurements.takeFirst().smithCurve;
@@ -4682,9 +4635,9 @@ void Measurements::on_impedanceChanged(double _z0)
         }
     }
     m_measuringInProgress = false;
-    if (!selected.isEmpty()) {
-        m_tableWidget->selectRow(selected.at(0)->row());
-        emit selectMeasurement(selected.at(0)->row(), selected.at(0)->column());
+    if ( selectedRow != -1) {
+        m_tableWidget->selectRow(selectedRow);
+        emit selectMeasurement(selectedRow, 0);
     }
 }
 
@@ -5198,3 +5151,27 @@ void Measurements::changeColorTheme(bool _dark)
     }
 }
 
+void Measurements::toggleVisibility(int row, bool _state)
+{
+    measurement& mm = m_measurements[row];
+    mm.visible = _state;
+    int count = m_swrWidget->graphCount();
+    if (count > 1) {
+        m_swrWidget->graph(row+1)->setVisible(_state);
+        m_phaseWidget->graph(row+1)->setVisible(_state);
+        m_rlWidget->graph(row+1)->setVisible(_state);
+
+        int row1 = row*3 + 1;
+        m_rpWidget->graph(row1+0)->setVisible(_state);
+        m_rpWidget->graph(row1+1)->setVisible(_state);
+        m_rpWidget->graph(row1+2)->setVisible(_state);
+
+        m_rsWidget->graph(row1+0)->setVisible(_state);
+        m_rsWidget->graph(row1+1)->setVisible(_state);
+        m_rsWidget->graph(row1+2)->setVisible(_state);
+
+        row1 = row*2 + 1;
+        m_tdrWidget->graph(row1+0)->setVisible(_state);
+        m_tdrWidget->graph(row1+0)->setVisible(_state);
+    }
+}

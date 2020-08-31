@@ -93,12 +93,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_lightPalette = qApp->palette();
 
-    ui->tableWidget_measurments->setColumnCount(1);
+    ui->tableWidget_measurments->setColumnCount(MEASUREMENTS_TABLE_COLUMNS);
     ui->tableWidget_measurments->setSelectionBehavior(QAbstractItemView::SelectRows );
     ui->tableWidget_measurments->setToolTip(tr("Double-click an item to rescale the chart.\nRight-click an item to change color"));
     ui->tableWidget_measurments->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableWidget_measurments, &QTableWidget::customContextMenuRequested, this, &MainWindow::on_tableWidgetMeasurmentsContextMenu);
-
+    connect(ui->tableWidget_measurments, &QTableWidget::itemChanged, this, [=] (QTableWidgetItem* item) {
+        if (item != nullptr && item->column() == 0) {
+            m_measurements->toggleVisibility(item->row(), item->checkState()==Qt::Checked);
+        }
+    });
     setWidgetsSettings();
 
     foreach (QCustomPlot *plot, m_mapWidgets) {
@@ -2980,13 +2984,6 @@ void MainWindow::createTabs (QString sequence)
             m_horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
             m_rsWidget = new CustomPlot(3, m_tab_3);
 
-            // TODO in the construction: show/hide chart Z by click
-//            connect(m_rsWidget, &QCustomPlot::legendClick, this, [this] (QCPLegend *legend,  QCPAbstractLegendItem *item, QMouseEvent *event) {
-//                qDebug() <<  "QCustomPlot::legendClick";
-//                m_rsWidget->graph()->setVisible(!m_rsWidget->graph()->visible());
-//                m_rsWidget->replot();
-//            });
-
             qobject_cast<GLWidget*>(m_tab_3)->setPlotter(m_rsWidget);
             m_rsWidget->setObjectName(QStringLiteral("rs_widget"));
 
@@ -3890,8 +3887,9 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
     {
         return;
     }
+    int columns = ui->tableWidget_measurments->columnCount();
     QList <QTableWidgetItem *> list = ui->tableWidget_measurments->selectedItems();
-    for(int i = 0; i < list.length(); ++i)
+    for(int i = 0; i < list.length(); i+=columns)
     {
         QTableWidgetItem * item = list.at(i);
         int rowNumber = item->row();
@@ -4153,7 +4151,7 @@ void MainWindow::on_printBtn_clicked()
         for(int i = 1; i < cnt; ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
-                    index( i-1, 0, QModelIndex());
+                    index( i-1, COL_NAME, QModelIndex());
             QPen pen = m_swrWidget->graph(i)->pen();
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_swrWidget->graph(i)->data(), pen, myIndex.data().toString());
@@ -4167,7 +4165,7 @@ void MainWindow::on_printBtn_clicked()
         for(int i = 1; i < m_phaseWidget->graphCount(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
-                    index( i-1, 0, QModelIndex());
+                    index( i-1, COL_NAME, QModelIndex());
             QPen pen = m_phaseWidget->graph(i)->pen();
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_phaseWidget->graph(i)->data(), pen, myIndex.data().toString());
@@ -4205,7 +4203,7 @@ void MainWindow::on_printBtn_clicked()
         for(int i = 1; i < m_rlWidget->graphCount(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
-                    index( i-1, 0, QModelIndex());
+                    index( i-1, COL_NAME, QModelIndex());
             QPen pen = m_rlWidget->graph(i)->pen();
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_rlWidget->graph(i)->data(), pen, myIndex.data().toString());
@@ -4232,7 +4230,7 @@ void MainWindow::on_printBtn_clicked()
         for(int i = 0; i < m_measurements->getMeasurementLength(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
-                                index( m_smithWidget->graphCount()-i-1, 0, QModelIndex());
+                                index( m_smithWidget->graphCount()-i-1, COL_NAME, QModelIndex());
             QPen pen = m_measurements->getMeasurement(i)->smithCurve->pen();
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setSmithData(&m_measurements->getMeasurement(i)->smithGraph, pen, myIndex.data().toString());

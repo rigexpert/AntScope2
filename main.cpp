@@ -11,36 +11,35 @@ bool g_raspbian = false;
 #include <windows.h>
 #include <dbt.h>
 
-//#define LOG_TO_FILE
+#define LOG_TO_FILE
 
 #ifdef LOG_TO_FILE
-QString logFilePath = "antscope2-debug.log";
-bool logToFile = true;
+QString logFilePath = "antscope2";
+bool firstLog = true;
 void customMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
+    if (type != QtInfoMsg)
+        return;
     QHash<QtMsgType, QString> msgLevelHash({{QtDebugMsg, "Debug"}, {QtInfoMsg, "Info"}, {QtWarningMsg, "Warning"}, {QtCriticalMsg, "Critical"}, {QtFatalMsg, "Fatal"}});
-    QByteArray localMsg = msg.toLocal8Bit();
     QTime time = QTime::currentTime();
     QString formattedTime = time.toString("hh:mm:ss.zzz");
-    QByteArray formattedTimeMsg = formattedTime.toLocal8Bit();
-    QString logLevelName = msgLevelHash[type];
-    QByteArray logLevelMsg = logLevelName.toLocal8Bit();
+    QString sufix = QDateTime::currentDateTime().toString("-yyyyMMdd_hhmmss.log");
+    QString logLevelName = "";//msgLevelHash[type];
 
-    if (logToFile) {
-        QString txt = QString("%1 %2: %3 (%4:%5, %6)")
-                .arg(formattedTime, logLevelName, msg,  context.file)
-                .arg(context.line)
-                .arg(context.function);
+    QString txt = QString("%1 %2: %3 (%4:%5, %6)")
+            .arg(formattedTime, logLevelName, msg,  context.file)
+            .arg(context.line)
+            .arg(context.function);
+    if (firstLog) {
+        firstLog = false;
         QDir dir = QDir::tempPath();
-        QFile outFile(dir.absoluteFilePath(logFilePath));
-        outFile.open(QIODevice::WriteOnly | QIODevice::Append);
-        QTextStream ts(&outFile);
-        ts << txt << endl;
-        ts.flush();
-    } else {
-        fprintf(stderr, "%s %s: %s (%s:%u, %s)\n", formattedTimeMsg.constData(), logLevelMsg.constData(), localMsg.constData(), context.file, context.line, context.function);
-        fflush(stderr);
+        logFilePath = dir.absoluteFilePath(logFilePath + sufix);
     }
+    QFile outFile(logFilePath);
+    outFile.open(QIODevice::WriteOnly | QIODevice::Append);
+    QTextStream ts(&outFile);
+    ts << txt << endl;
+    ts.flush();
 }
 #endif
 
@@ -94,11 +93,10 @@ int main(int argc, char *argv[])
 
 #ifdef LOG_TO_FILE
     qInstallMessageHandler(customMessageOutput);
-    if (logToFile) {
-        qDebug() << "                                                         ";
-        qDebug() << "*********************************************************";
-        qDebug() << "  AntScope2 STARTED";
-    }
+    qInfo() << "                                                         ";
+    qInfo() << "*********************************************************";
+    qInfo() << "  AntScope2 " << QString(ANTSCOPE2VER) << " STARTED " << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    qInfo() << "                                                         ";
 #endif
 
 #ifdef Q_OS_WIN

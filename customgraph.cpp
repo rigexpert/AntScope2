@@ -76,5 +76,13 @@ QRectF CustomGraph::getClipRect(QVector<QPointF>& _lineCoords)
     return _clip;
 }
 
-
+void CustomGraph::draw(QCPPainter *painter)
+{
+    if (checked()) {
+        qDebug() << "CustomGraph::draw" << name();
+        QCPGraph::draw(painter);
+    } else {
+        qDebug() << "CustomGraph::skip" << name();
+    }
+}
 

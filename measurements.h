@@ -125,7 +125,7 @@ public:
 private:
 //    QVector <rawData> m_rawDataVector;
 //    QVector < QVector<rawData> > m_rawDataLists;
-    QVector <QString> m_tableNames;
+//    QVector <QString> m_tableNames;
 
     QString m_currentTab;
 
@@ -273,6 +273,7 @@ public slots:
 
     void on_drawPoint();
     void on_measurementComplete();
+    void toggleVisibility(int row, bool _state);
 };
 
 #endif // MEASUREMENTS_H

@@ -83,7 +83,7 @@ bool AA30ZEROFirmwareUpdater::update(const ReDeviceInfo &dev, QIODevice *fw)
         arr.append(crc8(&arr));
         unsigned char len = arr.length();
         arr.insert(0,len);
-        arr.insert(0,0xAF);
+        arr.insert(0,(unsigned char)0xAF);
 
         m_port.write(arr);
 
@@ -97,7 +97,7 @@ bool AA30ZEROFirmwareUpdater::update(const ReDeviceInfo &dev, QIODevice *fw)
     }
 
     arr.clear();
-    arr.append(0xAF);
+    arr.append((unsigned char)0xAF);
     arr.append(0x02);
     arr.append(0x06);
     arr.append(0x12);
@@ -148,7 +148,7 @@ AA30ZEROFirmwareUpdater::FirmwareInfo AA30ZEROFirmwareUpdater::firmwareInfo(cons
     QByteArray arr;
     arr = m_port.readAll();
     arr.clear();
-    arr.append(175);
+    arr.append((unsigned char)175);
     arr.append(2);
     arr.append(1);
     arr.append(7);
@@ -213,7 +213,7 @@ bool AA30ZEROFirmwareUpdater::setInBootMode(ReDeviceInfo &dev)
     //get info
     arr = m_port.readAll();
     arr.clear();
-    arr.append(175);
+    arr.append((unsigned char)175);
     arr.append(2);
     arr.append(1);
     arr.append(7);
