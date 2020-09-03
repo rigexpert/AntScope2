@@ -11,7 +11,7 @@ bool g_raspbian = false;
 #include <windows.h>
 #include <dbt.h>
 
-#define LOG_TO_FILE
+//#define LOG_TO_FILE
 
 #ifdef LOG_TO_FILE
 QString logFilePath = "antscope2";

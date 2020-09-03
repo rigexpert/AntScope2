@@ -79,10 +79,10 @@ QRectF CustomGraph::getClipRect(QVector<QPointF>& _lineCoords)
 void CustomGraph::draw(QCPPainter *painter)
 {
     if (checked()) {
-        qDebug() << "CustomGraph::draw" << name();
+        //qDebug() << "CustomGraph::draw" << name();
         QCPGraph::draw(painter);
     } else {
-        qDebug() << "CustomGraph::skip" << name();
+        //qDebug() << "CustomGraph::skip" << name();
     }
 }
 

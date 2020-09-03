@@ -5635,16 +5635,16 @@ void QCPAxis::setupTickVectors()
       {
           double n = mTickVector.at(i);
           //tmp = mParentPlot->locale().toString(mTickVector.at(i), mNumberFormatChar.toLatin1(), mNumberPrecision);
-          if(n > 999999)
+          if(n > 99999999)
           {
               int t = (int)n%10;
               n /= 10;
-              tmp = mParentPlot->locale().toString(n);
+              tmp = mParentPlot->locale().toString(n, 'f', 0);
 //              qDebug() << tmp;
               tmp.append(QString::number(t));
           }else
           {
-              tmp = mParentPlot->locale().toString(n);
+              tmp = mParentPlot->locale().toString(n, 'f', 0);
 //              qDebug() << tmp;
           }
 

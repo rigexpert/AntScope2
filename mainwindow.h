@@ -31,7 +31,7 @@
 #include <qserialport.h>
 
 
-#define MEASUREMENTS_TABLE_COLUMNS 2
+#define MEASUREMENTS_TABLE_COLUMNS 3
 enum {
     COL_VISIBLE,
     COL_NAME,
@@ -113,7 +113,7 @@ private:
     QMap<QString, QCustomPlot *> m_mapWidgets;
 
     Measurements *m_measurements;
-    QVector <QCPItemRect*> m_itemRectList;
+    QVector <QCPAbstractItem*> m_itemRectList;
     Settings *m_settingsDialog;
     Export *m_exportDialog;
     FqSettings *m_fqSettings;
@@ -189,6 +189,7 @@ private:
     void setBands(QCustomPlot * widget, QStringList* bands, double y1, double y2);
     void setBands(QCustomPlot * widget, double y1, double y2);
     void addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2);
+    void addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2, QString& name);
     void createTabs (QString sequence);
     void moveEvent(QMoveEvent *);
     void resizeEvent(QResizeEvent *e);

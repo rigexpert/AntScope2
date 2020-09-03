@@ -83,7 +83,7 @@ static QString names[QUANTITY]={
     "AA-1000",
     "AA-1400",
     "AA-1500 ZOOM",
-    "AA-2000",
+    "AA-2000 ZOOM",
     "NanoVNA"
 };
 static QString minFq[QUANTITY]={//in kHz
@@ -126,8 +126,8 @@ static QString maxFq[QUANTITY]={//in kHz
     "230000",   //AA-230PRO
     "230000",   //AA-230ZOOM
     "230000",   //STICK 230
-                                //"670000",   //STICK PRO
-                                "600000",   //STICK PRO
+    //"670000",   //STICK PRO
+    "600000",   //STICK PRO
     "500000",   //AA-500
     "520000",   //AA-520
     "600000",   //AA-600
@@ -136,7 +136,7 @@ static QString maxFq[QUANTITY]={//in kHz
     "1000000",  //AA-1000
     "1400000",  //AA-1400
     "1500000",  //AA-1500
-    "2000000",   //AA-2000
+    "2000000",  //AA-2000
     "1000000"   //NanoVNA
 };
 

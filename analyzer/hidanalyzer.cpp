@@ -317,7 +317,7 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     }
                     for(quint32 i = 0; i < QUANTITY; ++i)
                     {
-                        if(names[i] == "AA-2000")
+                        if(names[i] == "AA-2000 ZOOM")
                         {
                             m_analyzerModel = i;
                             emit analyzerFound(i);
@@ -367,7 +367,7 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     connect(RE_BOOT_VID, RE_BOOT_PID);
                     for(quint32 i = 0; i < QUANTITY; ++i)
                     {
-                        if(names[i] == "AA-2000")
+                        if(names[i] == "AA-2000 ZOOM")
                         {
                             m_bootMode = true;
                             m_analyzerModel = i;

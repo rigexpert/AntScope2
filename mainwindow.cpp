@@ -99,7 +99,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableWidget_measurments->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableWidget_measurments, &QTableWidget::customContextMenuRequested, this, &MainWindow::on_tableWidgetMeasurmentsContextMenu);
     connect(ui->tableWidget_measurments, &QTableWidget::itemChanged, this, [=] (QTableWidgetItem* item) {
-        if (item != nullptr && item->column() == 0) {
+        if (item == nullptr)
+            return;
+        if (item != nullptr && item->column() == COL_VISIBLE) {
             m_measurements->toggleVisibility(item->row(), item->checkState()==Qt::Checked);
         }
     });
@@ -834,6 +836,8 @@ void MainWindow::setBands(QCustomPlot * widget, QStringList* bands, double y1, d
         if (list.size() == 2)
         {
             addBand(widget, list[0].toDouble(), list[1].toDouble(), y1, y2);
+        } else if (list.size() == 3) {
+            addBand(widget, list[0].toDouble(), list[1].toDouble(), y1, y2, list[2]);
         }
     }
 }
@@ -854,6 +858,37 @@ void MainWindow::addBand (QCustomPlot * widget, double x1, double x2, double y1,
     xRectItem->bottomRight ->setType(QCPItemPosition::ptPlotCoords);
     xRectItem->bottomRight ->setAxisRect( widget->xAxis->axisRect() );
     xRectItem->bottomRight ->setCoords( x2, y1 );
+}
+
+void MainWindow::addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2, QString& name)
+{
+    QCPItemRect * xRectItem = new QCPItemRect( widget );
+    m_itemRectList.append(xRectItem);
+
+    xRectItem->setVisible          (true);
+    xRectItem->setPen              (QPen(Qt::transparent));
+    xRectItem->setBrush            (QBrush(QColor(50,50,150,50)));
+
+    xRectItem->topLeft->setType(QCPItemPosition::ptPlotCoords);
+    xRectItem->topLeft->setAxisRect( widget->xAxis->axisRect() );
+    xRectItem->topLeft->setCoords( x1, y2 );
+
+    xRectItem->bottomRight ->setType(QCPItemPosition::ptPlotCoords);
+    xRectItem->bottomRight ->setAxisRect( widget->xAxis->axisRect() );
+    xRectItem->bottomRight ->setCoords( x2, y1 );
+
+    QRectF rr(QPointF(x1, y1), QPointF(x2, y2));
+    QPointF pt = rr.center();
+    QCPItemText* textItem = new QCPItemText( widget );
+    textItem->setColor(QColor(50,50,150,150));
+    textItem->setPen(Qt::NoPen);
+    textItem->setText(name);
+    textItem->position->setCoords(pt.x(), pt.y());
+    textItem->setPositionAlignment(Qt::AlignHCenter);
+    textItem->setRotation(270);
+
+    m_itemRectList.append(textItem);
+
 }
 
 void MainWindow::on_pressF1 ()
@@ -4278,6 +4313,17 @@ void MainWindow::on_measurmentsSaveBtn_clicked()
             m_lastSaveOpenPath = path;
             QTableWidgetItem * item = list.at(0);
             m_measurements->saveData(item->row(), path);
+            QFileInfo fi(path);
+            QString fname = fi.baseName();
+            //item->setText(fname);
+
+            measurement* mm = m_measurements->getMeasurement(item->row());
+            QString mmName = mm->name;
+            int pos = mmName.indexOf("> ");
+            if (pos != -1)
+                mmName = mmName.left(pos+2);
+            mm->name = mmName + fname;
+            ui->tableWidget_measurments->item(item->row(), COL_NAME)->setText(mm->name);
         }
     }
 }

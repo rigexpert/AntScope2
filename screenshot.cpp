@@ -108,12 +108,31 @@ void Screenshot::savePDF(QString path, QString comment)
     printer.setPageSize(QPrinter::A4);
     printer.setOrientation(QPrinter::Portrait);
 
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+    bool full = model == "AA-2000 ZOOM";
+
+    QRect rect = printer.pageRect();
+
     QPainter painter(&printer);
-    painter.drawImage(QPoint(m_lcdWidth*0.7, m_lcdWidth/4), *m_image);
+    int iwd = m_image->width();
+    int iht = m_image->height();
+    int wd = rect.width() - 2*rect.left();
+    int ht = wd * iht / iwd - 2*rect.top();
+    QRect rr(rect.left(), rect.top(), wd, ht);
+
+    if (full)
+        painter.drawImage(rr, *m_image);
+    else
+        painter.drawImage(QPoint(m_lcdWidth*0.7, m_lcdWidth/4), *m_image);
+
     QFont font = painter.font() ;
     font.setPointSize (14);
     painter.setFont(font);
-    painter.drawText(QPoint(50, m_lcdWidth/4 + m_lcdHeight + 100), comment);
+    if (full)
+        painter.drawText(QPoint(50, rr.bottom() + 50), comment);
+    else
+        painter.drawText(QPoint(50, m_lcdWidth/4 + m_lcdHeight + 100), comment);
     painter.end();
 
     //this->close();
@@ -240,7 +259,7 @@ void Screenshot::on_newData(QByteArray data)
             int blue = (data>>11)&0x1F;
 
             //if (model == "AA-230 ZOOM" || model == "AA-2000") {
-            if (model == "AA-2000") {
+            if (model == "AA-2000 ZOOM") {
                 int tmp = red;
                 red = blue;
                 blue = tmp;

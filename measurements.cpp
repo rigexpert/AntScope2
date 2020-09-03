@@ -161,6 +161,27 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
         m_graphBriefHint->setBackgroundColor(QColor(0,0,0,0));
         m_graphBriefHint->setTextColor("black");
     }
+    connect(m_tableWidget, &QTableWidget::cellClicked, [=](int row, int col) {
+        if (col == COL_MENU) {
+            measurement& mm = m_measurements[row];
+            bool ok;
+            QString prefix;
+            QString name = mm.name;
+            int pos = name.indexOf("> ");
+            if (pos != -1) {
+                prefix = name.left(pos+2);
+                name = name.mid(pos+2);
+            }
+            QString text = QInputDialog::getText(nullptr, tr("Change name"),
+                                                     tr("Measurement name:"), QLineEdit::Normal,
+                                                     name, &ok);
+            if (ok && !text.isEmpty()) {
+                mm.name = prefix + text;
+                m_tableWidget->item(row, COL_NAME)->setText(mm.name);
+            }
+        }
+    });
+
 }
 
 void Measurements::setUserWidget(QCustomPlot * user) {
@@ -416,8 +437,18 @@ void Measurements::on_newMeasurement(QString name)
         m_measurements.last().name = nextName;
         m_tableWidget->setRowCount(0);
 
+        QIcon icon;
+        icon.addPixmap(QPixmap(":/new/prefix1/pencil.png"), QIcon::Normal, QIcon::Off);
+
+        const int cell_side = 24;
         m_tableWidget->setColumnCount(MEASUREMENTS_TABLE_COLUMNS);
-       // m_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        m_tableWidget->setIconSize(QSize(16, 16));
+        m_tableWidget->horizontalHeader()->setSectionResizeMode(COL_VISIBLE, QHeaderView::Fixed);
+        m_tableWidget->horizontalHeader()->setSectionResizeMode(COL_NAME, QHeaderView::Stretch);
+        m_tableWidget->horizontalHeader()->setSectionResizeMode(COL_MENU, QHeaderView::Fixed);
+        m_tableWidget->horizontalHeader()->resizeSection(COL_VISIBLE, cell_side);
+        m_tableWidget->horizontalHeader()->resizeSection(COL_MENU, cell_side);
+
         m_tableWidget->setRowCount(m_measurements.length());
         for(int i = 0; i < m_measurements.length(); ++i)
         {
@@ -433,7 +464,13 @@ void Measurements::on_newMeasurement(QString name)
             QString str = mm.name;
             item->setText(str);
             m_tableWidget->setItem(i,COL_NAME, item);
+
+            item = new QTableWidgetItem();
+            item->setIcon(icon);
+            item->setSizeHint(QSize(cell_side, cell_side));
+            m_tableWidget->setItem(i,COL_MENU, item);
         }
+
         m_tableWidget->reset();
         QModelIndex myIndex = m_tableWidget->model()->index( m_measurements.size()-1, 0, QModelIndex());
         m_tableWidget->selectionModel()->select(myIndex,QItemSelectionModel::Select | QItemSelectionModel::Rows);
@@ -1313,7 +1350,7 @@ void Measurements::on_newCursorSmithPos (double x, double y, int index)
     lpar = 1E9 * xpar / (2*M_PI * frequency * 1E3);//nH
     cpar = 1E12 / (2*M_PI * frequency * (xpar * (-1)) * 1E3);//pF
 
-    QString str = QString::number(frequency);
+    QString str = QString::number(frequency, 'f', 2);
     int pos = str.indexOf(".");
     if(pos < 0)
     {
@@ -1777,7 +1814,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         if(m_graphBriefHint != NULL)
                         {
                             QString str;
-                            str = QString::number(frequency);
+                            str = QString::number(frequency, 'f', 2);
                             int idx = str.indexOf(".");
                             if(idx < 0)
                             {
@@ -1901,7 +1938,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                 m_rlLine2->point2->setCoords(m_rlWidget->yAxis->getRangeUpper(), rl);
             }
 
-            QString str = QString::number(frequency);
+            QString str = QString::number(frequency, 'f', 2);
             int idx = str.indexOf(".");
             if(idx < 0)
             {
