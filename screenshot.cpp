@@ -277,6 +277,13 @@ void Screenshot::on_newData(QByteArray data)
     }
     int percent = m_imageVector.length()/(m_lcdHeight*m_lcdWidth/100);
 
+
+
+    qDebug() << "screen shot: " << percent << "%, count"
+             << m_imageVector.length() << ", estimated"
+             << m_lcdHeight << "x" << m_lcdWidth << m_lcdHeight*m_lcdWidth;
+
+
     ui->progressBar->setValue(percent);
     if(     (model == "AA-30") ||
             (model == "AA-54")||

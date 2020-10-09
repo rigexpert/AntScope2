@@ -105,6 +105,7 @@ private:
     void initCustomizeTab();
 
 signals:
+    void reloadBands(QString _currentBand);
     void paramsChanged();
     void checkUpdatesBtn();
     void autoUpdatesCheckBox(bool);

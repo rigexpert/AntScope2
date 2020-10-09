@@ -877,17 +877,19 @@ void MainWindow::addBand (QCustomPlot * widget, double x1, double x2, double y1,
     xRectItem->bottomRight ->setAxisRect( widget->xAxis->axisRect() );
     xRectItem->bottomRight ->setCoords( x2, y1 );
 
-    QRectF rr(QPointF(x1, y1), QPointF(x2, y2));
-    QPointF pt = rr.center();
-    QCPItemText* textItem = new QCPItemText( widget );
-    textItem->setColor(QColor(50,50,150,150));
-    textItem->setPen(Qt::NoPen);
-    textItem->setText(name);
-    textItem->position->setCoords(pt.x(), pt.y());
-    textItem->setPositionAlignment(Qt::AlignHCenter);
-    textItem->setRotation(270);
+    if (!name.isEmpty()) {
+        QRectF rr(QPointF(x1, y1), QPointF(x2, y2));
+        QPointF pt = rr.center();
+        QCPItemText* textItem = new QCPItemText( widget );
+        textItem->setColor(QColor(50,50,150,150));
+        textItem->setPen(Qt::NoPen);
+        textItem->setText(name);
+        textItem->position->setCoords(pt.x(), pt.y());
+        textItem->setPositionAlignment(Qt::AlignHCenter);
+        textItem->setRotation(270);
 
-    m_itemRectList.append(textItem);
+        m_itemRectList.append(textItem);
+    }
 
 }
 
@@ -2329,13 +2331,17 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
         {
             QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
+        QCPRange range = m_swrWidget->yAxis->range();
+        double lower = range.lower - 0.2;
+        if (lower < MIN_SWR)
+            lower = MIN_SWR;
+        m_swrWidget->yAxis->setRangeLower(lower);
         if(e->delta() < 0)
         {
             if(m_swrZoomState <= 9)
             {
-                ++m_swrZoomState;
+                ++m_swrZoomState;                
                 m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
-                m_swrWidget->yAxis->setRangeLower(MIN_SWR);
             }
         }else
         {
@@ -2343,7 +2349,6 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
             {
                 --m_swrZoomState;
                 m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
-                m_swrWidget->yAxis->setRangeLower(MIN_SWR);
             }
         }
         QTimer::singleShot(5, m_markers, SLOT(redraw()));
@@ -3882,6 +3887,10 @@ void MainWindow::on_settingsBtn_clicked()
     connect(m_settingsDialog, &Settings::fqRestrictChecked, this, [this](bool checked) {
         this->m_fqRestrict=checked;
     });
+    connect(m_settingsDialog, &Settings::reloadBands, [=](QString band) {
+        loadBands();
+        on_bandChanged(band);
+    });
 
     bool was_customized = CustomAnalyzer::customized();
 
@@ -4948,9 +4957,12 @@ QCustomPlot* MainWindow::getCurrentPlot()
 
 bool MainWindow::loadBands()
 {
-    QString ituPath = Settings::programDataPath("itu-regions.txt");
-
+    QString ituPath = Settings::localDataPath("itu-regions.txt");
     QFile file(ituPath);
+    if (!file.exists()) {
+        file.setFileName(Settings::programDataPath("itu-regions.txt"));
+    }
+
     bool res = file.open(QFile::ReadOnly);
     if(!res)
         return false;

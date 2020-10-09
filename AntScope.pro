@@ -88,7 +88,8 @@ SOURCES += main.cpp\
     CustomPlot.cpp \
     customgraph.cpp \
     analyzer/nanovna_analyzer.cpp \
-    tdrprogressdialog.cpp
+    tdrprogressdialog.cpp \
+    editbandsdialog.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -134,7 +135,8 @@ HEADERS  += mainwindow.h \
     CustomPlot.h \
     customgraph.h \
     analyzer/nanovna_analyzer.h \
-    tdrprogressdialog.h
+    tdrprogressdialog.h \
+    editbandsdialog.h
 
 # TODO these files dont exist and are not generated
 #        ui_mainwindow.h \
@@ -155,7 +157,8 @@ FORMS    += mainwindow.ui \
         antscopeupdatedialog.ui \
     ProgressDlg.ui \
     licensesdialog.ui \
-    tdrprogressdialog.ui
+    tdrprogressdialog.ui \
+    editbandsdialog.ui
 
 INCLUDEPATH +=  $$PWD/analyzer \
             $$PWD/analyzer/updater
@@ -195,7 +198,7 @@ macx {
     RUNTIME_FILES.path = Contents/MacOS/Resources
     RUNTIME_FILES.files = \
         $$PWD/cables.txt \
-        $$PWD/itu-regions.txt
+        $$PWD/itu-regions-defaults.txt
 
     TRANSLATION_FILES.path = Contents/MacOS
     TRANSLATION_FILES.files = \

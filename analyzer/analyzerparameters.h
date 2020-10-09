@@ -190,7 +190,7 @@ static int lcdWidth[QUANTITY]={//in kHz
     320,  //AA-1000
     320,   //AA-1400
     320,   //AA-1500
-    800,   //AA-2000
+    746,   //AA-2000
     0   // NanoVNA
 };
 

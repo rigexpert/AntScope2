@@ -5,6 +5,7 @@
 #include "fqinputvalidator.h"
 #include "licensesdialog.h"
 #include "analyzer/nanovna_analyzer.h"
+#include "editbandsdialog.h"
 
 extern bool g_developerMode;
 extern int g_maxMeasurements; // see measurements.cpp
@@ -113,6 +114,13 @@ Settings::Settings(QWidget *parent) :
     connect(ui->lineEditPoints, &QLineEdit::editingFinished, this, &Settings::on_PointsFinished);
     connect(ui->exportBtn, &QPushButton::clicked, this, &Settings::on_exportCableSettings);
 
+    connect(ui->editBandsBtn, &QToolButton::clicked, [=]() {
+        EditBandsDialog dlg(this);
+        dlg.exec();
+        if (dlg.changed()) {
+            emit reloadBands(ui->bandsCombobox->currentText());
+        }
+    });
     //{
     // TODO Bug #2247: update doesn't work from Antscope2
     ui->tabWidget->removeTab(4);
@@ -955,13 +963,13 @@ QString Settings::programDataPath(QString _fileName)
     QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
 
     qDebug() << list;
-
     for (int idx=0; idx<list.size(); idx++)
     {
         QDir dir = list[idx];
         QString path = dir.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
-        if (QFile::exists(path))
+        if (QFile::exists(path)) {
             return path;
+        }
     }
     return QString();
 #endif

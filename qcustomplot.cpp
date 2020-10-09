@@ -5630,21 +5630,27 @@ void QCPAxis::setupTickVectors()
     mTickVectorLabels.resize(vecsize);
     if (mTickLabelType == ltNumber)
     {
+        double delta = (vecsize > 1) ? (mTickVector.at(1) - mTickVector.at(0)) : 0;
+        int p = 0;
+        if (delta < 0.01) p = 3;
+        else if (delta < 0.1) p = 2;
+        else if (delta < 1) p = 1;
+
       QString tmp;
       for (int i=mLowestVisibleTick; i<=mHighestVisibleTick; ++i)
       {
-          double n = mTickVector.at(i);
+          double n = mTickVector.at(i);          
           //tmp = mParentPlot->locale().toString(mTickVector.at(i), mNumberFormatChar.toLatin1(), mNumberPrecision);
           if(n > 99999999)
           {
               int t = (int)n%10;
               n /= 10;
-              tmp = mParentPlot->locale().toString(n, 'f', 0);
+              tmp = mParentPlot->locale().toString(n, 'f', p);
 //              qDebug() << tmp;
               tmp.append(QString::number(t));
           }else
           {
-              tmp = mParentPlot->locale().toString(n, 'f', 0);
+              tmp = mParentPlot->locale().toString(n, 'f', p);
 //              qDebug() << tmp;
           }
 
