@@ -33,6 +33,8 @@ public:
     quint32 getHidModel( void );
     void updateFirmware (QIODevice *fw);
     double getVersion() const;
+    QString getVersionString() const;
+    QString getRevision() const;
     bool checkFile(QString path);
     bool openComPort(const QString& portName, quint32 portSpeed);
     void closeComPort();
@@ -160,6 +162,7 @@ public slots:
     void on_screenshotComplete(void);
     void makeScreenshot();
     void on_updatePercentChanged(int number);
+    void on_statisticsComplete();
     void on_downloadInfoComplete();
     void on_downloadFileComplete();
     void on_checkUpdatesBtn_clicked();
@@ -181,6 +184,7 @@ public slots:
     void on_applyLicense(QString& _license);
     void on_connectNanoNVA();
     void on_disconnectNanoNVA();
+    void sendStatistics();
 };
 
 #endif // ANALYZER_H

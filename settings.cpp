@@ -99,6 +99,7 @@ Settings::Settings(QWidget *parent) :
         ui->fqRestrictCheckBox->setVisible(false);
     //}
     // ///
+    ui->checkBoxBandName->setChecked(m_settings->value("show-band-name", false).toBool());
     m_settings->endGroup();
 
     connect(ui->lineEdit_systemImpedance, &QLineEdit::editingFinished, this, &Settings::on_systemImpedance);
@@ -120,6 +121,13 @@ Settings::Settings(QWidget *parent) :
         if (dlg.changed()) {
             emit reloadBands(ui->bandsCombobox->currentText());
         }
+    });
+    connect(ui->checkBoxBandName, &QCheckBox::clicked, [=](bool checked) {
+        m_settings->beginGroup("Settings");
+        m_settings->setValue("show-band-name", checked);
+        m_settings->endGroup();
+
+        emit reloadBands(ui->bandsCombobox->currentText());
     });
     //{
     // TODO Bug #2247: update doesn't work from Antscope2
@@ -167,6 +175,7 @@ Settings::~Settings()
     m_settings->setValue("darkColorTheme", ui->radioButtonDark->isChecked());
 
     m_settings->setValue("currentIndex",ui->tabWidget->currentIndex());
+    m_settings->setValue("show-band-name", ui->checkBoxBandName->isChecked());
     m_settings->endGroup();
 
     // auto calibration

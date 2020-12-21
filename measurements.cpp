@@ -4904,6 +4904,8 @@ void Measurements::redrawRp(bool _incrementally)
     if (m_measurements.isEmpty())
         return;
 
+    qint64 t0 = QDateTime::currentMSecsSinceEpoch();
+
     bool calibr = m_calibration->getCalibrationEnabled();
     int i = _incrementally ? (m_measurements.length()-1) : 0;
 
@@ -4971,7 +4973,11 @@ void Measurements::redrawRp(bool _incrementally)
             m_rpWidget->graph(i*3+1)->addData(m_viewMeasurements[i].rprGraph.last());
         }
     }
+    qint64 t1 = QDateTime::currentMSecsSinceEpoch();
     replot();
+    qint64 t2 = QDateTime::currentMSecsSinceEpoch();
+
+    //qDebug() << "Measurements::redrawRp() redraw " << (t1-t0) << ", replot " << (t2-t1) << ", total " << (t2-t1);
 }
 
 void Measurements::redrawRl(bool _incrementally)

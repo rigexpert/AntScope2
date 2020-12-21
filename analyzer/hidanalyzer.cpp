@@ -298,7 +298,7 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     }
                     for(quint32 i = 0; i < QUANTITY; ++i)
                     {
-                        if(names[i] == "StickPro")
+                        if(names[i] == "Stick Pro")
                         {
                             m_analyzerModel = i;
                             emit analyzerFound(i);
@@ -457,7 +457,7 @@ bool hidAnalyzer::disconnect(void)
 
 void hidAnalyzer::checkTimerTick ()
 {
-    if(!m_isMeasuring)
+    //if(!m_isMeasuring)
     {
         searchAnalyzer((bool)!m_analyzerModel);
         //startResresh();
@@ -481,7 +481,7 @@ void hidAnalyzer::sendData(QString data)
     {
         return;
     }
-    //qDebug() << "hidAnalyzer::sendData: " << data;
+    qDebug() << "hidAnalyzer::sendData: " << data;
     unsigned char buf[REPORT_SIZE] = {0};
     int size = data.length();
     if(size)

@@ -61,6 +61,30 @@ double Analyzer::getVersion() const
     return 0;
 }
 
+QString Analyzer::getVersionString() const
+{
+    if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
+    {
+        return m_comAnalyzer->getVersion();
+    }else if (m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
+    {
+        return m_hidAnalyzer->getVersion();
+    }
+    return QString();
+}
+
+QString Analyzer::getRevision() const
+{
+    if(m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
+    {
+        return m_hidAnalyzer->getRevision();
+    }else if (m_comAnalyzerFound && m_comAnalyzer != nullptr)
+    {
+        return m_comAnalyzer->getRevision();
+    }
+    return QString();
+}
+
 void Analyzer::on_downloadInfoComplete()
 {
     QString ver = m_downloader->version();
@@ -115,8 +139,12 @@ void Analyzer::on_downloadInfoComplete()
             }
         }
     }
+    QSettings settings(Settings::setIniFile(), QSettings::IniFormat);
+    settings.beginGroup("Update");
+    settings.setValue("statistics_time", QDateTime::currentMSecsSinceEpoch());
+    settings.endGroup();
 }
-
+/*
 bool Analyzer::needCheckForUpdate()
 {
     const qint64 interval = 24*60*60;
@@ -132,6 +160,21 @@ bool Analyzer::needCheckForUpdate()
     QDateTime current_dt = QDateTime::currentDateTime();
 
     return last_dt.secsTo(current_dt) > interval;
+}
+*/
+
+bool Analyzer::needCheckForUpdate()
+{
+    QSettings settings(Settings::setIniFile(), QSettings::IniFormat);
+    settings.beginGroup("Update");
+    qlonglong time = settings.value("statistics_time", 0).toLongLong();
+    settings.endGroup();
+
+    QDateTime dtPrev;
+    dtPrev.setMSecsSinceEpoch(time);
+    QDateTime dtCur = QDateTime::currentDateTime();
+
+    return (dtPrev.date().dayOfYear() != dtCur.date().dayOfYear());
 }
 
 void Analyzer::on_downloadFileComplete()
@@ -454,14 +497,16 @@ void Analyzer::on_hidAnalyzerFound (quint32 analyzerNumber)
     QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentAlias() : names[m_analyzerModel];
     emit analyzerFound(str);
 
+    // ------- moved to MainWindow::on_analyzerFound
+    //
     //if(m_autoCheckUpdate)
-    extern bool g_developerMode;
-    if (!g_developerMode)
-    {
-        QTimer::singleShot(5000, [this]() {
-            this->checkFirmwareUpdate();
-        });
-    }
+//    extern bool g_developerMode;
+//    if (!g_developerMode)
+//    {
+//        QTimer::singleShot(5000, [this]() {
+//            this->checkFirmwareUpdate();
+//        });
+//    }
 }
 
 void Analyzer::on_hidAnalyzerDisconnected ()
@@ -511,14 +556,18 @@ void Analyzer::on_comAnalyzerFound (quint32 analyzerNumber)
 //        url += "1";
 //        m_downloader->startDownloadInfo(QUrl(url));
 //    }
+
+
+    // ------- moved to MainWindow::on_analyzerFound
+    //
     //if(m_autoCheckUpdate)
-    extern bool g_developerMode;
-    if (!g_developerMode)
-    {
-        QTimer::singleShot(5000, [this]() {
-            this->checkFirmwareUpdate();
-        });
-    }
+//    extern bool g_developerMode;
+//    if (!g_developerMode)
+//    {
+//        QTimer::singleShot(5000, [this]() {
+//            this->checkFirmwareUpdate();
+//        });
+//    }
 
 }
 
@@ -740,11 +789,14 @@ void Analyzer::on_checkUpdatesBtn_clicked()
         m_downloader = new Downloader();
         connect(m_downloader, SIGNAL(downloadInfoComplete()),
                 this, SLOT(on_downloadInfoComplete()));
+        connect(m_downloader, SIGNAL(sendStatisicsComplete()),
+                this, SLOT(on_statisticsComplete()));
         connect(m_downloader, SIGNAL(downloadFileComplete()),
                 this, SLOT(on_downloadFileComplete()));
         connect(m_downloader, SIGNAL(progress(qint64,qint64)),
                 this, SLOT(on_progress(qint64,qint64)));
     }
+    /*
     QString url = "https://www.rigexpert.com/getfirmware?model=";
     QString prototype = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
     //url += names[m_analyzerModel].toLower().remove(" ").remove("-");
@@ -769,6 +821,17 @@ void Analyzer::on_checkUpdatesBtn_clicked()
     {
         url += "&s_n=" + m_mapFullInfo["SN"];
     }
+    */
+    QString url = "https://www.rigexpert.com/getfirmware?model=";
+    url += names[m_analyzerModel].toLower().remove(" ").remove("-");
+    url += "&sn=" + getSerialNumber();
+    url += "&revision=" + getRevision();
+    url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
+    url += "&cpu=" + QSysInfo::currentCpuArchitecture();
+    url += "&lang=" + QLocale::languageToString(QLocale::system().language());
+    url += "&sw=" + QString(ANTSCOPE2VER);
+    url += "&fw=" + getVersionString();
+
     m_downloader->startDownloadInfo(QUrl(url));
 }
 
@@ -1036,4 +1099,55 @@ void Analyzer::on_connectNanoNVA()
         m_NanovnaAnalyzer->checkAnalyzer();
     }
 }
+
+//{ under construction
+void Analyzer::sendStatistics()
+{
+    if(m_downloader == nullptr)
+    {
+        m_downloader = new Downloader();
+        connect(m_downloader, SIGNAL(downloadInfoComplete()),
+                this, SLOT(on_downloadInfoComplete()));
+        connect(m_downloader, SIGNAL(sendStatisicsComplete()),
+                this, SLOT(on_statisticsComplete()));
+        connect(m_downloader, SIGNAL(downloadFileComplete()),
+                this, SLOT(on_downloadFileComplete()));
+        connect(m_downloader, SIGNAL(progress(qint64,qint64)),
+                this, SLOT(on_progress(qint64,qint64)));
+    }
+
+    QSettings settings(Settings::setIniFile(), QSettings::IniFormat);
+    settings.beginGroup("Update");
+    qlonglong time = settings.value("statistics_time", 0).toLongLong();
+    settings.endGroup();
+
+    QDateTime dtPrev;
+    dtPrev.setMSecsSinceEpoch(time);
+    QDateTime dtCur = QDateTime::currentDateTime();
+    if (dtPrev.date().dayOfYear() == dtCur.date().dayOfYear())
+        return;
+
+    QString url = "https://www.rigexpert.com/getfirmware?model=";
+    url += names[m_analyzerModel].toLower().remove(" ").remove("-");
+    url += "&sn=" + getSerialNumber();
+    url += "&revision=" + getRevision();
+    url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
+    url += "&cpu=" + QSysInfo::currentCpuArchitecture();
+    url += "&lang=" + QLocale::languageToString(QLocale::system().language());
+    url += "&sw=" + QString(ANTSCOPE2VER);
+    url += "&fw=" + getVersionString();
+
+    qDebug() << url;
+    m_downloader->startSendStatistics(QUrl(url));
+}
+
+
+void Analyzer::on_statisticsComplete()
+{
+    QSettings settings(Settings::setIniFile(), QSettings::IniFormat);
+    settings.beginGroup("Update");
+    settings.setValue("statistics_time", QDateTime::currentMSecsSinceEpoch());
+    settings.endGroup();
+}
+//}
 

@@ -830,10 +830,13 @@ void MainWindow::setBands(QCustomPlot * widget, QStringList* bands, double y1, d
         setBands(widget, y1, y2);
         return;
     }
+    m_settings->beginGroup("Settings");
+    bool showName = m_settings->value("show-band-name", false).toBool();
+    m_settings->endGroup();
     foreach (QString str, *bands)
     {
         QStringList list = str.split(',');
-        if (list.size() == 2)
+        if (list.size() == 2 || !showName)
         {
             addBand(widget, list[0].toDouble(), list[1].toDouble(), y1, y2);
         } else if (list.size() == 3) {
@@ -2290,10 +2293,16 @@ void MainWindow::on_analyzerFound(QString name)
         ui->analyzerDataBtn->setEnabled(false);
         ui->screenshotAA->setEnabled(false);
     }
+    if (!g_developerMode) {
+        QTimer::singleShot(1000, this, [=]() {
+            m_analyzer->checkFirmwareUpdate();
+        });
+    }
 }
 
 void MainWindow::on_analyzerDisconnected()
 {
+    QWidget::setCursor(Qt::ArrowCursor);
     QString name = "AntScope2 v." + QString(ANTSCOPE2VER);
     name += tr(" - Analyzer not connected");
     setWindowTitle(name);
@@ -2301,6 +2310,14 @@ void MainWindow::on_analyzerDisconnected()
     ui->continuousStartBtn->setEnabled(false);
     ui->analyzerDataBtn->setEnabled(false);
     ui->screenshotAA->setEnabled(false);
+
+    PopUpIndicator::hideIndicator(this);
+    m_analyzer->setIsMeasuring(false);
+    ui->singleStart->setChecked(false);
+    ui->continuousStartBtn->setChecked(false);
+    m_measurements->setContinuous(false);
+    m_bInterrupted = true;
+
     if (m_analyzer != nullptr)
         m_analyzer->searchAnalyzer();
 }
@@ -4960,7 +4977,7 @@ bool MainWindow::loadBands()
     QString ituPath = Settings::localDataPath("itu-regions.txt");
     QFile file(ituPath);
     if (!file.exists()) {
-        file.setFileName(Settings::programDataPath("itu-regions.txt"));
+        file.setFileName(Settings::programDataPath("itu-regions-defaults.txt"));
     }
 
     bool res = file.open(QFile::ReadOnly);

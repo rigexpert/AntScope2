@@ -34,6 +34,7 @@ Downloader::State Downloader::startDownloadInfo(QUrl url)
     m_state = InProgress;
 
     m_isInfo = true;
+    m_sendStatisics = false;
     return Started;
 }
 
@@ -44,6 +45,7 @@ Downloader::State Downloader::startDownloadFw()
     }
 
     m_isInfo = false;
+    m_sendStatisics = false;
 
     QUrl url(m_link);
     QNetworkRequest request(url);
@@ -61,6 +63,23 @@ Downloader::State Downloader::startDownloadFw()
     m_state = InProgress;
 
     return m_state;
+}
+
+Downloader::State Downloader::startSendStatistics(QUrl url)
+{
+    if (m_state == InProgress) {
+        return m_state;
+    }
+
+    QNetworkRequest request(url);
+    m_mng.get(request);
+
+    m_state = InProgress;
+
+    m_isInfo = false;
+    m_sendStatisics = true;
+
+    return Started;
 }
 
 Downloader::State Downloader::state() const
@@ -93,12 +112,16 @@ void Downloader::fileDownloaded(QNetworkReply *reply)
 
     reply->deleteLater();
 
-    if (m_isInfo) {
-        emit downloadInfoComplete();
+    if (m_sendStatisics) {
+        emit sendStatisicsComplete();
     } else {
-        emit downloadFileComplete();
+        if (m_isInfo) {
+            emit downloadInfoComplete();
+        } else {
+            emit downloadFileComplete();
+        }
     }
-
+    m_sendStatisics = false;
 }
 
 

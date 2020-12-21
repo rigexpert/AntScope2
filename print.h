@@ -35,6 +35,8 @@ public:
 
     void rescale();
 
+protected:
+    void resizeEvent(QResizeEvent *e);
 
 private slots:
     void on_lineSlider_valueChanged(int value);

@@ -176,6 +176,7 @@ void Print::setSmithData(QCPCurveDataMap *map, QPen pen, QString name)
     smithCurve->setPen(pen);
     smithCurve->setName(name);
     m_isSmithGraph = true;
+    m_curveList.append(smithCurve);
     rescale();
 }
 
@@ -237,13 +238,21 @@ void Print::setHead(QString string)
 
 void Print::on_lineSlider_valueChanged(int value)
 {
-    for(int i = 0; i < ui->widgetGraph->graphCount(); ++i)
-    {
-        QPen pen = ui->widgetGraph->graph(i)->pen();
-        pen.setWidthF(value);
-        ui->widgetGraph->graph(i)->setPen(pen);
+    if (m_isSmithGraph) {
+        for(int i=0; i<m_curveList.size(); i++) {
+            QCPCurve* curve = m_curveList[i];
+            QPen pen = curve->pen();
+            pen.setWidthF(value);
+            curve->setPen(pen);
+        }
+    } else {
+        for(int i = 0; i < ui->widgetGraph->graphCount(); ++i)
+        {
+            QPen pen = ui->widgetGraph->graph(i)->pen();
+            pen.setWidthF(value);
+            ui->widgetGraph->graph(i)->setPen(pen);
+        }
     }
-
     ui->widgetGraph->replot();
 }
 
@@ -278,6 +287,7 @@ void Print::on_printBtn_clicked()
 
     delete dlg;
 }
+
 
 void Print::on_pdfPrintBtn_clicked()
 {
@@ -348,8 +358,76 @@ void Print::on_pngPrintBtn_clicked()
     {
         path.append(".png");
     }
-    file.save(path,"PNG",100);
+    file.save(path,"PNG",80);
 }
+
+/*
+void Print::on_pngPrintBtn_clicked()
+{
+    const double titleMarginTop = 20;
+    const double titleMarginLeft = 100;
+    const double titleHeight = 50;
+    const double imageMarginTop = 20;
+    const double imageMarginLeft = 0;
+    const double markerMarginTop = 20;
+    const double markerMarginLeft = 140;
+
+    QCPRange xrange = ui->widgetGraph->xAxis->range();
+    QCPRange yrange = ui->widgetGraph->yAxis->range();
+    double xsz = xrange.size();
+    double ysz = yrange.size();
+
+    const int side = 2000;
+    QString path = QFileDialog::getSaveFileName(this, "Export PNG", "", "*.png");
+
+    QPixmap file(side,side);
+    file.fill();
+    //QPixmap map = ui->widgetGraph->toPixmap(700,400,10);
+    QPixmap map = ui->widgetGraph->toPixmap(0, 0, 2);
+    QRect rmap = map.rect();
+    double aspect = (double)rmap.width()/rmap.height();
+
+    double heightOut = file.height()*0.5;
+    double widthOut =  heightOut*aspect;
+
+    if (widthOut > (side - 2*imageMarginLeft)) {
+        widthOut = side - 2*imageMarginLeft;
+        heightOut = widthOut / aspect;
+    }
+
+    double aa = widthOut / heightOut;
+    double imageOffset = (file.width() - widthOut) / 2;
+
+    QPixmap markersMap(ui->markersWidget->size());
+    ui->markersWidget->render(&markersMap);
+
+    QPainter painter(&file);
+
+    QFont font = ui->widgetGraph->xAxis->tickLabelFont();
+    font.setPointSize (26);
+    painter.setFont(font);
+
+    painter.drawText(titleMarginLeft, titleMarginTop, side - 2*titleMarginLeft, 50, Qt::TextExpandTabs , ui->lineEditHead->text());
+
+    //painter.drawImage(QRect(20,100,1400,1400/aspect),map.toImage());
+    QRectF rImage(imageOffset , titleMarginTop+titleHeight+imageMarginTop, widthOut, heightOut);
+    painter.drawImage(rImage, map.toImage());
+
+    QRectF rMarkers(markerMarginLeft, markerMarginTop + rImage.bottom(), markersMap.width()*2, markersMap.height()*2);
+    painter.drawImage(rMarkers, markersMap.toImage());
+
+    painter.drawText(rMarkers.left(), rMarkers.bottom() + titleMarginTop, rMarkers.width(), rMarkers.height(),
+                     Qt::TextExpandTabs , ui->textEditComment->toPlainText());
+
+    painter.end();
+
+    if(path.indexOf(".png") < 0)
+    {
+        path.append(".png");
+    }
+    file.save(path,"PNG", 80);
+}
+*/
 
 void Print::drawSmithImage(void)
 {
@@ -593,8 +671,12 @@ void Print::rescale()
 {
     if(m_isSmithGraph)
     {
-        int width = ui->widgetGraph->width();
-        int height = ui->widgetGraph->height();
+        double width = ui->widgetGraph->width();
+        double height = ui->widgetGraph->height();
+
+        QCPRange xr = ui->widgetGraph->xAxis->range();
+        QCPRange yr = ui->widgetGraph->yAxis->range();
+        qDebug() << width << height << "old range" << xr.lower << xr.upper << yr.lower << yr.upper;
         if(width > height)
         {
             double alfa = (double)width/height;
@@ -608,6 +690,9 @@ void Print::rescale()
             ui->widgetGraph->yAxis->setRangeLower((-1)*range/2);
             ui->widgetGraph->yAxis->setRangeUpper(range/2);
         }
+        xr = ui->widgetGraph->xAxis->range();
+        yr = ui->widgetGraph->yAxis->range();
+        qDebug() << width << height << "new range" << xr.lower << xr.upper << yr.lower << yr.upper;
     }else
     {
         for(int i = 0; i < m_mTextList.length(); ++i)
@@ -620,3 +705,10 @@ void Print::rescale()
     }
     ui->widgetGraph->replot();
 }
+
+void Print::resizeEvent(QResizeEvent * e)
+{
+    rescale();
+    QDialog::resizeEvent(e);
+}
+

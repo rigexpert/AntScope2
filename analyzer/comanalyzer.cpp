@@ -53,6 +53,9 @@ comAnalyzer::comAnalyzer(QObject *parent) : QObject(parent),
     m_sendTimer = new QTimer(this);
     connect(m_sendTimer, SIGNAL(timeout()), this, SLOT(continueMeasurement()));
     QTimer::singleShot(10000, this, SLOT(searchAnalyzer()));
+
+    m_pingTimer = new QTimer(this);
+    connect(m_pingTimer, &QTimer::timeout, this, &comAnalyzer::handlePing);
 }
 
 comAnalyzer::~comAnalyzer()
@@ -125,14 +128,16 @@ void comAnalyzer::closeComPort()
             m_comPort->close();
         }
     }
+    m_bAA55mode = false;
 }
 
 void comAnalyzer::dataArrived()
 {
+    m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
     QByteArray ar = m_comPort->readAll();
     m_incomingBuffer += ar;
 
-    //qDebug() << "com dataArrived: " << QString::fromLatin1(ar);
+    qDebug() << "com dataArrived: " << m_lastReadTimeMS << QString::fromLatin1(ar);
 
     int count = parse(m_incomingBuffer);
     m_incomingBuffer.remove(0, count);
@@ -354,8 +359,11 @@ qint32 comAnalyzer::parse (QByteArray arr)
                                 m_revision.clear();
                                 m_revision.append('1');
                             }
+                            if (names[m_analyzerModel].contains("AA-55")) {
+                                m_bAA55mode = true;
+                            }
                             emit analyzerFound (m_analyzerModel);
-                            QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
+                            //QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
                         }
                         break;
                     }
@@ -414,6 +422,8 @@ void comAnalyzer::searchAnalyzer()
             return;
         }
 
+qDebug() << "comAnalyzer::searchAnalyzer()";
+
         if(state == 0)
         {
             state = 1;
@@ -421,6 +431,9 @@ void comAnalyzer::searchAnalyzer()
             if(m_comPort->isOpen())
             {
                 versionRequest();
+                m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
+                m_pingTimer->start(1000);
+                qDebug() << "com::searchAnalyzer: m_pingTimer->start(1000)";
             }
 
         }else if(state == 1)
@@ -430,19 +443,23 @@ void comAnalyzer::searchAnalyzer()
             if(m_comPort->isOpen())
             {
                 versionRequest();
+                m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
+                m_pingTimer->start(1000);
+                qDebug() << "com::searchAnalyzer: m_pingTimer->start(1000)";
             }
         }
     }else
     {
         if( m_analyzerModel != 0)
         {
-            QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
+            QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
             return;
         }
-        if(analyzerDetected && (--messageWasShown < 0))
+        if(analyzerDetected && (--messageWasShown == 0))
         {
             //messageWasShown = -1;
             QMessageBox::information(NULL,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
+            QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
             return;
         }
         qDebug() << "messageWasShown" << messageWasShown;
@@ -453,7 +470,7 @@ void comAnalyzer::searchAnalyzer()
         list = ReDeviceInfo::availableDevices(ReDeviceInfo::Serial);
         if(list.isEmpty())
         {
-            QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
+            QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
             return;
         }else
         {
@@ -480,17 +497,20 @@ void comAnalyzer::searchAnalyzer()
                     if (opened) {
                         analyzerDetected = true;
                         versionRequest();
+                        m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
+                        m_pingTimer->start(1000);
+                        qDebug() << "com::searchAnalyzer: m_pingTimer->start(1000)";
                     } else {
-                        QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
+                        QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
                     }
                     return;
                 }
             }
-            QTimer::singleShot(20000, this, SLOT(searchAnalyzer()));
+            QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
         }
     }
 }
-
+/*
 void comAnalyzer::checkAnalyzer()
 {
     static qint32 state = 0;
@@ -533,7 +553,7 @@ void comAnalyzer::checkAnalyzer()
         state = 0;
     }
 }
-
+*/
 qint64 comAnalyzer::sendData(QString data)
 {
     qDebug() << "comAnalyzer::sendData> " << data;
@@ -1044,6 +1064,7 @@ void comAnalyzer::on_changedSerialPort(QString portName)
 
 void comAnalyzer::versionRequest()
 {
+    setParseState(WAIT_VER);
     //sendData("\r\nVER\r\n");
     sendData("VER\n");
 }
@@ -1054,5 +1075,37 @@ void comAnalyzer::applyLicense(QString _license)
     setParseState(WAIT_LICENSE_APPLY1);
     QString cmd = "ALICF-" + _license.left(_license.length()/2) + "\r\n";
     sendData(cmd);
+}
+
+void comAnalyzer::sendPing()
+{
+    m_bWaitingPing = true;
+    if (m_bAA55mode)
+        sendData("VER\r\n");
+    else
+        sendData("ping\r\n");
+}
+
+void comAnalyzer::handlePing()
+{
+    if (!m_bAA55mode) {
+        m_pingTimer->stop();
+        return;
+    }
+
+    long cur = QDateTime::currentMSecsSinceEpoch();
+    qDebug() << "comAnalyzer::handlePing()" << cur << (cur - m_lastReadTimeMS);
+    if ((cur - m_lastReadTimeMS) >= PING_TIMEOUT_MS) {
+        if (m_bWaitingPing) {
+            // error
+            m_analyzerModel = 0;
+            m_pingTimer->stop();
+            emit analyzerDisconnected();
+        } else {
+            sendPing();
+        }
+    } else {
+        m_bWaitingPing = false;
+    }
 }
 

@@ -213,7 +213,7 @@ void Screenshot::on_newData(QByteArray data)
                 mask >>= 1;
             }
         }
-    }else if (model == "StickPro") {
+    }else if (model == "Stick Pro") {
         // TODO not implemented yet
         while(m_inputData.length() > 3)
         {
@@ -329,7 +329,7 @@ void Screenshot::on_newData(QByteArray data)
             m_imageVector.clear();
             repaint();
         }
-    } else if (model == "StickPro") {
+    } else if (model == "Stick Pro") {
         // TODO not implemented yet
         //qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)

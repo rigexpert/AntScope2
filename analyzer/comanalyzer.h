@@ -16,6 +16,8 @@
 #include <analyzer/analyzerparameters.h>
 #include <devinfo/redeviceinfo.h>
 
+#define PING_TIMEOUT_MS 3000
+
 
 class comAnalyzer : public QObject
 {
@@ -56,10 +58,15 @@ private:
     quint32 m_analyzerModel;
     QTimer * m_chartTimer;
     QTimer * m_sendTimer;
+    QTimer * m_pingTimer;
+
     QList <QString> m_stringList;
     QString m_version;
     QString m_revision;
     QString m_serialNumber;
+    long m_lastReadTimeMS;
+    bool m_bWaitingPing = false;
+    bool m_bAA55mode = false;
 
     volatile bool m_isMeasuring;
     volatile bool m_isContinuos;
@@ -105,7 +112,7 @@ public slots:
     void startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx=true);
     void stopMeasure();
     void continueMeasurement();
-    void checkAnalyzer();
+    //void checkAnalyzer();
     void getAnalyzerData();
     void getAnalyzerData(QString number);
     void makeScreenshot();
@@ -114,6 +121,9 @@ public slots:
     void on_changedAutoDetectMode(bool state);
     void on_changedSerialPort(QString portName);
     void versionRequest();
+    void handlePing();
+    void sendPing();
+
 };
 
 #endif // COMANALYZER_H

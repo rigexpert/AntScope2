@@ -20,6 +20,7 @@ public:
 
     State startDownloadInfo(QUrl url);
     State startDownloadFw();
+    State startSendStatistics(QUrl url);
     State state() const;
     bool hasDownloadLink() const;
 
@@ -34,6 +35,7 @@ public:
 signals:
     void downloadFileComplete();
     void downloadInfoComplete();
+    void sendStatisicsComplete();
     void progress(qint64 dowload, qint64 total);
 
 
@@ -56,6 +58,7 @@ private:
     QString m_ver;
     QString m_lastError;
     bool m_isInfo;
+    bool m_sendStatisics=false;
     QTimer m_timer;
 
 

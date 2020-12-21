@@ -74,7 +74,7 @@ static QString names[QUANTITY]={
     "AA-230PRO",
     "AA-230 ZOOM",
     "Stick 230",
-    "StickPro",
+    "Stick Pro",
     "AA-500",
     "AA-520",
     "AA-600",
