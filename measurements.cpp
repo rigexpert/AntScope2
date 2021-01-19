@@ -952,7 +952,9 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
             m_measurements.last().smithGraphCalib.insert(len, QCPCurveData(len, ptX, ptY));
             len = m_measurements.last().dataRX.length()*2 - 1;
             m_measurements.last().smithGraphViewCalib.insert(len, QCPCurveData(len, ptX, ptY));
-            //----------------------calc smith end---------------------------
+
+            qDebug() << "calc smith" << _rawData.fq << ptX << ptY;
+             //----------------------calc smith end---------------------------
         }
     }
     m_currentPoint++;
@@ -1073,6 +1075,13 @@ void Measurements::prepareGraphs(rawData _rawData, GraphData& _data, GraphData& 
             _calibData.RhoMod = RhoMod;
         }
     }
+    //----------------------calc smith-------------------------------
+    double ptX,ptY;
+    NormRXtoSmithPoint(Rnorm, Xnorm, ptX, ptY);
+    _data.ptX = ptX;
+    _data.ptY = ptY;
+    qDebug() << "*calc smith" << _rawData.fq << ptX << ptY;
+
 }
 
 
@@ -4046,6 +4055,30 @@ void Measurements::updateOneFqWidget(GraphData& _data)
     if (m_oneFqWidget == nullptr)
         return;
     m_oneFqWidget->addData(_data);
+    if(m_smithTracer == NULL)
+    {
+        m_smithTracer = new QCPItemEllipse(m_smithWidget);
+        m_smithTracer->setAntialiased(true);
+        QPen pen;
+        //pen.setColor(QColor(250,30,20,180));
+        pen.setColor(Qt::magenta);
+        pen.setWidth(4);
+        m_smithTracer->setPen(pen);
+    }
+
+    double ptX = _data.ptX;
+    double ptY = _data.ptY;
+
+    //ptX = -1.05612;
+    //ptY = 2.91823 ;
+
+    ptX = m_smithWidget->xAxis->pixelToCoord(ptX);
+    ptY = m_smithWidget->yAxis->pixelToCoord(ptY);
+
+    m_smithTracer->topLeft->setCoords(ptX-0.1, ptY+0.1);
+    m_smithTracer->bottomRight->setCoords(ptX+0.1, ptY-0.1);
+    m_smithWidget->replot();
+
 }
 
 void Measurements::hideOneFqWidget(bool)
@@ -4053,6 +4086,7 @@ void Measurements::hideOneFqWidget(bool)
     m_oneFqMode = false;
     OneFqWidget* tmp = m_oneFqWidget;
     if (tmp != nullptr) {
+        m_isContinuing = false;
         m_oneFqWidget = nullptr;
         QPair<bool,bool> hints = tmp->resoreHintFlags();
         m_graphHintEnabled = hints.first;

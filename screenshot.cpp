@@ -276,7 +276,8 @@ void Screenshot::on_newData(QByteArray data)
         }
     }
     int percent = m_imageVector.length()/(m_lcdHeight*m_lcdWidth/100);
-
+    if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
+        percent = 100;
 
 
     qDebug() << "screen shot: " << percent << "%, count"
@@ -330,7 +331,6 @@ void Screenshot::on_newData(QByteArray data)
             repaint();
         }
     } else if (model == "Stick Pro") {
-        // TODO not implemented yet
         //qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
         {
@@ -352,7 +352,6 @@ void Screenshot::on_newData(QByteArray data)
     //          || ( (model == "AA-230 ZOOM")&&(m_imageVector.length() >= 63604) )
               )
     {
-            ui->progressBar->setValue(100);
             QApplication::clipboard()->setImage(*m_image,QClipboard::Clipboard);
             m_popUp->setPopupText(tr("Image added to clipboard"));
             m_popUp->setPosition(this->geometry().x()+this->width(),this->geometry().y()+this->height());

@@ -14,14 +14,14 @@ QT       += opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-VER_ARG=1.1.4
-DEFINES += ANTSCOPE2VER='\\"1.1.4\\"'
+VER_ARG=1.1.5
+DEFINES += ANTSCOPE2VER='\\"1.1.5\\"'
 DEFINES += OLD_TDR
 
 TARGET = AntScope2
 
-CONFIG -= debug
-CONFIG += release
+CONFIG += debug
+CONFIG -= release
 
 TRANSLATIONS += QtLanguage.ts
 TRANSLATIONS += QtLanguage_uk.ts

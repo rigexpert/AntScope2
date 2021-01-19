@@ -241,6 +241,8 @@ struct GraphData {
     double Xpar=DBL_MAX;
     double Zpar=DBL_MAX;
     double RL=DBL_MAX;
+    double ptX=0; // smith
+    double ptY=0; // smith
 };
 
 
