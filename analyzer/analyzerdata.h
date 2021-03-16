@@ -36,6 +36,7 @@ signals:
 
 public slots:
     void on_analyzerDataStringArrived(QString str);
+    bool close();
 
 private slots:
     void on_listWidget_itemDoubleClicked(QListWidgetItem *item);

@@ -953,7 +953,7 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
             len = m_measurements.last().dataRX.length()*2 - 1;
             m_measurements.last().smithGraphViewCalib.insert(len, QCPCurveData(len, ptX, ptY));
 
-            qDebug() << "calc smith" << _rawData.fq << ptX << ptY;
+            //qDebug() << "calc smith" << _rawData.fq << ptX << ptY;
              //----------------------calc smith end---------------------------
         }
     }
@@ -5211,7 +5211,6 @@ CustomPlot* Measurements::activePlot()
 
 void Measurements::on_measurementComplete()
 {
-    qDebug() << "Measurements::on_measurementComplete()";
     m_previousI = 0;
     m_measuringInProgress = false;
     m_isContinuing = false;

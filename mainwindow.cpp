@@ -3583,7 +3583,6 @@ void MainWindow::on_measurementComplete()
 {
     if (m_analyzer->isNanovna())
         return;
-    qDebug() << "MainWindow::on_measurementComplete() " << dtStartMeasurement.secsTo(QDateTime::currentDateTime());
     if (g_developerMode) {
         if (m_measurements->isOneFqMode()) {
             on_continuousStartBtn_clicked(false);

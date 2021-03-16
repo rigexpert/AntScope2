@@ -38,6 +38,7 @@ public:
 
     void setIsMeasuring (bool isMeasuring) {m_isMeasuring = isMeasuring;}
     bool getIsMeasuring (void) const { return m_isMeasuring;}
+    void setTakeData(bool _state) { m_isTakeData = _state; }
     void setContinuos(bool continuos){m_isContinuos = continuos;}
     bool getContinuos(void){ return m_isContinuos;}
     void setAnalyzerModel (int model) {m_analyzerModel = model;}
@@ -66,11 +67,14 @@ private:
     QString m_serialNumber;
     long m_lastReadTimeMS;
     bool m_bWaitingPing = false;
+
     bool m_bAA55mode = false;
+    bool m_bAA55modeNewProtocol = false;
 
     volatile bool m_isMeasuring;
     volatile bool m_isContinuos;
     volatile bool m_isFRX = true;
+    bool m_isTakeData = false;
 
     volatile bool m_ok;
     volatile bool m_updateOK;
@@ -123,7 +127,6 @@ public slots:
     void versionRequest();
     void handlePing();
     void sendPing();
-
 };
 
 #endif // COMANALYZER_H

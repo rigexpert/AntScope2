@@ -158,6 +158,7 @@ public slots:
     void on_itemDoubleClick(QString number, QString dotsNumber, QString name);
     void on_dialogClosed();
     void getAnalyzerData();
+    void closeAnalyzerData();
     void on_analyzerScreenshotDataArrived(QByteArray arr);
     void on_screenshotComplete(void);
     void makeScreenshot();

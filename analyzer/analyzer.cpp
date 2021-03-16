@@ -723,6 +723,14 @@ void Analyzer::getAnalyzerData()
     }
 }
 
+void Analyzer::closeAnalyzerData()
+{
+    if(m_comAnalyzerFound && m_comAnalyzer != nullptr)
+    {
+        m_comAnalyzer->setTakeData(false);
+    }
+}
+
 void Analyzer::on_itemDoubleClick(QString number, QString dotsNumber, QString name)
 {
     setIsMeasuring(true);

@@ -140,3 +140,9 @@ void AnalyzerData::on_finish()
     this->close();
 }
 
+bool AnalyzerData::close()
+{
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parentWidget());
+    mainWindow->analyzer()->closeAnalyzerData();
+    return QDialog::close();
+}

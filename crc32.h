@@ -11,6 +11,7 @@ public:
     ~CRC32();
 
     static quint32 crc(quint32 crc32, const QByteArray &data);
+    static quint8 crc8(const QByteArray& buf);
 };
 
 #endif // CRC32_H

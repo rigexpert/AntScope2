@@ -90,7 +90,8 @@ SOURCES += main.cpp\
     customgraph.cpp \
     analyzer/nanovna_analyzer.cpp \
     tdrprogressdialog.cpp \
-    editbandsdialog.cpp
+    editbandsdialog.cpp \
+    AA55BTPacket.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -137,7 +138,8 @@ HEADERS  += mainwindow.h \
     customgraph.h \
     analyzer/nanovna_analyzer.h \
     tdrprogressdialog.h \
-    editbandsdialog.h
+    editbandsdialog.h \
+    AA55BTPacket.h
 
 # TODO these files dont exist and are not generated
 #        ui_mainwindow.h \
