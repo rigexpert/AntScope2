@@ -4,6 +4,12 @@
 #include <QDateTime>
 #include "Notification.h"
 
+// static member
+#ifdef NEW_ANALYZER
+QList<AnalyzerParameters*> AnalyzerParameters::m_analyzers;
+AnalyzerParameters* AnalyzerParameters::m_current=nullptr;
+#endif
+
 Analyzer::Analyzer(QObject *parent) : QObject(parent),
     m_hidAnalyzer(nullptr),
     m_comAnalyzer(nullptr),
@@ -26,6 +32,10 @@ Analyzer::Analyzer(QObject *parent) : QObject(parent),
     m_calibrationMode(false)
 {
     m_pfw = new QByteArray;
+
+#ifdef NEW_ANALYZER
+    AnalyzerParameters::fill();
+#endif
 }
 
 Analyzer::~Analyzer()
@@ -308,7 +318,11 @@ bool Analyzer::checkFile(QString path)
 
 QString Analyzer::getModelString( void )
 {    
+#ifndef NEW_ANALYZER
     return CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    return CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getName();
+#endif
 }
 
 quint32 Analyzer::getModel( void )
@@ -494,7 +508,11 @@ void Analyzer::on_hidAnalyzerFound (quint32 analyzerNumber)
     m_hidAnalyzerFound = true;
     m_analyzerModel = analyzerNumber;
 
+#ifndef NEW_ANALYZER
     QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentAlias() : names[m_analyzerModel];
+#else
+    QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentAlias() : AnalyzerParameters::getName();
+#endif
     emit analyzerFound(str);
 
     // ------- moved to MainWindow::on_analyzerFound
@@ -530,7 +548,11 @@ void Analyzer::on_hidAnalyzerDisconnected ()
         connect(m_comAnalyzer, &comAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
     }
     m_hidAnalyzerFound = false;
-    m_analyzerModel = 0;
+#ifndef NEW_ANALYZER
+    m_analyzerModel = 0;    
+#else
+    AnalyzerParameters::setCurrent(nullptr);
+#endif
     emit analyzerDisconnected();
 }
 
@@ -542,32 +564,13 @@ void Analyzer::on_comAnalyzerFound (quint32 analyzerNumber)
         m_hidAnalyzer = nullptr;
     }
     m_comAnalyzerFound = true;
+#ifndef NEW_ANALYZER
     m_analyzerModel = analyzerNumber;
     QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getName();
+#endif
     emit analyzerFound(str);
-
-//    //if(m_autoCheckUpdate)
-//    {
-//        QString url = "https://www.rigexpert.com/getfirmware?model=";
-//        url += names[m_analyzerModel].toLower().remove(" ").remove("-");
-//        url += "&sn=";
-//        url += m_hidAnalyzer->getSerial();
-//        url += "&revision=";
-//        url += "1";
-//        m_downloader->startDownloadInfo(QUrl(url));
-//    }
-
-
-    // ------- moved to MainWindow::on_analyzerFound
-    //
-    //if(m_autoCheckUpdate)
-//    extern bool g_developerMode;
-//    if (!g_developerMode)
-//    {
-//        QTimer::singleShot(5000, [this]() {
-//            this->checkFirmwareUpdate();
-//        });
-//    }
 
 }
 
@@ -589,11 +592,15 @@ void Analyzer::on_comAnalyzerDisconnected ()
         connect(m_hidAnalyzer, &hidAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
     }
     m_comAnalyzerFound = false;
+#ifndef NEW_ANALYZER
     m_analyzerModel = 0;
     if(m_comAnalyzer != nullptr)
     {
         m_comAnalyzer->setAnalyzerModel(0);
     }
+#else
+    AnalyzerParameters::setCurrent(nullptr);
+#endif
     emit analyzerDisconnected();
 }
 
@@ -612,12 +619,16 @@ void Analyzer::on_nanovnaAnalyzerFound (QString name)
     m_hidAnalyzerFound = false;
     m_comAnalyzerFound = false;
     m_nanovnaAnalyzerFound = true;
+#ifndef NEW_ANALYZER
     for (int i=0; i<QUANTITY; i++) {
         if (names[i] == "NanoVNA") {
             m_analyzerModel = i;
             break;
         }
     }
+#else
+    AnalyzerParameters::setCurrent(AnalyzerParameters::byName("NanoVNA");
+#endif
     emit analyzerFound(name);
 }
 
@@ -657,7 +668,11 @@ void Analyzer::on_nanovnaAnalyzerDisconnected()
         connect(m_hidAnalyzer, &hidAnalyzer::signalMeasurementError, this, &Analyzer::signalMeasurementError);
     }
     m_nanovnaAnalyzerFound = false;
+#ifndef NEW_ANALYZER
     m_analyzerModel = 0;
+#else
+    AnalyzerParameters::setCurrent(nullptr);
+#endif
     emit analyzerDisconnected();
 }
 
@@ -804,34 +819,15 @@ void Analyzer::on_checkUpdatesBtn_clicked()
         connect(m_downloader, SIGNAL(progress(qint64,qint64)),
                 this, SLOT(on_progress(qint64,qint64)));
     }
-    /*
+
     QString url = "https://www.rigexpert.com/getfirmware?model=";
-    QString prototype = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
-    //url += names[m_analyzerModel].toLower().remove(" ").remove("-");
-    url += prototype.toLower().remove(" ").remove("-");
-    url += "&sn=";
-    if(m_hidAnalyzerFound && m_hidAnalyzer != nullptr)
-    {
-        url += m_hidAnalyzer->getSerial();
-        url += "&revision=";
-        url += m_hidAnalyzer->getRevision();
-    }else if (m_comAnalyzerFound && m_comAnalyzer != nullptr)
-    {
-        url += m_comAnalyzer->getSerial();
-        url += "&revision=";
-        url += m_comAnalyzer->getRevision();
-    }
-    if (m_mapFullInfo.contains("MAC"))
-    {
-        url += "&mac=" + m_mapFullInfo["MAC"];
-    }
-    if (m_mapFullInfo.contains("SN"))
-    {
-        url += "&s_n=" + m_mapFullInfo["SN"];
-    }
-    */
-    QString url = "https://www.rigexpert.com/getfirmware?model=";
+    //QString url = "https://www.rigexpert.com/get.php?part=antscope2&model=";
+#ifndef NEW_ANALYZER
     url += names[m_analyzerModel].toLower().remove(" ").remove("-");
+#else
+    QString name = AnalyzerParameters::getName();
+    url += name.toLower().remove(" ").remove("-");
+#endif
     url += "&sn=" + getSerialNumber();
     url += "&revision=" + getRevision();
     url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
@@ -883,8 +879,13 @@ void Analyzer::on_measureCalib(int dotsNumber)
 {
     m_isMeasuring = true;
     m_dotsNumber = dotsNumber;
+#ifndef NEW_ANALYZER
     qint64 minFq_ = minFq[m_analyzerModel].toULongLong()*1000;
     qint64 maxFq_ = maxFq[m_analyzerModel].toULongLong()*1000;
+#else
+    qint64 minFq_ = AnalyzerParameters::getMinFq().toULongLong()*1000;
+    qint64 maxFq_ = AnalyzerParameters::getMaxFq().toULongLong()*1000;
+#endif
     if (CustomAnalyzer::customized()) {
         CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
         if (ca != nullptr) {
@@ -1136,7 +1137,13 @@ void Analyzer::sendStatistics()
         return;
 
     QString url = "https://www.rigexpert.com/getfirmware?model=";
+    //QString url = "https://www.rigexpert.com/get.php?part=antscope2&model=";
+#ifndef NEW_ANALYZER
     url += names[m_analyzerModel].toLower().remove(" ").remove("-");
+#else
+    QString name = AnalyzerParameters::getName();
+    url += name.toLower().remove(" ").remove("-");
+#endif
     url += "&sn=" + getSerialNumber();
     url += "&revision=" + getRevision();
     url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();

@@ -11,6 +11,8 @@ extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
 extern int g_maxMeasurements; // see measurements.cpp
 extern void setAbsoluteFqMaximum();
+extern bool g_bAA55modeNewProtocol;
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -481,6 +483,28 @@ MainWindow::MainWindow(QWidget *parent) :
             this->ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
         }
     });
+
+    //{ TODO test
+    //QString path1 = "c:/0/marquee_test1.json";
+    //ui->labelMarquee->load(path1);
+    QString msg;
+    msg += "{\n  \"messages\": [\n    {";
+    msg += "\"message\": \"Test build 1.1.5.0: Zero II, Touch, Touch EInk support added\",\n";
+    msg += "\"timeoutafter\": 1,\n";
+    msg += "\"textcolor\": \"#ffff00\",\n";
+    msg += "\"speed\": 1\n";
+    msg += "}\n";
+    msg += "  ]\n";
+    msg += "}\n";
+    ui->labelMarquee->load(msg.toLocal8Bit());
+
+//    connect(ui->labelMarquee, &MarqueeLabel::clicked, this, [=] (const QString& link) {
+//        QDesktopServices::openUrl(QUrl(link));
+//    });
+
+    ui->labelMarquee->hide();
+    //}
+
 }
 
 MainWindow::~MainWindow()
@@ -2284,15 +2308,17 @@ void MainWindow::on_analyzerFound(QString name)
     QString name1 = "AntScope2 v." + QString(ANTSCOPE2VER);
     setWindowTitle(name1 + " - " + name);
 
+    bool zeroII = name1.contains("Zero II");
     ui->singleStart->setEnabled(true);
     ui->continuousStartBtn->setEnabled(true);
-    if (!NanovnaAnalyzer::isConnected()) {
+    if (!NanovnaAnalyzer::isConnected() && !zeroII) {
         ui->analyzerDataBtn->setEnabled(true);
         ui->screenshotAA->setEnabled(true);
     } else {
         ui->analyzerDataBtn->setEnabled(false);
         ui->screenshotAA->setEnabled(false);
     }
+
     if (!g_developerMode) {
         QTimer::singleShot(1000, this, [=]() {
             m_analyzer->checkFirmwareUpdate();

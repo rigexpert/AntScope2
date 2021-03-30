@@ -6,6 +6,8 @@
 
 bool g_developerMode = false;
 bool g_raspbian = false;
+bool g_bAA55modeNewProtocol = false;
+
 
 #ifdef Q_OS_WIN
 #include <windows.h>

@@ -14,14 +14,14 @@ QT       += opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-VER_ARG=1.1.5
-DEFINES += ANTSCOPE2VER='\\"1.1.5\\"'
+#VER_ARG=1.1.5.0
+DEFINES += ANTSCOPE2VER='\\"1.1.5.0\\"'
 DEFINES += OLD_TDR
 
 TARGET = AntScope2
 
-CONFIG += debug
-CONFIG -= release
+#CONFIG += debug
+#CONFIG -= release
 
 TRANSLATIONS += QtLanguage.ts
 TRANSLATIONS += QtLanguage_uk.ts
@@ -29,7 +29,7 @@ TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_ja.ts
 CODECFORSRC   = UTF-8
 
-CONFIG(release) {
+CONFIG(release, debug|release) {
     DESTDIR = $${PWD}/build/release
 }
 else {
@@ -91,7 +91,8 @@ SOURCES += main.cpp\
     analyzer/nanovna_analyzer.cpp \
     tdrprogressdialog.cpp \
     editbandsdialog.cpp \
-    AA55BTPacket.cpp
+    AA55BTPacket.cpp \
+    marqueelabel.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -139,7 +140,8 @@ HEADERS  += mainwindow.h \
     analyzer/nanovna_analyzer.h \
     tdrprogressdialog.h \
     editbandsdialog.h \
-    AA55BTPacket.h
+    AA55BTPacket.h \
+    marqueelabel.h
 
 # TODO these files dont exist and are not generated
 #        ui_mainwindow.h \

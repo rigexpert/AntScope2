@@ -4,6 +4,8 @@
 #include "analyzer.h"
 #include "AA55BTPacket.h"
 
+extern bool g_bAA55modeNewProtocol;
+
 static const unsigned char crc8_table[256] = {
     0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F,
     0x36, 0x31, 0x24, 0x23, 0x2A, 0x2D, 0x70, 0x77, 0x7E, 0x79,
@@ -109,7 +111,7 @@ bool comAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
     bool result = m_comPort->open(QSerialPort::ReadWrite);
     if (!result) {
         QString str = m_comPort->errorString();
-        qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
+        //qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
         // TODO show dialog
         // ...
     }
@@ -132,6 +134,7 @@ void comAnalyzer::closeComPort()
     }
     m_bAA55mode = false;
     m_bAA55modeNewProtocol = false;
+    g_bAA55modeNewProtocol = false;
 }
 
 void comAnalyzer::dataArrived()
@@ -149,7 +152,11 @@ void comAnalyzer::dataArrived()
 qint32 comAnalyzer::parse (QByteArray arr)
 {
     quint32 retVal = 0;
+#ifndef NEW_ANALYZER
     QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString model = AnalyzerParameters::getName();
+#endif
     if (getParseState() == WAIT_LICENSE_LIST)
     {
         int pos = arr.indexOf("\r\n");
@@ -380,8 +387,10 @@ qint32 comAnalyzer::parse (QByteArray arr)
                                 m_bAA55mode = true;
                                 bool ok = true;
                                 int ver = m_version.toInt(&ok);
-                                if (ok && ver > 125)
+                                if (ok && ver > 125) {
                                     m_bAA55modeNewProtocol = true;
+                                    g_bAA55modeNewProtocol = true;
+                                }
                             }
                             emit analyzerFound (m_analyzerModel);
                             //QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
@@ -475,7 +484,7 @@ qDebug() << "comAnalyzer::searchAnalyzer() 0";
             QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
             return;
         }
-        qDebug() << "messageWasShown" << messageWasShown;
+        //qDebug() << "messageWasShown" << messageWasShown;
 
         analyzerDetected = false;
         closeComPort();
@@ -705,7 +714,7 @@ void comAnalyzer::timeoutChart()
           data.r = packet.r();
           data.x = packet.x();
 
-          qDebug() << "com::timeoutChart ADD" << packet.id() << QString::number(data.fq, 'f') << data.r << data.x;
+          //qDebug() << "com::timeoutChart ADD" << packet.id() << QString::number(data.fq, 'f') << data.r << data.x;
 
           packet.setNext();
           emit newData(data);
@@ -815,7 +824,11 @@ void comAnalyzer::makeScreenshot()
     setIsMeasuring(true);
     m_parseState = WAIT_SCREENSHOT_DATA;
     m_incomingBuffer.clear();
+#ifndef NEW_ANALYZER
     QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString model = AnalyzerParameters::getName();
+#endif
     if(model == "AA-230 ZOOM")
     {
         QString str = "screenshot\r";
@@ -842,7 +855,11 @@ void comAnalyzer::on_measurementComplete()
 bool comAnalyzer::waitAnswer()
 {
     int times = 1;
+#ifndef NEW_ANALYZER
     QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString model = AnalyzerParameters::getName();
+#endif
     if(model == "AA-230 ZOOM")
     {
         while (times < 100)
@@ -888,7 +905,11 @@ bool comAnalyzer::waitAnswer()
 
 bool comAnalyzer::update (QIODevice *fw)
 {
+#ifndef NEW_ANALYZER
     QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString model = AnalyzerParameters::getName();
+#endif
     if(model == "AA-230 ZOOM")
     {
         setIsMeasuring(true);
@@ -1111,7 +1132,11 @@ void comAnalyzer::on_changedAutoDetectMode(bool state)
 {
     m_autoDetectMode = state;
     closeComPort();
+#ifndef NEW_ANALYZER
     m_analyzerModel = 0;
+#else
+    AnalyzerParameters::setCurrent(nullptr);
+#endif
     emit analyzerDisconnected();
 }
 
@@ -1163,7 +1188,11 @@ void comAnalyzer::handlePing()
     if ((cur - m_lastReadTimeMS) >= PING_TIMEOUT_MS) {
         if (m_bWaitingPing) {
             // error
-            m_analyzerModel = 0;
+#ifndef NEW_ANALYZER
+    m_analyzerModel = 0;
+#else
+    AnalyzerParameters::setCurrent(nullptr);
+#endif
             m_pingTimer->stop();
             emit analyzerDisconnected();
         } else {

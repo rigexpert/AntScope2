@@ -326,6 +326,66 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     }
                     break;
                 }
+                else if(serialNumber == PREFIX_SERIAL_NUMBER_ZEROII)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Zero II")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }
+                else if(serialNumber == PREFIX_SERIAL_NUMBER_TOUCH)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Touch")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }
+                else if(serialNumber == PREFIX_SERIAL_NUMBER_TOUCH_EINK)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Touch E-Ink")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }
             }else if((cur_dev->vendor_id == RE_BOOT_VID) && (cur_dev->product_id == RE_BOOT_PID))
             {
                 QString number = QString::fromWCharArray(cur_dev->serial_number);
@@ -368,6 +428,48 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     for(quint32 i = 0; i < QUANTITY; ++i)
                     {
                         if(names[i] == "AA-2000 ZOOM")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_ZEROII))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Zero II")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_TOUCH))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Touch")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_TOUCH_EINK))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Touch E-Ink")
                         {
                             m_bootMode = true;
                             m_analyzerModel = i;
