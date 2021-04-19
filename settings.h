@@ -62,10 +62,11 @@ public:
     void setFirmwareAutoUpdate(bool checked);
     void setAntScopeAutoUpdate(bool checked);
     void setAntScopeVersion(QString version);
-    void setAutoDetectMode(bool state, QString portName);
 
     void setLanguages(QStringList list, int number);
     void on_translate();
+    void fillSerials();
+
 private:
     Ui::Settings *ui;
     Analyzer * m_analyzer;
@@ -99,10 +100,14 @@ private:
 
     QList <QString> m_cablesList;
 
+    static int m_serialIndex;
+    bool m_connectedButton = true;
+
     void enableButtons(bool enabled);
     void cableActionEnableButtons(bool enabled);
     void openCablesFile(QString path);
     void initCustomizeTab();
+    void setConnectButtonText(bool _connect);
 
 signals:
     void reloadBands(QString _currentBand);
@@ -134,14 +139,16 @@ signals:
     void firmwareAutoUpdateStateChanged(bool);
     void antScopeAutoUpdateStateChanged(bool);
 
-    void changedAutoDetectMode(bool);
-    void changedSerialPort(QString);
-
     void languageChanged(int);
     void bandChanged(QString);
     void exportCableSettings(QString _description);
-    void connectNanoVNA();
+    void connectNanoVNA(QString port);
     void disconnectNanoVNA();
+    void connectSerial(QString port);
+    void disconnectSerial();
+    void connectBluetooth(QString port);
+    void disconnectBluetooth();
+    void disconnectDevice();
 
 private slots:
     void on_browseBtn_clicked();
@@ -175,9 +182,6 @@ private slots:
 
     void on_autoUpdatesCheckBox(bool checked);
     void on_checkBox_AntScopeAutoUpdate_clicked(bool checked);
-    void on_autoDetect_clicked(bool checked);
-    void on_manualDetect_clicked(bool checked);
-    void on_serialPortComboBox_activated(const QString &arg1);
     void on_languageComboBox_currentIndexChanged(int index);    
     void on_closeButton_clicked();
     void onBandsComboBox_currentIndexChanged(int index);
@@ -192,8 +196,9 @@ private slots:
     void on_PointsFinished();
     void on_systemImpedance();
     void on_exportCableSettings();
-    void on_licensesBtnPressed();
     void on_connectNanovna();
+    void on_connectSerial();
+    void on_connectBluetooth();
 };
 
 #endif // SETTINGS_H

@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Print</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="res.qrc">
+    <normaloff>:/new/prefix1/AntScope2.png</normaloff>:/new/prefix1/AntScope2.png</iconset>
+  </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
     <widget class="QGroupBox" name="groupBoxGraph">
@@ -125,7 +129,7 @@
        <property name="title">
         <string>Settings</string>
        </property>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -240,6 +244,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="res.qrc"/>
+ </resources>
  <connections/>
 </ui>

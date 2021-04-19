@@ -5,6 +5,7 @@
 #include "Notification.h"
 #include "glwidget.h"
 #include "CustomPlot.h"
+#include "selectdevicedialog.h"
 
 
 extern QString appendSpaces(const QString& number);
@@ -38,7 +39,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_tdrZoomState(10),
     m_smithZoomState(10),
     m_userZoomState(10),
-    m_autoDetectMode(true),
     m_languageNumber(0),
     m_addingMarker(false),
     m_bInterrupted(false)
@@ -50,6 +50,11 @@ MainWindow::MainWindow(QWidget *parent) :
     if (g_developerMode) {
         ui->spinBoxPoints->setRange(1, 1000000);
     }
+
+    QRegExp re("^[\d\s]*$");
+    QRegExpValidator *validator = new QRegExpValidator(re, this);
+    ui->lineEdit_fqFrom->setValidator(validator);
+    ui->lineEdit_fqTo->setValidator(validator);
 
     m_qtLanguageTranslator = new QTranslator();
 
@@ -380,21 +385,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_autoFirmwareUpdateEnabled = m_settings->value("autoFirmwareUpdate", true).toBool();
     m_autoUpdateEnabled = m_settings->value("autoUpdate", true).toBool();
-    m_autoDetectMode = m_settings->value("autoDetectMode",true).toBool();
-    m_serialPort = m_settings->value("serialPort","").toString();
 
-    m_analyzer->on_changedAutoDetectMode(m_autoDetectMode);
-    m_analyzer->on_changedSerialPort(m_serialPort);
-
-    /* ???
-    m_swrZoomState = m_settings->value("swrZoomState", 10).toInt();
-    m_phaseZoomState = m_settings->value("phaseZoomState", 10).toInt();
-    m_rsZoomState = m_settings->value("rsZoomState", 10).toInt();
-    m_rpZoomState = m_settings->value("rpZoomState", 10).toInt();
-    m_rlZoomState = m_settings->value("rlZoomState", 10).toInt();
-    m_tdrZoomState = m_settings->value("tdrZoomState", 10).toInt();
-    m_smithZoomState = m_settings->value("smithZoomState", 10).toInt();
-    */
     m_languageNumber = m_settings->value("languageNumber",0).toInt();
 
     m_settings->endGroup();
@@ -489,22 +480,49 @@ MainWindow::MainWindow(QWidget *parent) :
     //ui->labelMarquee->load(path1);
     QString msg;
     msg += "{\n  \"messages\": [\n    {";
-    msg += "\"message\": \"Test build 1.1.5.0: Zero II, Touch, Touch EInk support added\",\n";
+    msg += "\"message\": \"Test build 1.1.5.1: New connection strategy - always try to connect to HID devices automatically, if any, comport based devices are manually connected via settings\",\n";
     msg += "\"timeoutafter\": 1,\n";
-    msg += "\"textcolor\": \"#ffff00\",\n";
-    msg += "\"speed\": 1\n";
+    msg += "\"textcolor\": \"#000080\",\n";
+    msg += "\"speed\": 5\n";
     msg += "}\n";
     msg += "  ]\n";
     msg += "}\n";
     ui->labelMarquee->load(msg.toLocal8Bit());
 
-//    connect(ui->labelMarquee, &MarqueeLabel::clicked, this, [=] (const QString& link) {
-//        QDesktopServices::openUrl(QUrl(link));
-//    });
+    connect(ui->labelMarquee, &MarqueeLabel::clicked, this, [=] (const QString& link) {
+        QDesktopServices::openUrl(QUrl(link));
+    });
 
-    ui->labelMarquee->hide();
+    //ui->labelMarquee->hide();
     //}
 
+#ifdef NEW_CONNECTION
+    m_settings->beginGroup("Connection");
+    bool start = m_settings->value("same", false).toBool();
+    int _type = m_settings->value("type", ReDeviceInfo::HID).toInt();
+    QString device_name = m_settings->value("name", "").toString();
+    m_settings->endGroup();
+
+    if (start && !device_name.isEmpty()) {
+        SelectDeviceDialog dlg(this);
+        if (dlg.connectSilent(_type, device_name)) {
+            AnalyzerParameters* selected = AnalyzerParameters::current();
+            if (selected != nullptr) {
+                m_analyzer->connectDevice();
+            }
+        }
+    } else {
+        QTimer::singleShot(500, this, [&](){
+            SelectDeviceDialog dlg(this);
+            if (dlg.exec() == QDialog::Accepted) {
+                AnalyzerParameters* selected = AnalyzerParameters::current();
+                if (selected != nullptr) {
+                    m_analyzer->connectDevice();
+                }
+            }
+        });
+    }
+#endif
 }
 
 MainWindow::~MainWindow()
@@ -544,8 +562,6 @@ MainWindow::~MainWindow()
     m_settings->setValue("rangeUpper", m_swrWidget->xAxis->range().upper);
     m_settings->setValue("autoFirmwareUpdate", m_autoFirmwareUpdateEnabled);
     m_settings->setValue("autoUpdate", m_autoUpdateEnabled);
-    m_settings->setValue("autoDetectMode", m_autoDetectMode);
-    m_settings->setValue("serialPort",m_serialPort);
 
     m_settings->setValue("swrZoomState", m_swrZoomState);
     m_settings->setValue("phaseZoomState", m_phaseZoomState);
@@ -2308,10 +2324,14 @@ void MainWindow::on_analyzerFound(QString name)
     QString name1 = "AntScope2 v." + QString(ANTSCOPE2VER);
     setWindowTitle(name1 + " - " + name);
 
+    AnalyzerParameters* _analyzer = AnalyzerParameters::current();
     bool zeroII = name1.contains("Zero II");
     ui->singleStart->setEnabled(true);
     ui->continuousStartBtn->setEnabled(true);
-    if (!NanovnaAnalyzer::isConnected() && !zeroII) {
+    if (g_bAA55modeNewProtocol) {
+        ui->analyzerDataBtn->setEnabled(true);
+        ui->screenshotAA->setEnabled(false);
+    } else if (!NanovnaAnalyzer::isConnected() && !zeroII) {
         ui->analyzerDataBtn->setEnabled(true);
         ui->screenshotAA->setEnabled(true);
     } else {
@@ -3306,8 +3326,16 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 
 void MainWindow::on_screenshotAA_clicked()
 {
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    if (param == nullptr)
+        return;
+    int wd = param->getWidth();
+    int ht = param->getHeight();
+#else
     int wd = lcdWidth[m_analyzer->getModel()];
     int ht = lcdHeight[m_analyzer->getModel()];
+#endif
     if (CustomAnalyzer::customized()) {
         CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
         if (ca != nullptr) {
@@ -3316,6 +3344,10 @@ void MainWindow::on_screenshotAA_clicked()
         }
     }
 
+    if (analyzer()->analyzerType() == ReDeviceInfo::Serial && param->name() != "AA-230 ZOOM") {
+        QMessageBox::warning(nullptr, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
+        return;
+    }
     m_screenshot = new Screenshot(this, m_analyzer->getModel(), ht, wd);
     m_screenshot->setAttribute(Qt::WA_DeleteOnClose);
     m_screenshot->setWindowTitle("Screenshot");
@@ -3327,6 +3359,7 @@ void MainWindow::on_screenshotAA_clicked()
     m_analyzer->makeScreenshot();
 
     m_screenshot->exec();
+    m_screenshot = nullptr;
 }
 
 void MainWindow::on_singleStart_clicked()
@@ -3349,7 +3382,8 @@ void MainWindow::on_singleStart_clicked()
     ui->singleStart->setChecked(true);
     ui->continuousStartBtn->setChecked(false);
 
-    if (g_developerMode) {
+    //if (g_developerMode)
+    {
         ui->singleStart->setChecked(true);
         quint64 fqFrom = ui->lineEdit_fqFrom->text().remove(' ').toLongLong();
         quint64 fqTo = ui->lineEdit_fqTo->text().remove(' ').toLongLong();
@@ -3364,8 +3398,14 @@ void MainWindow::on_singleStart_clicked()
     double start;
     double stop;
 
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    qint64 minFreq = param == nullptr ? 100 : param->minFq().toULongLong();
+    qint64 maxFreq = param == nullptr ? ABSOLUTE_MAX_FQ : param->maxFq().toULongLong();
+#else
     qint64 minFreq = minFq[m_analyzer->getAnalyzerModel()].toULongLong();
     qint64 maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toULongLong();
+#endif
 
     if (CustomAnalyzer::customized()) {
         CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
@@ -3438,8 +3478,15 @@ void MainWindow::on_singleStart_clicked()
     if(ui->tabWidget->currentWidget()->objectName() == "tab_6")
     {
 #ifdef OLD_TDR
-        qint64 minFq_ = minFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
-        qint64 maxFq_ = maxFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
+
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    qint64 minFq_ = param == nullptr ? 100 : param->minFq().toULongLong()*1000;
+    qint64 maxFq_ = param == nullptr ? ABSOLUTE_MAX_FQ : param->maxFq().toULongLong()*1000;
+#else
+    qint64 minFq_ = minFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
+    qint64 maxFq_ = maxFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
+#endif
         if (CustomAnalyzer::customized()) {
             CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
             if (ca != nullptr) {
@@ -3519,8 +3566,14 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         start = getFqFrom();
         stop = getFqTo();
 
-        qint64 minFreq = minFq[m_analyzer->getAnalyzerModel()].toULongLong();
-        qint64 maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toULongLong();
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    qint64 minFreq = param == nullptr ? 100 : param->minFq().toULongLong();
+    qint64 maxFreq = param == nullptr ? ABSOLUTE_MAX_FQ : param->maxFq().toULongLong();
+#else
+    qint64 minFreq = minFq[m_analyzer->getAnalyzerModel()].toULongLong();
+    qint64 maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toULongLong();
+#endif
         if (CustomAnalyzer::customized()) {
             CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
             if (ca != nullptr) {
@@ -3648,8 +3701,14 @@ void MainWindow::on_measurementComplete()
         start = getFqFrom();
         stop = getFqTo();
 
-        qint64 minFreq = minFq[m_analyzer->getAnalyzerModel()].toULongLong();
-        qint64 maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toULongLong();
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    qint64 minFreq = param == nullptr ? 100 : param->minFq().toULongLong();
+    qint64 maxFreq = param == nullptr ? ABSOLUTE_MAX_FQ : param->maxFq().toULongLong();
+#else
+    qint64 minFreq = minFq[m_analyzer->getAnalyzerModel()].toULongLong();
+    qint64 maxFreq = maxFq[m_analyzer->getAnalyzerModel()].toULongLong();
+#endif
         if (CustomAnalyzer::customized()) {
             CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
             if (ca != nullptr) {
@@ -3691,7 +3750,6 @@ void MainWindow::on_measurementComplete()
             m_userWidget->xAxis->setRange(range);
         if (!m_bInterrupted)
         {
-            qDebug() << "MainWindow::on_measurementComplete emit measureContinuous " << start*1000 << stop*1000 << m_dotsNumber;
             emit measureContinuous(start*1000, stop*1000, m_dotsNumber);
         } else {
             m_bInterrupted = true;
@@ -3738,9 +3796,7 @@ void MainWindow::on_measurementCompleteNano()
         m_measurements->stopTDRProgress();
     }
 //}
-
     m_tdrWidget->xAxis->setRangeLower(0);
-
     QTimer::singleShot(5, m_markers, SLOT(redraw()));
     if(m_isContinuos)
     {
@@ -3833,7 +3889,6 @@ void MainWindow::on_settingsBtn_clicked()
     m_settingsDialog->setFirmwareAutoUpdate(m_autoFirmwareUpdateEnabled);
     m_settingsDialog->setAntScopeAutoUpdate(m_autoUpdateEnabled);
     m_settingsDialog->setAntScopeVersion(ANTSCOPE2VER);
-    m_settingsDialog->setAutoDetectMode(m_autoDetectMode, m_serialPort);
 
     QStringList list;
     for(int i = 0; i < LANGUAGES_QUANTITY; ++i)
@@ -3866,10 +3921,21 @@ void MainWindow::on_settingsBtn_clicked()
             m_analyzer,SLOT(setAutoCheckUpdate(bool)));
     connect(m_settingsDialog, SIGNAL(updateBtn(QString)),
             m_analyzer,SLOT(readFile(QString)));
+
     connect(m_settingsDialog, &Settings::connectNanoVNA,
             m_analyzer, &Analyzer::on_connectNanoNVA);
     connect(m_settingsDialog, &Settings::disconnectNanoVNA,
             m_analyzer, &Analyzer::on_disconnectNanoNVA);
+    connect(m_settingsDialog, &Settings::connectSerial,
+            m_analyzer, &Analyzer::on_connectSerial);
+    connect(m_settingsDialog, &Settings::disconnectSerial,
+            m_analyzer, &Analyzer::on_disconnectSerial);
+    connect(m_settingsDialog, &Settings::connectBluetooth,
+            m_analyzer, &Analyzer::on_connectBluetooth);
+    connect(m_settingsDialog, &Settings::disconnectBluetooth,
+            m_analyzer, &Analyzer::on_disconnectBluetooth);
+    connect(m_settingsDialog, &Settings::disconnectDevice,
+            m_analyzer, &Analyzer::on_disconnectDevice);
 
     connect(m_settingsDialog,SIGNAL(startCalibration()),
             m_calibration,SLOT(on_startCalibration()));
@@ -3918,10 +3984,6 @@ void MainWindow::on_settingsBtn_clicked()
 
     connect(m_settingsDialog,SIGNAL(antScopeAutoUpdateStateChanged(bool)),this, SLOT(on_antScopeAutoUpdateStateChanged(bool)));
 
-    connect(m_settingsDialog, SIGNAL(changedAutoDetectMode(bool)), this, SLOT(on_changedAutoDetectMode(bool)));
-
-    connect(m_settingsDialog, SIGNAL(changedSerialPort(QString)), this, SLOT(on_changedSerialPort(QString)));
-
     connect(m_settingsDialog, SIGNAL(languageChanged(int)), this, SLOT(on_translate(int)));
 
     connect(m_settingsDialog, SIGNAL(bandChanged(QString)), this, SLOT(on_bandChanged(QString)));
@@ -3954,8 +4016,11 @@ void MainWindow::on_settingsBtn_clicked()
         m_analyzer->searchAnalyzer();
     }
 
+    bool force = true;
+    m_calibration->start(force);
     ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
     ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
+
     ui->measurmentsDeleteBtn->setEnabled(!m_analyzer->isMeasuring());
     ui->measurmentsClearBtn->setEnabled(!m_analyzer->isMeasuring());
     m_measurements->on_redrawGraphs(false);
@@ -4219,8 +4284,14 @@ void MainWindow::on_printBtn_clicked()
         bands = m_BandsMap[band];
     }
 
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : (param == nullptr ? "" : param->name());
+#else
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzer->getModel()];
+#endif
     QString name = ui->tabWidget->currentWidget()->objectName();
     QString string;
     string += model + ", ";
@@ -4443,7 +4514,6 @@ void MainWindow::on_Z0Changed(double _Z0)
     m_measurements->setZ0(m_Z0);
 
     m_measurements->on_impedanceChanged(m_Z0);
-    qDebug() << "MainWindow::on_Z0Changed " << m_Z0;
 }
 
 void MainWindow::updateGraph ()
@@ -4547,9 +4617,26 @@ void MainWindow::on_limitsBtn_clicked(bool checked)
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
         double center = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
         double range = ui->lineEdit_fqTo->text().remove(' ').toDouble();
+        double from = center - range;
+        double to = center + range;
 
-        setFqFrom(center - range);
-        setFqTo(center + range);
+        if (from > to) {
+            double tmp = to;
+            to = from;
+            from = tmp;
+        }
+        AnalyzerParameters* analyzer = AnalyzerParameters::current();
+        if (analyzer != nullptr) {
+            double minFq = analyzer->minFq().toULongLong();
+            double maxFq = analyzer->maxFq().toULongLong();
+            if (from < minFq || from > maxFq || to < minFq || to > maxFq) {
+                from = minFq;
+                to = maxFq;
+            }
+        }
+
+        setFqFrom(from);
+        setFqTo(to);
         emit isRangeChanged(m_isRange);
     }
 }
@@ -4573,6 +4660,22 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
         double from = getFqFrom();
         double to = getFqTo();
+
+        if (from > to) {
+            double tmp = to;
+            to = from;
+            from = tmp;
+        }
+        AnalyzerParameters* analyzer = AnalyzerParameters::current();
+        if (analyzer != nullptr) {
+            double minFq = analyzer->minFq().toULongLong();
+            double maxFq = analyzer->maxFq().toULongLong();
+            if (from < minFq || from > maxFq || to < minFq || to > maxFq) {
+                from = minFq;
+                to = maxFq;
+            }
+        }
+
         setFqFrom((to + from)/2);
         setFqTo((to - from)/2);
         emit isRangeChanged(m_isRange);
@@ -4855,18 +4958,6 @@ void MainWindow::on_1secTimerTick()
     }
 }
 
-void MainWindow::on_changedAutoDetectMode(bool state)
-{
-    m_autoDetectMode = state;
-    m_analyzer->on_changedAutoDetectMode(state);
-}
-
-void MainWindow::on_changedSerialPort(QString portName)
-{
-    m_serialPort = portName;
-    m_analyzer->on_changedSerialPort(portName);
-}
-
 bool MainWindow::loadLanguage(QString locale)
 { //locale: en, ukr, ru, ja, etc.
     QString title = windowTitle();
@@ -5126,8 +5217,16 @@ QString appendSpaces(const QString& str) {
 void MainWindow::onFullRange(bool)
 {
     int model = m_analyzer->getModel();
+
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    qint64 from = param == nullptr ? 100 : param->minFq().toULongLong();
+    qint64 to = param == nullptr ? ABSOLUTE_MAX_FQ : param->maxFq().toULongLong();
+#else
     qint64 from = minFq[model].toULongLong();
     qint64 to = maxFq[model].toULongLong();
+#endif
+
     qint64 range = to - from;
 
     m_lastEnteredFqFrom = from;
@@ -5305,8 +5404,18 @@ void MainWindow::changeMeasurmentsColor(int _row, QColor& _color)
 
 void MainWindow::on_showNotification(QString msg, QString url)
 {
-    QRect rn(0, 0, rect().width(), 40);
-    Notification::showMessage(msg, url, rn, 5000, ui->tabWidget->currentWidget());
+//    QRect rn(0, 0, rect().width(), 40);
+//    Notification::showMessage(msg, url, rn, 5000, ui->tabWidget->currentWidget());
+
+    QJsonObject json;
+    json["message"] = msg;
+    json["linkto"] = url;
+    json["textcolor"] = QColor(Qt::darkRed).name();
+    MarqueeString str(json);
+    QList<MarqueeString> list;
+    list << str;
+    ui->labelMarquee->addStrings(list);
+    ui->labelMarquee->show();
 }
 
 QTabWidget* MainWindow::tabWidget()

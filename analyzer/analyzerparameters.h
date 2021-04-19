@@ -4,10 +4,7 @@
 #include <QVector>
 #include <qcustomplot.h>
 #include <float.h>
-
-//#define SETTINGS_PATH "AntScope2.ini"
-
-//#define NEW_ANALYZER
+#include "devinfo/redeviceinfo.h"
 
 
 #pragma warning (disable : 4068 )
@@ -223,6 +220,7 @@ enum parse{
     WAIT_NO=0,
     WAIT_VER,
     WAIT_DATA,
+    WAIT_SLOT_DATA,
     WAIT_ANALYZER_DATA,
     WAIT_SCREENSHOT_DATA,
     WAIT_ANALYZER_UPDATE,
@@ -252,6 +250,7 @@ struct rawData{
         json["r"] = r;
         json["x"] = x;
     }
+    QString toString() { return QString("%1, %2, %3").arg(fq,0,'f',4,QLatin1Char(' ')).arg(r,0,'f',4,QLatin1Char(' ')).arg(x,0,'f',4,QLatin1Char(' ')); }
 };
 
 struct GraphData {
@@ -329,7 +328,6 @@ struct measurement
     QCPCurveDataMap smithGraphViewCalib;
 };
 
-
 #ifdef NEW_ANALYZER
 #define PREFIX_SERIAL_NUMBER_AA35	1350
 #define PREFIX_SERIAL_NUMBER_AA35_ZOOM	1351
@@ -352,13 +350,14 @@ class AnalyzerParameters {
     int m_lcdHeight=0;
     int m_lcdWidth=0;
     int m_prefix=-1;
+    int m_index=0;
     static QList<AnalyzerParameters*> m_analyzers;
     static AnalyzerParameters* m_current;
 
 public:
     AnalyzerParameters() {}
-    AnalyzerParameters(QString _name, QString _minFq, QString _maxFq, int _height=0, int _width=0, int _prefix=0) {
-        m_name=_name; m_minFq=_minFq; m_maxFq=_maxFq; m_lcdHeight=_height, m_lcdWidth=_width; m_prefix=_prefix;
+    AnalyzerParameters(int _index, QString _name, QString _minFq, QString _maxFq, int _height=0, int _width=0, int _prefix=0) {
+        m_index=_index; m_name=_name; m_minFq=_minFq; m_maxFq=_maxFq; m_lcdHeight=_height, m_lcdWidth=_width; m_prefix=_prefix;
     }
     QString name() { return m_name; }
     QString minFq() { return m_minFq; }
@@ -367,6 +366,7 @@ public:
     int width() { return m_lcdWidth; }
     int prefix() { return m_prefix; }
     bool isValid() { return (m_prefix!=-1); }
+    int index() { return m_index; }
 
     static AnalyzerParameters* byPrefix(int _prefix) {
         foreach (AnalyzerParameters* par, m_analyzers) {
@@ -382,7 +382,20 @@ public:
         }
         return nullptr;
     }
+    static AnalyzerParameters* byIndex(int idx) {
+        if (idx < 0 || idx >= m_analyzers.size())
+            return nullptr;
+        return m_analyzers[idx];
+    }
+    static AnalyzerParameters* byVER(QString ver) {
+        foreach (AnalyzerParameters* par, m_analyzers) {
+            if (ver.contains(par->name()))
+                return par;
+        }
+        return nullptr;
+    }
 
+    static int prefixFromSerial(QString serial) { return ( serial.length()==9 ? serial.remove(4,5).toInt() : 0); }
     static QString getName() { return m_current==nullptr ? QString() : m_current->name(); }
     static QString getMinFq() { return m_current==nullptr ? QString() : m_current->minFq(); }
     static QString getMaxFq() { return m_current==nullptr ? QString() : m_current->maxFq(); }
@@ -391,39 +404,51 @@ public:
     static AnalyzerParameters* current() { return m_current; }
     static void setCurrent(AnalyzerParameters* _cur) { m_current = _cur; }
     static void fill() {
-        m_analyzers << new AnalyzerParameters("NONE", "NONE", "NONE", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-30", "100", "30000", 64, 133);
-        m_analyzers << new AnalyzerParameters("AA-30 ZERO", "60", "30000", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-30.ZERO", "60", "170000", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-35 ZOOM", "60", "35000" , 240, 320, PREFIX_SERIAL_NUMBER_AA35);
-        m_analyzers << new AnalyzerParameters("AA-35 ZOOM", "60", "35000" , 240, 320, PREFIX_SERIAL_NUMBER_AA35_ZOOM);
-        m_analyzers << new AnalyzerParameters("AA-54", "100", "54000", 64, 133);
-        m_analyzers << new AnalyzerParameters("AA-55 ZOOM", "60", "55000", 240, 320, PREFIX_SERIAL_NUMBER_AA55);
-        m_analyzers << new AnalyzerParameters("AA-55 ZOOM", "60", "55000", 240, 320, PREFIX_SERIAL_NUMBER_AA55_ZOOM);
-        m_analyzers << new AnalyzerParameters("AA-170", "100", "170000", 64, 133);
-        m_analyzers << new AnalyzerParameters("AA-200", "100", "200000", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-230", "100", "230000", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-230PRO", "100", "230000", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-230 ZOOM", "100", "230000", 220, 290, PREFIX_SERIAL_NUMBER_AA230_ZOOM);
-        m_analyzers << new AnalyzerParameters("Stick 230", "100", "230000", 200, 200, PREFIX_SERIAL_NUMBER_AA230_STICK);
-        m_analyzers << new AnalyzerParameters("Stick Pro", "100", "600000", 220, 220, PREFIX_SERIAL_NUMBER_STICK_PRO);
-        m_analyzers << new AnalyzerParameters("AA-500", "100", "500000", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-520", "100", "520000", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-600", "100", "600000", 240, 320);
-        m_analyzers << new AnalyzerParameters("AA-650 ZOOM", "100", "650000", 240, 320, PREFIX_SERIAL_NUMBER_AA650_ZOOM);
-        m_analyzers << new AnalyzerParameters("AA-700 ZOOM", "100", "700000", 0, 0);
-        m_analyzers << new AnalyzerParameters("AA-1000", "100", "1000000", 240, 320);
-        m_analyzers << new AnalyzerParameters("AA-1400", "100", "1400000", 240, 320);
-        m_analyzers << new AnalyzerParameters("AA-1500 ZOOM", "100", "1500000", 240, 320, PREFIX_SERIAL_NUMBER_AA1500_ZOOM);
-        m_analyzers << new AnalyzerParameters("AA-2000 ZOOM", "100", "2000000", 480, 746, PREFIX_SERIAL_NUMBER_AA2000);
-        m_analyzers << new AnalyzerParameters("NanoVNA", "100", "1000000", 0, 0);
-        m_analyzers << new AnalyzerParameters("Zero II", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_ZEROII);
-        m_analyzers << new AnalyzerParameters("Touch", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH);
-        m_analyzers << new AnalyzerParameters("Touch E-Ink", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH_EINK);
+        int idx=0;
+        m_analyzers << new AnalyzerParameters(idx++, "NONE", "NONE", "NONE", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-30", "100", "30000", 64, 133);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-30 ZERO", "60", "30000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-30.ZERO", "60", "170000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-35 ZOOM", "60", "35000" , 240, 320, PREFIX_SERIAL_NUMBER_AA35);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-35 ZOOM", "60", "35000" , 240, 320, PREFIX_SERIAL_NUMBER_AA35_ZOOM);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-54", "100", "54000", 64, 133);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-55 ZOOM", "60", "55000", 240, 320, PREFIX_SERIAL_NUMBER_AA55);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-55 ZOOM", "60", "55000", 240, 320, PREFIX_SERIAL_NUMBER_AA55_ZOOM);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-170", "100", "170000", 64, 133);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-200", "100", "200000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-230", "100", "230000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-230PRO", "100", "230000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-230 ZOOM", "100", "230000", 220, 290, PREFIX_SERIAL_NUMBER_AA230_ZOOM);
+        m_analyzers << new AnalyzerParameters(idx++, "Stick 230", "100", "230000", 200, 200, PREFIX_SERIAL_NUMBER_AA230_STICK);
+        m_analyzers << new AnalyzerParameters(idx++, "Stick Pro", "100", "600000", 220, 220, PREFIX_SERIAL_NUMBER_STICK_PRO);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-500", "100", "500000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-520", "100", "520000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-600", "100", "600000", 240, 320);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-650 ZOOM", "100", "650000", 240, 320, PREFIX_SERIAL_NUMBER_AA650_ZOOM);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-700 ZOOM", "100", "700000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-1000", "100", "1000000", 240, 320);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-1400", "100", "1400000", 240, 320);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-1500 ZOOM", "100", "1500000", 240, 320, PREFIX_SERIAL_NUMBER_AA1500_ZOOM);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-2000 ZOOM", "100", "2000000", 480, 746, PREFIX_SERIAL_NUMBER_AA2000);
+        m_analyzers << new AnalyzerParameters(idx++, "NanoVNA", "100", "1000000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "Zero II", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_ZEROII);
+        m_analyzers << new AnalyzerParameters(idx++, "Touch", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH);
+        m_analyzers << new AnalyzerParameters(idx++, "Touch E-Ink", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH_EINK);
     }
 
     static QList<AnalyzerParameters*>& analyzers() { return m_analyzers; }
 };
+
+struct SelectionParameters
+{
+    QString name;
+    int modelIndex=-1;
+    ReDeviceInfo::InterfaceType type;
+    QString port;
+
+    static SelectionParameters selected;
+};
+
 #endif
 
 

@@ -3,8 +3,6 @@
 
 #include <QObject>
 #include <QDateTime>
-#include <analyzer/comanalyzer.h>
-#include <analyzer/hidanalyzer.h>
 #include "analyzer/nanovna_analyzer.h"
 #include <math.h>
 #include "analyzerparameters.h"
@@ -14,6 +12,14 @@
 #include <devinfo/redeviceinfo.h>
 #include <updatedialog.h>
 #include <crc32.h>
+
+#ifdef NEW_CONNECTION
+#include <analyzer/hid_analyzer.h>
+#include <analyzer/com_analyzer.h>
+#else
+#include <analyzer/hidanalyzer.h>
+#include <analyzer/comanalyzer.h>
+#endif
 
 #ifndef M_PI
 #define M_PI       3.14159265358979323846
@@ -30,15 +36,14 @@ public:
 
     QString getModelString(void);
     quint32 getModel(void);
-    quint32 getHidModel( void );
     void updateFirmware (QIODevice *fw);
     double getVersion() const;
     QString getVersionString() const;
     QString getRevision() const;
     bool checkFile(QString path);
-    bool openComPort(const QString& portName, quint32 portSpeed);
     void closeComPort();
-
+    void connectDevice();
+    ReDeviceInfo::InterfaceType connectionType() { return m_connectionType; }
     void setIsMeasuring (bool _isMeasuring);
 
     void setContinuos(bool isContinuos)
@@ -61,16 +66,26 @@ public:
     bool isMeasuring (void) const { return m_isMeasuring;}
     bool isNanovna(void) const { return m_nanovnaAnalyzerFound;}
 
-    hidAnalyzer * getHidAnalyzer() { return m_hidAnalyzer; }
-    comAnalyzer * getComAnalyzer() { return m_comAnalyzer; }
+#ifdef NEW_CONNECTION
+    HidAnalyzer* getHidAnalyzer() { return m_hidAnalyzer; }
+    ComAnalyzer* getComAnalyzer() { return m_comAnalyzer; }
+#else
+    hidAnalyzer* getHidAnalyzer() { return m_hidAnalyzer; }
+    comAnalyzer* getComAnalyzer() { return m_comAnalyzer; }
+#endif
     NanovnaAnalyzer* getNanovnaAnalyzer() { return m_NanovnaAnalyzer; }
-
-    void setAnalyzerModel (int model);
-    quint32 getAnalyzerModel (void) const { return m_analyzerModel;}
 
     void setComAnalyzerFound (bool found) {m_comAnalyzerFound = found;}
     void setHidAnalyzerFound (bool found) {m_hidAnalyzerFound = found;}
     void setNanovnaAnalyzerFound (bool found) {m_nanovnaAnalyzerFound = found;}
+
+    ReDeviceInfo::InterfaceType analyzerType() {
+        if (m_comAnalyzer != nullptr)
+            return ReDeviceInfo::Serial;
+        if (m_NanovnaAnalyzer != nullptr)
+            return ReDeviceInfo::NANO;
+        return ReDeviceInfo::HID;
+    }
 
     QString getSerialNumber(void) const;
     int getDots() { return m_dotsNumber; }
@@ -81,9 +96,14 @@ public:
 private:
 //    void send (char* byte);
 //    char read (void);
-
-    hidAnalyzer * m_hidAnalyzer=nullptr;
-    comAnalyzer * m_comAnalyzer=nullptr;
+#ifdef NEW_CONNECTION
+    HidAnalyzer* m_hidAnalyzer=nullptr;
+    ComAnalyzer* m_comAnalyzer=nullptr;
+    BaseAnalyzer* m_baseAnalyzer=nullptr;
+#else
+    hidAnalyzer* m_hidAnalyzer=nullptr;
+    comAnalyzer* m_comAnalyzer=nullptr;
+#endif
     NanovnaAnalyzer* m_NanovnaAnalyzer=nullptr;
 
     quint32 m_analyzerModel;
@@ -96,6 +116,7 @@ private:
     quint32 m_dotsNumber;
     bool m_autoCheckUpdate;
     bool m_getAnalyzerData = false;
+    ReDeviceInfo::InterfaceType m_connectionType = ReDeviceInfo::HID;
 
     Downloader *m_downloader;
     UpdateDialog *m_updateDialog;
@@ -175,16 +196,23 @@ public slots:
     void on_measureCalib(int dotsNumber);
     void setCalibrationMode(bool enabled);
     void on_stopMeasure();
-    void on_changedAutoDetectMode(bool state);
-    void on_changedSerialPort(QString portName);
     void slotFullInfo(QString str);
     bool needCheckForUpdate();
 
     void on_getLicenses();
     void on_generateLicence();
     void on_applyLicense(QString& _license);
-    void on_connectNanoNVA();
+
+    void on_connectNanoNVA(QString port);
     void on_disconnectNanoNVA();
+    void on_connectSerial(QString port);
+    void on_disconnectSerial();
+    void on_connectBluetooth(QString port);
+    void on_disconnectBluetooth();
+    void on_connectHid();
+    void on_disconnectHid();
+    void on_disconnectDevice();
+
     void sendStatistics();
 };
 

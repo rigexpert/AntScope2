@@ -170,9 +170,6 @@ private:
     int m_smithZoomState;
     int m_userZoomState;
 
-    bool m_autoDetectMode;
-    QString m_serialPort;
-
     QTranslator *m_qtLanguageTranslator;
 
     int m_languageNumber;
@@ -309,8 +306,6 @@ private slots:
     void on_firmwareAutoUpdateStateChanged( bool state);
     void on_antScopeAutoUpdateStateChanged( bool state);
     void on_1secTimerTick();
-    void on_changedAutoDetectMode(bool state);
-    void on_changedSerialPort(QString portName);
     void on_calibrationChanged();
     void on_SaveFile(int row, QString path);
     void on_mouseDoubleClick(QMouseEvent* e);

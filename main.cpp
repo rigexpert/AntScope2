@@ -78,11 +78,19 @@ void setAbsoluteFqMaximum()
     if (CustomAnalyzer::customized() && CustomAnalyzer::getCurrent() != nullptr) {
             fqMax = CustomAnalyzer::getCurrent()->maxFq().toInt();
     } else {
+#ifdef NEW_ANALYZER
+        foreach (AnalyzerParameters* param, AnalyzerParameters::analyzers()) {
+            QString str = param->maxFq();
+            int fq = str.toInt();
+            fqMax = qMax(fqMax, fq);
+        }
+#else
         for (int idx=1; idx<QUANTITY; idx++) {
             QString str = maxFq[idx];
             int fq = str.toInt();
             fqMax = qMax(fqMax, fq);
         }
+#endif
     }
     ABSOLUTE_MAX_FQ = fqMax;
 }

@@ -4,18 +4,16 @@
 #include <QThread>
 #include "analyzer.h"
 
-hidAnalyzer::hidAnalyzer(QObject *parent) : QObject(parent),
-      m_parseState(1),
+
+HidAnalyzer::HidAnalyzer(QObject *parent) : BaseAnalyzer(parent),
       m_chartTimer(nullptr),
-      m_ok(false),
-      m_isMeasuring(false),
-      m_isContinuos(false),
       m_analyzerPresent(false),
       m_bootMode(false),
       m_devices(nullptr),
       m_futureRefresh(nullptr),
       m_watcherRefresh(nullptr)
 {
+    m_type = ReDeviceInfo::HID;
     m_hidDevice = nullptr;
     m_checkTimer = new QTimer(this);
     QObject::connect(m_checkTimer, SIGNAL(timeout()), this, SLOT(checkTimerTick()));
@@ -25,30 +23,54 @@ hidAnalyzer::hidAnalyzer(QObject *parent) : QObject(parent),
     QObject::connect(m_chartTimer, SIGNAL(timeout()), this, SLOT(timeoutChart()));
     m_chartTimer->start(5);
 
-    m_sendTimer = new QTimer(this);
-    QObject::connect(m_sendTimer, SIGNAL(timeout()), this, SLOT(continueMeasurement()));
+    //m_sendTimer = new QTimer(this);
+    //QObject::connect(m_sendTimer, SIGNAL(timeout()), this, SLOT(continueMeasurement()));
 
     m_hidReadTimer = new QTimer(this);
     QObject::connect(m_hidReadTimer, SIGNAL(timeout()), this, SLOT(hidRead()));
     m_hidReadTimer->start(1);
 
-    QTimer::singleShot(1000, this, &hidAnalyzer::startResresh);
+    QTimer::singleShot(1000, this, &HidAnalyzer::startResresh);
 }
 
-void hidAnalyzer::startResresh()
+#if 0
+void HidAnalyzer::startResresh()
 {
-    //qDebug() << "hidAnalyzer::startResresh()";
+    qDebug() << "HidAnalyzer::startResresh()";
+    if (future != nullptr) {
+        watcher->disconnect();
+        delete watcher;
+        delete future;
+        watcher = nullptr;
+        future = nullptr;
+    }
+    future = new QFuture<struct hid_device_info*>;
+    watcher = new QFutureWatcher<struct hid_device_info*>;
+
+    QObject::connect(watcher, SIGNAL(finished()), this, SLOT(refreshReady()));
+
+    *future = QtConcurrent::run(this, &HidAnalyzer::refreshThreadStarted, this);
+    watcher->setFuture(*future);
+}
+#endif
+void HidAnalyzer::startResresh()
+{
+    return;
+    qDebug() << "HidAnalyzer::startResresh()";
     if (m_futureRefresh == nullptr) {
         m_futureRefresh = new QFuture<struct hid_device_info*>;
         m_watcherRefresh = new QFutureWatcher<struct hid_device_info*>;
         QObject::connect(m_watcherRefresh, SIGNAL(finished()), this, SLOT(refreshReady()));
     }
 
-    *m_futureRefresh = QtConcurrent::run(this, &hidAnalyzer::refreshThreadStarted);
+    *m_futureRefresh = QtConcurrent::run(this, &HidAnalyzer::refreshThreadStarted);
     m_watcherRefresh->setFuture(*m_futureRefresh);
 }
 
-hidAnalyzer::~hidAnalyzer()
+
+
+
+HidAnalyzer::~HidAnalyzer()
 {
     if (m_devices != nullptr) {
         hid_free_enumeration(m_devices);
@@ -83,72 +105,358 @@ hidAnalyzer::~hidAnalyzer()
         delete m_hidReadTimer;
         m_hidReadTimer = nullptr;
     }
-    closeHid();
+    disconnect();
 }
 
-QString hidAnalyzer::getVersion(void) const
-{
-    return m_version;
-}
-
-QString hidAnalyzer::getRevision() const
-{
-    return m_revision;
-}
-
-QString hidAnalyzer::getSerial(void) const
-{
-    return m_serialNumber;
-}
-
-void hidAnalyzer::nonblocking (int nonblock)
+void HidAnalyzer::nonblocking (int nonblock)
 {
     hid_set_nonblocking(m_hidDevice, nonblock);
 }
 
-bool hidAnalyzer::searchAnalyzer(bool arrival)
+#ifndef NEW_ANALYZER
+bool HidAnalyzer::searchAnalyzer(bool arrival)
 {
     //qDebug() << "HidAnalyzer::searchAnalyzer";
     bool result = false;
     if(arrival)//add device
     {
-        struct hid_device_info *devs=nullptr, *cur_dev=nullptr;
+        struct hid_device_info *devs, *cur_dev;
+
         QMutexLocker locker(&m_mutexSearch);
         devs = m_devices;
         if (devs == nullptr)
             return false;
-        AnalyzerParameters* analyzer = nullptr;
 
         cur_dev = devs;
-        for(;;)
-        {
-            if(cur_dev == nullptr)
-              break;
 
+        for(int i = 0; i < 100; i++)
+        {
+            if(!cur_dev)
+            {
+              break;
+            }
             if( cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID)
             {
                 QString number = QString::fromWCharArray(cur_dev->serial_number);
+//                if (number.isEmpty()) {
+//                    number = "165000011";
+//                }
                 number.remove(4,5);
-                int prefix = number.toInt();
-                analyzer = AnalyzerParameters::byPrefix(prefix);
-                if(analyzer == nullptr)
-                    continue;
-
-                if (analyzer->prefix() == prefix) {
+                int serialNumber = number.toInt();
+                if((serialNumber == PREFIX_SERIAL_NUMBER_AA35) ||
+                   (serialNumber == PREFIX_SERIAL_NUMBER_AA35_ZOOM))
+                {
                     m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
-                    result = connectHid(RE_VID, RE_PID);
-                    if (result) {
-                        m_analyzerPresent = true;
-                        AnalyzerParameters::setCurrent(analyzer);
-                        emit analyzerFound(analyzer->index());
-                        return true;
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
                     }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-35 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_AA55) ||
+                         (serialNumber == PREFIX_SERIAL_NUMBER_AA55_ZOOM))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-55 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA230_ZOOM)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-230 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA650_ZOOM)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-650 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA1500_ZOOM)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-1500 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA230_STICK)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Stick 230")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_STICK_PRO)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Stick Pro")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }else if(serialNumber == PREFIX_SERIAL_NUMBER_AA2000)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-2000 ZOOM")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }
+                else if(serialNumber == PREFIX_SERIAL_NUMBER_ZEROII)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Zero II")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }
+                else if(serialNumber == PREFIX_SERIAL_NUMBER_TOUCH)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Touch")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }
+                else if(serialNumber == PREFIX_SERIAL_NUMBER_TOUCH_EINK)
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_VID, RE_PID);
+                    result = true;
+                    if(!result)
+                    {
+                        return false;
+                    }
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Touch E-Ink")
+                        {
+                            m_analyzerModel = i;
+                            emit analyzerFound(i);
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }else if((cur_dev->vendor_id == RE_BOOT_VID) && (cur_dev->product_id == RE_BOOT_PID))
+            {
+                QString number = QString::fromWCharArray(cur_dev->serial_number);
+                number.remove(4,5);
+                int serialNumber = number.toInt();
+                if((serialNumber == PREFIX_SERIAL_NUMBER_AA35) ||
+                   (serialNumber == PREFIX_SERIAL_NUMBER_AA35_ZOOM))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-35 ZOOM")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_AA55) ||
+                         (serialNumber == PREFIX_SERIAL_NUMBER_AA55_ZOOM))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-55 ZOOM")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_AA2000))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "AA-2000 ZOOM")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_ZEROII))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Zero II")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_TOUCH))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Touch")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
+                }else if((serialNumber == PREFIX_SERIAL_NUMBER_TOUCH_EINK))
+                {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    connect(RE_BOOT_VID, RE_BOOT_PID);
+                    for(quint32 i = 0; i < QUANTITY; ++i)
+                    {
+                        if(names[i] == "Touch E-Ink")
+                        {
+                            m_bootMode = true;
+                            m_analyzerModel = i;
+                            break;
+                        }
+                    }
+                    break;
                 }
             }
             cur_dev = cur_dev->next;
-        }
-        return false;
-    } else { // remove device
+        }        
+        //hid_free_enumeration(devs);
+        return result;
+    }else//delete device
+    {
         struct hid_device_info *devs, *cur_dev;
         if (!m_mutexSearch.tryLock())
             return false;
@@ -173,16 +481,90 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
         m_mutexSearch.unlock();
 
         m_bootMode = false;
-        AnalyzerParameters::setCurrent(nullptr);
-        m_analyzerPresent = false;
-
+        m_analyzerModel = 0;
         emit analyzerDisconnected();
-        closeHid();
+        disconnect();
+
+        return false;
+    }
+}
+#else
+bool HidAnalyzer::searchAnalyzer(bool arrival)
+{
+    return false;
+
+    //qDebug() << "HidAnalyzer::searchAnalyzer";
+    bool result = false;
+    if(arrival)//add device
+    {
+        struct hid_device_info *devs=nullptr, *cur_dev=nullptr;
+        QMutexLocker locker(&m_mutexSearch);
+        devs = m_devices;
+        if (devs == nullptr)
+            return false;
+
+        AnalyzerParameters* analyzer = AnalyzerParameters::byIndex(SelectionParameters::selected.modelIndex);
+        if (analyzer == nullptr)
+            return false;
+
+        cur_dev = devs;
+        for(;;)
+        {
+            if(cur_dev == nullptr)
+              break;
+
+            if( cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID)
+            {
+                QString number = QString::fromWCharArray(cur_dev->serial_number);
+                number.remove(4,5);
+                int prefix = number.toInt();
+                if (analyzer->prefix() == prefix) {
+                    m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                    result = connect(RE_VID, RE_PID);
+                    if (result) {
+                        emit analyzerFound(analyzer->index());
+                        return true;
+                    }
+                }
+            }
+            cur_dev = cur_dev->next;
+        }
+        return false;
+    } else {
+        struct hid_device_info *devs, *cur_dev;
+        if (!m_mutexSearch.tryLock())
+            return false;
+
+        devs = m_devices;
+        if (devs == nullptr) {
+            m_mutexSearch.unlock();
+            return false;
+        }
+
+        cur_dev = devs;
+        while (cur_dev != nullptr) {
+            if (QString::fromWCharArray(cur_dev->serial_number) == m_serialNumber) {
+                if (cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID ||
+                    cur_dev->vendor_id == RE_BOOT_VID && cur_dev->product_id == RE_BOOT_PID ) {
+                    m_mutexSearch.unlock();
+                    return false;
+                }
+            }
+            cur_dev = cur_dev->next;
+        }
+        m_mutexSearch.unlock();
+
+        m_bootMode = false;
+        m_analyzerModel = 0;
+        emit analyzerDisconnected();
+        disconnect();
     }
     return false;
 }
 
-bool hidAnalyzer::connectHid(quint32 vid, quint32 pid)
+#endif
+
+bool HidAnalyzer::connect(quint32 vid, quint32 pid)
 {
     if(m_hidDevice != nullptr)
     {
@@ -208,7 +590,7 @@ bool hidAnalyzer::connectHid(quint32 vid, quint32 pid)
     }
 }
 
-bool hidAnalyzer::closeHid(void)
+bool HidAnalyzer::disconnect(void)
 {
     if(m_hidDevice != nullptr)
     {
@@ -222,35 +604,40 @@ bool hidAnalyzer::closeHid(void)
     }
 }
 
-void hidAnalyzer::checkTimerTick ()
+void HidAnalyzer::checkTimerTick ()
 {
-    searchAnalyzer(!m_analyzerPresent);
+    // TODO
+    //searchAnalyzer(m_analyzerModel != 0);
+    // TODO
 }
 
-void hidAnalyzer::on_screenshotComplete()
+/*
+void HidAnalyzer::on_screenshotComplete()
 {
     m_parseState = WAIT_NO;
     m_isMeasuring = false;
 }
 
-void hidAnalyzer::on_measurementComplete()
+void HidAnalyzer::on_measurementComplete()
 {
+    //m_isMeasuring = false;
     if(!m_isContinuos)
     {
         setIsMeasuring(false);
     }
-}
 
-void hidAnalyzer::sendData(QString data)
+}
+*/
+qint64 HidAnalyzer::sendData(QString data)
 {
     if(m_hidDevice == nullptr)
     {
-        return;
+        return 0;
     }
-    //qDebug() << "hidAnalyzer::sendData: " << data;
+    qDebug() << "HidAnalyzer::sendData: " << data;
     unsigned char buf[REPORT_SIZE] = {0};
     int size = data.length();
-    if(size)
+    if(size != 0)
     {
         buf[0] = ANTSCOPE_REPORT;
         buf[1] = (unsigned char)size;
@@ -258,16 +645,18 @@ void hidAnalyzer::sendData(QString data)
         {
             buf[i+2] = data[i].toLatin1();
         }
-        hid_write(m_hidDevice, buf, REPORT_SIZE);
+        return hid_write(m_hidDevice, buf, REPORT_SIZE);
     }
+    return 0;
 }
-
-void hidAnalyzer::startMeasureOneFq(qint64 fqFrom, int dotsNumber)
+/*
+void HidAnalyzer::startMeasureOneFq(qint64 fqFrom, int dotsNumber)
 {
     startMeasure(fqFrom, fqFrom, dotsNumber);
 }
-
-void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
+*/
+/*
+void HidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
 {
     static qint32 state = 1;
     static QString FQ;
@@ -281,7 +670,7 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
         state = 1;
     }
 
-    //qDebug() << "hidAnalyzer::startMeasure:" << fqFrom << fqTo << dotsNumber << "state" << state << "m_ok" << m_ok;
+    qDebug() << "hidAnalyzer::startMeasure:" << fqFrom << fqTo << dotsNumber << "state" << state << "m_ok" << m_ok;
     switch(state)
     {
     case 1:
@@ -327,19 +716,20 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
         break;
     }
 }
-
-void hidAnalyzer::continueMeasurement()
+*/
+/*
+void HidAnalyzer::continueMeasurement()
 {
     startMeasure(0,0,0);
 }
-
-void hidAnalyzer::timeoutChart()
+*/
+void HidAnalyzer::timeoutChart()
 {
     quint32 len;
     QStringList stringList;
     QString str;
 
-    if (!m_isMeasuring)
+    if (!isMeasuring())
     {
         m_stringList.clear();
         return;
@@ -398,7 +788,7 @@ void hidAnalyzer::timeoutChart()
     }
 }
 
-void hidAnalyzer::timeoutChartUser()
+void HidAnalyzer::timeoutChartUser()
 {
     quint32 len = m_stringList.length();
     if(len >=1)
@@ -448,7 +838,7 @@ void hidAnalyzer::timeoutChartUser()
 }
 
 
-void hidAnalyzer::hidRead (void)
+void HidAnalyzer::hidRead (void)
 {
     if(m_hidDevice == nullptr)
     {
@@ -473,9 +863,8 @@ void hidAnalyzer::hidRead (void)
     m_mutexRead.unlock();
 }
 
-qint32 hidAnalyzer::parse (QByteArray arr)
+qint32 HidAnalyzer::parse (QByteArray arr)
 {
-    //qDebug() << "hidAnalyzer::parse() " << arr;
     quint32 retVal = 0;
     if (getParseState() == WAIT_CALFIVEKOHM_START)
     {
@@ -616,7 +1005,7 @@ qint32 hidAnalyzer::parse (QByteArray arr)
                     // skip FULLINFO field `NAME` to keep version obtained in VER
                     continue;
                 }
-
+#ifdef NEW_ANALYZER
                 AnalyzerParameters* param = AnalyzerParameters::current();
                 if (param != nullptr) {
                     QString analyzer = param->name();
@@ -650,10 +1039,46 @@ qint32 hidAnalyzer::parse (QByteArray arr)
                         break;
                     }
                 }
+#else
+                for(quint32 i = QUANTITY-1; i > 0; i--)
+                {
+                    QString analyzer = names[i];
+                    int namePos = str.indexOf(analyzer);
+                    if(namePos >= 0 )
+                    {
+                        int pos = analyzer.length() + 1;
+                        if(str.length() >= pos+3)
+                        {
+                            m_version.clear();
+                            m_version.append(str.at(pos));
+                            m_version.append(str.at(pos+1));
+                            m_version.append(str.at(pos+2));
+                        }
+                        pos = str.indexOf("REV ");
+                        if(pos >= 0)
+                        {
+                            //qDebug() << "FULLINFO: " << str;
+                            pos += 4;
+                            int revLen = str.length() - pos;
+                            m_revision.clear();
+                            for(int t = 0; t < revLen; ++t)
+                            {
+                                m_revision.append(str.at(pos+t));
+                            }
+                        }else
+                        {
+                            m_revision.clear();
+                            m_revision.append('1');
+                        }
+                        break;
+                    }
+                }
+#endif
             }else if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA)
             {
                 m_stringList.append(str);
                 str.clear();
+                //qDebug() << "hid::parse" << m_stringList;
             }else if(m_parseState == WAIT_ANALYZER_DATA)
             {
                 emit analyzerDataStringArrived(str);
@@ -664,34 +1089,34 @@ qint32 hidAnalyzer::parse (QByteArray arr)
     }
     return 0;
 }
-
-void hidAnalyzer::getAnalyzerData()
+/*
+void HidAnalyzer::getAnalyzerData()
 {
     m_parseState = WAIT_ANALYZER_DATA;
     m_incomingBuffer.clear();
     sendData("FLASHH\r");
 }
 
-void hidAnalyzer::getAnalyzerData(QString number)
+void HidAnalyzer::getAnalyzerData(QString number)
 {
     m_parseState = WAIT_DATA;
     m_incomingBuffer.clear();
     QString str = "FLASHFRX" + number + "\r";
     sendData(str);
 }
-
-void hidAnalyzer::makeScreenshot()
+*/
+void HidAnalyzer::makeScreenshot()
 {
     m_parseState = WAIT_SCREENSHOT_DATA;
     nonblocking(true);
     m_incomingBuffer.clear();
     QString str = "screenshot\r";
-    //qDebug() << "========== hidAnalyzer::makeScreenshot()";
+    //qDebug() << "========== HidAnalyzer::makeScreenshot()";
     sendData(str);
     //QThread::currentThread()->msleep(100);
 }
 
-bool hidAnalyzer::waitAnswer()
+bool HidAnalyzer::waitAnswer()
 {
     int times = 0;
     unsigned char buff[65];
@@ -723,14 +1148,14 @@ bool hidAnalyzer::waitAnswer()
     return false;
 }
 
-void hidAnalyzer::preUpdate ()
+void HidAnalyzer::preUpdate ()
 {
     hid_close(m_hidDevice);
     m_hidDevice = nullptr;
     searchAnalyzer(true);
 }
 
-bool hidAnalyzer::update (QIODevice *fw)
+bool HidAnalyzer::update (QIODevice *fw)
 {
     m_hidReadTimer->stop();
     if(!m_bootMode)
@@ -844,27 +1269,23 @@ bool hidAnalyzer::update (QIODevice *fw)
     return res;
 }
 
-void hidAnalyzer::stopMeasure()
+/*
+void HidAnalyzer::stopMeasure()
 {
     sendData("off\r");
     m_isMeasuring = false;
 }
-
-void hidAnalyzer::setIsMeasuring (bool isMeasuring)
-{
-    m_isMeasuring = isMeasuring;
-}
-
-struct hid_device_info* hidAnalyzer::refreshThreadStarted()
+*/
+struct hid_device_info* HidAnalyzer::refreshThreadStarted()
 {
     struct hid_device_info *devs = hid_enumerate(0x0, 0x0);
     return devs;
 }
 
-void hidAnalyzer::refreshReady()
+void HidAnalyzer::refreshReady()
 {
-    //qDebug() << "hidAnalyzer::refreshReady()";
-    QTimer::singleShot(1000, this, &hidAnalyzer::startResresh);
+    qDebug() << "HidAnalyzer::refreshReady()";
+    QTimer::singleShot(1000, this, &HidAnalyzer::startResresh);
 
     struct hid_device_info* devs = m_futureRefresh->result();
     if (m_mutexSearch.tryLock()) {
@@ -876,7 +1297,7 @@ void hidAnalyzer::refreshReady()
     }
 }
 
-void hidAnalyzer::applyLicense(QString _license)
+void HidAnalyzer::applyLicense(QString _license)
 {
     m_license = _license;
     setParseState(WAIT_LICENSE_APPLY1);
@@ -884,11 +1305,49 @@ void hidAnalyzer::applyLicense(QString _license)
     sendData(cmd);
 }
 
-QString hidAnalyzer::hidError(hid_device* _device)
+QString HidAnalyzer::hidError(hid_device* _device)
 {
     const wchar_t* perr;
     perr = hid_error(_device);
     return QString::fromWCharArray(perr);
 }
 
+bool HidAnalyzer::connectAnalyzer()
+{
+    AnalyzerParameters* analyzer = AnalyzerParameters::byIndex(SelectionParameters::selected.modelIndex);
+    if (analyzer == nullptr)
+        return false;
 
+    struct hid_device_info *devs = HidAnalyzer::refreshThreadStarted();
+    if (devs == nullptr)
+        return false;
+
+    struct hid_device_info *cur_dev = devs;
+    for(;;)
+    {
+        if(cur_dev == nullptr)
+          break;
+
+        if( cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID)
+        {
+            QString number = QString::fromWCharArray(cur_dev->serial_number);
+            number.remove(4,5);
+            int prefix = number.toInt();
+            if (analyzer->prefix() == prefix) {
+                m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
+                bool result = connect(RE_VID, RE_PID);
+                if (result) {
+                    emit analyzerFound(analyzer->index());
+                    return true;
+                }
+            }
+        }
+        cur_dev = cur_dev->next;
+    }
+    return false;
+}
+
+void HidAnalyzer::disconnectAnalyzer()
+{
+
+}

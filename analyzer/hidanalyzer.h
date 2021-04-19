@@ -59,7 +59,6 @@ public:
     QString getRevision(void) const;
     void setRevision(QString rev){ m_revision = rev;}
     QString getSerial(void) const;
-    int getModel(void) const;
     void nonblocking (int nonblock);
     bool update(QIODevice *fw);
     void setIsMeasuring (bool isMeasuring);
@@ -73,13 +72,14 @@ public:
     void setParseState(int _state) { m_parseState=_state; } // analyzerparameters.h: enum parse{}
     int getParseState() { return m_parseState; }
     void applyLicense(QString _license);
+    QString hidError(hid_device* _device);
+    bool closeHid(void);
 
 private:
     hid_device *m_hidDevice;
     QString m_serialNumber;
     quint32 m_parseState;
     QTimer *m_checkTimer;
-    quint32 m_analyzerModel;
     QTimer * m_chartTimer;
     QTimer * m_sendTimer;
     QTimer * m_hidReadTimer;
@@ -103,12 +103,7 @@ private:
     struct hid_device_info* m_devices;
     QThread* m_refreshThread;
 
-//    unsigned char m_inputBuffer[INPUT_BUFFER_SIZE];
-//    int m_inputBufferHead;
-//    int m_inputBufferTail;
-
-    bool connect(quint32 vid, quint32 pid);
-    bool disconnect(void);
+    bool connectHid(quint32 vid, quint32 pid);
     qint32 parse (QByteArray arr);
     bool waitAnswer();
     QFuture<struct hid_device_info*> *m_futureRefresh;
@@ -126,7 +121,6 @@ signals:
     void updatePercentChanged(int);
     void signalFullInfo(QString str);
     void signalMeasurementError();
-    void signalOk();
 
 public slots:
     bool searchAnalyzer(bool arrival);

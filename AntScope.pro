@@ -14,14 +14,23 @@ QT       += opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-#VER_ARG=1.1.5.0
-DEFINES += ANTSCOPE2VER='\\"1.1.5.0\\"'
+DEFINES += ANTSCOPE2VER='\\"1.1.5.1\\"'
 DEFINES += OLD_TDR
+
+#-------------------------------------------------
+# under construction
+
+# add connection dialog
+#DEFINES += NEW_CONNECTION
+
+# improve analyzer selection
+DEFINES += NEW_ANALYZER
+
+#-------------------------------------------------
+
 
 TARGET = AntScope2
 
-#CONFIG += debug
-#CONFIG -= release
 
 TRANSLATIONS += QtLanguage.ts
 TRANSLATIONS += QtLanguage_uk.ts
@@ -92,7 +101,9 @@ SOURCES += main.cpp\
     tdrprogressdialog.cpp \
     editbandsdialog.cpp \
     AA55BTPacket.cpp \
-    marqueelabel.cpp
+    marqueelabel.cpp \
+    selectdevicedialog.cpp \
+    analyzer/baseanalyzer.cpp
 
 HEADERS  += mainwindow.h \
         qcustomplot.h \
@@ -141,7 +152,9 @@ HEADERS  += mainwindow.h \
     tdrprogressdialog.h \
     editbandsdialog.h \
     AA55BTPacket.h \
-    marqueelabel.h
+    marqueelabel.h \
+    selectdevicedialog.h \
+    analyzer/baseanalyzer.h
 
 # TODO these files dont exist and are not generated
 #        ui_mainwindow.h \
@@ -163,10 +176,24 @@ FORMS    += mainwindow.ui \
     ProgressDlg.ui \
     licensesdialog.ui \
     tdrprogressdialog.ui \
-    editbandsdialog.ui
+    editbandsdialog.ui \
+    selectdevicedialog.ui
 
 INCLUDEPATH +=  $$PWD/analyzer \
             $$PWD/analyzer/updater
+
+contains(DEFINES, NEW_CONNECTION) {
+SOURCES -= analyzer/hidanalyzer.cpp
+HEADERS -= analyzer/hidanalyzer.h
+SOURCES += analyzer/hid_analyzer.cpp
+HEADERS += analyzer/hid_analyzer.h
+
+SOURCES -= analyzer/comanalyzer.cpp
+HEADERS -= analyzer/comanalyzer.h
+SOURCES += analyzer/com_analyzer.cpp
+HEADERS += analyzer/com_analyzer.h
+}
+
 
 win32{
     SOURCES += analyzer/usbhid/hidapi/windows/hid.c
@@ -227,3 +254,4 @@ DISTFILES += \
 
 RESOURCES += \
     res.qrc
+

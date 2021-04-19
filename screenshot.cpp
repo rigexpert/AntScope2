@@ -15,9 +15,18 @@ Screenshot::Screenshot(QWidget *parent, int _model, int height, int width) :
     m_lcdWidth = width;
 
     m_popUp = new PopUp();
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    QString name = param == nullptr ? "" : param->name();
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : name;
+
+    //qDebug() << "Screenshot::Screenshot(wd, ht, model, name)" << m_lcdWidth << m_lcdHeight << m_analyzerModel << name;
+
+#else
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
-
+#endif
     if(     (model == "AA-30") ||
             (model == "AA-54")||
             (model == "AA-170")    )
@@ -50,8 +59,15 @@ void Screenshot::paintEvent(QPaintEvent *)
     QPainter painter(this);
 
     int biasx,biasy;
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    QString name = param == nullptr ? "" : param->name();
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : name;
+#else
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#endif
 
     QRectF r;
     if(     (model == "AA-30") ||
@@ -108,8 +124,15 @@ void Screenshot::savePDF(QString path, QString comment)
     printer.setPageSize(QPrinter::A4);
     printer.setOrientation(QPrinter::Portrait);
 
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    QString name = param == nullptr ? "" : param->name();
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : name;
+#else
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#endif
     bool full = model == "AA-2000 ZOOM";
 
     QRect rect = printer.pageRect();
@@ -164,8 +187,15 @@ void Screenshot::on_newData(QByteArray data)
         m_inputData.append((unsigned char)data.at(i));
     }
 
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    QString name = param == nullptr ? "" : param->name();
+    QString model = CustomAnalyzer::customized() ?
+                CustomAnalyzer::currentPrototype() : name;
+#else
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#endif
 
     if(     (model == "AA-30") ||
             (model == "AA-54")||
@@ -280,9 +310,9 @@ void Screenshot::on_newData(QByteArray data)
         percent = 100;
 
 
-    qDebug() << "screen shot: " << percent << "%, count"
-             << m_imageVector.length() << ", estimated"
-             << m_lcdHeight << "x" << m_lcdWidth << m_lcdHeight*m_lcdWidth;
+//    qDebug() << "screen shot: " << percent << "%, count"
+//             << m_imageVector.length() << ", estimated"
+//             << m_lcdHeight << "x" << m_lcdWidth << m_lcdHeight*m_lcdWidth;
 
 
     ui->progressBar->setValue(percent);
@@ -313,7 +343,7 @@ void Screenshot::on_newData(QByteArray data)
             repaint();
         }
     } else if (model == "Stick 230") {
-        //qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
+        qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
         {
             int x,y;

@@ -52,10 +52,10 @@ Calibration::~Calibration()
     m_settings->endGroup();
 }
 
-void Calibration::start(void)
+void Calibration::start(bool force)
 {
     QString notChoosed = tr("Not chosen");
-    if(m_OSLCalibrationPerformed)
+    if(force || m_OSLCalibrationPerformed)
     {
         if(m_openCalibFilePath != "")
         {

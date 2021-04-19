@@ -70,8 +70,14 @@ void TDRProgressDialog::on_startButton()
     const int iTdrFftSize2 = 8192;
     const double coeff = 1.0/4*SPEEDOFLIGHT;
 
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    qint64 minFq_ = param == nullptr ? 100000 : param->minFq().toULongLong()*1000;
+    qint64 maxFq_ = param == nullptr ? ABSOLUTE_MAX_FQ : param->maxFq().toULongLong()*1000;
+#else
     qint64 minFq_ = minFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
     qint64 maxFq_ = maxFq[m_analyzer->getAnalyzerModel()].toULongLong()*1000;
+#endif
 
     double resolution = cableLength * 1000000.0/iTdrFftSize;
     double fqMax = coeff * m_cableVelFactor / iTdrFftSize2 * (dots-1) / resolution;

@@ -1,4 +1,4 @@
-#include "comanalyzer.h"
+#include "com_analyzer.h"
 #include "customanalyzer.h"
 #include <qserialport.h>
 #include "analyzer.h"
@@ -36,33 +36,30 @@ static const unsigned char crc8_table[256] = {
 
 
 
-comAnalyzer::comAnalyzer(QObject *parent) : QObject(parent),
-    m_parseState(1),
-    m_analyzerModel(0),
+ComAnalyzer::ComAnalyzer(QObject *parent) : BaseAnalyzer(parent),
     m_chartTimer(NULL),
-    m_isMeasuring(false),
-    m_isContinuos(false),
-    m_ok(false),
+    //m_ok(false),
     m_updateOK(false),
     m_updateErr(0),
     m_analyzerPresent(false),
     m_autoDetectMode(true)
 {
+    m_type = ReDeviceInfo::Serial;
     m_comPort = new QSerialPort(this);
 
     m_chartTimer = new QTimer(this);
     connect(m_chartTimer, SIGNAL(timeout()), this, SLOT(timeoutChart()));
     m_chartTimer->start(10);
 
-    m_sendTimer = new QTimer(this);
-    connect(m_sendTimer, SIGNAL(timeout()), this, SLOT(continueMeasurement()));
+    //m_sendTimer = new QTimer(this);
+    //connect(m_sendTimer, SIGNAL(timeout()), this, SLOT(continueMeasurement()));
     QTimer::singleShot(10000, this, SLOT(searchAnalyzer()));
 
     m_pingTimer = new QTimer(this);
-    connect(m_pingTimer, &QTimer::timeout, this, &comAnalyzer::handlePing);
+    connect(m_pingTimer, &QTimer::timeout, this, &ComAnalyzer::handlePing);
 }
 
-comAnalyzer::~comAnalyzer()
+ComAnalyzer::~ComAnalyzer()
 {
     m_chartTimer->stop();
     delete m_chartTimer;
@@ -76,22 +73,7 @@ comAnalyzer::~comAnalyzer()
     m_comPort = NULL;
 }
 
-QString comAnalyzer::getVersion() const
-{
-    return m_version;
-}
-
-QString comAnalyzer::getRevision() const
-{
-    return m_revision;
-}
-
-QString comAnalyzer::getSerial() const
-{
-    return m_serialNumber;
-}
-
-bool comAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
+bool ComAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
 {
     if(m_comPort->isOpen())
     {
@@ -105,22 +87,22 @@ bool comAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
     m_comPort->setParity(QSerialPort::NoParity);
     m_comPort->setStopBits(QSerialPort::OneStop);
 
-    connect(m_comPort, SIGNAL(readyRead()), this, SLOT(dataArrived()));
     bool result = m_comPort->open(QSerialPort::ReadWrite);
     if (!result) {
         QString str = m_comPort->errorString();
-        qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
+        qDebug() << "ComAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
         // TODO show dialog
         // ...
     }
-//    else {
-//        qDebug() << "comAnalyzer::openComPort: " << portName << (m_comPort ? " opened" : "NOT opened");
-//    }
+    else {
+        qDebug() << "ComAnalyzer::openComPort: " << portName << (m_comPort ? " opened" : "NOT opened");
+        connect(m_comPort, SIGNAL(readyRead()), this, SLOT(dataArrived()));
+    }
     return result;
 }
 
 
-void comAnalyzer::closeComPort()
+void ComAnalyzer::closeComPort()
 {
     if(m_comPort != NULL)
     {
@@ -135,23 +117,26 @@ void comAnalyzer::closeComPort()
     g_bAA55modeNewProtocol = false;
 }
 
-void comAnalyzer::dataArrived()
+void ComAnalyzer::dataArrived()
 {
     m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
     QByteArray ar = m_comPort->readAll();
     m_incomingBuffer += ar;
 
-    //qDebug() << "com dataArrived: " << m_lastReadTimeMS << QString::fromLatin1(ar);
+    qDebug() << "com dataArrived: " << m_lastReadTimeMS << QString::fromLatin1(ar);
 
     int count = parse(m_incomingBuffer);
     m_incomingBuffer.remove(0, count);
 }
 
-qint32 comAnalyzer::parse (QByteArray arr)
+qint32 ComAnalyzer::parse (QByteArray arr)
 {
     quint32 retVal = 0;
-    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getName();
-
+#ifndef NEW_ANALYZER
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString model = AnalyzerParameters::getName();
+#endif
     if (getParseState() == WAIT_LICENSE_LIST)
     {
         int pos = arr.indexOf("\r\n");
@@ -307,7 +292,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
                     emit signalMeasurementError();
                 continue;
             }
-            if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA || m_parseState == WAIT_SLOT_DATA)
+            if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA)
             {
                 m_stringList.append(str);
                 str.clear();
@@ -327,55 +312,112 @@ qint32 comAnalyzer::parse (QByteArray arr)
                     emit signalFullInfo(str);
                     continue;
                 }
-
-
-                AnalyzerParameters* param = AnalyzerParameters::byVER(str);
-                if (param == nullptr)
-                    return retVal;
-                AnalyzerParameters::setCurrent(param);
-                QString analyzer = param->name();
-                int namePos = str.indexOf(analyzer);
-                if(namePos >= 0 )
-                {
-                    if (!m_analyzerPresent)
+#ifdef NEW_ANALYZER
+                AnalyzerParameters* param = AnalyzerParameters::current();
+                if (param != nullptr) {
+                    QString analyzer = param->name();
+                    int namePos = str.indexOf(analyzer);
+                    if(namePos >= 0 )
                     {
-                        int pos = analyzer.length() + 1;
-                        if(str.length() >= pos+3)
+                        if(m_analyzerModel != 0)
                         {
-                            m_version.clear();
-                            m_version.append(str.at(pos));
-                            m_version.append(str.at(pos+1));
-                            m_version.append(str.at(pos+2));
-                        }
-                        pos = str.indexOf("REV ");
-                        if(pos >= 0)
-                        {
-                            pos += 4;
-                            int revLen = str.length() - pos;
-                            m_revision.clear();
-                            for(int t = 0; t < revLen; ++t)
-                            {
-                                m_revision.append(str.at(pos+t));
-                            }
+                            m_analyzerPresent = true;
                         }else
                         {
-                            m_revision.clear();
-                            m_revision.append('1');
-                        }
-                        if (analyzer.contains("AA-55")) {
-                            m_bAA55mode = true;
-                            bool ok = true;
-                            int ver = m_version.toInt(&ok);
-                            if (ok && ver > 125) {
-                                m_bAA55modeNewProtocol = true;
-                                g_bAA55modeNewProtocol = true;
+                            // ??? SKIP PING response
+                            // if (m_analyzerModel == idx)
+                            //    break;
+                            //m_analyzerModel = idx;
+                            int pos = analyzer.length() + 1;
+                            if(str.length() >= pos+3)
+                            {
+                                m_version.clear();
+                                m_version.append(str.at(pos));
+                                m_version.append(str.at(pos+1));
+                                m_version.append(str.at(pos+2));
                             }
+                            pos = str.indexOf("REV ");
+                            if(pos >= 0)
+                            {
+                                pos += 4;
+                                int revLen = str.length() - pos;
+                                m_revision.clear();
+                                for(int t = 0; t < revLen; ++t)
+                                {
+                                    m_revision.append(str.at(pos+t));
+                                }
+                            }else
+                            {
+                                m_revision.clear();
+                                m_revision.append('1');
+                            }
+                            if (analyzer.contains("AA-55")) {
+                                m_bAA55mode = true;
+                                bool ok = true;
+                                int ver = m_version.toInt(&ok);
+                                if (ok && ver > 125) {
+                                    m_bAA55modeNewProtocol = true;
+                                    g_bAA55modeNewProtocol = true;
+                                }
+                            }
+                            emit analyzerFound (m_analyzerModel);
+                            //QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
                         }
-                        m_analyzerModel = param->index();
-                        m_analyzerPresent = true;
-                        emit analyzerFound (m_analyzerModel);
                     }
                 }
+#else
+                for(quint32 idx = QUANTITY-1; idx > 0; idx--)
+                {
+                    if(str.indexOf(names[idx]) >= 0 )
+                    {
+                        if(m_analyzerModel != 0)
+                        {
+                            m_analyzerPresent = true;
+                        }else
+                        {
+                            // ??? SKIP PING response
+                            // if (m_analyzerModel == idx)
+                            //    break;
+                            m_analyzerModel = idx;
+                            int pos = names[idx].length() + 1;
+                            if(str.length() >= pos+3)
+                            {
+                                m_version.clear();
+                                m_version.append(str.at(pos));
+                                m_version.append(str.at(pos+1));
+                                m_version.append(str.at(pos+2));
+                            }
+                            pos = str.indexOf("REV ");
+                            if(pos >= 0)
+                            {
+                                pos += 4;
+                                int revLen = str.length() - pos;
+                                m_revision.clear();
+                                for(int t = 0; t < revLen; ++t)
+                                {
+                                    m_revision.append(str.at(pos+t));
+                                }
+                            }else
+                            {
+                                m_revision.clear();
+                                m_revision.append('1');
+                            }
+                            if (names[m_analyzerModel].contains("AA-55")) {
+                                m_bAA55mode = true;
+                                bool ok = true;
+                                int ver = m_version.toInt(&ok);
+                                if (ok && ver > 125) {
+                                    m_bAA55modeNewProtocol = true;
+                                    g_bAA55modeNewProtocol = true;
+                                }
+                            }
+                            emit analyzerFound (m_analyzerModel);
+                            //QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
+                        }
+                        break;
+                    }
+                }
+#endif
             }
         }
         return retVal;
@@ -383,7 +425,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
     return 0;
 }
 
-quint32 comAnalyzer::compareStrings (QString arr, QString arr1)
+quint32 ComAnalyzer::compareStrings (QString arr, QString arr1)
 {
     if(arr.length() < arr1.length())
     {
@@ -406,7 +448,12 @@ quint32 comAnalyzer::compareStrings (QString arr, QString arr1)
     return result;
 }
 
-void comAnalyzer::searchAnalyzer()
+#ifdef NEW_ANALYZER
+void ComAnalyzer::searchAnalyzer()
+{
+}
+#else
+void ComAnalyzer::searchAnalyzer()
 {
     static bool analyzerDetected = false;
     static int messageWasShown = 5;
@@ -415,48 +462,116 @@ void comAnalyzer::searchAnalyzer()
     if (m_isMeasuring)
         return;
 
-    if(analyzerDetected && (--messageWasShown == 0))
+    if(!m_autoDetectMode)
     {
-        QMessageBox::information(NULL,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
-        QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
-        return;
-    }
+        if( m_analyzerModel != 0)
+        {
+            return;
+        }
 
-    analyzerDetected = false;
-    closeComPort();
+qDebug() << "ComAnalyzer::searchAnalyzer() 0";
 
-    //QString name = ReDeviceInfo::deviceName(list.at(0));
-    bool opened = false;
-    opened = openComPort(m_serialPortName,38400);
-    // ??? TODO speed
-//        if(name == "AA-230 ZOOM")
-//        {
-//            opened = openComPort(list.at(0).portName(),115200);
-//        }
-    if (opened) {
-        analyzerDetected = true;
-        versionRequest();
-        m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
-        m_pingTimer->start(1000);
-    } else {
-        QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
+        if(state == 0)
+        {
+            state = 1;
+            openComPort(m_serialPortName,38400);
+            if(m_comPort->isOpen())
+            {
+                versionRequest();
+                m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
+                m_pingTimer->start(1000);
+                qDebug() << "com::searchAnalyzer 1: m_pingTimer->start(1000)";
+            }
+
+        }else if(state == 1)
+        {
+            state = 0;
+            openComPort(m_serialPortName,115200);
+            if(m_comPort->isOpen())
+            {
+                versionRequest();
+                m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
+                m_pingTimer->start(1000);
+                qDebug() << "com::searchAnalyzer 2: m_pingTimer->start(1000)";
+            }
+        }
+    }else
+    {
+        if( m_analyzerModel != 0)
+        {
+            QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
+            return;
+        }
+        if(analyzerDetected && (--messageWasShown == 0))
+        {
+            //messageWasShown = -1;
+            QMessageBox::information(NULL,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
+            QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
+            return;
+        }
+        //qDebug() << "messageWasShown" << messageWasShown;
+
+        analyzerDetected = false;
+        closeComPort();
+        QList<ReDeviceInfo> list;
+        list = ReDeviceInfo::availableDevices(ReDeviceInfo::Serial);
+        if(list.isEmpty())
+        {
+            QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
+            return;
+        }else
+        {
+            QString name = ReDeviceInfo::deviceName(list.at(0));
+            for(quint32 i = QUANTITY-1; i > 0; i--)
+            {
+                if(names[i].indexOf(name) >= 0 )
+                {
+                    bool opened = false;
+                    if(name == "AA-230 ZOOM")
+                    {
+                        opened = openComPort(list.at(0).portName(),115200);
+                        //{ TODO debug BLE
+                        //opened = openComPort(m_serialPortName,115200);
+                        //}
+                    } else if (name == "AA-30 ZERO" || name == "AA-30.ZERO")
+                    {
+                        opened = openComPort(m_serialPortName,38400);
+
+                    } else
+                    {
+                        opened = openComPort(list.at(0).portName(),38400);
+                    }
+                    if (opened) {
+                        analyzerDetected = true;
+                        versionRequest();
+                        m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
+                        m_pingTimer->start(1000);
+                        qDebug() << "com::searchAnalyzer 3: m_pingTimer->start(1000)";
+                    } else {
+                        QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
+                    }
+                    return;
+                }
+            }
+            QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
+        }
     }
 }
-
-qint64 comAnalyzer::sendData(QString data)
+#endif
+qint64 ComAnalyzer::sendData(QString data)
 {
-    //qDebug() << "comAnalyzer::sendData> " << data;
+    qDebug() << "ComAnalyzer::sendData> " << data;
     qint64 res = m_comPort->write(data.toLocal8Bit());
     return res;
 }
-
-void comAnalyzer::startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx)
+/*
+void ComAnalyzer::startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx)
 {
     startMeasure(fqFrom, fqFrom, dotsNumber, frx);
 }
 
 
-void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool frx)
+void ComAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool frx)
 {
     Q_UNUSED (frx)
 
@@ -483,7 +598,7 @@ void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool 
             band = fqTo - fqFrom;
             center = band/2 + fqFrom;
 
-            //qDebug() << "comAnalyzer::startMeasure: " << band << dotsNumber << (band / dotsNumber);
+            //qDebug() << "ComAnalyzer::startMeasure: " << band << dotsNumber << (band / dotsNumber);
             AA55BTPacket::start(fqFrom, band / dotsNumber);
         }else
         {
@@ -522,13 +637,13 @@ void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool 
     }
 }
 
-void comAnalyzer::stopMeasure()
+void ComAnalyzer::stopMeasure()
 {
     sendData("off\r");
     m_isMeasuring = false;
 }
-
-void comAnalyzer::timeoutChart()
+*/
+void ComAnalyzer::timeoutChart()
 {
     quint32 len;
     QStringList stringList;
@@ -545,10 +660,11 @@ void comAnalyzer::timeoutChart()
         timeoutChartUser();
         return;
     }
-    if (m_bAA55modeNewProtocol && m_parseState != WAIT_SLOT_DATA) { // TODO AA-55 BT still has old protocol for analyzer data
-        if (m_stringList.isEmpty())
-            return;
 
+    if (m_stringList.isEmpty())
+        return;
+
+    if (m_bAA55modeNewProtocol) {
         str = m_stringList.takeFirst();
         if (str.size() != 14) {
             QString err = QString("z%1\r\n").arg(AA55BTPacket::dot());
@@ -566,9 +682,7 @@ void comAnalyzer::timeoutChart()
         } else {
             if (packet.waitForLost() && packet.id() != packet.dot()) {
                 if (packet.disconnect()) {
-                    closeComPort();
-                    m_analyzerModel = 0;
-                    emit analyzerDisconnected();
+                    on_changedSerialPort(m_serialPortName);
                     return;
                 }
                 if (packet.repeat()) {
@@ -590,31 +704,27 @@ void comAnalyzer::timeoutChart()
         return;
     }
 
-    len = m_stringList.length();
-    if(len >=1)
+    str = m_stringList.takeFirst();
+    stringList = str.split(',');
+    int count = (stringList.size() / 3) * 3;
+    for (int idx=0; idx<count; idx+=3)
     {
-        str = m_stringList.takeFirst();
-        stringList = str.split(',');
-        int count = (stringList.size() / 3) * 3;
-        for (int idx=0; idx<count; idx+=3)
-        {
-            bool ok=true;
-            rawData data;
-            data.fq = stringList[idx+0].toDouble(&ok);
-            if (!ok)
-                qDebug() << "***** ERROR: " << stringList[idx+0];
-            data.r  = stringList[idx+1].toDouble(&ok);
-            if (!ok)
-                qDebug() << "***** ERROR: " << stringList[idx+1];
-            data.x  = stringList[idx+2].toDouble(&ok);
-            if (!ok)
-                qDebug() << "***** ERROR: " << stringList[idx+2];
-            emit newData(data);
-        }
+        bool ok=true;
+        rawData data;
+        data.fq = stringList[idx+0].toDouble(&ok);
+        if (!ok)
+            qDebug() << "***** ERROR: " << stringList[idx+0];
+        data.r  = stringList[idx+1].toDouble(&ok);
+        if (!ok)
+            qDebug() << "***** ERROR: " << stringList[idx+1];
+        data.x  = stringList[idx+2].toDouble(&ok);
+        if (!ok)
+            qDebug() << "***** ERROR: " << stringList[idx+2];
+        emit newData(data);
     }
 }
 
-void comAnalyzer::timeoutChartUser()
+void ComAnalyzer::timeoutChartUser()
 {
     quint32 len = m_stringList.length();
     if(len >=1)
@@ -663,13 +773,13 @@ void comAnalyzer::timeoutChartUser()
     }
 }
 
-
-void comAnalyzer::continueMeasurement()
+/*
+void ComAnalyzer::continueMeasurement()
 {
     startMeasure(0,0,0);
 }
 
-void comAnalyzer::getAnalyzerData()
+void ComAnalyzer::getAnalyzerData()
 {
     setTakeData(true);
     setIsMeasuring(true);
@@ -678,54 +788,54 @@ void comAnalyzer::getAnalyzerData()
     sendData("FLASHH\r");
 }
 
-void comAnalyzer::getAnalyzerData(QString number)
+void ComAnalyzer::getAnalyzerData(QString number)
 {
     setTakeData(true);
     m_parseState = WAIT_DATA;
-    if (m_bAA55modeNewProtocol)
-        m_parseState = WAIT_SLOT_DATA;
     m_incomingBuffer.clear();
     QString str = "FLASHFRX" + number + "\r";
     sendData(str);
 }
-
-void comAnalyzer::makeScreenshot()
+*/
+void ComAnalyzer::makeScreenshot()
 {
     setIsMeasuring(true);
     m_parseState = WAIT_SCREENSHOT_DATA;
     m_incomingBuffer.clear();
-
-    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getName();
-
-    if(model == "AA-230 ZOOM")
+#ifndef NEW_ANALYZER
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString model = AnalyzerParameters::getName();
+#endif
+    if(model == "AA-230 ZOOM" || model == "AA-55 ZOOM")
     {
         QString str = "screenshot\r";
         sendData(str);
-    } else {
-        emit signalMeasurementError();
-        QMessageBox::warning(nullptr, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
     }
 }
-
-void comAnalyzer::on_screenshotComplete()
+/*
+void ComAnalyzer::on_screenshotComplete()
 {
     m_parseState = WAIT_NO;
     setIsMeasuring(false);
 }
 
-void comAnalyzer::on_measurementComplete()
+void ComAnalyzer::on_measurementComplete()
 {
     if(!m_isContinuos)
     {
         setIsMeasuring(false);
     }
 }
-
-bool comAnalyzer::waitAnswer()
+*/
+bool ComAnalyzer::waitAnswer()
 {
     int times = 1;
-    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getName();
-
+#ifndef NEW_ANALYZER
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString model = AnalyzerParameters::getName();
+#endif
     if(model == "AA-230 ZOOM")
     {
         while (times < 100)
@@ -769,10 +879,13 @@ bool comAnalyzer::waitAnswer()
     return false;
 }
 
-bool comAnalyzer::update (QIODevice *fw)
+bool ComAnalyzer::update (QIODevice *fw)
 {
-    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getName();
-
+#ifndef NEW_ANALYZER
+    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+#else
+    QString model = AnalyzerParameters::getName();
+#endif
     if(model == "AA-230 ZOOM")
     {
         setIsMeasuring(true);
@@ -906,7 +1019,7 @@ bool comAnalyzer::update (QIODevice *fw)
     return false;
 }
 
-QString comAnalyzer::textError(ReturnCode code)
+QString ComAnalyzer::textError(ReturnCode code)
 {
     QString str;
 
@@ -978,7 +1091,7 @@ QString comAnalyzer::textError(ReturnCode code)
     return str;
 }
 
-unsigned char comAnalyzer::crc8(QByteArray *buf)//, unsigned int length)
+unsigned char ComAnalyzer::crc8(QByteArray *buf)//, unsigned int length)
 {
     unsigned char crc8_calculation_register = 0;
 
@@ -991,18 +1104,41 @@ unsigned char comAnalyzer::crc8(QByteArray *buf)//, unsigned int length)
     return crc8_calculation_register;
 }
 
-void comAnalyzer::versionRequest()
+void ComAnalyzer::on_changedAutoDetectMode(bool state)
+{
+    m_autoDetectMode = state;
+    closeComPort();
+#ifndef NEW_ANALYZER
+    m_analyzerModel = 0;
+#else
+    AnalyzerParameters::setCurrent(nullptr);
+#endif
+    emit analyzerDisconnected();
+}
+
+void ComAnalyzer::on_changedSerialPort(QString portName)
+{
+    m_serialPortName = portName;
+    closeComPort();
+    m_analyzerModel = 0;
+    emit analyzerDisconnected();
+}
+
+void ComAnalyzer::versionRequest()
 {
     if (m_isTakeData)
         return;
 
     setParseState(WAIT_VER);
-    //sendData("\r\nVER\r\n");
 
-    sendData("VER\n");
+    // TODO
+    sendData("\r\nVER\r\n");
+    //sendData("VER\n");
+    // TODO
+
 }
 
-void comAnalyzer::applyLicense(QString _license)
+void ComAnalyzer::applyLicense(QString _license)
 {
     m_license = _license;
     setParseState(WAIT_LICENSE_APPLY1);
@@ -1010,7 +1146,7 @@ void comAnalyzer::applyLicense(QString _license)
     sendData(cmd);
 }
 
-void comAnalyzer::sendPing()
+void ComAnalyzer::sendPing()
 {
     m_bWaitingPing = true;
     if (m_bAA55mode || m_bAA55modeNewProtocol)
@@ -1019,19 +1155,23 @@ void comAnalyzer::sendPing()
         sendData("ping\r\n");
 }
 
-void comAnalyzer::handlePing()
+void ComAnalyzer::handlePing()
 {
-    if ( ! (m_bAA55mode || m_bAA55modeNewProtocol)) {
+    if (!(m_bAA55mode || m_bAA55modeNewProtocol)) {
         m_pingTimer->stop();
         return;
     }
 
     long cur = QDateTime::currentMSecsSinceEpoch();
-    //qDebug() << "comAnalyzer::handlePing()" << cur << (cur - m_lastReadTimeMS);
+    //qDebug() << "ComAnalyzer::handlePing()" << cur << (cur - m_lastReadTimeMS);
     if ((cur - m_lastReadTimeMS) >= PING_TIMEOUT_MS) {
         if (m_bWaitingPing) {
             // error
-            AnalyzerParameters::setCurrent(nullptr);
+#ifndef NEW_ANALYZER
+    m_analyzerModel = 0;
+#else
+    AnalyzerParameters::setCurrent(nullptr);
+#endif
             m_pingTimer->stop();
             emit analyzerDisconnected();
         } else {
@@ -1042,3 +1182,48 @@ void comAnalyzer::handlePing()
     }
 }
 
+bool ComAnalyzer::connectAnalyzer()
+{
+    static int messageWasShown = 5;
+    static int state = 0;
+
+    AnalyzerParameters* analyzer = AnalyzerParameters::byIndex(SelectionParameters::selected.modelIndex);
+    if (analyzer == nullptr)
+        return false;
+
+    QString _serialPortName = SelectionParameters::selected.port;
+
+    // TODO
+    //_serialPortName = "COM4";
+    //
+
+    bool opened = false;
+    QString name = analyzer->name();
+    if(name == "AA-230 ZOOM")
+    {
+        opened = openComPort(_serialPortName,115200);
+        //{ TODO debug BLE
+        //opened = openComPort(m_serialPortName,115200);
+        //}
+    } else if (name == "AA-30 ZERO" || name == "AA-30.ZERO")
+    {
+        opened = openComPort(_serialPortName,38400);
+
+    } else
+    {
+        opened = openComPort(_serialPortName,38400);
+    }
+    if (opened) {
+        m_serialPortName = _serialPortName;
+        versionRequest();
+        m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
+        m_pingTimer->start(1000);
+        qDebug() << "ComAnalyzer::connectAnalyzer " << name << "opened " << m_serialPortName;
+    }
+    return false;
+}
+
+void ComAnalyzer::disconnectAnalyzer()
+{
+
+}

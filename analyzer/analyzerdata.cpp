@@ -6,14 +6,13 @@
 #include <iostream>
 #include "Notification.h"
 
-AnalyzerData::AnalyzerData(int _model, QWidget *parent) :
-    QDialog(parent),
+AnalyzerData::AnalyzerData(int _model, QWidget *_parent) :
+    QDialog(_parent),
     ui(new Ui::AnalyzerData),
     m_isSelected(false), m_model(_model),
     progressDialog(nullptr)
 {
     ui->setupUi(this);
-//    setWindowTitle(tr("Read analyzer data"));
 }
 
 AnalyzerData::~AnalyzerData()
@@ -38,7 +37,15 @@ void AnalyzerData::on_listWidget_itemDoubleClicked(QListWidgetItem *item)
     QStringList list2 = list.at(3).split(":");
 
     int div = 1;
+
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    QString model = param == nullptr ? "" : param->name();
+#else
     QString model = names[m_model];
+#endif
+
+
     if (model == "AA-230 ZOOM" || model == "AA-55 ZOOM" || model == "AA-650 ZOOM")
         div = 1000;
     // center, range, dots

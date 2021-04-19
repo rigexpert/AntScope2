@@ -36,6 +36,16 @@ ReDeviceInfo::ReDeviceInfo(InterfaceType type, const QString &name,  const QStri
 
 }
 
+ReDeviceInfo::ReDeviceInfo(const ReDeviceInfo& that):
+    m_name(that.m_name),
+    m_portName(that.m_portName),
+    m_serial(that.m_serial),
+    m_type(that.m_type),
+    m_vid(that.m_vid),
+    m_pid(that.m_pid)
+{
+
+}
 
 ReDeviceInfo::~ReDeviceInfo()
 {
@@ -55,6 +65,16 @@ QList<ReDeviceInfo> ReDeviceInfo::availableDevices(InterfaceType type)
     }
 
     return list;
+}
+
+ReDeviceInfo ReDeviceInfo::byPort(const QString& port)
+{
+    QList<ReDeviceInfo> list = ReDeviceInfo::availableSerial();
+    foreach (const ReDeviceInfo& info, list) {
+        if (info.portName() == port)
+            return ReDeviceInfo(info);
+    }
+    return ReDeviceInfo();
 }
 
 
@@ -87,6 +107,12 @@ QList<ReDeviceInfo> ReDeviceInfo::availableHID(quint16 vid, quint16 pid)
     return list;
 }
 
+void showFtdiInfo(FtdiInfo::Info item)
+{
+    QString portName = item.Info::portName;
+    QString portInfo = item.Info::portInfo;
+}
+
 QList<ReDeviceInfo> ReDeviceInfo::availableSerial()
 {
     QList<ReDeviceInfo> list;
@@ -99,10 +125,8 @@ QList<ReDeviceInfo> ReDeviceInfo::availableSerial()
     }
 
     if (list.isEmpty()) {
-        list.append(ReDeviceInfo(Serial, "AA-30 ZERO", "AA-30 ZERO"));
-        //{ TODO debug BLE
-        //list.append(ReDeviceInfo(Serial, "AA-230 ZOOM", "AA-230 ZOOM"));
-        //}
+        // ???? obsolete
+        //list.append(ReDeviceInfo(Serial, "AA-30 ZERO", "AA-30 ZERO"));
     }
     return list;
 }
@@ -190,5 +214,16 @@ quint16 ReDeviceInfo::pid() const
 QString ReDeviceInfo::portName() const
 {
     return m_portName;
+}
+
+QList<QSerialPortInfo> bluetoothPorts()
+{
+    QList<QSerialPortInfo> list;
+    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
+        if (info.description().contains("Bluetooth", Qt::CaseInsensitive)) {
+            list << info;
+        }
+    }
+    return list;
 }
 

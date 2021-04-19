@@ -9,11 +9,15 @@
 //#include "hidapi.h"
 #include "ftdi/ftdiinfo.h"
 
+extern QList<QSerialPortInfo> bluetoothPorts();
+
+
 class ReDeviceInfo
 {
 public:
-    enum InterfaceType {HID=0, Serial};
+    enum InterfaceType { WRONG=-1, HID=0, Serial, NANO, BT, BLE };
     ReDeviceInfo();
+    ReDeviceInfo(const ReDeviceInfo& that);
     ~ReDeviceInfo();
 
     QString systemName() const;
@@ -27,7 +31,7 @@ public:
     static QList<ReDeviceInfo> availableDevices(InterfaceType type);
     static QString deviceName(const ReDeviceInfo &dev);
     static QString externalSerial(const ReDeviceInfo &dev);
-
+    static ReDeviceInfo byPort(const QString& port);
 
 protected:
     ReDeviceInfo(InterfaceType type, const QString &name,

@@ -33,8 +33,9 @@ public:
     QString getRevision() const;
     QString getSerial() const;
     bool update(QIODevice *fw);
-    bool openComPort(const QString& portName, quint32 portSpeed);
+    bool openComPort(const QString& portName, quint32 portSpeed=115200);
     void closeComPort();
+    void setSerialPort(QString port) { m_serialPortName = port; }
 
     void setIsMeasuring (bool isMeasuring) {m_isMeasuring = isMeasuring;}
     bool getIsMeasuring (void) const { return m_isMeasuring;}
@@ -49,12 +50,12 @@ public:
     void setParseState(int _state) { m_parseState=_state; } // analyzerparameters.h: enum parse{}
     int getParseState() { return m_parseState; }
     void applyLicense(QString _license);
+    bool connected() { return m_analyzerPresent; }
 
 private:
     QSerialPort * m_comPort;
     QStringList m_comAvailables;
     QByteArray m_incomingBuffer;
-    //QString m_chartData;
     quint32 m_parseState;
     quint32 m_analyzerModel;
     QTimer * m_chartTimer;
@@ -122,8 +123,6 @@ public slots:
     void makeScreenshot();
     void on_screenshotComplete();
     void on_measurementComplete();
-    void on_changedAutoDetectMode(bool state);
-    void on_changedSerialPort(QString portName);
     void versionRequest();
     void handlePing();
     void sendPing();

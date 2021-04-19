@@ -10,7 +10,7 @@ MarqueeLabel::MarqueeLabel(QWidget *parent)
     : QLabel(parent), m_px(0), m_py(10), m_speed(1), m_direction(RightToLeft)
 {	
     connect(&m_timer, &QTimer::timeout, this, [=](){ repaint(); });
-    //m_timer.start(10);
+    //m_timer.start(SPEED_TIMER);
 }
 
 MarqueeLabel::~MarqueeLabel()
@@ -84,14 +84,14 @@ void MarqueeLabel::next()
         m_speed = m_strings[m_current].speed();
         updateCoordinates();
         setDirection(m_direction);
-        m_px = (m_direction==RightToLeft) ? width() : (- m_textLength);
+        m_px = (m_direction==RightToLeft) ? width() : 0;//(- m_textLength);
     }
     if (!m_strings[m_current].link().isEmpty()) {
         setCursor(Qt::PointingHandCursor);
     } else{
         setCursor(Qt::ArrowCursor);
     }
-    m_timer.start(10);
+    m_timer.start(SPEED_TIMER);
     m_waitForDelay = false;
 }
 
@@ -111,7 +111,7 @@ void MarqueeLabel::repeate(int delay)
             setCursor(Qt::PointingHandCursor);
         else
             setCursor(Qt::ArrowCursor);
-        m_timer.start(10);
+        m_timer.start(SPEED_TIMER);
         m_waitForDelay = false;
     //});
 }
@@ -154,7 +154,7 @@ void MarqueeLabel::setDirection(int _direction)
 {
 	m_direction = _direction;
 	if (m_direction == RightToLeft)
-		m_px = width() - m_textLength;
+        m_px = width();// - m_textLength;
 	else
 		m_px = 0;
     //repaint();
@@ -170,7 +170,21 @@ void MarqueeLabel::setStrings(QList<MarqueeString>& list)
     setText(m_strings[m_current].text());
     updateCoordinates();
     setDirection(m_direction);
-    m_timer.start(10);
+    m_timer.start(SPEED_TIMER);
+}
+
+void MarqueeLabel::addStrings(QList<MarqueeString>& list)
+{
+    for (int i=0; i<list.size(); i++) {
+        m_strings.append(list.at(i));
+    }
+    m_timer.stop();
+    clear();
+    m_current = 0;
+    setText(m_strings[m_current].text());
+    updateCoordinates();
+    setDirection(m_direction);
+    m_timer.start(SPEED_TIMER);
 }
 
 void MarqueeLabel::mousePressEvent ( QMouseEvent *  )

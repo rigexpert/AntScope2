@@ -286,7 +286,6 @@ void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 
     QTableWidgetItem *item = m_tableWidget->item(row,COL_NAME);
     item->setToolTip(tips);
     m_measuringInProgress = true;
-    qDebug() << "Measurements::on_newMeasurement";
 }
 
 void Measurements::on_newMeasurement(QString name)
@@ -484,8 +483,6 @@ void Measurements::on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots)
     Q_UNUSED (fq);
     Q_UNUSED (sw);
     Q_UNUSED (dots);
-
-    qDebug() << "Measurements::on_continueMeasurement" << fq << sw << dots;
 
     m_isContinuing = true;
     m_currentPoint = 0;
@@ -2213,7 +2210,6 @@ void Measurements::loadData(QString path)
             qWarning("Couldn't open saved file.");
             return;
         }
-        on_newMeasurement(list.last());
 
         QByteArray saveData = loadFile.readAll();
 
@@ -2225,6 +2221,12 @@ void Measurements::loadData(QString path)
         double fqMin = DBL_MAX;
         double fqMax = 0;
         int size = measureArray.size();
+        if (size < 2) {
+            QMessageBox::information(NULL, tr("Error"), tr("The saved file is too short."));
+            qWarning("Couldn't open saved file.");
+            return;
+        }
+        on_newMeasurement(list.last());
 
         ProgressDlg* progressDlg = new ProgressDlg();
         progressDlg->setValue(0);

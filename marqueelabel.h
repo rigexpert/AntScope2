@@ -5,6 +5,8 @@
 #include <QTimer>
 #include <QJsonObject>
 
+#define SPEED_TIMER 100
+
 class MarqueeString
 {
     QString m_text;
@@ -63,8 +65,10 @@ public:
     void setAlignment(Qt::Alignment);
     int getSpeed();
     void setStrings(QList<MarqueeString>& list);
+    void addStrings(QList<MarqueeString>& list);
     bool load(QString& path);
     bool load(QByteArray& data);
+    bool isEmpty() { return m_strings.isEmpty(); }
 
 signals:
     void clicked(const QString& link);

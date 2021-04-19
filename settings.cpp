@@ -6,10 +6,42 @@
 #include "licensesdialog.h"
 #include "analyzer/nanovna_analyzer.h"
 #include "editbandsdialog.h"
+#include "selectdevicedialog.h"
 
 extern bool g_developerMode;
 extern int g_maxMeasurements; // see measurements.cpp
 extern QString appendSpaces(const QString& number);
+int Settings::m_serialIndex = 0;
+
+void showPortInfo(const QSerialPortInfo& info)
+{
+    QString desc = info.description();
+    QString manufacturer = 	info.manufacturer() ;
+    QString portName =	info.portName() ;
+    quint16 productIdentifier =	info.productIdentifier() ;
+    QString serialNumber =	info.serialNumber() ;
+    QString systemLocation = 	info.systemLocation() ;
+    quint16 vendorIdentifier = info.vendorIdentifier();
+
+    qDebug() << portName;
+    qDebug() << "  description" << desc;
+    qDebug() << "  manufacturer" << manufacturer;
+    qDebug() << "  productIdentifier" << productIdentifier;
+    qDebug() << "  vendorIdentifier" << vendorIdentifier;
+    qDebug() << "  serialNumber" << serialNumber;
+    qDebug() << "  systemLocation" << systemLocation;
+}
+
+void showPortReDeviceInfo(const ReDeviceInfo& info)
+{
+    qDebug() << "PortReDeviceInfo:";
+    qDebug() << "  portName" << info.portName();
+    qDebug() << "  manufacturer" << info.externalSerial(info);
+    qDebug() << "  PID" << info.pid();
+    qDebug() << "  VID" << info.vid();
+    qDebug() << "  serial" << info.serial();
+    qDebug() << "  systemName" << info.systemName();
+}
 
 QString Settings::iniFilePath;
 Settings::Settings(QWidget *parent) :
@@ -27,6 +59,7 @@ Settings::Settings(QWidget *parent) :
     m_farEndMeasurement(0)
 {
     ui->setupUi(this);
+
     PopUpIndicator::setIndicatorVisible(false);
 
     QString style = "QPushButton:disabled{"
@@ -40,18 +73,23 @@ Settings::Settings(QWidget *parent) :
     ui->loadOpenFileBtn->setStyleSheet(style);
     ui->loadCalibBtn->setStyleSheet(style);
     ui->calibWizard->setStyleSheet(style);
-    ui->licencesBtn->setStyleSheet(style);
+
+
+    // serial connection
+    fillSerials();
 
     // NanoVNA support
-    NanovnaAnalyzer::detectPorts();
-    ui->connectNanovnaBtn->setStyleSheet(style);
-    ui->connectNanovnaBtn->setVisible(NanovnaAnalyzer::portsCount() != 0);
-    if (NanovnaAnalyzer::isConnected()) {
-        ui->connectNanovnaBtn->setText(tr("Disconnect NanoVNA"));
-    } else {
-        ui->connectNanovnaBtn->setText(tr("Connect NanoVNA"));
-    }
-    connect(ui->connectNanovnaBtn, &QPushButton::clicked, this, &Settings::on_connectNanovna);
+//    NanovnaAnalyzer::detectPorts();
+//    ui->connectNanovnaBtn->setStyleSheet(style);
+//    ui->connectNanovnaBtn->setVisible(NanovnaAnalyzer::portsCount() != 0);
+//    if (NanovnaAnalyzer::isConnected()) {
+//        ui->connectNanovnaBtn->setText(tr("Disconnect NanoVNA"));
+//    } else {
+//        ui->connectNanovnaBtn->setText(tr("Connect NanoVNA"));
+//    }
+//    connect(ui->connectNanovnaBtn, &QPushButton::clicked, this, &Settings::on_connectNanovna);
+//    connect(ui->connectBluetoothBtn, &QPushButton::clicked, this, &Settings::on_connectBluetooth);
+//    connect(ui->connectSerialBtn, &QPushButton::clicked, this, &Settings::on_connectSerial);
 
     style = "QGroupBox {border: 2px solid rgb(100,100,100); margin-top: 1ex;}";
     style += "QGroupBox::title {color: rgb(1, 178, 255);}";
@@ -143,15 +181,23 @@ Settings::Settings(QWidget *parent) :
     QString cablesPath = Settings::programDataPath("cables.txt");
     openCablesFile(cablesPath);
 
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
-    {
-        ui->serialPortComboBox->addItem(info.portName());
-    }
     connect(ui->closeBtn, SIGNAL(pressed()), this, SLOT(close()));
     ui->closeBtn->setFocus();
 
-    // TODO not implemented yet
-    ui->licencesBtn->setVisible(false);
+#ifdef NEW_CONNECTION
+    ui->groupBox_12->setVisible(false);
+    connect(ui->pushButtonConnection, &QPushButton::clicked, [&](){
+        SelectDeviceDialog dlg(this);
+        if (dlg.exec() == QDialog::Accepted) {
+            AnalyzerParameters* selected = AnalyzerParameters::current();
+            if (selected != nullptr) {
+                m_analyzer->connectDevice();
+            }
+        }
+    });
+#else
+    //ui->pushButtonConnection->hide();
+#endif
 }
 
 Settings::~Settings()
@@ -294,9 +340,8 @@ void Settings::setAnalyzer(Analyzer * analyzer)
     if(analyzer)
     {
         m_analyzer = analyzer;
-
-        connect(ui->licencesBtn, &QPushButton::pressed, this, &Settings::on_licensesBtnPressed);
-
+        ReDeviceInfo::InterfaceType type = analyzer->analyzerType();
+        setConnectButtonText(!(type == ReDeviceInfo::Serial || type == ReDeviceInfo::NANO || type == ReDeviceInfo::BT));
         qint32 num =  m_analyzer->getModel();
         if(num != 0)
         {
@@ -357,6 +402,12 @@ void Settings::setMarkersHintChecked(bool checked)
     ui->markersHintCheckBox->setChecked(checked);
 }
 
+#ifdef NEW_ANALYZER
+void Settings::findBootloader (void)
+{
+    // obsolete
+}
+#else
 void Settings::findBootloader (void)
 {
     static qint32 counter = 0;
@@ -403,6 +454,7 @@ void Settings::findBootloader (void)
         QTimer::singleShot( 1, m_analyzer, SLOT(on_findAA30ZERO()));
     }
 }
+#endif
 
 void Settings::on_autoUpdatesCheckBox_clicked(bool checked)
 {
@@ -1038,81 +1090,6 @@ void Settings::setAntScopeVersion(QString version)
     ui->antScopeVersion->setText(version);
 }
 
-void Settings::setAutoDetectMode(bool state, QString portName)
-{
-    ui->autoDetect->setChecked(state);
-    m_autoDetectChecked = state;
-    ui->manualDetect->setChecked(!state);
-    m_manualDetectChecked = !state;
-
-    ui->serialPortComboBox->setEnabled(!state);
-
-    int found = -1;
-    for(int i = 0; i < ui->serialPortComboBox->count(); ++i)
-    {
-        if( portName == ui->serialPortComboBox->itemText(i))
-        {
-            found = i;
-            break;
-        }
-    }
-    if(found >= 0)
-    {
-        ui->serialPortComboBox->setCurrentIndex(found);
-    }else
-    {
-        ui->serialPortComboBox->addItem(portName);
-        ui->serialPortComboBox->setCurrentText(portName);
-    }
-}
-
-void Settings::on_autoDetect_clicked(bool checked)
-{
-    if(!checked)
-    {
-        if(m_autoDetectChecked)
-        {
-            ui->autoDetect->setChecked(true);
-        }else
-        {
-            m_manualDetectChecked = checked;
-        }
-    }else
-    {
-        emit changedAutoDetectMode(true);
-        m_autoDetectChecked = checked;
-        m_manualDetectChecked = !checked;
-        ui->manualDetect->setChecked(!checked);
-    }
-    ui->serialPortComboBox->setEnabled(false);
-}
-
-void Settings::on_manualDetect_clicked(bool checked)
-{
-    if(!checked)
-    {
-        if(m_manualDetectChecked)
-        {
-            ui->manualDetect->setChecked(true);
-        }else
-        {
-            m_autoDetectChecked = checked;
-        }
-    }else
-    {
-        emit changedAutoDetectMode(false);
-        m_manualDetectChecked = checked;
-        m_autoDetectChecked = !checked;
-        ui->autoDetect->setChecked(!checked);
-    }
-    ui->serialPortComboBox->setEnabled(true);
-}
-
-void Settings::on_serialPortComboBox_activated(const QString &arg1)
-{
-    emit changedSerialPort(arg1);
-}
-
 void Settings::setLanguages(QStringList list, int number)
 {
     ui->languageComboBox->addItems(list);
@@ -1173,9 +1150,16 @@ void Settings::initCustomizeTab()
 
     //CustomAnalyzer::load(m_settings);
     QString curAlias = CustomAnalyzer::currentAlias();
+#ifdef NEW_ANALYZER
+    QList<AnalyzerParameters*> analyzers = AnalyzerParameters::analyzers();
+    foreach (AnalyzerParameters* param, AnalyzerParameters::analyzers()) {
+        ui->comboBoxPrototype->addItem(param->name());
+    }
+#else
     for (int idx=0; idx<QUANTITY; idx++) {
         ui->comboBoxPrototype->addItem(names[idx]);
     }
+#endif
     const QMap<QString, CustomAnalyzer>& map = CustomAnalyzer::getMap();
     QStringList keys = map.keys();
     for (int idx=0; idx<keys.size(); idx++) {
@@ -1235,10 +1219,20 @@ void Settings::on_comboBoxPrototype_currentIndexChanged(int index)
 {
     if (index < 0)
         return;
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::byIndex(index);
+    if (param == nullptr)
+        return;
+    ui->lineEditMin->setText(param->minFq());
+    ui->lineEditMax->setText(param->maxFq());
+    ui->spinBoxWidth->setValue(param->width());
+    ui->spinBoxHeight->setValue(param->height());
+#else
     ui->lineEditMin->setText(minFq[index]);
     ui->lineEditMax->setText(maxFq[index]);
     ui->spinBoxWidth->setValue(lcdWidth[index]);
     ui->spinBoxHeight->setValue(lcdHeight[index]);
+#endif
 }
 
 void Settings::on_comboBoxName_currentIndexChanged(int index)
@@ -1370,24 +1364,140 @@ void Settings::on_exportCableSettings()
     emit exportCableSettings(desc);
 }
 
-
-void Settings::on_licensesBtnPressed()
-{
-    LicensesDialog* dlg = new LicensesDialog(m_analyzer, nullptr);
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setWindowTitle(tr("Licenses"));
-    dlg->exec();
-}
-
 void Settings::on_connectNanovna()
 {
-    if (NanovnaAnalyzer::isConnected())
+    if (NanovnaAnalyzer::isConnected()) {
+        setConnectButtonText(true);
         emit disconnectNanoVNA();
-    else
-        emit connectNanoVNA();
-
-    close();
-    //QMessageBox::warning(this, "Connect NanoVNA", "Not implemented yet!", QMessageBox::Ok);
+        close();
+    } else {
+        QString port = ui->serialPortComboBox->currentText();
+        int pos = port.indexOf('(');
+        if (pos != -1)
+            port = port.left(pos);
+        emit connectNanoVNA(port.trimmed());
+        close();
+    }
 }
 
+void Settings::on_connectBluetooth()
+{
+    ReDeviceInfo::InterfaceType type = m_analyzer->connectionType();
+    if (type == ReDeviceInfo::BT) {
+        setConnectButtonText(true);
+        emit disconnectDevice();
+        close();
+    } else {
+        QString port = ui->serialPortComboBox->currentText();
+        int pos = port.indexOf('(');
+        if (pos != -1)
+            port = port.left(pos);
+        emit connectSerial(port.trimmed());
+        close();
+    }
+}
 
+void Settings::on_connectSerial()
+{
+    ReDeviceInfo::InterfaceType type = m_analyzer->connectionType();
+    if (type == ReDeviceInfo::Serial) {
+        setConnectButtonText(true);
+        emit disconnectDevice();
+        close();
+    } else {
+        QString port = ui->serialPortComboBox->currentText();
+        int pos = port.indexOf('(');
+        if (pos != -1)
+            port = port.left(pos);
+        emit connectSerial(port.trimmed());
+        close();
+    }
+}
+
+void Settings::fillSerials()
+{
+    QSet<QString> ports;
+    // ftdi
+    QList<ReDeviceInfo> list = ReDeviceInfo::availableDevices(ReDeviceInfo::Serial);
+    foreach (const ReDeviceInfo &info, list)
+    {
+        QString port = info.portName();
+        if (ports.contains(port))
+            continue;
+        ports << port;
+
+        QString name = info.deviceName(info).replace("Analyzer", "", Qt::CaseInsensitive).trimmed();
+        QString text = QString("%1  (%2)").arg(port, name);
+        ui->serialPortComboBox->addItem(text, (int)ReDeviceInfo::Serial);
+    }
+    // qserialport Nano
+//    NanovnaAnalyzer::detectPorts();
+//    foreach (const QSerialPortInfo &info, NanovnaAnalyzer::availablePorts())
+//    {
+//        QString name("NanoVNA ?");
+//        QString port = info.portName();
+//        QString text = QString("%1  (%2)").arg(port, name);
+//        ui->serialPortComboBox->addItem(text, (int)ReDeviceInfo::NANO);
+//    }
+    // qserialport
+    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
+    {
+        QString port = info.portName();
+        if (ports.contains(port))
+            continue;
+        ports << port;
+
+        quint16 vendorIdentifier = info.vendorIdentifier() ;
+        quint16 productIdentifier = info.productIdentifier() ;
+
+        if (vendorIdentifier == NANOVNA_VID && productIdentifier == NANOVNA_PID) {
+            QString name("NanoVNA ?");
+            QString text = QString("%1  (%2)").arg(port, name);
+            ui->serialPortComboBox->addItem(text, (int)ReDeviceInfo::NANO);
+        } else if (info.description().contains("Bluetooth", Qt::CaseInsensitive)) {
+            QString name("AA-55 ZOOM BT ?");
+            QString text = QString("%1  (%2)").arg(port, name);
+            ui->serialPortComboBox->addItem(text, (int)ReDeviceInfo::BT);
+        }
+        else {
+            ui->serialPortComboBox->addItem(port, (int)ReDeviceInfo::Serial);
+        }
+    }
+    ui->serialPortComboBox->model()->sort(0, Qt::AscendingOrder);
+    ui->serialPortComboBox->setCurrentIndex(m_serialIndex);
+    connect(ui->serialPortComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [=](int _index){
+        setConnectButtonText(m_serialIndex != _index);
+    });
+
+    connect(ui->connectSerialBtn, &QPushButton::clicked, this, [&](){
+        m_serialIndex = ui->serialPortComboBox->currentIndex();
+        emit disconnectDevice();
+        if (m_connectedButton) {
+            ReDeviceInfo::InterfaceType type = (ReDeviceInfo::InterfaceType)(ui->serialPortComboBox->currentData().toInt());
+            switch(type) {
+            case ReDeviceInfo::Serial:
+                on_connectSerial();
+                break;
+            case ReDeviceInfo::NANO:
+                on_connectNanovna();
+                break;
+            case ReDeviceInfo::BT:
+                on_connectBluetooth();
+                break;
+            }
+        }
+        close();
+    });
+
+}
+
+void Settings::setConnectButtonText(bool _connect)
+{
+    m_connectedButton = _connect;
+    ReDeviceInfo::InterfaceType type = m_analyzer->connectionType();
+    if (_connect)
+        ui->connectSerialBtn->setText(tr("Connect analyser"));
+    else
+        ui->connectSerialBtn->setText(tr("Disconnect analyser"));
+    ui->connectSerialBtn->update();
+}

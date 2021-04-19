@@ -326,7 +326,7 @@ public:
     explicit Calibration(QObject *parent = 0);
     ~Calibration();
 
-    void start(void);
+    void start(bool force=false);
     bool getCalibrationPerformed(void);
     bool getCalibrationEnabled(void);
     void setAnalyzer(Analyzer *analyzer);//, Measurements *measurements);

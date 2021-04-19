@@ -6,15 +6,13 @@
 QList<QSerialPortInfo> NanovnaAnalyzer::m_listNanovnaPorts;
 bool NanovnaAnalyzer::m_isConnected = false;
 
-NanovnaAnalyzer::NanovnaAnalyzer(QObject *parent) : QObject(parent),
-    m_parseState(WAIT_NANO_NO),
-    m_isMeasuring(false),
-    m_ok(false),
+NanovnaAnalyzer::NanovnaAnalyzer(QObject *parent) : BaseAnalyzer(parent),
     m_analyzerPresent(false)
 {
+    m_type = ReDeviceInfo::NANO;
     m_comPort = new QSerialPort(this);
 
-    qDebug() << "NanovnaAnalyzer::NanovnaAnalyzer";
+    //qDebug() << "NanovnaAnalyzer::NanovnaAnalyzer";
     //QTimer::singleShot(5000, this, SLOT(searchAnalyzer()));
 }
 
@@ -26,24 +24,7 @@ NanovnaAnalyzer::~NanovnaAnalyzer()
     }
     delete m_comPort;
     m_comPort = NULL;
-    qDebug() << "NanovnaAnalyzer::~NanovnaAnalyzer";
-}
-
-QString NanovnaAnalyzer::getVersion() const
-{
-//    if(m_version.isEmpty())
-//        return "0";
-    return m_version;
-}
-
-QString NanovnaAnalyzer::getRevision() const
-{
-    return m_revision;
-}
-
-QString NanovnaAnalyzer::getSerial() const
-{
-    return m_serialNumber;
+    //qDebug() << "NanovnaAnalyzer::~NanovnaAnalyzer";
 }
 
 bool NanovnaAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
@@ -65,7 +46,7 @@ bool NanovnaAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
     bool result = m_comPort->open(QSerialPort::ReadWrite);
     if (!result) {
         QString str = m_comPort->errorString();
-        qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
+        //qDebug() << "comAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
         // TODO show dialog
         // ...
     }
@@ -122,7 +103,14 @@ qint32 NanovnaAnalyzer::parse (QByteArray arr)
             } else {
                 if (data.contains("Board:")) {
                     QString board = data.replace("Board:", "");
-                    emit analyzerFound(board.trimmed());
+                    AnalyzerParameters* param = AnalyzerParameters::byName("NanoVNA");
+#ifdef NEW_CONNECTION
+                    if (param != nullptr)
+                        emit analyzerFound(param->index());
+#else
+                    if (param != nullptr)
+                        emit analyzerFound(param->name());
+#endif
                 }
             }
         } else if (getParseState() == WAIT_NANO_SWEEP) {
@@ -194,15 +182,15 @@ void NanovnaAnalyzer::searchAnalyzer()
                     hasVendorIdentifier?vendorIdentifier:-1, 16);
         QString _productIdentifier; _productIdentifier.setNum(
                     hasProductIdentifier?productIdentifier:-1, 16);
-        qDebug() << " portName: " << portName << "\n"
-                 << "systemLocation: " << systemLocation << "\n"
-                 << "description: " << description << "\n"
-                 << "manufacturer: " << manufacturer << "\n"
-                 << "serialNumber: " << serialNumber << "\n"
-                 << "vendorIdentifier: " << _vendorIdentifier << "\n"
-                 << "productIdentifier: " << _productIdentifier << "\n"
-                 << "------------------------------------"
-                    ;
+//        qDebug() << " portName: " << portName << "\n"
+//                 << "systemLocation: " << systemLocation << "\n"
+//                 << "description: " << description << "\n"
+//                 << "manufacturer: " << manufacturer << "\n"
+//                 << "serialNumber: " << serialNumber << "\n"
+//                 << "vendorIdentifier: " << _vendorIdentifier << "\n"
+//                 << "productIdentifier: " << _productIdentifier << "\n"
+//                 << "------------------------------------"
+//                    ;
 
         info.description();
         QString name = info.description();
@@ -273,7 +261,7 @@ void NanovnaAnalyzer::checkAnalyzer()
 
 qint64 NanovnaAnalyzer::sendData(QString data)
 {
-    qDebug() << "NanovnaAnalyzer::sendData> " << data;
+    //qDebug() << "NanovnaAnalyzer::sendData> " << data;
 
     qint64 res = m_comPort->write(data.toLocal8Bit());
     return res;
@@ -281,9 +269,9 @@ qint64 NanovnaAnalyzer::sendData(QString data)
 
 void NanovnaAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool frx)
 {
-    qDebug() << "NanovnaAnalyzer::startMeasure" << fqFrom << fqTo << dotsNumber;
+    //qDebug() << "NanovnaAnalyzer::startMeasure" << fqFrom << fqTo << dotsNumber;
     if (getParseState() == WAIT_NANO_SWEEP) {
-        qDebug() << "getParseState() == WAIT_NANO_SWEEP";
+        //qDebug() << "getParseState() == WAIT_NANO_SWEEP";
         return;
     }
     Q_UNUSED (frx)
@@ -296,7 +284,7 @@ void NanovnaAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, b
     setParseState(WAIT_NANO_SWEEP);
     QString cmd = QString("sweep %1 %2 %3\r\n").arg(fqFrom).arg(fqTo).arg(dotsNumber);
     //QString cmd = QString("sweep 100 1000000000 101\r\n").arg(fqFrom).arg(fqTo).arg(dotsNumber);
-    qDebug() << "NanovnaAnalyzer::startMeasure " << cmd;
+    //qDebug() << "NanovnaAnalyzer::startMeasure " << cmd;
     sendData(cmd);
 }
 
@@ -324,7 +312,7 @@ void NanovnaAnalyzer::on_measurementComplete()
     setIsMeasuring(false);
 }
 
-void NanovnaAnalyzer::on_changedSerialPort(QString portName)
+void NanovnaAnalyzer::on_changedSerialPort(QString portName, int analyzerIndex)
 {
     m_serialPortName = portName;
     closeComPort();
@@ -340,9 +328,8 @@ void NanovnaAnalyzer::versionRequest()
 
 void NanovnaAnalyzer::portClosed()
 {
-    qDebug() << "Port closed";
+    //qDebug() << "Port closed";
 }
-
 
 void NanovnaAnalyzer::detectPorts()
 {
@@ -352,6 +339,7 @@ void NanovnaAnalyzer::detectPorts()
         QSerialPortInfo info = listPorts.at(idx);
         quint16 vendorIdentifier = info.vendorIdentifier() ;
         quint16 productIdentifier = info.productIdentifier() ;
+
         if (vendorIdentifier == NANOVNA_VID && productIdentifier == NANOVNA_PID) {
             NanovnaAnalyzer::m_listNanovnaPorts << info;
         }
@@ -389,4 +377,25 @@ rawData NanovnaAnalyzer::toRawData(QString& s1p)
     data.r *= 50;
     data.x *= 50;
     return data;
+}
+
+bool NanovnaAnalyzer::connectAnalyzer()
+{
+    AnalyzerParameters* analyzer = AnalyzerParameters::byIndex(SelectionParameters::selected.modelIndex);
+    if (analyzer == nullptr)
+        return false;
+
+    QString _serialPortName = SelectionParameters::selected.port;
+    bool connected = openComPort(_serialPortName);
+//    connect(this, &NanovnaAnalyzer::completeMeasurement, this, [=](){
+//       emit measurementCompleteNano();
+//    });
+
+    checkAnalyzer();
+    return connected;
+}
+
+void NanovnaAnalyzer::disconnectAnalyzer()
+{
+
 }

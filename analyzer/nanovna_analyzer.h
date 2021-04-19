@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <qdebug.h>
 #include <math.h>
+#include "baseanalyzer.h"
 
 #ifndef _NO_WINDOWS_
 #include <windows.h>
@@ -19,7 +20,7 @@
 #define NANOVNA_VID 0x0483
 #define NANOVNA_PID 0x5740
 
-class NanovnaAnalyzer : public QObject
+class NanovnaAnalyzer : public BaseAnalyzer
 {
     Q_OBJECT
 
@@ -35,21 +36,14 @@ class NanovnaAnalyzer : public QObject
 public:
     explicit NanovnaAnalyzer(QObject *parent = 0);
     ~NanovnaAnalyzer();
-    QString getVersion() const;
-    QString getRevision() const;
-    QString getSerial() const;
     bool openComPort(const QString& portName, quint32 portSpeed=115200);
     void closeComPort();
 
-    void setIsMeasuring (bool isMeasuring) {m_isMeasuring = isMeasuring;}
-    bool getIsMeasuring (void) const { return m_isMeasuring;}
     qint64 sendData(QString data);
-    void setParseState(int _state) { m_parseState=_state; } // analyzerparameters.h: enum parse{}
-    int getParseState() { return m_parseState; }
     QSerialPort* comport() { return m_comPort; }
     rawData toRawData(QString& s1p);
-    void setContinuos(bool continuos){m_isContinuos = continuos;}
-    bool getContinuos(void){ return m_isContinuos;}
+    virtual bool connectAnalyzer();
+    virtual void disconnectAnalyzer();
 
     static void detectPorts();
     static QList<QSerialPortInfo> availablePorts() { return m_listNanovnaPorts; }
@@ -60,16 +54,8 @@ private:
     QSerialPort * m_comPort;
     QStringList m_comAvailables;
     QByteArray m_incomingBuffer;
-    //QString m_chartData;
-    quint32 m_parseState;
     QList <QString> m_stringList;
-    QString m_version;
-    QString m_revision;
-    QString m_serialNumber;
 
-    volatile bool m_isMeasuring;
-    volatile bool m_isContinuos;
-    volatile bool m_ok;
     volatile bool m_analyzerPresent;
     qint64 m_fqFrom;
     qint64 m_fqTo;
@@ -84,13 +70,13 @@ private:
     static bool m_isConnected;
 
 signals:
-    void analyzerFound (QString);
-    void analyzerDisconnected();
-    void analyzerDataStringArrived(QString);
-    void analyzerScreenshotDataArrived(QByteArray);
-    void signalFullInfo(QString str);
-    void signalMeasurementError();
-    void newData(rawData);
+    //void analyzerFound (QString);
+    //void analyzerDisconnected();
+    //void analyzerDataStringArrived(QString);
+    //void analyzerScreenshotDataArrived(QByteArray);
+    //void signalFullInfo(QString str);
+    //void signalMeasurementError();
+    //void newData(rawData);
     void dataReceived(QString msg);
     void completeMeasurement();
 
@@ -103,7 +89,7 @@ public slots:
     void makeScreenshot();
     void on_screenshotComplete();
     void on_measurementComplete();
-    void on_changedSerialPort(QString portName);
+    void on_changedSerialPort(QString portName, int analyzerIndex);
     void versionRequest();
     void portClosed();
 };
