@@ -207,6 +207,7 @@ private:
     void showErrorPopup(QString text, int msDuration);
     void changeMeasurmentsColor(int _row, QColor& _color);
     void changeColorTheme(bool _dark);
+    void getEnteredFq(double& start, double& stop);
 
 signals:
     void measure(qint64,qint64,int);

@@ -66,13 +66,13 @@ public:
     void add();
     bool getMarkersHintEnabled(void);
     void saveBmp(QString path);
-    QString getMarkersHintText();
     QList <QStringList> getMarkersHintList();
     qint32 getMarkersCount();
     marker getMarker( quint32 number);
     void repaint();
     void on_translate();
     void changeColorTheme(bool _dark);
+    void changeMarkersHint();
 
 private:
     QCustomPlot *m_swrWidget;
@@ -98,6 +98,7 @@ private:
     bool m_focus;
 
     double interpolate(double fq1, double fq2, double fq3, double param1, double param2);
+
 signals:
 
 public slots:

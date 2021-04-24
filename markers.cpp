@@ -28,6 +28,7 @@ Markers::Markers(QObject *parent) : QObject(parent),
             m_markersHint->focusShow();
         m_markersHint->setName(tr("Markers"));
         connect(m_markersHint, SIGNAL(removeMarker(int)), SLOT(on_removeMarker(int)));
+        connect(m_markersHint, &MarkersPopUp::changeColumns, this, [&](){ repaint(); });
         repaint();
     }
 }
@@ -204,16 +205,20 @@ void Markers::add()
     }
     for(int i = 0; i < m_markersList.length(); ++i)
     {
-        m_markersList.at(i)->swrLineText->setText(QString::number(i+1));
-        m_markersList.at(i)->phaseLineText->setText(QString::number(i+1));
-        m_markersList.at(i)->rsLineText->setText(QString::number(i+1));
-        m_markersList.at(i)->rpLineText->setText(QString::number(i+1));
-        m_markersList.at(i)->rlLineText->setText(QString::number(i+1));
+        QString index = QString::number(i+1);
+        m_markersList.at(i)->swrLineText->setText(index);
+        m_markersList.at(i)->phaseLineText->setText(index);
+        m_markersList.at(i)->rsLineText->setText(index);
+        m_markersList.at(i)->rpLineText->setText(index);
+        m_markersList.at(i)->rlLineText->setText(index);
     }
-    repaint();
+
+    changeMarkersHint();
     redraw();
     if(m_markersHintEnabled && !m_markersList.isEmpty()) {
        m_markersHint->focusShow();
+    } else {
+        m_markersHint->setVisible(false);
     }
 }
 
@@ -232,35 +237,60 @@ void Markers::on_focus(bool focus)
         }
     }
 }
-
+#if 1
 void Markers::repaint()
 {
-    m_markersHint->clearTable();
-
     if(!m_measurements)
     {
         return;
     }
+    QList<int> types = m_markersHint->getColumns();
+    qDebug() << "Markers::repaint() columns" << types;
+
+    QList<QList<QVariant>> info;
+
     for(int n = 0; n < m_markersList.length(); ++n)
     {
-        QVector<double> fq;
-        QVector<double> swr;
-        QVector<double> rl;
-        QVector<QString> z;
-        QVector<double> phase;
-        QVector<int> measurement;
+        double fq0 = m_markersList.at(n)->frequency;
+//        QVector<double> fq;
+//        QVector<double> swr;
+//        QVector<double> rl;
+//        QVector<QString> z;
+//        QVector<double> phase;
+//        QVector<int> measurement;
 
         int count = m_measurements->getMeasurementLength();
-        for(int i = 0; i < count; ++i)
+        for(int i=count-1; i>=0; i--)
         {
-            measurement.append(i+1);
-            fq.append(m_markersList.at(n)->frequency);
+            //measurement.append(i+1);
+            //fq.append(m_markersList.at(n)->frequency);
+            QList<QVariant> row;
+            int index = i;
+            QString name = m_measurements->getMeasurement(i)->name;
+            int pos = name.indexOf('>');
+            if (pos != -1)
+                index = name.left(2).toInt();
+            row << QVariant(QVariant::Invalid); // fieldDelete
+            row << QVariant(n+1); // fieldMarker
+            row << QVariant(index); // fieldSerie
+            row << QVariant(fq0); // fieldFQ
 
-            double dSwr;
-            double dRl;
-            double dR;
-            double dX;
-            double dPhase;
+            double dSwr=DBL_MAX;
+            double dRl=DBL_MAX;
+            double dR=DBL_MAX;
+            double dX=DBL_MAX;
+            double dZmod=DBL_MAX;
+            double dL=DBL_MAX;
+            double dC=DBL_MAX;
+            double dPhase=DBL_MAX;
+            double dRho=DBL_MAX;
+            double dRpar=DBL_MAX;
+            double dXpar=DBL_MAX;
+            double dLpar=DBL_MAX;
+            double dCpar=DBL_MAX;
+
+            QString zString;
+            QString zparString;
 
             QCPDataMap *swrMap;
             if(m_measurements->getCalibrationEnabled())
@@ -271,204 +301,191 @@ void Markers::repaint()
                 swrMap = &m_measurements->getMeasurement(i)->swrGraph;
             }
             QList <double> swrKeys = swrMap->keys();
+            measurement* mm;
+            bool calib = m_measurements->getCalibrationEnabled();
+            switch (m_measurements->getFarEndMeasurement()) {
+            case 1:
+                mm = m_measurements->getMeasurementSub(i);
+                break;
+            case 2:
+                mm = m_measurements->getMeasurementAdd(i);
+                break;
+            default:
+                mm = m_measurements->getMeasurement(i);
+                break;
+            }
 
             for(int ii = 0; ii < swrKeys.length()-1; ++ii)
             {
-                if((swrKeys.at(ii) <= m_markersList.at(n)->frequency) && (swrKeys.at(ii+1) >= m_markersList.at(n)->frequency))
+                if((swrKeys.at(ii) <= fq0) && (swrKeys.at(ii+1) >= fq0))
                 {
-                    double frequency1 = swrKeys.at(ii);
-                    double frequency2 = swrKeys.at(ii+1);
+                    double fq1 = swrKeys.at(ii);
+                    double fq2 = swrKeys.at(ii+1);
 
-                    if(m_measurements->getCalibrationEnabled())
+                    if(calib)
                     {
-                        if(m_measurements->getFarEndMeasurement() == 1)
-                        {
-                            dPhase = interpolate(frequency1,
-                                                 m_markersList.at(n)->frequency,
-                                                 frequency2,
-                                                 m_measurements->getMeasurementSub(i)->phaseGraphCalib.value(frequency1).value,
-                                                 m_measurements->getMeasurementSub(i)->phaseGraphCalib.value(frequency2).value);
-
-                            dR = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurementSub(i)->rsrGraphCalib.value(frequency1).value,
-                                             m_measurements->getMeasurementSub(i)->rsrGraphCalib.value(frequency2).value);
-
-                            dX = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurementSub(i)->rsxGraphCalib.value(frequency1).value,
-                                             m_measurements->getMeasurementSub(i)->rsxGraphCalib.value(frequency2).value);
-
-                        }else if(m_measurements->getFarEndMeasurement() == 2)
-                        {
-                            dPhase = interpolate(frequency1,
-                                                 m_markersList.at(n)->frequency,
-                                                 frequency2,
-                                                 m_measurements->getMeasurementAdd(i)->phaseGraphCalib.value(frequency1).value,
-                                                 m_measurements->getMeasurementAdd(i)->phaseGraphCalib.value(frequency2).value);
-
-                            dR = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurementAdd(i)->rsrGraphCalib.value(frequency1).value,
-                                             m_measurements->getMeasurementAdd(i)->rsrGraphCalib.value(frequency2).value);
-
-                            dX = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurementAdd(i)->rsxGraphCalib.value(frequency1).value,
-                                             m_measurements->getMeasurementAdd(i)->rsxGraphCalib.value(frequency2).value);
-                        }else
-                        {
-                            dPhase = interpolate(frequency1,
-                                                 m_markersList.at(n)->frequency,
-                                                 frequency2,
-                                                 m_measurements->getMeasurement(i)->phaseGraphCalib.value(frequency1).value,
-                                                 m_measurements->getMeasurement(i)->phaseGraphCalib.value(frequency2).value);
-
-                            dR = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurement(i)->dataRXCalib.at(ii).r,
-                                             m_measurements->getMeasurement(i)->dataRXCalib.at(ii+1).r);
-
-                            dX = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurement(i)->dataRXCalib.at(ii).x,
-                                             m_measurements->getMeasurement(i)->dataRXCalib.at(ii+1).x);
-                        }
-                        double m1 = m_measurements->getMeasurement(i)->swrGraphCalib.value(frequency1).value;
-                        double m2 = m_measurements->getMeasurement(i)->swrGraphCalib.value(frequency2).value;
+                        dPhase = interpolate(fq1, fq0, fq2, mm->phaseGraphCalib.value(fq1).value, mm->phaseGraphCalib.value(fq2).value);
+                        dR = interpolate(fq1, fq0, fq2, mm->rsrGraphCalib.value(fq1).value, mm->rsrGraphCalib.value(fq2).value);
+                        dX = interpolate(fq1, fq0, fq2, mm->rsxGraphCalib.value(fq1).value, mm->rsxGraphCalib.value(fq2).value);
+                        dRho = interpolate(fq1, fq0, fq2, mm->rhoGraphCalib.value(fq1).value, mm->rhoGraphCalib.value(fq2).value);
+                        double m1 = m_measurements->getMeasurement(i)->swrGraphCalib.value(fq1).value;
+                        double m2 = m_measurements->getMeasurement(i)->swrGraphCalib.value(fq2).value;
                         if(m1 > 10)
-                        {
                             m1 = 10;
-                        }
                         if(m2 > 10)
-                        {
                             m2 = 10;
-                        }
-                        dSwr = interpolate(frequency1,
-                                           m_markersList.at(n)->frequency,
-                                           frequency2,
-                                           m1,
-                                           m2);
+                        dSwr = interpolate(fq1, fq0, fq2, m1, m2);
 
-                        dRl = interpolate(frequency1,
-                                          m_markersList.at(n)->frequency,
-                                          frequency2,
-                                          m_measurements->getMeasurement(i)->rlGraphCalib.value(frequency1).value,
-                                          m_measurements->getMeasurement(i)->rlGraphCalib.value(frequency2).value);
-
+                        m1 = m_measurements->getMeasurement(i)->rlGraphCalib.value(fq1).value;
+                        m2 = m_measurements->getMeasurement(i)->rlGraphCalib.value(fq2).value;
+                        dRl = interpolate(fq1, fq0, fq2, m1, m2);
                     }else
                     {
-                        if(m_measurements->getFarEndMeasurement() == 1)
-                        {
-                            dPhase = interpolate(frequency1,
-                                                 m_markersList.at(n)->frequency,
-                                                 frequency2,
-                                                 m_measurements->getMeasurementSub(i)->phaseGraph.value(frequency1).value,
-                                                 m_measurements->getMeasurementSub(i)->phaseGraph.value(frequency2).value);
-
-                            dR = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurementSub(i)->rsrGraph.value(frequency1).value,
-                                             m_measurements->getMeasurementSub(i)->rsrGraph.value(frequency2).value);
-
-                            dX = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurementSub(i)->rsxGraph.value(frequency1).value,
-                                             m_measurements->getMeasurementSub(i)->rsxGraph.value(frequency2).value);
-
-                        }else if(m_measurements->getFarEndMeasurement() == 2)
-                        {
-                            dPhase = interpolate(frequency1,
-                                                 m_markersList.at(n)->frequency,
-                                                 frequency2,
-                                                 m_measurements->getMeasurementAdd(i)->phaseGraph.value(frequency1).value,
-                                                 m_measurements->getMeasurementAdd(i)->phaseGraph.value(frequency2).value);
-
-                            dR = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurementAdd(i)->rsrGraph.value(frequency1).value,
-                                             m_measurements->getMeasurementAdd(i)->rsrGraph.value(frequency2).value);
-
-                            dX = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurementAdd(i)->rsxGraph.value(frequency1).value,
-                                             m_measurements->getMeasurementAdd(i)->rsxGraph.value(frequency2).value);
-
-                        }else
-                        {
-                            dPhase = interpolate(frequency1,
-                                                 m_markersList.at(n)->frequency,
-                                                 frequency2,
-                                                 m_measurements->getMeasurement(i)->phaseGraph.value(frequency1).value,
-                                                 m_measurements->getMeasurement(i)->phaseGraph.value(frequency2).value);
-
-                            dR = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurement(i)->dataRX.at(ii).r,
-                                             m_measurements->getMeasurement(i)->dataRX.at(ii+1).r);
-
-                            dX = interpolate(frequency1,
-                                             m_markersList.at(n)->frequency,
-                                             frequency2,
-                                             m_measurements->getMeasurement(i)->dataRX.at(ii).x,
-                                             m_measurements->getMeasurement(i)->dataRX.at(ii+1).x);
-
-                        }
-                        double m1 = m_measurements->getMeasurement(i)->swrGraph.value(frequency1).value;
-                        double m2 = m_measurements->getMeasurement(i)->swrGraph.value(frequency2).value;
+                        dPhase = interpolate(fq1, fq0, fq2, mm->phaseGraph.value(fq1).value, mm->phaseGraph.value(fq2).value);
+                        dR = interpolate(fq1, fq0, fq2, mm->rsrGraph.value(fq1).value, mm->rsrGraph.value(fq2).value);
+                        dX = interpolate(fq1, fq0, fq2, mm->rsxGraph.value(fq1).value, mm->rsxGraph.value(fq2).value);
+                        dRho = interpolate(fq1, fq0, fq2, mm->rhoGraph.value(fq1).value, mm->rhoGraph.value(fq2).value);
+                        double m1 = m_measurements->getMeasurement(i)->swrGraph.value(fq1).value;
+                        double m2 = m_measurements->getMeasurement(i)->swrGraph.value(fq2).value;
                         if(m1 > 10)
-                        {
                             m1 = 10;
-                        }
                         if(m2 > 10)
-                        {
                             m2 = 10;
-                        }
-                        dSwr = interpolate(frequency1,
-                                           m_markersList.at(n)->frequency,
-                                           frequency2,
-                                           m1,
-                                           m2);
+                        dSwr = interpolate(fq1, fq0, fq2, m1, m2);
 
-                        dRl = interpolate(frequency1,
-                                          m_markersList.at(n)->frequency,
-                                          frequency2,
-                                          m_measurements->getMeasurement(i)->rlGraph.value(frequency1).value,
-                                          m_measurements->getMeasurement(i)->rlGraph.value(frequency2).value);
-
+                        m1 = m_measurements->getMeasurement(i)->rlGraph.value(fq1).value;
+                        m2 = m_measurements->getMeasurement(i)->rlGraph.value(fq2).value;
+                        dRl = interpolate(fq1, fq0, fq2, m1, m2);
                     }
 
-                    swr.append(dSwr);
-                    rl.append(dRl);
-                    phase.append(dPhase);
-                    QString zString = QString::number(dR,'f', 2);
+                    measurement* vmm = m_measurements->getMeasurementView(i);
+                    dZmod =  interpolate(fq1, fq0, fq2, vmm->rszGraph.value(fq1).value, vmm->rszGraph.value(fq2).value);
+                    dRpar =  interpolate(fq1, fq0, fq2, vmm->rprGraph.value(fq1).value, vmm->rprGraph.value(fq2).value);
+                    dXpar =  interpolate(fq1, fq0, fq2, vmm->rpxGraph.value(fq1).value, vmm->rpxGraph.value(fq2).value);
+
+                    zString+= QString::number(dR,'f', 2);
                     if(dX >= 0)
                     {
+                        if (dX > 2000)
+                            dX = 2000; // HUCK
                         zString+= " + j";
                         zString+= QString::number(dX,'f', 2);
                     }else
                     {
+                        if (dX < -2000)
+                            dX = -2000; // HUCK
                         zString+= " - j";
                         zString+= QString::number((dX * (-1)),'f', 2);
                     }
-                    z.append(zString);
+                    zparString += QString::number(dRpar,'f', 2);
+                    if(dXpar >= 0)
+                    {
+                        zparString+= " + j";
+                        zparString+= QString::number(dXpar,'f', 2);
+                    }else
+                    {
+                        zparString+= " - j";
+                        zparString+= QString::number((dXpar * (-1)),'f', 2);
+                    }
+
+                    dL = 1E9 * dX / (2*M_PI * fq0 * 1E3);//nH
+                    dC = 1E12 / (2*M_PI * fq0 * (dX * (-1)) * 1E3);//pF
+
+                    dLpar = 1E9 * dXpar / (2*M_PI * fq0 * 1E3);
+                    dCpar = 1E12 / (2*M_PI * fq0 * (dXpar * (-1)) * 1E3);
+
                 }
             }
-        }
-        m_markersHint->addRowText( n, &measurement, &fq, &swr, &rl, &z, &phase);
-    }
+            for (int j=MarkersHeaderColumn::fieldFQ+1; j<types.size(); j++) {
+                switch (types[j]) {
+                case MarkersHeaderColumn::fieldSWR:
+                    row << QVariant(dSwr);
+                    break;
+                case MarkersHeaderColumn::fieldRL:
+                    row << QVariant(dRl);
+                    break;
+                case MarkersHeaderColumn::fieldPhase:
+                    row << QVariant(dPhase);
+                    break;
+                case MarkersHeaderColumn::fieldR:
+                    row << QVariant(dR);
+                    break;
+                case MarkersHeaderColumn::fieldX:
+                    row << QVariant(dX);
+                    break;
+                case MarkersHeaderColumn::fieldL:
+                    row << QVariant(dL);
+                    break;
+                case MarkersHeaderColumn::fieldC:
+                    row << QVariant(dC);
+                    break;
+                case MarkersHeaderColumn::fieldRpar:
+                    row << QVariant(dRpar);
+                    break;
+                case MarkersHeaderColumn::fieldXpar:
+                    row << QVariant(dXpar);
+                    break;
+                case MarkersHeaderColumn::fieldLpar:
+                    row << QVariant(dLpar);
+                    break;
+                case MarkersHeaderColumn::fieldCpar:
+                    row << QVariant(dCpar);
+                    break;
+                case MarkersHeaderColumn::fieldRho:
+                    row << QVariant(dRho);
+                    break;
+                case MarkersHeaderColumn::fieldZ:
+                    row << QVariant(zString);
+                    break;
+                case MarkersHeaderColumn::fieldZpar:
+                    row << QVariant(zparString);
+                    break;
+                case MarkersHeaderColumn::fieldZmod:
+                    row << QVariant(dZmod);
+                    break;
+                default:
+                    row << QVariant(QVariant::Invalid);
+                    break;
+                }
+            }
+            info << row;
+        } // for (m_measurements)
+    } // for (m_markersList)
+    m_markersHint->updateInfo(info);
 }
+#else
+void Markers::repaint()
+{
+    if(!m_measurements)
+    {
+        return;
+    }
+    QList<int> types = m_markersHint->getColumns();
+    QList<QList<double>> info;
+
+    for(int i=0; i<m_markersList.length(); i++)
+    {
+        for (int j=0; j<m_measurements->getMeasurementLength(); j++) {
+            QList<double> row;
+            int index = j;
+            QString name = m_measurements->getMeasurement(j)->name;
+            int pos = name.indexOf('>');
+            if (pos != -1)
+                index = name.left(2).toInt();
+            row << 0; // fieldDelete
+            row << i+1; // fieldMarker
+            row << index; // fieldSerie
+            row << m_markersList.at(i)->frequency; // fieldFQ
+            for (int k=MarkersHeaderColumn::fieldFQ+1; k<types.size(); k++) {
+                double val = types[k];
+                row << val;
+            }
+            info << row;
+        }
+    }
+    m_markersHint->updateInfo(info);
+}
+#endif
 
 double Markers::interpolate(double fq1, double fq2, double fq3, double param1, double param2)
 {
@@ -495,7 +512,7 @@ void Markers::on_newMeasurement(QString )
 
 void Markers::on_measurementComplete()
 {
-    repaint();
+    changeMarkersHint();
 }
 
 void Markers::setMarkersHintEnabled(bool enabled)
@@ -508,7 +525,7 @@ void Markers::setMarkersHintEnabled(bool enabled)
             m_markersHint->focusShow();
         }else
         {
-            m_markersHint->focusHide();
+            m_markersHint->setVisible(false);
         }
     }
 }
@@ -526,15 +543,6 @@ void Markers::saveBmp(QString path)
         QPixmap mapScaled = map.scaled(5000,3000,Qt::KeepAspectRatio,Qt::SmoothTransformation);
         mapScaled.save(path,"BMP",100);
     }
-}
-
-QString Markers::getMarkersHintText()
-{
-    if(m_markersHint != NULL)
-    {
-        return m_markersHint->getPopupText();
-    }
-    return QString();
 }
 
 QList <QStringList> Markers::getMarkersHintList()
@@ -584,20 +592,22 @@ void Markers::redraw(void)
 
 void Markers::on_removeMarker(int number)
 {
-    m_markersList.at(number)->clear();
-    m_markersList.remove(number,1);
-    for(int i = 0; i < m_markersList.length(); ++i)
-    {
-        m_markersList.at(i)->swrLineText->setText(QString::number(i+1));
-        m_markersList.at(i)->phaseLineText->setText(QString::number(i+1));
-        m_markersList.at(i)->rsLineText->setText(QString::number(i+1));
-        m_markersList.at(i)->rpLineText->setText(QString::number(i+1));
-        m_markersList.at(i)->rlLineText->setText(QString::number(i+1));
+    if (!m_markersList.isEmpty()) {
+        m_markersList.at(number)->clear();
+        m_markersList.remove(number,1);
+        for(int i = 0; i < m_markersList.length(); ++i)
+        {
+            m_markersList.at(i)->swrLineText->setText(QString::number(i+1));
+            m_markersList.at(i)->phaseLineText->setText(QString::number(i+1));
+            m_markersList.at(i)->rsLineText->setText(QString::number(i+1));
+            m_markersList.at(i)->rpLineText->setText(QString::number(i+1));
+            m_markersList.at(i)->rlLineText->setText(QString::number(i+1));
+        }
     }
-    repaint();
+    changeMarkersHint();
     redraw();
     if (m_markersList.isEmpty()) {
-       m_markersHint->focusHide();
+       m_markersHint->setVisible(false);
     }
 }
 
@@ -618,5 +628,13 @@ void Markers::changeColorTheme(bool _dark)
     } else {
         m_markersHint->setBackgroundColor(QColor(0,0,0,180 ));
         m_markersHint->setTextColor("#01b2ff");
+    }
+}
+
+void Markers::changeMarkersHint()
+{
+    if (m_markersList.size() != 0) {
+        m_markersHint->updateMarkers(m_markersList.size(), m_measurements->getMeasurementLength());
+        repaint();
     }
 }

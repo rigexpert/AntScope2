@@ -4,6 +4,9 @@
 #include <QLabel>
 #include <QTimer>
 #include <QJsonObject>
+#include <QJsonArray>
+#include <QDate>
+#include "downloader.h"
 
 #define SPEED_TIMER 100
 
@@ -14,8 +17,9 @@ class MarqueeString
     int m_timeAfterSec = 0;
     QColor m_color = Qt::transparent;
     double m_width = 100; // ??????
-    QList<QString> m_keywords;
+    QMap<QString, QString> m_keywords;
     int m_speed = 1;
+    QDate m_endDate=QDate::currentDate();
 
 public:
     MarqueeString() {}
@@ -29,15 +33,16 @@ public:
     QColor color() { return m_color; }
     double width() { return m_width ; }
     int speed() { return m_speed; }
-    QList<QString> keywords() { return m_keywords; }
+    QDate enddate() { return m_endDate; }
+    QMap<QString, QString> keywords() { return m_keywords; }
 
     void read(QJsonObject& obj)
     {
         m_text = obj["message"].toString("");
         m_link = obj["linkto"].toString("");
         m_timeAfterSec = obj["timeoutafter"].toInt(0);
-        m_speed = obj["speed"].toInt(1);
-        QString tmp = obj["textcolor"].toString("");
+        m_speed = obj["speed"].toInt(1);        
+        QString tmp = obj["textcolor"].toString("").trimmed();
         if (tmp.isEmpty()) {
             m_color = QColor(Qt::transparent);
         } else if (tmp[0] != '#')
@@ -45,9 +50,20 @@ public:
         QColor color(tmp);
         m_color = color.isValid() ? color : (QColor(Qt::transparent));
         m_width = obj["size"].toDouble(100.0);
-        tmp = obj["keywords"].toString("");
-        if (!tmp.isEmpty()) {
-            m_keywords = tmp.split(",");
+        tmp = obj["enddate"].toString("");
+        m_endDate = QDate::fromString(tmp, "yyyyMMdd");
+        QJsonArray array = obj["keywords"].toArray();
+        for(int i=0; i<array.size(); ++i)
+        {
+            QJsonObject keyObject = array[i].toObject();
+            QString val = keyObject["type"].toString();
+            if (!val.isEmpty()) {
+                m_keywords.insert("type", val);
+            }
+            val = keyObject["sn"].toString();
+            if (!val.isEmpty()) {
+                m_keywords.insert("sn", val);
+            }
         }
     }
 };
@@ -69,6 +85,7 @@ public:
     bool load(QString& path);
     bool load(QByteArray& data);
     bool isEmpty() { return m_strings.isEmpty(); }
+    void request();
 
 signals:
     void clicked(const QString& link);
@@ -77,6 +94,8 @@ public slots:
     void setSpeed(int s);
     void setDirection(int d);
     int speed();
+    void on_downloadInfoComplete();
+    void on_downloadFileComplete();
 
 protected: 
     void paintEvent(QPaintEvent *evt);
@@ -99,6 +118,7 @@ private:
     int m_current = 0;
     int m_repeateDelaySec = 10;
     bool m_waitForDelay = false;
+    Downloader *m_downloader;
 };
 
 #endif /*_MARQUEELABEL_H_*/

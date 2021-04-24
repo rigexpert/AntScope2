@@ -619,6 +619,7 @@ void Analyzer::on_hidAnalyzerFound (quint32 analyzerNumber)
 #else
     QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentAlias() : AnalyzerParameters::getName();
 #endif
+    sendStatistics();
     emit analyzerFound(str);
 
     // ------- moved to MainWindow::on_analyzerFound
@@ -653,6 +654,7 @@ void Analyzer::on_comAnalyzerFound (quint32 analyzerNumber)
 #else
     QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getName();
 #endif
+    sendStatistics();
     emit analyzerFound(str);
 }
 
@@ -725,6 +727,7 @@ void Analyzer::on_nanovnaAnalyzerFound (QString name)
 #else
     AnalyzerParameters::setCurrent(AnalyzerParameters::byName("NanoVNA"));
 #endif
+    sendStatistics();
     emit analyzerFound(name);
 }
 
@@ -1249,17 +1252,6 @@ void Analyzer::sendStatistics()
         connect(m_downloader, SIGNAL(progress(qint64,qint64)),
                 this, SLOT(on_progress(qint64,qint64)));
     }
-
-    QSettings settings(Settings::setIniFile(), QSettings::IniFormat);
-    settings.beginGroup("Update");
-    qlonglong time = settings.value("statistics_time", 0).toLongLong();
-    settings.endGroup();
-
-    QDateTime dtPrev;
-    dtPrev.setMSecsSinceEpoch(time);
-    QDateTime dtCur = QDateTime::currentDateTime();
-    if (dtPrev.date().dayOfYear() == dtCur.date().dayOfYear())
-        return;
 
     QString url = "https://www.rigexpert.com/getfirmware?model=";
     //QString url = "https://www.rigexpert.com/get.php?part=antscope2&model=";

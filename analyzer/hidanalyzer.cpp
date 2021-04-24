@@ -139,6 +139,7 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                     result = connectHid(RE_VID, RE_PID);
                     if (result) {
                         m_analyzerPresent = true;
+                        analyzer->setSerial(m_serialNumber);
                         AnalyzerParameters::setCurrent(analyzer);
                         emit analyzerFound(analyzer->index());
                         return true;

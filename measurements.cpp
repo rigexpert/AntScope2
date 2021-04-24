@@ -253,34 +253,36 @@ void Measurements::deleteRow(int row)
                                     QItemSelectionModel::Select | QItemSelectionModel::Rows);
     }
 
-
     m_tableWidget->setRowCount(m_measurements.length());
 }
 
-void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 dots)
+void Measurements::on_newMeasurement(QString name, qint64 from, qint64 to, qint32 dots)
 {
     on_newMeasurement(name);
 
-    m_measurements.last().set(fq, sw, dots);
-    m_viewMeasurements.last().set(fq, sw, dots);
-    m_farEndMeasurementsAdd.last().set(fq, sw, dots);
-    m_farEndMeasurementsSub.last().set(fq, sw, dots);
+    m_measurements.last().set(from, to, dots);
+    m_viewMeasurements.last().set(from, to, dots);
+    m_farEndMeasurementsAdd.last().set(from, to, dots);
+    m_farEndMeasurementsSub.last().set(from, to, dots);
 
-    double range = sw;
-    double center = fq;
+    double range = (to - from)/2.0;
+    double center = from + range;
+    QString tips;
     QString fmt;
     if (m_RangeMode)
     {
         fmt = tr("FQ:%1kHz SW:%2kHz Points:%3");
-        range = (sw - fq)/2.0;
-        center = fq + range;
+        tips = QString(fmt)
+                .arg((long)(center/1000))
+                .arg((long)(range/1000))
+                .arg(dots);
     } else {
         fmt = tr("Start:%1kHz Stop:%2kHz Points:%3");
+        tips = QString(fmt)
+                .arg((long)(from/1000))
+                .arg((long)(to/1000))
+                .arg(dots);
     }
-    QString tips = QString(fmt)
-            .arg((long)(center/1000))
-            .arg((long)(range/1000))
-            .arg(dots);
 
     int row = m_tableWidget->rowCount()-1;
     QTableWidgetItem *item = m_tableWidget->item(row,COL_NAME);
@@ -291,32 +293,11 @@ void Measurements::on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 
 void Measurements::on_newMeasurement(QString name)
 {
     m_interrupted = false;
-
     while(m_measurements.length() >= g_maxMeasurements)
     {
-        measurement mm = m_measurements.takeFirst();
-        delete mm.smithCurve;
-        delete m_viewMeasurements.takeFirst().smithCurve;
-        delete m_farEndMeasurementsAdd.takeFirst().smithCurve;
-        delete m_farEndMeasurementsSub.takeFirst().smithCurve;
-        m_swrWidget->removeGraph(1);
-        m_phaseWidget->removeGraph(1);
-        m_rsWidget->removeGraph(1);
-        m_rsWidget->removeGraph(1);
-        m_rsWidget->removeGraph(1);
-        m_rpWidget->removeGraph(1);
-        m_rpWidget->removeGraph(1);
-        m_rpWidget->removeGraph(1);
-        m_rlWidget->removeGraph(1);
-        m_tdrWidget->removeGraph(1);
-        m_tdrWidget->removeGraph(1);
-
-        if (g_developerMode) {
-            int count = mm.userGraphs.size();
-            for (int i=0; i<count; i++)
-                m_userWidget->removeGraph(1);
-        }
+        deleteRow(0);
     }
+
     m_measurements.append( measurement());
     m_viewMeasurements.append( measurement());
     m_farEndMeasurementsAdd.append( measurement());
@@ -414,23 +395,7 @@ void Measurements::on_newMeasurement(QString name)
         QString nextName = name;
         if (name.indexOf("##") == 0)
         {
-            int next = 0;
-            for (int idx=0; idx<m_measurements.size(); idx++)
-            {
-                QString existed = m_measurements[idx].name;
-                if (existed.indexOf('>') == 2) {
-                    QString num = existed.left(2);
-                    bool ok = false;
-                    int prefix = num.toInt(&ok);
-                    if (ok) {
-                        next = qMax(next, prefix);
-                    }
-                }
-            }
-            next++;
-            if (next > 99)
-                next = 1;
-
+            int next = nextPrefix();
             nextName = QString("%1> %2").arg(next, 2, 10, QChar('0')).arg(name.mid(2));
         }
         m_measurements.last().name = nextName;
@@ -478,10 +443,10 @@ void Measurements::on_newMeasurement(QString name)
 }
 
 
-void Measurements::on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots)
+void Measurements::on_continueMeasurement(qint64 from, qint64 to, qint32 dots)
 {
-    Q_UNUSED (fq);
-    Q_UNUSED (sw);
+    Q_UNUSED (from);
+    Q_UNUSED (to);
     Q_UNUSED (dots);
 
     m_isContinuing = true;
@@ -2226,7 +2191,9 @@ void Measurements::loadData(QString path)
             qWarning("Couldn't open saved file.");
             return;
         }
-        on_newMeasurement(list.last());
+        int next = nextPrefix();
+        QString nextName = QString("%1> %2").arg(next, 2, 10, QChar('0')).arg(list.last());
+        on_newMeasurement(nextName);
 
         ProgressDlg* progressDlg = new ProgressDlg();
         progressDlg->setValue(0);
@@ -4616,23 +4583,26 @@ void Measurements::on_isRangeChanged(bool _range)
     for (int i=0; i<m_tableWidget->rowCount(); i++)
     {
         measurement* mm = getMeasurement(len-i-1);
-        qint64 sw = mm->qint64Sw;
-        qint64 fq = mm->qint64Fq;
-        double range = sw;
-        double center = fq;
+        qint64 from = mm->qint64From;
+        qint64 to = mm->qint64To;
+        double range = to-from/2;
+        double center = from + range;
         QString fmt;
+        QString tips;
         if (m_RangeMode)
         {
             fmt = tr("FQ:%1kHz SW:%2kHz Points:%3");
-            range = (sw - fq)/2.0;
-            center = fq + range;
+            tips = QString(fmt)
+                    .arg((long)(center/1000))
+                    .arg((long)(range/1000))
+                    .arg(mm->qint64Dots);
         } else {
             fmt = tr("Start:%1kHz Stop:%2kHz Points:%3");
+            tips = QString(fmt)
+                    .arg((long)(from/1000))
+                    .arg((long)(to/1000))
+                    .arg(mm->qint64Dots);
         }
-        QString tips = QString(fmt)
-                .arg((long)(center/1000))
-                .arg((long)(range/1000))
-                .arg(mm->qint64Dots);
         QTableWidgetItem *item = m_tableWidget->item(i,COL_NAME);
         item->setToolTip(tips);
     }
@@ -4675,7 +4645,7 @@ void Measurements::on_impedanceChanged(double _z0)
         m_tdrWidget->removeGraph(1);
         m_tdrWidget->removeGraph(1);
 
-        on_newMeasurement(name, mm.qint64Fq, mm.qint64Sw, mm.qint64Dots);
+        on_newMeasurement(name, mm.qint64From, mm.qint64To, mm.qint64Dots);
         for (int i=0; i<mm.dataRX.size(); i++) {
             on_newData(mm.dataRX.at(i));
         }
@@ -5252,4 +5222,25 @@ void Measurements::toggleVisibility(int row, bool _state)
         m_tdrWidget->graph(row1+0)->setVisible(_state);
         m_tdrWidget->graph(row1+0)->setVisible(_state);
     }
+}
+
+int Measurements::nextPrefix()
+{
+    int next = 0;
+    for (int idx=0; idx<m_measurements.size(); idx++)
+    {
+        QString existed = m_measurements[idx].name;
+        if (existed.indexOf('>') == 2) {
+            QString num = existed.left(2);
+            bool ok = false;
+            int prefix = num.toInt(&ok);
+            if (ok) {
+                next = qMax(next, prefix);
+            }
+        }
+    }
+    next++;
+    if (next > 99)
+        next = 1;
+    return next;
 }

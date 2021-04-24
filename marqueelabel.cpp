@@ -5,17 +5,17 @@
 #include <QJsonParseError>
 #include <QJsonArray>
 #include <QDebug>
+#include "analyzerparameters.h"
 
 MarqueeLabel::MarqueeLabel(QWidget *parent) 
-    : QLabel(parent), m_px(0), m_py(10), m_speed(1), m_direction(RightToLeft)
+    : QLabel(parent), m_downloader(nullptr), m_px(0), m_py(10), m_speed(1), m_direction(RightToLeft)
 {	
     connect(&m_timer, &QTimer::timeout, this, [=](){ repaint(); });
-    //m_timer.start(SPEED_TIMER);
 }
 
 MarqueeLabel::~MarqueeLabel()
 {
-	
+    delete m_downloader;
 }
 
 void MarqueeLabel::show()
@@ -33,6 +33,7 @@ void MarqueeLabel::setAlignment(Qt::Alignment _align)
 void MarqueeLabel::paintEvent(QPaintEvent *event)
 {
     if (m_strings.isEmpty() || m_waitForDelay) {
+        setText("");
         QLabel::paintEvent(event);
         return;
     }
@@ -76,8 +77,8 @@ void MarqueeLabel::next()
     m_current++;
     if (m_current >= m_strings.size()) {
         m_timer.stop();
+        setText("");
         repeate(m_repeateDelaySec);
-        m_speed = m_strings[m_current].speed();
         return;
     } else {
         setText(m_strings[m_current].text());
@@ -101,7 +102,7 @@ void MarqueeLabel::repeate(int delay)
         m_timer.stop();
         return;
     }
-    //QTimer::singleShot(delay*1000, this, [=](){
+    QTimer::singleShot(delay*1000, this, [=](){
         m_current = 0;
         setText(m_strings[m_current].text());
         m_speed = m_strings[m_current].speed();
@@ -113,7 +114,7 @@ void MarqueeLabel::repeate(int delay)
             setCursor(Qt::ArrowCursor);
         m_timer.start(SPEED_TIMER);
         m_waitForDelay = false;
-    //});
+    });
 }
 
 void MarqueeLabel::resizeEvent(QResizeEvent *evt)
@@ -222,10 +223,72 @@ bool MarqueeLabel::load(QByteArray& data)
     for(int i=0; i<array.size(); ++i)
     {
         QJsonObject dataObject = array[i].toObject();
-        MarqueeString string(dataObject);
-        m_strings << string;
+        MarqueeString mstring(dataObject);
+        if (mstring.enddate().isValid() && QDate::currentDate() > mstring.enddate()) {
+            qDebug() << "JSON expired";
+            continue;
+        }
+        if (mstring.keywords().isEmpty()) {
+            m_strings << mstring;
+        } else {
+            AnalyzerParameters* analyzer = AnalyzerParameters::current();
+            if (analyzer != nullptr) {
+                QMapIterator<QString, QString> i(mstring.keywords());
+                while (i.hasNext()) {
+                    i.next();
+                    if (i.key()=="type" && analyzer->name().contains(i.value())) {
+                        m_strings << mstring;
+                        break;
+                    }
+                    if (i.key()=="sn" && analyzer->serilal().contains(i.value())) {
+                        m_strings << mstring;
+                        break;
+                    }
+                }
+            } else {
+                m_strings << mstring;
+            }
+        }
     }
     repeate(0);
     return true;
+}
+
+void MarqueeLabel::request()
+{
+    if(m_downloader == nullptr)
+    {
+        m_downloader = new Downloader(this);
+        connect(m_downloader, &Downloader::downloadInfoComplete, this, &MarqueeLabel::on_downloadInfoComplete);
+        connect(m_downloader, &Downloader::downloadFileComplete, this, &MarqueeLabel::on_downloadFileComplete);
+    }
+
+    QString url = "https://www.rigexpert.com/get.php?part=asscroll&model=";
+#ifndef NEW_ANALYZER
+    url += names[m_analyzerModel].toLower().remove(" ").remove("-");
+#else
+    QString name = AnalyzerParameters::getName();
+    url += name.toLower().remove(" ").remove("-");
+#endif
+    url += "&sn=" + AnalyzerParameters::getSerial();
+    url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
+    url += "&cpu=" + QSysInfo::currentCpuArchitecture();
+    url += "&lang=" + QLocale::languageToString(QLocale::system().language());
+    url += "&sw=" + QString(ANTSCOPE2VER);
+
+    m_downloader->startDownloadInfo(QUrl(url));
+}
+
+void MarqueeLabel::on_downloadInfoComplete()
+{
+    m_downloader->startDownloadFw();
+}
+
+void MarqueeLabel::on_downloadFileComplete()
+{
+    QByteArray arr = m_downloader->file();
+    if (load(arr)) {
+        show();
+    }
 }
 

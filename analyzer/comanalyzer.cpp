@@ -332,6 +332,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
                 AnalyzerParameters* param = AnalyzerParameters::byVER(str);
                 if (param == nullptr)
                     return retVal;
+                param->setSerial(m_serialNumber);
                 AnalyzerParameters::setCurrent(param);
                 QString analyzer = param->name();
                 int namePos = str.indexOf(analyzer);

@@ -280,11 +280,11 @@ struct measurement
 {
     QString name;
     bool visible = true;
-    qint64 qint64Fq;
-    qint64 qint64Sw;
+    qint64 qint64From;
+    qint64 qint64To;
     qint64 qint64Dots;
-    void set(qint64 _qint64Fq, qint64 _qint64Sw, qint64 _qint64Dots) {
-        qint64Fq = _qint64Fq; qint64Sw = _qint64Sw; qint64Dots =_qint64Dots;
+    void set(qint64 _qint64From, qint64 _qint64To, qint64 _qint64Dots) {
+        qint64From = _qint64From; qint64To = _qint64To; qint64Dots =_qint64Dots;
     }
 
     QVector <rawData> dataRX;
@@ -351,6 +351,7 @@ class AnalyzerParameters {
     int m_lcdWidth=0;
     int m_prefix=-1;
     int m_index=0;
+    QString m_serial;
     static QList<AnalyzerParameters*> m_analyzers;
     static AnalyzerParameters* m_current;
 
@@ -367,6 +368,8 @@ public:
     int prefix() { return m_prefix; }
     bool isValid() { return (m_prefix!=-1); }
     int index() { return m_index; }
+    QString serilal() { return m_serial; }
+    void setSerial(QString _serial) { m_serial = _serial; }
 
     static AnalyzerParameters* byPrefix(int _prefix) {
         foreach (AnalyzerParameters* par, m_analyzers) {
@@ -395,8 +398,49 @@ public:
         return nullptr;
     }
 
+    static void normalizeFq(double& _from, double& _to) {
+        double from = _from;
+        double to = _to;
+       if (to < from) {
+           double tmp = from;
+           from = to;
+           to = tmp;
+       }
+       if (AnalyzerParameters::current() != nullptr) {
+           double _minfq = (double)AnalyzerParameters::getMinFq().toLongLong();
+           double _maxfq = (double)AnalyzerParameters::getMaxFq().toLongLong();
+           if (from < _minfq)
+               from = _minfq;
+           if (to > _maxfq)
+               to = _maxfq;
+       }
+       _from = from;
+       _to = to;
+    }
+
+    static void normalizeFqRange(double& _center, double& _range) {
+        double from = _center - _range;
+        double to = _center + _range;
+       if (to < from) {
+           double tmp = from;
+           from = to;
+           to = tmp;
+       }
+       if (AnalyzerParameters::current() != nullptr) {
+           double _minfq = (double)AnalyzerParameters::getMinFq().toLongLong();
+           double _maxfq = (double)AnalyzerParameters::getMaxFq().toLongLong();
+           if (from < _minfq)
+               from = _minfq;
+           if (to > _maxfq)
+               to = _maxfq;
+       }
+       _range = (to - from) / 2;;
+       _center = from + _range;
+    }
+
     static int prefixFromSerial(QString serial) { return ( serial.length()==9 ? serial.remove(4,5).toInt() : 0); }
     static QString getName() { return m_current==nullptr ? QString() : m_current->name(); }
+    static QString getSerial() { return m_current==nullptr ? QString() : m_current->serilal(); }
     static QString getMinFq() { return m_current==nullptr ? QString() : m_current->minFq(); }
     static QString getMaxFq() { return m_current==nullptr ? QString() : m_current->maxFq(); }
     static int getHeight() { return m_current==nullptr ? 0 : m_current->height(); }

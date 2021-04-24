@@ -68,11 +68,13 @@ public:
     measurement* getMeasurement(int number) {return &m_measurements[m_measurements.length()-1 - number];}
     measurement* getMeasurementSub(int number) {return &m_farEndMeasurementsSub[m_farEndMeasurementsSub.length()-1 - number];}
     measurement* getMeasurementAdd(int number) {return &m_farEndMeasurementsAdd[m_farEndMeasurementsAdd.length()-1 - number];}
+    measurement* getMeasurementView(int number) {return &m_viewMeasurements[m_measurements.length()-1 - number];}
     qint32 getMeasurementLength(void) {return m_measurements.length();}
     bool isEmpty() { return getMeasurementLength() == 0; }
     bool getGraphHintEnabled(void);
     void saveData(quint32 number, QString path);
     void loadData(QString path);
+    int  nextPrefix();
     void changeColorTheme(bool _dark);
 
     void exportData(QString _name, int _type, int _number, bool _applyCable=false, QString _description=QString());
@@ -245,7 +247,7 @@ public slots:
     void on_newUserDataHeader(QStringList);
     void on_newUserData(rawData, UserData);
     void on_newMeasurement(QString name);
-    void on_newMeasurement(QString name, qint64 fq, qint64 sw, qint32 dots);
+    void on_newMeasurement(QString name, qint64 from, qint64 to, qint32 dots);
     void on_newMeasurementOneFq(QWidget*, qint64 fq, qint32 dots);
     void on_continueMeasurement(qint64 fq, qint64 sw, qint32 dots);
     void on_currentTab(QString);

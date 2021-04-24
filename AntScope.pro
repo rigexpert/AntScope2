@@ -14,7 +14,7 @@ QT       += opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.1.5.1\\"'
+DEFINES += ANTSCOPE2VER='\\"1.1.5.2\\"'
 DEFINES += OLD_TDR
 
 #-------------------------------------------------

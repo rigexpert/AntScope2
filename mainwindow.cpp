@@ -475,26 +475,21 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     });
 
-    //{ TODO test
-    //QString path1 = "c:/0/marquee_test1.json";
-    //ui->labelMarquee->load(path1);
-    QString msg;
-    msg += "{\n  \"messages\": [\n    {";
-    msg += "\"message\": \"Test build 1.1.5.1: New connection strategy - always try to connect to HID devices automatically, if any, comport based devices are manually connected via settings\",\n";
-    msg += "\"timeoutafter\": 1,\n";
-    msg += "\"textcolor\": \"#000080\",\n";
-    msg += "\"speed\": 5\n";
-    msg += "}\n";
-    msg += "  ]\n";
-    msg += "}\n";
-    ui->labelMarquee->load(msg.toLocal8Bit());
-
     connect(ui->labelMarquee, &MarqueeLabel::clicked, this, [=] (const QString& link) {
         QDesktopServices::openUrl(QUrl(link));
     });
+    ui->labelMarquee->hide();
 
-    //ui->labelMarquee->hide();
-    //}
+
+
+//{ TODO test
+#if 0
+    QString path1 = "c:/0/AntScope_scroll.json.txt";
+    ui->labelMarquee->load(path1);
+    ui->labelMarquee->show();
+#endif
+//} TODO test
+
 
 #ifdef NEW_CONNECTION
     m_settings->beginGroup("Connection");
@@ -2324,7 +2319,6 @@ void MainWindow::on_analyzerFound(QString name)
     QString name1 = "AntScope2 v." + QString(ANTSCOPE2VER);
     setWindowTitle(name1 + " - " + name);
 
-    AnalyzerParameters* _analyzer = AnalyzerParameters::current();
     bool zeroII = name1.contains("Zero II");
     ui->singleStart->setEnabled(true);
     ui->continuousStartBtn->setEnabled(true);
@@ -2344,6 +2338,7 @@ void MainWindow::on_analyzerFound(QString name)
             m_analyzer->checkFirmwareUpdate();
         });
     }
+    ui->labelMarquee->request();
 }
 
 void MainWindow::on_analyzerDisconnected()
@@ -3415,17 +3410,32 @@ void MainWindow::on_singleStart_clicked()
             QString strMax = ca->maxFq();
             maxFreq = strMax.toULongLong();
         }
-    }
-
-    if (use_min_max)
-    {
-        start = minFreq;
-        stop = maxFreq;
-    }
-    else
-    {
-        start = getFqFrom();
-        stop = getFqTo();
+        if (use_min_max)
+        {
+            start = minFreq;
+            stop = maxFreq;
+        }
+        else
+        {
+            // 20210423
+            //start = getFqFrom();
+            //stop = getFqTo();
+            getEnteredFq(start, stop);
+        }
+    } else {
+        if (use_min_max)
+        {
+            start = minFreq;
+            stop = maxFreq;
+        }
+        else
+        {
+            // 20210423
+            //start = getFqFrom();
+            //stop = getFqTo();
+            getEnteredFq(start, stop);
+            AnalyzerParameters::normalizeFq(start, stop);
+        }
     }
 
     if(m_fqRestrict && (stop > static_cast<double>(maxFreq)))
@@ -3563,8 +3573,10 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         double start;
         double stop;
 
-        start = getFqFrom();
-        stop = getFqTo();
+        // 20210423
+        //start = getFqFrom();
+        //stop = getFqTo();
+        getEnteredFq(start, stop);
 
 #ifdef NEW_ANALYZER
     AnalyzerParameters* param = AnalyzerParameters::current();
@@ -3580,6 +3592,8 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
                 minFreq = ca->minFq().toULongLong();
                 maxFreq = ca->maxFq().toULongLong();
             }
+        } else {
+            AnalyzerParameters::normalizeFq(start, stop);
         }
 
         if(m_fqRestrict && (stop > static_cast<double>(maxFreq)))
@@ -3698,8 +3712,10 @@ void MainWindow::on_measurementComplete()
         double start;
         double stop;
 
-        start = getFqFrom();
-        stop = getFqTo();
+        // 20210423
+        //start = getFqFrom();
+        //stop = getFqTo();
+        getEnteredFq(start, stop);
 
 #ifdef NEW_ANALYZER
     AnalyzerParameters* param = AnalyzerParameters::current();
@@ -3715,6 +3731,8 @@ void MainWindow::on_measurementComplete()
                 minFreq = ca->minFq().toULongLong();
                 maxFreq = ca->maxFq().toULongLong();
             }
+        } else {
+            AnalyzerParameters::normalizeFq(start, stop);
         }
         if(m_fqRestrict && (stop > static_cast<double>(maxFreq)))
         {
@@ -4066,7 +4084,7 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
     }
     if(m_markers)
     {
-        m_markers->repaint();
+        m_markers->changeMarkersHint();
         m_markers->redraw();
     }
     m_measurements->replot();
@@ -4090,8 +4108,9 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
 
     //{ Antonov's request: keep user's values
     //onFullRange(true);
-    qint64 from = m_lastEnteredFqFrom;
-    qint64 to =  m_lastEnteredFqTo;
+    double from = m_lastEnteredFqFrom;
+    double to =  m_lastEnteredFqTo;
+    AnalyzerParameters::normalizeFq(from, to);
     qint64 range = (to - from);
     on_dataChanged(from + range/2, range, m_dotsNumber);
     //}
@@ -4105,7 +4124,7 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
     }
     if(m_markers)
     {
-        m_markers->repaint();
+        m_markers->changeMarkersHint();
         m_markers->redraw();
     }
     m_measurements->replot();
@@ -4176,20 +4195,22 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
         return;
     qint32 count = m_measurements->getMeasurementLength();
     measurement* mm = m_measurements->getMeasurement(count - row - 1);
-    qint64 fq = mm->qint64Fq/1000;
-    qint64 sw = mm->qint64Sw/1000;
+    qint64 from = mm->qint64From/1000;
+    qint64 to = mm->qint64To/1000;
+    double sw = (to-from)/2.0;
+    double center = from + sw;
     if(!m_isRange)
     {
-        setFqFrom(fq);
-        setFqTo(sw);
+        setFqFrom(from);
+        setFqTo(to);
     }else
     {
-        setFqFrom(fq - sw/2.0);
-        setFqTo(fq + sw/2.0);
+        setFqFrom(center);
+        setFqTo(sw);
     }
     QCPRange range;
-    range.lower = fq;
-    range.upper = sw;
+    range.lower = from;
+    range.upper = to;
 
     m_swrWidget->xAxis->setRange(range);
     m_phaseWidget->xAxis->setRange(range);
@@ -4434,18 +4455,19 @@ void MainWindow::on_measurmentsSaveBtn_clicked()
         {
             m_lastSaveOpenPath = path;
             QTableWidgetItem * item = list.at(0);
-            m_measurements->saveData(item->row(), path);
+            int row = item->row();
+            m_measurements->saveData(row, path);
             QFileInfo fi(path);
             QString fname = fi.baseName();
             //item->setText(fname);
 
-            measurement* mm = m_measurements->getMeasurement(item->row());
+            measurement* mm = m_measurements->getMeasurement(m_measurements->getMeasurementLength()-row-1);
             QString mmName = mm->name;
             int pos = mmName.indexOf("> ");
             if (pos != -1)
                 mmName = mmName.left(pos+2);
             mm->name = mmName + fname;
-            ui->tableWidget_measurments->item(item->row(), COL_NAME)->setText(mm->name);
+            ui->tableWidget_measurments->item(row, COL_NAME)->setText(mm->name);
         }
     }
 }
@@ -4608,6 +4630,11 @@ void MainWindow::on_limitsBtn_clicked(bool checked)
         }
     }else
     {
+        double from;
+        double to;
+        getEnteredFq(from, to);
+        AnalyzerParameters::normalizeFq(from, to);
+
         m_isRange = false;
         ui->rangeBtn->setChecked(false);
         ui->startLabel->setText(tr("Start"));
@@ -4615,25 +4642,6 @@ void MainWindow::on_limitsBtn_clicked(bool checked)
         ui->groupBox_Presets->setTitle(tr("Presets (limits), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Start"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
-        double center = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
-        double range = ui->lineEdit_fqTo->text().remove(' ').toDouble();
-        double from = center - range;
-        double to = center + range;
-
-        if (from > to) {
-            double tmp = to;
-            to = from;
-            from = tmp;
-        }
-        AnalyzerParameters* analyzer = AnalyzerParameters::current();
-        if (analyzer != nullptr) {
-            double minFq = analyzer->minFq().toULongLong();
-            double maxFq = analyzer->maxFq().toULongLong();
-            if (from < minFq || from > maxFq || to < minFq || to > maxFq) {
-                from = minFq;
-                to = maxFq;
-            }
-        }
 
         setFqFrom(from);
         setFqTo(to);
@@ -4651,6 +4659,13 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
         }
     }else
     {
+        double start;
+        double stop;
+        getEnteredFq(start, stop);
+        double range = (stop - start)/2;
+        double center = start + range;
+        AnalyzerParameters::normalizeFqRange(center, range);
+
         m_isRange = true;
         ui->limitsBtn->setChecked(false);
         ui->startLabel->setText(tr("Center"));
@@ -4658,26 +4673,11 @@ void MainWindow::on_rangeBtn_clicked(bool checked)
         ui->groupBox_Presets->setTitle(tr("Presets (center, range), kHz"));
         ui->tableWidget_presets->horizontalHeaderItem(0)->setText(tr("Center"));
         ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Range(+/-)"));
-        double from = getFqFrom();
-        double to = getFqTo();
-
-        if (from > to) {
-            double tmp = to;
-            to = from;
-            from = tmp;
-        }
-        AnalyzerParameters* analyzer = AnalyzerParameters::current();
-        if (analyzer != nullptr) {
-            double minFq = analyzer->minFq().toULongLong();
-            double maxFq = analyzer->maxFq().toULongLong();
-            if (from < minFq || from > maxFq || to < minFq || to > maxFq) {
-                from = minFq;
-                to = maxFq;
-            }
-        }
-
-        setFqFrom((to + from)/2);
-        setFqTo((to - from)/2);
+        // 20210423
+        //double from = getFqFrom();
+        //double to = getFqTo();
+        setFqFrom(center);
+        setFqTo(range);
         emit isRangeChanged(m_isRange);
     }
 }
@@ -5170,13 +5170,19 @@ void MainWindow::calibrationToggled(bool checked)
 
 void MainWindow::on_dataChanged(qint64 _center_khz, qint64 _range_khz, qint32 _dots)
 {
+    double center_khz = (double)_center_khz;
+    double range_khz = (double)_range_khz;
+    AnalyzerParameters::normalizeFqRange(center_khz, range_khz);
+    _center_khz = (qint64)center_khz;
+    _range_khz = (qint64)range_khz;
+
     ui->spinBoxPoints->setValue(_dots);
     if (m_isRange) {
         ui->lineEdit_fqFrom->setText(QString::number(_center_khz));
-        ui->lineEdit_fqTo->setText(QString::number(_range_khz/2));
+        ui->lineEdit_fqTo->setText(QString::number(_range_khz));
     } else {
-        ui->lineEdit_fqFrom->setText(QString::number(_center_khz - _range_khz/2));
-        ui->lineEdit_fqTo->setText(QString::number(_center_khz + _range_khz/2));
+        ui->lineEdit_fqFrom->setText(QString::number(_center_khz - _range_khz));
+        ui->lineEdit_fqTo->setText(QString::number(_center_khz + _range_khz));
     }
     changeFqTo();
     changeFqFrom();
@@ -5537,4 +5543,17 @@ void MainWindow::changeColorTheme(bool _dark)
 
     m_measurements->changeColorTheme(m_darkColorTheme);
     m_measurements->on_redrawGraphs();
+}
+
+void MainWindow::getEnteredFq(double& start, double& stop)
+{
+    if (m_isRange) {
+        double center = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
+        double range = ui->lineEdit_fqTo->text().remove(' ').toDouble();
+        start = center - range;
+        stop = center + range;
+    } else {
+        start = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
+        stop = ui->lineEdit_fqTo->text().remove(' ').toDouble();
+    }
 }
