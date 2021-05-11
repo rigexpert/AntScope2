@@ -7,7 +7,7 @@
 bool g_developerMode = false;
 bool g_raspbian = false;
 bool g_bAA55modeNewProtocol = false;
-
+MainWindow* g_mainWindow;
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -123,6 +123,7 @@ int main(int argc, char *argv[])
     g_raspbian = QSysInfo::productType().contains("raspbian", Qt::CaseInsensitive);
 
     MainWindow w;
+    g_mainWindow = w.m_mainWindow;
 
     foreach (QString path, args) {
         if (path.contains(".asd")) {

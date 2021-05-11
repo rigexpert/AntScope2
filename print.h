@@ -34,6 +34,7 @@ public:
     void drawSmithImage (void);
 
     void rescale();
+    void updateMarkers(int markers, int measurements, QList<QList<QVariant>> info);
 
 protected:
     void resizeEvent(QResizeEvent *e);
@@ -49,32 +50,30 @@ private:
     QSettings * m_settings;
     QString m_lastPath;
 
-//    QGridLayout m_layout;
-
-    QLabel m_markersNumberLabel;
-    QLabel m_measurementsNumberLabel;
-    QLabel m_fqLabel;
-    QLabel m_swrLabel;
-    QLabel m_rlLabel;
-    QLabel m_zLabel;
-    QLabel m_phaseLabel;
+//    QLabel m_markersNumberLabel;
+//    QLabel m_measurementsNumberLabel;
+//    QLabel m_fqLabel;
+//    QLabel m_swrLabel;
+//    QLabel m_rlLabel;
+//    QLabel m_zLabel;
+//    QLabel m_phaseLabel;
 
 
-    QStringList m_markersNumberList;
-    QStringList m_measurementsNumberList;
-    QStringList m_fqList;
-    QStringList m_swrList;
-    QStringList m_rlList;
-    QStringList m_zList;
-    QStringList m_phaseList;
+//    QStringList m_markersNumberList;
+//    QStringList m_measurementsNumberList;
+//    QStringList m_fqList;
+//    QStringList m_swrList;
+//    QStringList m_rlList;
+//    QStringList m_zList;
+//    QStringList m_phaseList;
 
-    QList <QLabel*> m_markersNumberObjList;
-    QList <QLabel*> m_measurementsNumberObjList;
-    QList <QLabel*> m_fqObjList;
-    QList <QLabel*> m_swrObjList;
-    QList <QLabel*> m_rlObjList;
-    QList <QLabel*> m_zObjList;
-    QList <QLabel*> m_phaseObjList;    
+//    QList <QLabel*> m_markersNumberObjList;
+//    QList <QLabel*> m_measurementsNumberObjList;
+//    QList <QLabel*> m_fqObjList;
+//    QList <QLabel*> m_swrObjList;
+//    QList <QLabel*> m_rlObjList;
+//    QList <QLabel*> m_zObjList;
+//    QList <QLabel*> m_phaseObjList;
 
     QVector <double> m_mFqList;
     QVector <QCPCurve*> m_curveList;
@@ -85,6 +84,40 @@ private:
 
     bool m_isSmithGraph;
 
+};
+
+//////////////////////////////////////////
+class PrintMarkers : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit PrintMarkers(QWidget *parent = 0);
+    ~PrintMarkers();
+
+protected:
+    virtual void createHeader();
+    virtual void initLayout();
+    QString formatText(int type, QVariant val);
+    void updateTable();
+
+public slots:
+    virtual void updateMarkers(int markers, int measurements);
+    virtual void updateInfo(QList<QList<QVariant>>& info);
+    void clearTable(void);
+    QList<int> getColumns();
+
+signals:
+    void changeColumns();
+
+protected:
+    int m_markers=0;
+    int m_measurements=0;
+    bool m_menuVisible = false;
+    QList<MarkersHeaderColumn> m_headerColumns;
+    QList<QList<QWidget*>> m_rows;
+    QGridLayout m_layout;
+    QSettings *m_settings;
 };
 
 #endif // PRINT_H

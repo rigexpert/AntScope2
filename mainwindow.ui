@@ -285,6 +285,12 @@
         <layout class="QFormLayout" name="formLayout">
          <item row="0" column="0">
           <widget class="QPushButton" name="limitsBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>Entering the initial and final measurement frequency</string>
            </property>
@@ -307,6 +313,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QPushButton" name="rangeBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>Setting the central measurement frequency and range</string>
            </property>
@@ -326,6 +338,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="startLabel">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="text">
             <string>Center</string>
            </property>
@@ -348,6 +366,12 @@
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="stopLabel">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="text">
             <string>Range (+/-)</string>
            </property>
@@ -376,6 +400,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="text">
             <string>Points</string>
            </property>
@@ -434,6 +464,12 @@ process in the settings menu!</string>
          </item>
          <item row="4" column="1">
           <widget class="QPushButton" name="fullBtn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>Set the default values of the measuring frequency range</string>
            </property>
@@ -807,13 +843,13 @@ process in the settings menu!</string>
               <bool>true</bool>
              </attribute>
              <attribute name="horizontalHeaderDefaultSectionSize">
-              <number>30</number>
+              <number>40</number>
              </attribute>
              <attribute name="horizontalHeaderHighlightSections">
               <bool>true</bool>
              </attribute>
              <attribute name="horizontalHeaderMinimumSectionSize">
-              <number>30</number>
+              <number>40</number>
              </attribute>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>false</bool>

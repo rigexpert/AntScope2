@@ -1,4 +1,7 @@
 #include "markerspopup.h"
+#include "mainwindow.h"
+
+QMap<int, QString> MarkersHeaderColumn::m_mapHeader;
 
 MarkersPopUp::MarkersPopUp(QWidget *parent) : QWidget(parent),
       m_durability(2000),
@@ -24,32 +27,14 @@ MarkersPopUp::MarkersPopUp(QWidget *parent) : QWidget(parent),
       animation.setTargetObject(this);                // Устанавливаем целевой объект анимации
       animation.setPropertyName("popupOpacity");      // Устанавливаем анимируемое свойство
       connect(&animation, &QAbstractAnimation::finished, this, &MarkersPopUp::hide); /* Подключаем сигнал окончания
-                                                                               * анимации к слоту скрытия
-                                                                               * */
+                                                                               * анимации к слоту скрытия                                                                               * */
       QString path = Settings::setIniFile();
       m_settings = new QSettings(path,QSettings::IniFormat);
-
-
-//      m_layout.addWidget(&m_removeLabel,0,0);
-//      m_layout.addWidget(&m_numberLabel,0,1);
-//      m_layout.addWidget(&m_measurementLabel,0,2);
-//      m_layout.addWidget(&m_fqLabel,0,3);
-//      m_layout.addWidget(&m_swrLabel,0,4);
-//      m_layout.addWidget(&m_rlLabel,0,5);
-//      m_layout.addWidget(&m_zLabel,0,6);
-//      m_layout.addWidget(&m_phaseLabel,0,7);
-
-      fillHeader();
-      createHeader();
-
-      setLayout(&m_layout);
-
-      on_translate();
 
       m_timer = new QTimer();
       connect(m_timer, &QTimer::timeout, this, &MarkersPopUp::hideAnimation);
 
-      updateTable();
+      initLayout();
 }
 
 void MarkersPopUp::setName(QString name)
@@ -101,6 +86,14 @@ MarkersPopUp::~MarkersPopUp()
     delete m_settings;
 }
 
+void MarkersPopUp::initLayout()
+{
+      //fillHeaderMap();
+      createHeader();
+      setLayout(&m_layout);
+      updateTable();
+}
+
 void MarkersPopUp::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event)
@@ -120,143 +113,14 @@ void MarkersPopUp::paintEvent(QPaintEvent *event)
     painter.drawRoundedRect(roundedRect, 5, 5);
 }
 
-#if 0
-void MarkersPopUp::addRowText( int markerNumber,
-                               QVector<int> *measurement,
-                               QVector<double> *fq,
-                               QVector<double> *swr,
-                               QVector<double> *rl,
-                               QVector<QString> *z,
-                               QVector<double> *phase)
-{
-    QPushButton* button = new QPushButton();
-    int row = fq->length() == 0 ? 1 : fq->length();
-    m_layout.addWidget(button, row * m_buttonsObjList.length() + 1, 0);
-    //m_layout.addWidget(button, fq->length()*(m_buttonsObjList.length()) + 1, 0);
-    //m_layout.addWidget(button, markerNumber + 1, 0);
-    QString str = "RM" + QString::number(markerNumber);
-    button->setObjectName(str);
-    button->setText("X");
-    button->setMaximumWidth(20);
-    connect(button, SIGNAL(clicked()), this, SLOT(on_remove()));
-    m_buttonsObjList.append(button);
-
-    QLabel* label = new QLabel();
-    label->setText(QString::number(markerNumber+1));
-    m_layout.addWidget(label, row * m_markersObjList.length() + 1, 1);
-    //m_layout.addWidget(label, fq->length()*(m_markersObjList.length()) + 1, 1);
-    //m_layout.addWidget(label, markerNumber + 1, 1);
-    m_markersObjList.append(label);
-
-    for(int i = 0; i < measurement->length(); ++i)
-    {
-        QLabel* label = new QLabel();
-        label->setText(QString::number(measurement->at(measurement->length()- i-1)));
-        int t = measurement->length()*(markerNumber) + i + 1;
-        m_layout.addWidget(label, t, 2);
-        m_measurementsObjList.append(label);
-        m_measurementsList.append(QString::number(measurement->at(measurement->length()- i-1)));
-        m_markersList.append(QString::number(markerNumber+1));
-    }
-
-    for(int i = 0; i < fq->length(); ++i)
-    {
-        QLabel* label = new QLabel();
-        label->setText(QString::number(fq->at(i)));
-        int t = fq->length()*(markerNumber) + i + 1;
-        m_layout.addWidget(label, t, 3);
-        m_fqObjList.append(label);
-        m_fqList.append(QString::number(fq->at(i)));
-    }
-
-    for(int i = 0; i < swr->length(); ++i)
-    {
-        QLabel* label = new QLabel();
-        label->setText(QString::number(swr->at(i),'f', 2));
-        m_layout.addWidget(label, swr->length()*(markerNumber) + i + 1, 4);
-        m_swrObjList.append(label);
-        m_swrList.append(QString::number(swr->at(i),'f', 2));
-    }
-
-    for(int i = 0; i < rl->length(); ++i)
-    {
-        QLabel* label = new QLabel();
-        label->setText(QString::number(rl->at(i),'f', 2));
-        m_layout.addWidget(label, rl->length()*(markerNumber) + i + 1, 5);
-        m_rlObjList.append(label);
-        m_rlList.append(QString::number(rl->at(i),'f', 2));
-    }
-
-    for(int i = 0; i < z->length(); ++i)
-    {
-        QLabel* label = new QLabel();
-        label->setText(z->at(i));
-        m_layout.addWidget(label, z->length()*(markerNumber) + i + 1, 6);
-        m_zObjList.append(label);
-        m_zList.append(z->at(i));
-    }
-
-    for(int i = 0; i < phase->length(); ++i)
-    {
-        QLabel* label = new QLabel();
-        label->setText(QString::number(phase->at(i),'f', 2));
-        m_layout.addWidget(label, phase->length()*(markerNumber) + i + 1, 7);
-        m_phaseObjList.append(label);
-        m_phaseList.append(QString::number(phase->at(i),'f', 2));
-    }
-
-    updateTable();
-}
-#endif
-
 
 void MarkersPopUp::on_remove()
 {
-    // TODO
     QString str = sender()->objectName();
     str.remove(0,2);
     int markerIndex = str.toInt();
-//    for (int idx=0; idx<m_headerColumns.size(); idx++) {
-//        MarkersHeaderColumn& col = m_headerColumns[idx];
-//        QWidget* field = col.rows[markerIndex];
-//        m_layout.removeWidget(field);
-//        col.rows.removeOne(field);
-//        delete field;
-//        col.strings.removeAt(markerIndex);
-//    }
     emit removeMarker(markerIndex);
 }
-
-/*
-void MarkersPopUp::addMarker(int markerNumber)
-{
-    int row = m_headerColumns[0].rows.size();
-    for (int idx=0; idx<m_headerColumns.size(); idx++) {
-        MarkersHeaderColumn& col = m_headerColumns[idx];
-        QWidget* field;
-        if (idx == 0) {
-            field = new QToolButton();
-            QString str = "RM" + QString::number(markerNumber);
-            field->setObjectName(str);
-            field->setMaximumWidth(20);
-            ((QToolButton*)field)->setText("X");
-            connect((QToolButton*)field, &QToolButton::clicked, this, &MarkersPopUp::on_remove);
-        } else {
-            field = new QLabel(this);
-            QString text;
-            if (col.type == MarkersHeaderColumn::fieldNum)
-                text = QString::number(markerNumber+1);
-            col.strings << text;
-            ((QLabel*)field)->setText(text);
-        }
-        col.rows << field;
-        m_layout.addWidget(field, row+1, idx);
-
-        updateTable();
-    }
-}
-*/
-
 
 QList <QStringList> MarkersPopUp::getPopupList()
 { // print support
@@ -307,16 +171,18 @@ void MarkersPopUp::show()
 
 void MarkersPopUp::focusShow()
 {
+    //qDebug() << "MarkersPopUp::focusShow()" << m_menuVisible;
     QWidget::show();
 }
 
 void MarkersPopUp::focusHide()
 {
+    //qDebug() << "MarkersPopUp::focusHide()" << m_menuVisible;
     if (m_menuVisible) {
         setVisible(true);
         return;
     }
-    //QWidget::hide();
+    QWidget::hide();
 }
 
 void MarkersPopUp::hideAnimation()
@@ -406,49 +272,11 @@ void MarkersPopUp::on_translate()
 //    m_phaseLabel.setText(tr("Phase"));
 }
 
-void MarkersPopUp::fillHeader()
-{
-    m_mapHeader.clear();
-    int i = MarkersHeaderColumn::fieldDelete;
-    m_mapHeader.insert(i++, "Del");
-    m_mapHeader.insert(i++, "Marker");
-    m_mapHeader.insert(i++, " # ");
-    m_mapHeader.insert(i++, "FQ");
-    m_mapHeader.insert(i++, "SWR");        // SWR   - коэф. стоячей волны
-    m_mapHeader.insert(i++, "RL, dB");     // RL   - возвратные потери
-    m_mapHeader.insert(i++, "Phase°");     // phase - фаза
-    m_mapHeader.insert(i++, "R, Ohm");     // R    - активное сопротивление (последовательная модель)
-    m_mapHeader.insert(i++, "X, Ohm");     // X    - реактивное сопротивление (последовательная модель)
-    m_mapHeader.insert(i++, "Z, Ohm");     // Z     - импеданс
-    m_mapHeader.insert(i++, "L, nH");      // L    - индуктивность (последовательная модель)
-    m_mapHeader.insert(i++, "C, pF");      // C    - ёмкость (последовательная модель)
-    m_mapHeader.insert(i++, "rho");        // rho   - магнитуда
-    m_mapHeader.insert(i++, "|Z|, Ohm");   // |Z|  - модуль импеданса
-    m_mapHeader.insert(i++, "|Г|");        // |Г|   - модуль коэф. отражения
-    m_mapHeader.insert(i++, "R||, Ohm");   // R||  - активное сопротивление (параллельная модель)
-    m_mapHeader.insert(i++, "X||, Ohm");   // X||  - реактивное сопротивление (параллельная модель)
-    m_mapHeader.insert(i++, "Z||, Ohm");   // Z||   - импеданс  (параллельная модель)
-    m_mapHeader.insert(i++, "L||, nH");    // L||  - индуктивность (параллельная модель)
-    m_mapHeader.insert(i++, "C||, pF");    // C||  - ёмкость (параллельная модель)
-}
 
 void MarkersPopUp::createMenu(MarkersHeaderColumn &column)
 {
     column.menu = new QMenu(column.button);
-
-//    QString  menuStyle(
-//               "QMenu::item{"
-//               "background-color: rgb(0, 170, 0);"
-//               "color: rgb(255, 255, 255);"
-//               "}"
-//               "QMenu::item:selected{"
-//               "background-color: rgb(0, 85, 127);"
-//               "color: rgb(255, 255, 255);"
-//               "}"
-//            );
-//    column.menu->setStyleSheet(menuStyle);
-
-    QMapIterator<int, QString> it(m_mapHeader);
+    QMapIterator<int, QString> it(MarkersHeaderColumn::headerMap());
     while (it.hasNext()) {
         it.next();
         if (it.key() > MarkersHeaderColumn::fieldFQ) {
@@ -456,20 +284,72 @@ void MarkersPopUp::createMenu(MarkersHeaderColumn &column)
             action->setData(it.key());
         }
     }
+    connect(column.menu, &QMenu::aboutToShow, this, [=](){
+        m_menuVisible = true;
+        setVisible(true);
+    });
+    connect(column.menu, &QMenu::aboutToHide, this, [=](){
+        m_menuVisible = false;
+        extern MainWindow* g_mainWindow;
+        QApplication::setActiveWindow(g_mainWindow);
+    });
     connect(column.menu, &QMenu::triggered, this, [this, column](QAction* act) {
        m_menuVisible = true;
        int index = act->data().toInt();
-       QString title = act->text();
-       column.button->setText(title);
-       column.button->setProperty("field_type", index);
-       emit changeColumns();
+       if (index == MarkersHeaderColumn::fieldInsert) {
+            // inset column
+           if (m_headerColumns.size() <= MAX_BUTTONS_NUM) {
+               QList<int> buttons = getColumns();
+               buttons.insert(column.index+1, MarkersHeaderColumn::fieldSWR);
+               QString header;
+               for (int i=0; i<buttons.size(); i++)
+                   header += QString::number(buttons[i]) + ",";
+               m_settings->beginGroup("Markers");
+               m_settings->setValue("header", header);
+               m_settings->endGroup();
+               m_settings->sync();
+               clearTable();
+               createHeader();
+               updateMarkers(m_markers, m_measurements);
+           }
+       } else  if (index == MarkersHeaderColumn::fieldRemove) {
+            // remove column
+           if (m_headerColumns.size() > MIN_BUTTONS_NUM) {
+               QList<int> buttons = getColumns();
+               buttons.removeAt(column.index);
+               QString header;
+               for (int i=0; i<buttons.size(); i++)
+                   header += QString::number(buttons[i]) + ",";
+               m_settings->beginGroup("Markers");
+               m_settings->setValue("header", header);
+               m_settings->endGroup();
+               m_settings->sync();
+               clearTable();
+               createHeader();
+               updateMarkers(m_markers, m_measurements);
+           }
+       } else {
+           QString title = act->text();
+           ((QToolButton*)(column.button))->setText(title);
+           column.button->setProperty("field_type", index);
+           QList<int> buttons = getColumns();
+           QString header;
+           for (int i=0; i<buttons.size(); i++)
+               header += QString::number(buttons[i]) + ",";
+           m_settings->beginGroup("Markers");
+           m_settings->setValue("header", header);
+           m_settings->endGroup();
+           m_settings->sync();
+        }
        setVisible(true);
        m_menuVisible = false;
+       emit changeColumns();
     });
 }
 
 void MarkersPopUp::createHeader()
 {
+    QMap<int, QString>& mapHeader = MarkersHeaderColumn::headerMap();
     m_headerColumns.clear();
 
     m_settings->beginGroup("Markers");
@@ -478,17 +358,21 @@ void MarkersPopUp::createHeader()
     QList<QString> list = buttons.split(',');
     int column = 0;
     foreach (QString key, list) {
+        if (key.isEmpty())
+            continue;
         MarkersHeaderColumn data;
         int type = key.toInt();
-        data.button = new QToolButton(this);
-        data.button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        data.button->setProperty("field_type", type);
+        data.index = column;
+        QToolButton* button = new QToolButton(this);
+        data.button = button;
+        button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        button->setProperty("field_type", type);
         if (type > MarkersHeaderColumn::fieldFQ) {
-            data.button->setPopupMode(QToolButton::MenuButtonPopup);
+            button->setPopupMode(QToolButton::MenuButtonPopup);
             createMenu(data);
-            data.button->setMenu(data.menu);
+            button->setMenu(data.menu);
         }
-        data.button->setText(m_mapHeader[type]);
+        button->setText(mapHeader[type]);
         m_layout.addWidget(data.button, 0 ,column++, Qt::AlignHCenter);
         m_headerColumns << data;
     }
@@ -520,8 +404,6 @@ void MarkersPopUp::updateMarkers(int markers, int measurements)
         m_headerColumns[i].button->show();
     }
 
-    int s1 = m_layout.children().size();
-
     int rowCount = m_measurements==0 ? 1 : m_measurements;
     int rowIndex = 1;
     for (int i=0; i<m_markers; i++) {
@@ -546,9 +428,6 @@ void MarkersPopUp::updateMarkers(int markers, int measurements)
             rowIndex++;
         }
     }
-
-    int s2 = m_layout.children().size();
-    qDebug() << "MarkersPopUp::updateMarkers children" << s1 << s2;
 
     updateTable();
 }
@@ -579,14 +458,11 @@ void MarkersPopUp::updateInfo(QList<QList<QVariant>>& info)
 
 void MarkersPopUp::clearTable(void)
 {
-    int s1 = m_layout.children().size();
     QLayoutItem* item = nullptr;
     while((item=m_layout.takeAt(0)) != nullptr) {
         item->widget()->setVisible(false);
         m_layout.removeItem(item);
     }
-
-    int s2 = m_layout.children().size();
     for(int i=0; i<m_rows.size(); i++) {
         QList<QWidget*> row = m_rows[i];
         for (int j=0; j<row.size(); j++) {
@@ -595,8 +471,6 @@ void MarkersPopUp::clearTable(void)
         row.clear();
     }
     m_rows.clear();
-    int s3 = m_layout.children().size();
-    qDebug() << "MarkersPopUp::clearTable children" << s1 << s2 << s3;
 }
 
 void MarkersPopUp::updateTable()
@@ -613,9 +487,6 @@ QString MarkersPopUp::formatText(int type, QVariant v)
     switch (type) {
     case MarkersHeaderColumn::fieldDelete:
         break;
-//    case MarkersHeaderColumn::fieldFQ:
-//        str = QString::number(val);
-//        break;
     case MarkersHeaderColumn::fieldNum:
         str = QString::number(v.toInt());
         break;
@@ -633,4 +504,35 @@ QString MarkersPopUp::formatText(int type, QVariant v)
         break;
     }
     return str;
+}
+
+///////////////////////////////////////////////////////
+QMap<int, QString>& MarkersHeaderColumn::headerMap()
+{
+    if (m_mapHeader.isEmpty()) {
+        int i = MarkersHeaderColumn::fieldDelete;
+        m_mapHeader.insert(i++, "Del");
+        m_mapHeader.insert(i++, "Marker");
+        m_mapHeader.insert(i++, " # ");
+        m_mapHeader.insert(i++, "FQ, kHz");
+        m_mapHeader.insert(i++, "SWR");        // SWR   - коэф. стоячей волны
+        m_mapHeader.insert(i++, "RL, dB");     // RL   - возвратные потери
+        m_mapHeader.insert(i++, "Phase°");     // phase - фаза
+        m_mapHeader.insert(i++, "R, Ohm");     // R    - активное сопротивление (последовательная модель)
+        m_mapHeader.insert(i++, "X, Ohm");     // X    - реактивное сопротивление (последовательная модель)
+        m_mapHeader.insert(i++, "Z, Ohm");     // Z     - импеданс
+        m_mapHeader.insert(i++, "L, nH");      // L    - индуктивность (последовательная модель)
+        m_mapHeader.insert(i++, "C, pF");      // C    - ёмкость (последовательная модель)
+        m_mapHeader.insert(i++, "rho");        // rho   - магнитуда
+        m_mapHeader.insert(i++, "|Z|, Ohm");   // |Z|  - модуль импеданса
+        m_mapHeader.insert(i++, "R||, Ohm");   // R||  - активное сопротивление (параллельная модель)
+        m_mapHeader.insert(i++, "X||, Ohm");   // X||  - реактивное сопротивление (параллельная модель)
+        m_mapHeader.insert(i++, "Z||, Ohm");   // Z||   - импеданс  (параллельная модель)
+        m_mapHeader.insert(i++, "L||, nH");    // L||  - индуктивность (параллельная модель)
+        m_mapHeader.insert(i++, "C||, pF");    // C||  - ёмкость (параллельная модель)
+
+        m_mapHeader.insert(MarkersHeaderColumn::fieldInsert, "Insert column");
+        m_mapHeader.insert(MarkersHeaderColumn::fieldRemove, "Remove column");
+    }
+    return m_mapHeader;
 }

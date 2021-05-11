@@ -57,19 +57,26 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QLabel" name="label_2">
+         <widget class="QLabel" name="labelMarkers">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>Markers:</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QWidget" name="markersWidget" native="true">
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <layout class="QGridLayout" name="markersLayout"/>
-           </item>
-          </layout>
+         <widget class="PrintMarkers" name="markersWidget" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
          </widget>
         </item>
        </layout>
@@ -77,7 +84,7 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="labelComment">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
             <horstretch>0</horstretch>
@@ -241,6 +248,12 @@
    <class>QCustomPlot</class>
    <extends>QWidget</extends>
    <header>qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PrintMarkers</class>
+   <extends>QWidget</extends>
+   <header location="global">markerspopup.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

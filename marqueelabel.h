@@ -8,7 +8,6 @@
 #include <QDate>
 #include "downloader.h"
 
-#define SPEED_TIMER 100
 
 class MarqueeString
 {
@@ -20,6 +19,7 @@ class MarqueeString
     QMap<QString, QString> m_keywords;
     int m_speed = 1;
     QDate m_endDate=QDate::currentDate();
+    int m_waitTimeSec = 0;
 
 public:
     MarqueeString() {}
@@ -35,13 +35,15 @@ public:
     int speed() { return m_speed; }
     QDate enddate() { return m_endDate; }
     QMap<QString, QString> keywords() { return m_keywords; }
+    int waitTime() { return m_waitTimeSec; }
 
     void read(QJsonObject& obj)
     {
         m_text = obj["message"].toString("");
         m_link = obj["linkto"].toString("");
         m_timeAfterSec = obj["timeoutafter"].toInt(0);
-        m_speed = obj["speed"].toInt(1);        
+        m_speed = obj["speed"].toInt(1);
+        m_waitTimeSec = obj["waittime"].toInt(0);
         QString tmp = obj["textcolor"].toString("").trimmed();
         if (tmp.isEmpty()) {
             m_color = QColor(Qt::transparent);
@@ -106,6 +108,7 @@ protected:
     void next();
 
 private: 
+    int m_speedTimerMs = 25;
     int m_px;
     int m_py;
     QTimer m_timer;

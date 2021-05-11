@@ -121,6 +121,8 @@ QList<ReDeviceInfo> ReDeviceInfo::availableSerial()
     foreach (FtdiInfo::Info item, infolist)
     {
         item.portInfo.remove("RigExpert ");
+        if (item.portInfo.contains("AA-170"))
+            item.portInfo = "AA-170";
         list.append(ReDeviceInfo(Serial, item.portInfo, item.portName));
     }
 
@@ -221,6 +223,10 @@ QList<QSerialPortInfo> bluetoothPorts()
     QList<QSerialPortInfo> list;
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
         if (info.description().contains("Bluetooth", Qt::CaseInsensitive)) {
+#ifdef Q_OS_DARWIN
+            if (info.description().contains("tty."))
+                continue;
+#endif
             list << info;
         }
     }

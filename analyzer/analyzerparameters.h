@@ -26,6 +26,8 @@ static int ABSOLUTE_MIN_FQ = 0;
 static int ABSOLUTE_MAX_FQ = 10000000;
 static int MAX_DOTS = 2000;
 
+static double VALUE_LIMIT = 9999; // VALUE_LIMIT +- jVALUE_LIMIT
+
 #ifndef NEW_ANALYZER
 
 /*
@@ -303,8 +305,10 @@ struct measurement
     QCPDataMap rlGraph;
     QCPDataMap tdrImpGraph;
     QCPDataMap tdrStepGraph;
+    QCPDataMap tdrZGraph;
     QCPDataMap tdrImpGraphFeet;
     QCPDataMap tdrStepGraphFeet;
+    QCPDataMap tdrZGraphFeet;
     QVector<QCPDataMap*> userGraphs;
 
     QCPCurve *smithCurve;
@@ -450,9 +454,9 @@ public:
     static void fill() {
         int idx=0;
         m_analyzers << new AnalyzerParameters(idx++, "NONE", "NONE", "NONE", 0, 0);
-        m_analyzers << new AnalyzerParameters(idx++, "AA-30", "100", "30000", 64, 133);
         m_analyzers << new AnalyzerParameters(idx++, "AA-30 ZERO", "60", "30000", 0, 0);
         m_analyzers << new AnalyzerParameters(idx++, "AA-30.ZERO", "60", "170000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-30", "100", "30000", 64, 133);
         m_analyzers << new AnalyzerParameters(idx++, "AA-35 ZOOM", "60", "35000" , 240, 320, PREFIX_SERIAL_NUMBER_AA35);
         m_analyzers << new AnalyzerParameters(idx++, "AA-35 ZOOM", "60", "35000" , 240, 320, PREFIX_SERIAL_NUMBER_AA35_ZOOM);
         m_analyzers << new AnalyzerParameters(idx++, "AA-54", "100", "54000", 64, 133);
@@ -460,9 +464,9 @@ public:
         m_analyzers << new AnalyzerParameters(idx++, "AA-55 ZOOM", "60", "55000", 240, 320, PREFIX_SERIAL_NUMBER_AA55_ZOOM);
         m_analyzers << new AnalyzerParameters(idx++, "AA-170", "100", "170000", 64, 133);
         m_analyzers << new AnalyzerParameters(idx++, "AA-200", "100", "200000", 0, 0);
-        m_analyzers << new AnalyzerParameters(idx++, "AA-230", "100", "230000", 0, 0);
         m_analyzers << new AnalyzerParameters(idx++, "AA-230PRO", "100", "230000", 0, 0);
         m_analyzers << new AnalyzerParameters(idx++, "AA-230 ZOOM", "100", "230000", 220, 290, PREFIX_SERIAL_NUMBER_AA230_ZOOM);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-230", "100", "230000", 0, 0);
         m_analyzers << new AnalyzerParameters(idx++, "Stick 230", "100", "230000", 200, 200, PREFIX_SERIAL_NUMBER_AA230_STICK);
         m_analyzers << new AnalyzerParameters(idx++, "Stick Pro", "100", "600000", 220, 220, PREFIX_SERIAL_NUMBER_STICK_PRO);
         m_analyzers << new AnalyzerParameters(idx++, "AA-500", "100", "500000", 0, 0);

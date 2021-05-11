@@ -131,9 +131,10 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
                 number.remove(4,5);
                 int prefix = number.toInt();
                 analyzer = AnalyzerParameters::byPrefix(prefix);
-                if(analyzer == nullptr)
+                if(analyzer == nullptr) {
+                    cur_dev = cur_dev->next;
                     continue;
-
+                }
                 if (analyzer->prefix() == prefix) {
                     m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
                     result = connectHid(RE_VID, RE_PID);

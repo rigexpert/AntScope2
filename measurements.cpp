@@ -77,6 +77,7 @@ Measurements::Measurements(QObject *parent) : QObject(parent),
 
     m_pdTdrImp =  new double[TDR_MAXARRAY];
     m_pdTdrStep =  new double[TDR_MAXARRAY];
+    m_pdTdrZ =  new double[TDR_MAXARRAY];
 
     if(m_graphHint == NULL)
     {
@@ -123,6 +124,7 @@ Measurements::~Measurements()
 
     delete []m_pdTdrImp;
     delete []m_pdTdrStep;
+    delete []m_pdTdrZ;
 
     if(m_graphHint)
     {
@@ -224,8 +226,9 @@ void Measurements::deleteRow(int row)
         m_rpWidget->removeGraph(1+row*3);
         m_rpWidget->removeGraph(1+row*3);
         m_rlWidget->removeGraph(row_);
-        m_tdrWidget->removeGraph(1+row*2);
-        m_tdrWidget->removeGraph(1+row*2);
+        m_tdrWidget->removeGraph(1+row*3);
+        m_tdrWidget->removeGraph(1+row*3);
+        m_tdrWidget->removeGraph(1+row*3);
         if (g_developerMode) {
             int index = getBaseUserGraphIndex(row);
             int cnt = mm.userGraphs.size();
@@ -245,6 +248,7 @@ void Measurements::deleteRow(int row)
 
             m_tdrWidget->legend->addItem(new QCPPlottableLegendItem(m_tdrWidget->legend, m_tdrWidget->graph(1)));
             m_tdrWidget->legend->addItem(new QCPPlottableLegendItem(m_tdrWidget->legend, m_tdrWidget->graph(2)));
+            m_tdrWidget->legend->addItem(new QCPPlottableLegendItem(m_tdrWidget->legend, m_tdrWidget->graph(3)));
         }
         int selRow = (row >= m_measurements.length()) ? (row-1) : row;
         QModelIndex myIndex = m_tableWidget->model()->index( selRow, 0,
@@ -316,6 +320,7 @@ void Measurements::on_newMeasurement(QString name)
     }    
     m_swrWidget->addGraph();
     m_swrWidget->graph()->setAntialiasedFill(false);
+    m_swrWidget->graph()->setName(name);
     m_phaseWidget->addGraph();
 
     m_rsWidget->setAutoAddPlottableToLegend(m_rsWidget->legend->itemCount() < 3);
@@ -334,11 +339,15 @@ void Measurements::on_newMeasurement(QString name)
     m_rpWidget->addGraph();
     m_rpWidget->graph()->setName("|Zp|");
     m_rlWidget->addGraph();
-    //m_tdrWidget->setAutoAddPlottableToLegend(m_tdrWidget->legend->itemCount() < 2);
+
+    m_tdrWidget->setAutoAddPlottableToLegend(m_tdrWidget->legend->itemCount() < 3);
     m_tdrWidget->addGraph();
     m_tdrWidget->graph()->setName(tr("Impulse response"));
     m_tdrWidget->addGraph();
     m_tdrWidget->graph()->setName(tr("Step response"));
+    m_tdrWidget->addGraph();
+    m_tdrWidget->graph()->setName(tr("|Z|"));
+    m_tdrWidget->graph()->setValueAxis(m_tdrWidget->yAxis2);
 
     m_measurements.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
     m_viewMeasurements.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
@@ -381,8 +390,9 @@ void Measurements::on_newMeasurement(QString name)
     m_rpWidget->graph(rsGraphCount-2)->setPen(xpen);
     m_rpWidget->graph(rsGraphCount-1)->setPen(zpen);
 
-    m_tdrWidget->graph(tdrGraphCount-2)->setPen(zpen);
-    m_tdrWidget->graph(tdrGraphCount-1)->setPen(xpen);
+    m_tdrWidget->graph(tdrGraphCount-3)->setPen(zpen);
+    m_tdrWidget->graph(tdrGraphCount-2)->setPen(xpen);
+    m_tdrWidget->graph(tdrGraphCount-1)->setPen(rpen);
 
     // name.isEmpty -> singlePoint measurement
     if (!name.isEmpty())
@@ -526,6 +536,16 @@ void Measurements::on_newUserData(rawData _rawData, UserData _userData)
     on_redrawGraphs(true);
 }
 
+double regulate(double val, double limit)
+{
+    double _val = val;
+    if (val < -limit)
+        _val = -limit;
+    if (val > limit)
+        _val = limit;
+    return _val;
+}
+
 void Measurements::on_newData(rawData _rawData, bool _redraw)
 {
     if (m_oneFqMode) {
@@ -613,37 +633,19 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
     double X = _rawData.x;
     double Z = computeZ(R, X);
 
-    data.value = R;
+    data.value = regulate(R, VALUE_LIMIT);
     m_measurements.last().rsrGraph.insert(data.key,data);
-    if( R > maxRs )
-    {
-        data.value = maxRs;
-    }else if( R < (-maxRs) )
-    {
-        data.value = -maxRs;
-    }
+    data.value = regulate(R, maxRs);
     m_viewMeasurements.last().rsrGraph.insert(data.key,data);
 
-    data.value = X;
+    data.value = regulate(X, VALUE_LIMIT);
     m_measurements.last().rsxGraph.insert(data.key,data);
-    if( X > maxRs )
-    {
-        data.value = maxRs;
-    }else if( X < (-maxRs) )
-    {
-        data.value = -maxRs;
-    }
+    data.value = regulate(X, maxRs);
     m_viewMeasurements.last().rsxGraph.insert(data.key,data);
 
-    data.value = Z;
+    data.value = regulate(Z, VALUE_LIMIT);
     m_measurements.last().rszGraph.insert(data.key,data);
-    if( Z > maxRs )
-    {
-        data.value = maxRs;
-    }else if( Z < (-maxRs) )
-    {
-        data.value = -maxRs;
-    }
+    data.value = regulate(Z, maxRs);
     m_viewMeasurements.last().rszGraph.insert(data.key,data);
 //------------------------------------------------------------------------------
 //------------------RXZ par-----------------------------------------------------
@@ -658,39 +660,27 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
     }
     double Rpar = R*(1+X*X/R/R);
     double Xpar = X*(1+R*R/X/X);
-    double Zpar = computeZ(R, X);
+    double Zpar = computeZ(Rpar, Xpar);
 
-    data.value = Rpar;
+    double rr, xx, zz;
+    data.value = regulate(Rpar, VALUE_LIMIT);
     m_measurements.last().rprGraph.insert(data.key,data);
-    if( Rpar > maxRp )
-    {
-        data.value = maxRp;
-    }else if( Rpar < (-maxRp) )
-    {
-        data.value = -maxRp;
-    }
+    rr = data.value;
+
+    data.value = regulate(Rpar, maxRp);
     m_viewMeasurements.last().rprGraph.insert(data.key,data);
 
-    data.value = Xpar;
+    data.value = regulate(Xpar, VALUE_LIMIT);
     m_measurements.last().rpxGraph.insert(data.key,data);
-    if( Xpar > maxRp )
-    {
-        data.value = maxRp;
-    }else if( Xpar < (-maxRp) )
-    {
-        data.value = -maxRp;
-    }
+    xx = data.value;
+
+    data.value = regulate(Xpar, maxRp);
     m_viewMeasurements.last().rpxGraph.insert(data.key,data);
 
-    data.value = Zpar;
+    data.value = regulate(Zpar, VALUE_LIMIT);
     m_measurements.last().rpzGraph.insert(data.key,data);
-    if( Zpar > maxRp )
-    {
-        data.value = maxRp;
-    }else if( Zpar < (-maxRp) )
-    {
-        data.value = -maxRp;
-    }
+    zz = data.value;
+    data.value = regulate(Zpar, maxRp);
     m_viewMeasurements.last().rpzGraph.insert(data.key,data);
 
     data.value = RL;
@@ -802,73 +792,38 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
             }
             m_viewMeasurements.last().swrGraphCalib.insert(data.key,data);
 
-            data.value = calR;
+            data.value = regulate(calR, VALUE_LIMIT);
             m_measurements.last().rsrGraphCalib.insert(data.key,data);
-            if( calR > maxRs )
-            {
-                data.value = maxRs;
-            }else if( calR < (-maxRs) )
-            {
-                data.value = -maxRs;
-            }
+            data.value = regulate(calR, maxRs);
             m_viewMeasurements.last().rsrGraphCalib.insert(data.key,data);
 
-            data.value = calX;
+            data.value = regulate(calX, VALUE_LIMIT);
             m_measurements.last().rsxGraphCalib.insert(data.key,data);
-            if( calX > maxRs )
-            {
-                data.value = maxRs;
-            }else if( calX < (-maxRs) )
-            {
-                data.value = -maxRs;
-            }
+            data.value = regulate(calX, maxRs);
             m_viewMeasurements.last().rsxGraphCalib.insert(data.key,data);
 
-            data.value = calZ;
+            data.value = regulate(calZ, VALUE_LIMIT);
             m_measurements.last().rszGraphCalib.insert(data.key,data);
-            if( calZ > maxRs )
-            {
-                data.value = maxRs;
-            }else if( calZ < (-maxRs) )
-            {
-                data.value = -maxRs;
-            }
+            data.value = regulate(calZ, maxRs);
             m_viewMeasurements.last().rszGraphCalib.insert(data.key,data);
 
 
             double calRpar = calR*(1+calX*calX/calR/calR);
             double calZpar = computeZ(calRpar, calX);
-            data.value = calRpar;
+
+            data.value = regulate(calRpar, VALUE_LIMIT);
             m_measurements.last().rprGraphCalib.insert(data.key,data);
-            if( calRpar > maxRp )
-            {
-                data.value = maxRp;
-            }else if( calRpar < (-maxRp) )
-            {
-                data.value = -maxRp;
-            }
+            data.value = regulate(calRpar, maxRp);
             m_viewMeasurements.last().rprGraphCalib.insert(data.key,data);
 
-            data.value = calX;
+            data.value = regulate(calX, VALUE_LIMIT);
             m_measurements.last().rpxGraphCalib.insert(data.key,data);
-            if( calX > maxRp )
-            {
-                data.value = maxRp;
-            }else if( calX < (-maxRp) )
-            {
-                data.value = -maxRp;
-            }
+            data.value = regulate(calX, maxRp);
             m_viewMeasurements.last().rpxGraphCalib.insert(data.key,data);
 
-            data.value = calZpar;
+            data.value = regulate(calZpar, VALUE_LIMIT);
             m_measurements.last().rpzGraphCalib.insert(data.key,data);
-            if( calZpar > maxRp )
-            {
-                data.value = maxRp;
-            }else if( calZpar < (-maxRp) )
-            {
-                data.value = -maxRp;
-            }
+            data.value = regulate(calZpar, maxRp);
             m_viewMeasurements.last().rpzGraphCalib.insert(data.key,data);
 
             data.value = RL;
@@ -1260,9 +1215,12 @@ void Measurements::on_newCursorSmithPos (double x, double y, int index)
         }
         swr = m_measurements.at(index).swrGraphCalib.value(frequency).value;
         rl = m_measurements.at(index).rlGraphCalib.value(frequency).value;
-        z = m_viewMeasurements.at(index).rszGraphCalib.value(frequency).value;
-        rpar = m_viewMeasurements.at(index).rprGraphCalib.value(frequency).value;
-        xpar = m_viewMeasurements.at(index).rpxGraphCalib.value(frequency).value;
+//        z = m_viewMeasurements.at(index).rszGraphCalib.value(frequency).value;
+//        rpar = m_viewMeasurements.at(index).rprGraphCalib.value(frequency).value;
+//        xpar = m_viewMeasurements.at(index).rpxGraphCalib.value(frequency).value;
+        z = m_measurements.at(index).rszGraphCalib.value(frequency).value;
+        rpar = m_measurements.at(index).rprGraphCalib.value(frequency).value;
+        xpar = m_measurements.at(index).rpxGraphCalib.value(frequency).value;
     }else
     {
         if(m_farEndMeasurement == 1)
@@ -1286,22 +1244,26 @@ void Measurements::on_newCursorSmithPos (double x, double y, int index)
         }
         swr = m_measurements.at(index).swrGraph.value(frequency).value;
         rl = m_measurements.at(index).rlGraph.value(frequency).value;
-        z = m_viewMeasurements.at(index).rszGraph.value(frequency).value;
-        rpar = m_viewMeasurements.at(index).rprGraph.value(frequency).value;
-        xpar = m_viewMeasurements.at(index).rpxGraph.value(frequency).value;
+//        z = m_viewMeasurements.at(index).rszGraph.value(frequency).value;
+//        rpar = m_viewMeasurements.at(index).rprGraph.value(frequency).value;
+//        xpar = m_viewMeasurements.at(index).rpxGraph.value(frequency).value;
+        z = m_measurements.at(index).rszGraph.value(frequency).value;
+        rpar = m_measurements.at(index).rprGraph.value(frequency).value;
+        xpar = m_measurements.at(index).rpxGraph.value(frequency).value;
     }
 
+    const double maxRp = VALUE_LIMIT;
     zString+= QString::number(r,'f', 2);
     if(x1 >= 0)
     {
-        if (x1 > 2000)
-            x1 = 2000; // HUCK
+        if (x1 > maxRp)
+            x1 = maxRp; // HUCK
         zString+= " + j";
         zString+= QString::number(x1,'f', 2);
     }else
     {
-        if (x1 < -2000)
-            x1 = -2000; // HUCK
+        if (x1 < -maxRp)
+            x1 = -maxRp; // HUCK
         zString+= " - j";
         zString+= QString::number((x1 * (-1)),'f', 2);
     }
@@ -1429,22 +1391,29 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
 #define DELTA 5
     if(m_graphHint)
     {
+        if (!m_measurements[index].visible) {
+            return;
+        }
         if(m_currentTab == "tab_6")
         {
             QCPDataMap *tdrmapImp;
             QCPDataMap *tdrmapStep;
+            QCPDataMap *tdrmapZ;
             double pdTdrImp;
             double pdTdrStep;
+            double pdTdrZ;
             if(m_farEndMeasurement == 1)
             {
                 if(m_measureSystemMetric)
                 {
                     tdrmapImp = &(m_farEndMeasurementsSub[index].tdrImpGraph);
                     tdrmapStep = &(m_farEndMeasurementsSub[index].tdrStepGraph);
+                    tdrmapZ = &(m_farEndMeasurementsSub[index].tdrZGraph);
                 }else
                 {
                     tdrmapImp = &(m_farEndMeasurementsSub[index].tdrImpGraphFeet);
                     tdrmapStep = &(m_farEndMeasurementsSub[index].tdrStepGraphFeet);
+                    tdrmapZ = &(m_farEndMeasurementsSub[index].tdrZGraphFeet);
                 }
             }else if(m_farEndMeasurement == 2)
             {
@@ -1452,10 +1421,12 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                 {
                     tdrmapImp = &(m_farEndMeasurementsAdd[index].tdrImpGraph);
                     tdrmapStep = &(m_farEndMeasurementsAdd[index].tdrStepGraph);
+                    tdrmapZ = &(m_farEndMeasurementsAdd[index].tdrZGraph);
                 }else
                 {
                     tdrmapImp = &(m_farEndMeasurementsAdd[index].tdrImpGraphFeet);
                     tdrmapStep = &(m_farEndMeasurementsAdd[index].tdrStepGraphFeet);
+                    tdrmapZ = &(m_farEndMeasurementsAdd[index].tdrZGraphFeet);
                 }
             }else
             {
@@ -1463,10 +1434,12 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                 {
                     tdrmapImp = &(m_measurements[index].tdrImpGraph);
                     tdrmapStep = &(m_measurements[index].tdrStepGraph);
+                    tdrmapZ = &(m_measurements[index].tdrZGraph);
                 }else
                 {
                     tdrmapImp = &(m_measurements[index].tdrImpGraphFeet);
                     tdrmapStep = &(m_measurements[index].tdrStepGraphFeet);
+                    tdrmapZ = &(m_measurements[index].tdrZGraphFeet);
                 }
             }
 
@@ -1535,6 +1508,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         */
                         pdTdrImp = tdrmapImp->value(place).value;
                         pdTdrStep = tdrmapStep->value(place).value;
+                        pdTdrZ = tdrmapZ->value(place).value;
 
                         if(!m_tdrLine)
                         {
@@ -1546,10 +1520,10 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         m_tdrLine->point2->setCoords(place, 1);
 
                         double Z = m_Z0*(1+pdTdrStep)/(1-pdTdrStep);
-                        if (Z<0)
-                        {
+                        if (Z<0)                        
                             Z = 0;
-                        }
+                        if (Z > VALUE_LIMIT)
+                            Z = VALUE_LIMIT;
 
                         QString text;
                         QString distance;
@@ -1680,25 +1654,31 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                         {
                             if(m_farEndMeasurement == 1)
                             {
-                                swr = m_farEndMeasurementsSub.at(index).swrGraph.value(frequency).value;
-                                rl = m_farEndMeasurementsSub.at(index).rlGraph.value(frequency).value;
-                                rho = m_farEndMeasurementsSub.at(index).rhoGraph.value(frequency).value;
-                                phase = m_farEndMeasurementsSub.at(index).phaseGraph.value(frequency).value;
-                                r = m_farEndMeasurementsSub.at(index).rsrGraph.value(frequency).value;
-                                x = m_farEndMeasurementsSub.at(index).rsxGraph.value(frequency).value;
+                                swr = m_farEndMeasurementsSub.at(index).swrGraphCalib.value(frequency).value;
+                                rl = m_farEndMeasurementsSub.at(index).rlGraphCalib.value(frequency).value;
+                                rho = m_farEndMeasurementsSub.at(index).rhoGraphCalib.value(frequency).value;
+                                phase = m_farEndMeasurementsSub.at(index).phaseGraphCalib.value(frequency).value;
+                                r = m_farEndMeasurementsSub.at(index).rsrGraphCalib.value(frequency).value;
+                                x = m_farEndMeasurementsSub.at(index).rsxGraphCalib.value(frequency).value;
+                                z = m_farEndMeasurementsSub.at(index).rszGraphCalib.value(frequency).value;
+                                rpar = m_farEndMeasurementsSub.at(index).rprGraphCalib.value(frequency).value;
+                                xpar = m_farEndMeasurementsSub.at(index).rpxGraphCalib.value(frequency).value;
                             }else if(m_farEndMeasurement == 2)
                             {
-                                swr = m_farEndMeasurementsAdd.at(index).swrGraph.value(frequency).value;
-                                rl = m_farEndMeasurementsAdd.at(index).rlGraph.value(frequency).value;
-                                rho = m_farEndMeasurementsAdd.at(index).rhoGraph.value(frequency).value;
-                                phase = m_farEndMeasurementsAdd.at(index).phaseGraph.value(frequency).value;
-                                r = m_farEndMeasurementsAdd.at(index).rsrGraph.value(frequency).value;
-                                x = m_farEndMeasurementsAdd.at(index).rsxGraph.value(frequency).value;
+                                swr = m_farEndMeasurementsAdd.at(index).swrGraphCalib.value(frequency).value;
+                                rl = m_farEndMeasurementsAdd.at(index).rlGraphCalib.value(frequency).value;
+                                rho = m_farEndMeasurementsAdd.at(index).rhoGraphCalib.value(frequency).value;
+                                phase = m_farEndMeasurementsAdd.at(index).phaseGraphCalib.value(frequency).value;
+                                r = m_farEndMeasurementsAdd.at(index).rsrGraphCalib.value(frequency).value;
+                                x = m_farEndMeasurementsAdd.at(index).rsxGraphCalib.value(frequency).value;
+                                z = m_farEndMeasurementsAdd.at(index).rszGraphCalib.value(frequency).value;
+                                rpar = m_farEndMeasurementsAdd.at(index).rprGraphCalib.value(frequency).value;
+                                xpar = m_farEndMeasurementsAdd.at(index).rpxGraphCalib.value(frequency).value;
                             }else
                             {
                                 swr = m_measurements.at(index).swrGraphCalib.value(frequency).value;
                                 rl = m_measurements.at(index).rlGraphCalib.value(frequency).value;
-                                rho = m_measurements.at(index).rhoGraph.value(frequency).value;
+                                rho = m_measurements.at(index).rhoGraphCalib.value(frequency).value;
                                 phase = m_measurements.at(index).phaseGraphCalib.value(frequency).value;
                                 if (m_previousI < 0 || m_previousI >=dataSize)
                                     return;
@@ -1706,12 +1686,10 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                                 if (m_previousI < 0 || m_previousI >=dataSize)
                                     return;
                                 x = m_measurements.at(index).dataRXCalib.at(m_previousI).x;
+                                z = m_measurements.at(index).rszGraphCalib.value(frequency).value;
+                                rpar = m_measurements.at(index).rprGraphCalib.value(frequency).value;
+                                xpar = m_measurements.at(index).rpxGraphCalib.value(frequency).value;
                             }
-                            //swr = m_measurements.at(index).swrGraphCalib.value(frequency).value;
-                            //rl = m_measurements.at(index).rlGraphCalib.value(frequency).value;
-                            z = m_viewMeasurements.at(index).rszGraph.value(frequency).value;
-                            rpar = m_viewMeasurements.at(index).rprGraph.value(frequency).value;
-                            xpar = m_viewMeasurements.at(index).rpxGraph.value(frequency).value;
                         }else
                         {
                             if(m_farEndMeasurement == 1)
@@ -1722,6 +1700,9 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                                 phase = m_farEndMeasurementsSub.at(index).phaseGraph.value(frequency).value;
                                 r = m_farEndMeasurementsSub.at(index).rsrGraph.value(frequency).value;
                                 x = m_farEndMeasurementsSub.at(index).rsxGraph.value(frequency).value;
+                                z = m_farEndMeasurementsSub.at(index).rszGraph.value(frequency).value;
+                                rpar = m_farEndMeasurementsSub.at(index).rprGraph.value(frequency).value;
+                                xpar = m_farEndMeasurementsSub.at(index).rpxGraph.value(frequency).value;
                             }else if(m_farEndMeasurement == 2)
                             {
                                 swr = m_farEndMeasurementsAdd.at(index).swrGraph.value(frequency).value;
@@ -1730,6 +1711,9 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                                 phase = m_farEndMeasurementsAdd.at(index).phaseGraph.value(frequency).value;
                                 r = m_farEndMeasurementsAdd.at(index).rsrGraph.value(frequency).value;
                                 x = m_farEndMeasurementsAdd.at(index).rsxGraph.value(frequency).value;
+                                z = m_farEndMeasurementsAdd.at(index).rszGraph.value(frequency).value;
+                                rpar = m_farEndMeasurementsAdd.at(index).rprGraph.value(frequency).value;
+                                xpar = m_farEndMeasurementsAdd.at(index).rpxGraph.value(frequency).value;
                             }else
                             {
                                 swr = m_measurements.at(index).swrGraph.value(frequency).value;
@@ -1742,35 +1726,39 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                                 if (m_previousI < 0 || m_previousI >=dataSize)
                                     return;
                                 x = m_measurements.at(index).dataRX.at(m_previousI).x;
+                                z = m_measurements.at(index).rszGraph.value(frequency).value;
+                                rpar = m_measurements.at(index).rprGraph.value(frequency).value;
+                                xpar = m_measurements.at(index).rpxGraph.value(frequency).value;
                             }
-                            //swr = m_measurements.at(index).swrGraph.value(frequency).value;
-                            //rl = m_measurements.at(index).rlGraph.value(frequency).value;
-                            z = m_viewMeasurements.at(index).rszGraph.value(frequency).value;
-                            rpar = m_viewMeasurements.at(index).rprGraph.value(frequency).value;
-                            xpar = m_viewMeasurements.at(index).rpxGraph.value(frequency).value;
                         }
 
+                        const double maxRp = VALUE_LIMIT;
+                        rpar = regulate(rpar, maxRp);
                         zString+= QString::number(r,'f', 2);
                         if(x >= 0)
                         {
-                            if (x > 2000)
-                                x = 2000; // HUCK
+                            if (x > maxRp)
+                                x = maxRp; // HUCK
                             zString+= " + j";
                             zString+= QString::number(x,'f', 2);
                         }else
                         {
-                            if (x < -2000)
-                                x = -2000; // HUCK
+                            if (x < -maxRp)
+                                x = -maxRp; // HUCK
                             zString+= " - j";
                             zString+= QString::number((x * (-1)),'f', 2);
                         }
                         zparString+= QString::number(rpar,'f', 2);
-                        if(x >= 0)
+                        if(xpar >= 0)
                         {
+                            if (xpar > maxRp)
+                                xpar = maxRp; // HUCK
                             zparString+= " + j";
                             zparString+= QString::number(xpar,'f', 2);
                         }else
                         {
+                            if (xpar < -maxRp)
+                                xpar = -maxRp; // HUCK
                             zparString+= " - j";
                             zparString+= QString::number((xpar * (-1)),'f', 2);
                         }
@@ -3053,6 +3041,10 @@ int Measurements::CalcTdr(QVector <rawData> *data)
         }
 
         m_pdTdrStep[i] = ig;
+
+        double Z = m_Z0*(1+ig)/(1-ig);
+        Z = (Z < 0) ? 0 : Z;
+        m_pdTdrZ[i] = (Z > VALUE_LIMIT) ? VALUE_LIMIT : Z;
     }
 
     delete TdrReal;
@@ -3149,16 +3141,19 @@ void Measurements::on_dotsNumberChanged(int number)
 void Measurements::on_changeMeasureSystemMetric (bool state)
 {
     m_measureSystemMetric = state;
+    qDebug() << "Measurements::on_changeMeasureSystemMetric" << m_tdrWidget->graphCount();
     if(m_tdrWidget->graphCount()>2)
     {
         if(m_measureSystemMetric)
         {
-            m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_measurements.last().tdrImpGraph, true);
-            m_tdrWidget->graph()->setData(&m_measurements.last().tdrStepGraph, true);
+            m_tdrWidget->graph(m_tdrWidget->graphCount()-3)->setData(&m_measurements.last().tdrImpGraph, true);
+            m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_measurements.last().tdrStepGraph, true);
+            m_tdrWidget->graph(m_tdrWidget->graphCount()-1)->setData(&m_measurements.last().tdrZGraph, true);
         }else
         {
-            m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_measurements.last().tdrImpGraphFeet, true);
-            m_tdrWidget->graph()->setData(&m_measurements.last().tdrStepGraphFeet, true);
+            m_tdrWidget->graph(m_tdrWidget->graphCount()-3)->setData(&m_measurements.last().tdrImpGraphFeet, true);
+            m_tdrWidget->graph(m_tdrWidget->graphCount()-2)->setData(&m_measurements.last().tdrStepGraphFeet, true);
+            m_tdrWidget->graph(m_tdrWidget->graphCount()-1)->setData(&m_measurements.last().tdrZGraphFeet, true);
         }
     }
     if(m_measureSystemMetric)
@@ -3607,6 +3602,9 @@ void Measurements::calcFarEnd(bool _incrementally)
 
 int Measurements::CalcTdr2(QVector <rawData> *data)
 {
+    // not used
+    return 0;
+#if 0
     #define   MIN_VECTOR_SIZE    500
     #define   MAX_VECTOR_SIZE    16384    						// value must be by Radix2 !!!
     #define   PI                 (double)3.14159265358979323846
@@ -3762,10 +3760,13 @@ int Measurements::CalcTdr2(QVector <rawData> *data)
 
 
     return end;
+#endif
 }
 
 qint16 Measurements::DTF_FindRadix2Length(qint16 length, int *log2N)
 {
+    // not used
+#if 0
     qint8 log;
     qint16 result =0x0010;   //start from 16
     log = 4;
@@ -3779,11 +3780,13 @@ qint16 Measurements::DTF_FindRadix2Length(qint16 length, int *log2N)
         result<<=1;
         log++;
     }
+#endif
     return 0;
 }
 
 void  Measurements::FFT2(double *Rdat, double *Idat, int N, int LogN, int Ft_Flag)
 {
+#if 0
   register int  i, j, n, k, io, ie, in, nn;
   double        ru, iu, rtp, itp, rtq, itq, rw, iw, sr;
 
@@ -3870,6 +3873,7 @@ void  Measurements::FFT2(double *Rdat, double *Idat, int N, int LogN, int Ft_Fla
   }
 
   return;
+#endif
 }
 
 
@@ -4635,13 +4639,18 @@ void Measurements::on_impedanceChanged(double _z0)
         delete m_farEndMeasurementsSub.takeFirst().smithCurve;
         m_swrWidget->removeGraph(1);
         m_phaseWidget->removeGraph(1);
+
         m_rsWidget->removeGraph(1);
         m_rsWidget->removeGraph(1);
         m_rsWidget->removeGraph(1);
+
         m_rpWidget->removeGraph(1);
         m_rpWidget->removeGraph(1);
         m_rpWidget->removeGraph(1);
+
         m_rlWidget->removeGraph(1);
+
+        m_tdrWidget->removeGraph(1);
         m_tdrWidget->removeGraph(1);
         m_tdrWidget->removeGraph(1);
 
@@ -4686,6 +4695,7 @@ void Measurements::on_impedanceChanged(double _z0)
 
 void Measurements::redrawTDR(int _index)
 {
+    double zRange = 0;
     int mode = m_farEndMeasurement;
     int begin = _index < 0 ? 0 : _index;
     int end = _index < 0 ? m_measurements.length() : (_index+1);
@@ -4702,31 +4712,43 @@ void Measurements::redrawTDR(int _index)
         double step = m_tdrRange/len;
         mm.tdrImpGraph.clear();
         mm.tdrStepGraph.clear();
+        mm.tdrZGraph.clear();
         mm.tdrImpGraphFeet.clear();
         mm.tdrStepGraphFeet.clear();
+        mm.tdrZGraphFeet.clear();
         for(int i = 0; i < len; ++i)
         {
             double x = i;
-            double y = m_pdTdrImp[i];
             QCPData data;
             data.key = x*step;
-            data.value = y;
+            data.value = m_pdTdrImp[i];
             mm.tdrImpGraph.insert(data.key,data);
             data.value = m_pdTdrStep[i];
             mm.tdrStepGraph.insert(data.key,data);
+            data.value = m_pdTdrZ[i];
+            mm.tdrZGraph.insert(data.key,data);
 
             QCPData dataFeet;
             dataFeet.key = x*step;
-            dataFeet.value = y;
+            dataFeet.value = m_pdTdrImp[i];
             mm.tdrImpGraphFeet.insert(dataFeet.key,dataFeet);
             dataFeet.value = m_pdTdrStep[i];
             mm.tdrStepGraphFeet.insert(dataFeet.key,dataFeet);
+            dataFeet.value = m_pdTdrZ[i];
+            mm.tdrZGraphFeet.insert(dataFeet.key,dataFeet);
+
+            zRange = m_measureSystemMetric ? qMax(zRange, data.value) : qMax(zRange, dataFeet.value);
         }
-        m_tdrWidget->graph(index*2+1)->setData(
+        m_tdrWidget->graph(index*3+1)->setData(
                         m_measureSystemMetric ? &mm.tdrImpGraph : &mm.tdrImpGraphFeet, true);
-        m_tdrWidget->graph(index*2+2)->setData(
+        m_tdrWidget->graph(index*3+2)->setData(
                         m_measureSystemMetric ? &mm.tdrStepGraph : &mm.tdrStepGraphFeet, true);
-    } // for index
+        m_tdrWidget->graph(index*3+3)->setData(
+                        m_measureSystemMetric ? &mm.tdrZGraph : &mm.tdrZGraphFeet, true);
+    } // for ( index )
+    m_tdrWidget->yAxis2->setRangeUpper(zRange*1.05);
+    m_tdrWidget->yAxis2->setRangeLower(0);
+
     replot();
 }
 
@@ -5027,27 +5049,33 @@ void Measurements::redrawSmith(bool _incrementally)
         {
             for(; i < m_measurements.length(); ++i)
             {
-                m_measurements[i].smithCurve->setData(calibr
+                if (m_measurements[i].visible) {
+                    m_measurements[i].smithCurve->setData(calibr
                                                       ? &m_farEndMeasurementsSub[i].smithGraphCalib
                                                       : &m_farEndMeasurementsSub[i].smithGraph,true);
+                }
             }
         }else if(m_farEndMeasurement == 2)
         {
             for(; i < m_measurements.length(); ++i)
             {
-                m_measurements[i].smithCurve->setData(calibr
+                if (m_measurements[i].visible) {
+                    m_measurements[i].smithCurve->setData(calibr
                                                       ? &m_farEndMeasurementsAdd[i].smithGraphCalib
                                                       : &m_farEndMeasurementsAdd[i].smithGraph,true);
+                }
             }
         }
     }else
     {
         for(; i < m_measurements.length(); ++i)
         {
-            m_measurements[i].smithCurve->setData(&m_measurements[i].smithGraphViewCalib,true);
-            m_measurements[i].smithCurve->setData(calibr
-                                                  ? &m_measurements[i].smithGraphViewCalib
-                                                  : &m_measurements[i].smithGraphView,true);
+            if (m_measurements[i].visible) {
+                m_measurements[i].smithCurve->setData(&m_measurements[i].smithGraphViewCalib,true);
+                m_measurements[i].smithCurve->setData(calibr
+                                                      ? &m_measurements[i].smithGraphViewCalib
+                                                      : &m_measurements[i].smithGraphView,true);
+            }
         }
     }
     replot();
@@ -5208,6 +5236,7 @@ void Measurements::toggleVisibility(int row, bool _state)
         m_swrWidget->graph(row+1)->setVisible(_state);
         m_phaseWidget->graph(row+1)->setVisible(_state);
         m_rlWidget->graph(row+1)->setVisible(_state);
+        mm.smithCurve->setVisible(_state);
 
         int row1 = row*3 + 1;
         m_rpWidget->graph(row1+0)->setVisible(_state);
@@ -5218,10 +5247,11 @@ void Measurements::toggleVisibility(int row, bool _state)
         m_rsWidget->graph(row1+1)->setVisible(_state);
         m_rsWidget->graph(row1+2)->setVisible(_state);
 
-        row1 = row*2 + 1;
         m_tdrWidget->graph(row1+0)->setVisible(_state);
-        m_tdrWidget->graph(row1+0)->setVisible(_state);
+        m_tdrWidget->graph(row1+1)->setVisible(_state);
+        m_tdrWidget->graph(row1+2)->setVisible(_state);
     }
+    replot();
 }
 
 int Measurements::nextPrefix()

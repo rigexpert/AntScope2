@@ -6,16 +6,25 @@
 #include <QJsonArray>
 #include <QDebug>
 #include "analyzerparameters.h"
+#include "settings.h"
 
 MarqueeLabel::MarqueeLabel(QWidget *parent) 
     : QLabel(parent), m_downloader(nullptr), m_px(0), m_py(10), m_speed(1), m_direction(RightToLeft)
 {	
     connect(&m_timer, &QTimer::timeout, this, [=](){ repaint(); });
+//    QSettings set(Settings::setIniFile(), QSettings::IniFormat);
+//    set.beginGroup("MainWindow");
+//    m_speedTimerMs = set.value("scroll_timer_ms", 100).toInt();
+//    set.endGroup();
 }
 
 MarqueeLabel::~MarqueeLabel()
 {
     delete m_downloader;
+//    QSettings set(Settings::setIniFile(), QSettings::IniFormat);
+//    set.beginGroup("MainWindow");
+//    set.setValue("scroll_timer_ms", m_speedTimerMs );
+//    set.endGroup();
 }
 
 void MarqueeLabel::show()
@@ -47,7 +56,16 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
 	if(m_direction==RightToLeft)
 	{
 		m_px -= m_speed;
-        if(m_px <= (-m_textLength)) {
+        if ((m_px >= 0 && m_px < m_speed) || (m_px <= 0 && m_px > m_speed)) {
+            m_px = 0;
+            m_waitForDelay = true;
+            m_timer.stop();
+            int ww = m_strings[m_current].waitTime()*1000;
+            QTimer::singleShot(ww, this, [=]() {
+                m_waitForDelay = false;
+                m_timer.start(m_speedTimerMs);
+            });
+        } else  if(m_px <= (-m_textLength)) {
            //m_px = (-m_textLength);
            m_waitForDelay = true;
            m_timer.stop();
@@ -64,12 +82,8 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
             QTimer::singleShot(m_strings[m_current].delay()*1000, this, [=]() { next(); });
         }
 	}
-    paint.drawText(m_px, 0, width()-m_px, height(), Qt::AlignLeft|Qt::AlignVCenter ,text());
-
-//    QRectF rf(m_px/2.0, 0, width()-m_px/2.0, height());
-//    paint.drawText(rf, Qt::AlignLeft|Qt::AlignVCenter ,text());
-
-    paint.translate(m_px,0);
+    paint.drawText(m_px, -3, width()-m_px, height()+3, Qt::AlignLeft|Qt::AlignVCenter ,text());
+    //paint.translate(m_px, 0);
 }
 
 void MarqueeLabel::next()
@@ -92,7 +106,7 @@ void MarqueeLabel::next()
     } else{
         setCursor(Qt::ArrowCursor);
     }
-    m_timer.start(SPEED_TIMER);
+    m_timer.start(m_speedTimerMs);
     m_waitForDelay = false;
 }
 
@@ -112,7 +126,7 @@ void MarqueeLabel::repeate(int delay)
             setCursor(Qt::PointingHandCursor);
         else
             setCursor(Qt::ArrowCursor);
-        m_timer.start(SPEED_TIMER);
+        m_timer.start(m_speedTimerMs);
         m_waitForDelay = false;
     });
 }
@@ -171,7 +185,7 @@ void MarqueeLabel::setStrings(QList<MarqueeString>& list)
     setText(m_strings[m_current].text());
     updateCoordinates();
     setDirection(m_direction);
-    m_timer.start(SPEED_TIMER);
+    m_timer.start(m_speedTimerMs);
 }
 
 void MarqueeLabel::addStrings(QList<MarqueeString>& list)
@@ -185,7 +199,7 @@ void MarqueeLabel::addStrings(QList<MarqueeString>& list)
     setText(m_strings[m_current].text());
     updateCoordinates();
     setDirection(m_direction);
-    m_timer.start(SPEED_TIMER);
+    m_timer.start(m_speedTimerMs);
 }
 
 void MarqueeLabel::mousePressEvent ( QMouseEvent *  )

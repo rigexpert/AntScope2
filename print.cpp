@@ -8,6 +8,9 @@ Print::Print(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QString style = "QLabel {color: black;}";
+    setStyleSheet(style);
+
     QString path = Settings::setIniFile();
     m_settings = new QSettings(path, QSettings::IniFormat);
     m_settings->beginGroup("Print");
@@ -29,22 +32,24 @@ Print::Print(QWidget *parent) :
     ui->widgetGraph->xAxis->setLabelFont(font);
     ui->widgetGraph->yAxis->setLabelFont(font);
 
-    m_markersNumberLabel.setText(tr("Marker"));
-    m_measurementsNumberLabel.setText("#");
-    m_fqLabel.setText(tr("Fq"));
-    m_swrLabel.setText(tr("SWR"));
-    m_rlLabel.setText(tr("RL"));
-    m_zLabel.setText(tr("Z"));
-    m_phaseLabel.setText(tr("Phase"));
-    ui->markersLayout->addWidget(&m_markersNumberLabel,0,0);
-    ui->markersLayout->addWidget(&m_measurementsNumberLabel,0,1);
-    ui->markersLayout->addWidget(&m_fqLabel,0,2);
-    ui->markersLayout->addWidget(&m_swrLabel,0,3);
-    ui->markersLayout->addWidget(&m_rlLabel,0,4);
-    ui->markersLayout->addWidget(&m_zLabel,0,5);
-    ui->markersLayout->addWidget(&m_phaseLabel,0,6);
+//    m_markersNumberLabel.setText(tr("Marker"));
+//    m_measurementsNumberLabel.setText("#");
+//    m_fqLabel.setText(tr("Fq"));
+//    m_swrLabel.setText(tr("SWR"));
+//    m_rlLabel.setText(tr("RL"));
+//    m_zLabel.setText(tr("Z"));
+//    m_phaseLabel.setText(tr("Phase"));
+//    ui->markersLayout->addWidget(&m_markersNumberLabel,0,0);
+//    ui->markersLayout->addWidget(&m_measurementsNumberLabel,0,1);
+//    ui->markersLayout->addWidget(&m_fqLabel,0,2);
+//    ui->markersLayout->addWidget(&m_swrLabel,0,3);
+//    ui->markersLayout->addWidget(&m_rlLabel,0,4);
+//    ui->markersLayout->addWidget(&m_zLabel,0,5);
+//    ui->markersLayout->addWidget(&m_phaseLabel,0,6);
 
     ui->widgetGraph->legend->setVisible(true);
+
+    ui->verticalLayout_2->addWidget(ui->markersWidget);
 }
 
 Print::~Print()
@@ -82,6 +87,10 @@ void Print::addMarker(double fq, int number)
 
 void Print::addRowText(const QStringList &list)
 {
+    ///////////////
+    /// return;
+    ///////////////
+#if 0
     m_markersNumberList.append(list.at(0));
     m_measurementsNumberList.append(list.at(0));
     m_fqList.append(list.at(1));
@@ -126,6 +135,7 @@ void Print::addRowText(const QStringList &list)
     m_phaseObjList.append(label6);
 
     updateTable();
+#endif
 }
 
 void Print::updateTable()
@@ -335,8 +345,8 @@ void Print::on_pngPrintBtn_clicked()
     file.fill();
     QPixmap map = ui->widgetGraph->toPixmap(700,400,10);
 
-    QPixmap markersMap(ui->markersWidget->size());
-    ui->markersWidget->render(&markersMap);
+    //QPixmap markersMap(ui->markersWidget->size());
+    QPixmap markersMap = ui->markersWidget->grab();
 
     QPainter painter(&file);
 
@@ -346,9 +356,13 @@ void Print::on_pngPrintBtn_clicked()
 
     painter.drawText(100, 20, 1200, 50, Qt::TextExpandTabs , ui->lineEditHead->text());
 
-    painter.drawImage(QRect(20,100,1400,800),map.toImage());
+    QRect rGraph(20,100,1400,800);
+    painter.drawImage(rGraph, map.toImage());
 
-    painter.drawImage(QRect(70*2, 470*2, markersMap.width()*2, markersMap.height()*2),markersMap.toImage());
+    QRect rMark(0, 0, 1400, 1400*markersMap.height()/markersMap.width());// = markersMap.rect();
+    rMark.moveTo(rGraph.bottomLeft());
+    //painter.drawImage(QRect(70*2, 470*2, markersMap.width(), markersMap.height()),markersMap.toImage());
+    painter.drawImage(rMark, markersMap.toImage());
 
     painter.drawText(140, 1520, 1400, 600, Qt::TextExpandTabs , ui->textEditComment->toPlainText());
 
@@ -360,74 +374,6 @@ void Print::on_pngPrintBtn_clicked()
     }
     file.save(path,"PNG",80);
 }
-
-/*
-void Print::on_pngPrintBtn_clicked()
-{
-    const double titleMarginTop = 20;
-    const double titleMarginLeft = 100;
-    const double titleHeight = 50;
-    const double imageMarginTop = 20;
-    const double imageMarginLeft = 0;
-    const double markerMarginTop = 20;
-    const double markerMarginLeft = 140;
-
-    QCPRange xrange = ui->widgetGraph->xAxis->range();
-    QCPRange yrange = ui->widgetGraph->yAxis->range();
-    double xsz = xrange.size();
-    double ysz = yrange.size();
-
-    const int side = 2000;
-    QString path = QFileDialog::getSaveFileName(this, "Export PNG", "", "*.png");
-
-    QPixmap file(side,side);
-    file.fill();
-    //QPixmap map = ui->widgetGraph->toPixmap(700,400,10);
-    QPixmap map = ui->widgetGraph->toPixmap(0, 0, 2);
-    QRect rmap = map.rect();
-    double aspect = (double)rmap.width()/rmap.height();
-
-    double heightOut = file.height()*0.5;
-    double widthOut =  heightOut*aspect;
-
-    if (widthOut > (side - 2*imageMarginLeft)) {
-        widthOut = side - 2*imageMarginLeft;
-        heightOut = widthOut / aspect;
-    }
-
-    double aa = widthOut / heightOut;
-    double imageOffset = (file.width() - widthOut) / 2;
-
-    QPixmap markersMap(ui->markersWidget->size());
-    ui->markersWidget->render(&markersMap);
-
-    QPainter painter(&file);
-
-    QFont font = ui->widgetGraph->xAxis->tickLabelFont();
-    font.setPointSize (26);
-    painter.setFont(font);
-
-    painter.drawText(titleMarginLeft, titleMarginTop, side - 2*titleMarginLeft, 50, Qt::TextExpandTabs , ui->lineEditHead->text());
-
-    //painter.drawImage(QRect(20,100,1400,1400/aspect),map.toImage());
-    QRectF rImage(imageOffset , titleMarginTop+titleHeight+imageMarginTop, widthOut, heightOut);
-    painter.drawImage(rImage, map.toImage());
-
-    QRectF rMarkers(markerMarginLeft, markerMarginTop + rImage.bottom(), markersMap.width()*2, markersMap.height()*2);
-    painter.drawImage(rMarkers, markersMap.toImage());
-
-    painter.drawText(rMarkers.left(), rMarkers.bottom() + titleMarginTop, rMarkers.width(), rMarkers.height(),
-                     Qt::TextExpandTabs , ui->textEditComment->toPlainText());
-
-    painter.end();
-
-    if(path.indexOf(".png") < 0)
-    {
-        path.append(".png");
-    }
-    file.save(path,"PNG", 80);
-}
-*/
 
 void Print::drawSmithImage(void)
 {
@@ -712,3 +658,182 @@ void Print::resizeEvent(QResizeEvent * e)
     QDialog::resizeEvent(e);
 }
 
+void Print::updateMarkers(int markers, int measurements, QList<QList<QVariant>> info)
+{
+    ui->markersWidget->updateMarkers(markers, measurements);
+    ui->markersWidget->updateInfo(info);
+}
+
+///////////////////////////////////////////////////////////
+PrintMarkers::PrintMarkers(QWidget *parent)
+    : QWidget(parent)
+{
+    QString path = Settings::setIniFile();
+    m_settings = new QSettings(path,QSettings::IniFormat);
+    initLayout();
+}
+
+PrintMarkers::~PrintMarkers()
+{
+}
+
+void PrintMarkers::initLayout()
+{
+      createHeader();
+      setLayout(&m_layout);
+      updateTable();
+      emit changeColumns();
+}
+
+void PrintMarkers::createHeader()
+{
+    QMap<int, QString>& mapHeader = MarkersHeaderColumn::headerMap();
+    m_headerColumns.clear();
+
+    QString style = "QLabel {color: black; font: 14pt}";
+    m_settings->beginGroup("Markers");
+    QString buttons = m_settings->value("header", "0,1,2,3,4,5,6,7,8,9").toString();
+    m_settings->endGroup();
+    QList<QString> list = buttons.split(',');
+    list.removeAt(0);
+    int column = 0;
+    foreach (QString key, list) {
+        if (key.isEmpty())
+            continue;
+        MarkersHeaderColumn data;
+        int type = key.toInt();
+        data.index = column;
+        QLabel* button = new QLabel(this);
+        button->setStyleSheet(style);
+        button->setAlignment(Qt::AlignCenter);
+        button->setProperty("field_type", type);
+        button->setText(mapHeader[type]);
+        m_layout.addWidget(button, 0 ,column++);
+        data.button = button;
+        m_headerColumns << data;
+    }
+}
+
+
+void PrintMarkers::updateMarkers(int markers, int measurements)
+{
+    clearTable();
+
+    if (markers == 0) {
+        setVisible(false);
+        return;
+    }
+    m_markers = markers;
+    m_measurements = measurements;
+
+    QString style = "QLabel {color: black; font: 14pt}";
+
+    for (int i=0; i<m_headerColumns.size(); i++) {
+        m_layout.addWidget(m_headerColumns[i].button, 0, i);
+        m_headerColumns[i].button->show();
+    }
+
+    int rowCount = m_measurements==0 ? 1 : m_measurements;
+    int rowIndex = 1;
+    for (int i=0; i<m_markers; i++) {
+        for (int j=0; j<rowCount; j++) {
+            QList<QWidget*> row;
+            for (int k=0; k<m_headerColumns.size(); k++) {
+                QLabel* label = new QLabel(this);
+                label->setStyleSheet(style);
+                label->setAlignment(Qt::AlignCenter);
+
+                row << qobject_cast<QLabel*>(label);
+                m_layout.addWidget(label, rowIndex, k);
+                label->show();
+            }
+            m_rows << row;
+            rowIndex++;
+        }
+    }
+}
+
+void PrintMarkers::updateInfo(QList<QList<QVariant>>& info)
+{
+    if (info.size() != (m_markers*m_measurements))
+        return;
+
+    int rowIndex = 0;
+    for (int i=0; i<m_markers; i++) {
+        for (int j=0; j<m_measurements; j++) {
+            QList<QVariant>& rowInfo = info[rowIndex];
+            QList<QWidget*>& rowLabel = m_rows[rowIndex];
+            for (int k=0; k<m_headerColumns.size(); k++) {
+                if (j != 0 && k == 0)
+                    continue;
+                QVariant val = rowInfo[k+1];
+                int type = m_headerColumns[k].button->property("field_type").toInt();
+                QString str = formatText(type, val);
+                QLabel* label = qobject_cast<QLabel*>(rowLabel[k]);
+                label->setText(str);
+            }
+            rowIndex++;
+        }
+    }
+    setVisible(true);
+    updateTable();
+}
+
+QList<int> PrintMarkers::getColumns()
+{
+    QList<int> list;
+    for (int i=0; i<m_headerColumns.size(); i++) {
+        list << m_headerColumns[i].button->property("field_type").toInt();
+    }
+    return list;
+}
+
+void PrintMarkers::clearTable(void)
+{
+    QLayoutItem* item = nullptr;
+    while((item=m_layout.takeAt(0)) != nullptr) {
+        item->widget()->setVisible(false);
+        m_layout.removeItem(item);
+    }
+    for(int i=0; i<m_rows.size(); i++) {
+        QList<QWidget*> row = m_rows[i];
+        for (int j=0; j<row.size(); j++) {
+            delete row[j];
+        }
+        row.clear();
+    }
+    m_rows.clear();
+}
+
+void PrintMarkers::updateTable()
+{
+    adjustSize();
+}
+
+QString PrintMarkers::formatText(int type, QVariant v)
+{
+    if (v.type() == QVariant::Invalid || v.toDouble() == DBL_MAX)
+        return "";
+
+    QString str;
+    switch (type) {
+    case MarkersHeaderColumn::fieldDelete:
+        break;
+    case MarkersHeaderColumn::fieldNum:
+        str = QString::number(v.toInt());
+        break;
+    case MarkersHeaderColumn::fieldSerie:
+        str = QString::number(v.toInt());
+        break;
+    case MarkersHeaderColumn::fieldZ:
+        str = v.toString();
+        break;
+    case MarkersHeaderColumn::fieldZpar:
+        str = v.toString();
+        break;
+    default:
+        str = QString::number(v.toDouble(),'f', 2);
+        break;
+    }
+    return str;
+}

@@ -74,6 +74,8 @@ public:
     Analyzer* analyzer() { return m_analyzer; }
     bool isMeasuring() { return analyzer()->isMeasuring(); }
     QTabWidget* tabWidget();
+\
+    static MainWindow* m_mainWindow;
 
 private:
 

@@ -174,9 +174,11 @@ private:
 
     double *m_pdTdrImp;
     double *m_pdTdrStep;
+    double *m_pdTdrZ;
 
     double m_tdrResolution;
     double m_tdrRange;
+
 #ifdef OLD_TDR
     ProgressDlg* m_tdrProgressDlg = nullptr;
 #else

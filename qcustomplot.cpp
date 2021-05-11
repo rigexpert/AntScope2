@@ -11000,7 +11000,7 @@ void QCustomPlot::draw(QCPPainter *painter)
         painter->save();
         painter->setClipRect(child->clipRect().translated(0, -1));
         child->applyDefaultAntialiasingHint(painter);
-        child->draw(painter);
+        child->draw(painter);        
         painter->restore();
       }
     }

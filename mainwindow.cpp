@@ -13,6 +13,7 @@ extern bool g_developerMode; // see main.cpp
 extern int g_maxMeasurements; // see measurements.cpp
 extern void setAbsoluteFqMaximum();
 extern bool g_bAA55modeNewProtocol;
+MainWindow* MainWindow::m_mainWindow = nullptr;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -43,6 +44,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_addingMarker(false),
     m_bInterrupted(false)
 {
+    m_mainWindow = this;
+
     ui->setupUi(this);
 
     setAbsoluteFqMaximum();
@@ -51,10 +54,17 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->spinBoxPoints->setRange(1, 1000000);
     }
 
-    QRegExp re("^[\d\s]*$");
-    QRegExpValidator *validator = new QRegExpValidator(re, this);
-    ui->lineEdit_fqFrom->setValidator(validator);
-    ui->lineEdit_fqTo->setValidator(validator);
+//    QRegExp re("^[\d\s]*$");
+//    QRegExpValidator *validator = new QRegExpValidator(re, this);
+//    ui->lineEdit_fqFrom->setValidator(validator);
+//    ui->lineEdit_fqTo->setValidator(validator);
+    connect(ui->lineEdit_fqFrom, &QLineEdit::editingFinished, this, [=] {
+        changeFqFrom(true);
+    });
+    connect(ui->lineEdit_fqTo, &QLineEdit::editingFinished, this, [=] {
+        changeFqTo(true);
+    });
+
 
     m_qtLanguageTranslator = new QTranslator();
 
@@ -109,6 +119,7 @@ MainWindow::MainWindow(QWidget *parent) :
         if (item == nullptr)
             return;
         if (item != nullptr && item->column() == COL_VISIBLE) {
+            int row = item->row();
             m_measurements->toggleVisibility(item->row(), item->checkState()==Qt::Checked);
         }
     });
@@ -484,7 +495,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //{ TODO test
 #if 0
-    QString path1 = "c:/0/AntScope_scroll.json.txt";
+    QString path1 = "c:/0/AntScope_scroll.json";
     ui->labelMarquee->load(path1);
     ui->labelMarquee->show();
 #endif
@@ -785,7 +796,7 @@ void MainWindow::setWidgetsSettings()
 
     //-------TDR Widget------------------------------------------------
     qobject_cast<CustomPlot*>(m_tdrWidget)->addGraph();//graph(0)
-    m_tdrWidget->setAutoAddPlottableToLegend(false);
+    //m_tdrWidget->setAutoAddPlottableToLegend(false);
     m_tdrWidget->graph(0)->setPen(pen);
     m_tdrWidget->xAxis->setLabel(tr("Length, m"));
     m_tdrWidget->xAxis->setRangeLower(0);
@@ -800,6 +811,14 @@ void MainWindow::setWidgetsSettings()
     m_tdrWidget->yAxis->setTickLabelFont(fontTickLabel);
     m_tdrWidget->xAxis->setLabelFont(fontLabel);
     m_tdrWidget->yAxis->setLabelFont(fontLabel);
+    m_tdrWidget->yAxis->setLabel(tr("SR/IR"));
+    m_tdrWidget->yAxis2->setVisible(true);
+    m_tdrWidget->yAxis2->setTickLabelFont(fontTickLabel);
+    m_tdrWidget->yAxis2->setLabelFont(fontLabel);
+    m_tdrWidget->yAxis2->setRangeMin(0);
+    m_tdrWidget->yAxis2->setRangeMax(5000);
+    m_tdrWidget->yAxis2->setRange(0, 5000);
+    m_tdrWidget->yAxis2->setLabel(tr("|Z|"));
     m_tdrWidget->replot();
 
     //-------Smith Widget---------------------------------------------
@@ -810,7 +829,7 @@ void MainWindow::setWidgetsSettings()
     m_smithWidget->yAxis->setRangeMin(-10);
     m_smithWidget->yAxis->setRangeMax(10);
     m_smithWidget->yAxis->setRange(-7,7);
-    m_tdrWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+    //m_tdrWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     m_smithWidget->replot();
 
     //---------User defined
@@ -4043,6 +4062,9 @@ void MainWindow::on_settingsBtn_clicked()
     ui->measurmentsClearBtn->setEnabled(!m_analyzer->isMeasuring());
     m_measurements->on_redrawGraphs(false);
     updateGraph();
+    if (m_markers->markersHintEnabled()) {
+        m_markers->repaint();
+    }
 }
 
 void MainWindow::on_dotsNumberChanged(int number)
@@ -4157,14 +4179,18 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
                     pen = m_rsWidget->graph(j+ii)->pen();
                     pen.setWidth(pen_width);
                     m_rsWidget->graph(j+ii)->setPen(pen);
-                }
 
-                j = (i-1)*2 + 1;
-                for (int ii=0; ii<2; ii++) {
                     pen = m_tdrWidget->graph(j+ii)->pen();
                     pen.setWidth(pen_width);
                     m_tdrWidget->graph(j+ii)->setPen(pen);
                 }
+
+//                j = (i-1)*2 + 1;
+//                for (int ii=0; ii<2; ii++) {
+//                    pen = m_tdrWidget->graph(j+ii)->pen();
+//                    pen.setWidth(pen_width);
+//                    m_tdrWidget->graph(j+ii)->setPen(pen);
+//                }
                 if (g_developerMode) {
                     measurement* mm = m_measurements->getMeasurement(count - i-1);
                     int index = m_measurements->getBaseUserGraphIndex(i-1);
@@ -4195,6 +4221,8 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
         return;
     qint32 count = m_measurements->getMeasurementLength();
     measurement* mm = m_measurements->getMeasurement(count - row - 1);
+    if (!mm->visible)
+        return;
     qint64 from = mm->qint64From/1000;
     qint64 to = mm->qint64To/1000;
     double sw = (to-from)/2.0;
@@ -4227,7 +4255,7 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
             range.lower = 0;
             range.upper = dist;
             QWidget::setCursor(Qt::WaitCursor);
-            m_measurements->redrawTDR(count - row - 1);
+            m_measurements->redrawTDR(row);
             QWidget::setCursor(Qt::ArrowCursor);
         }
     }
@@ -4290,11 +4318,13 @@ void MainWindow::on_printBtn_clicked()
 {
     m_print = new Print();
     m_print->setAttribute(Qt::WA_DeleteOnClose);
-    QList <QStringList> lst = m_markers->getMarkersHintList();
-    for(int i = 0; i < lst.length(); ++i)
-    {
-        m_print->addRowText(lst.at(i));
-    }
+//    QList <QStringList> lst = m_markers->getMarkersHintList();
+//    for(int i = 0; i < lst.length(); ++i)
+//    {
+//        m_print->addRowText(lst.at(i));
+//    }
+    m_print->updateMarkers(m_markers->getMarkersCount(), m_measurements->getMeasurementLength(),
+                           m_markers->updateInfo(m_markers->markersHint()->getColumns()));
 
     m_settings->beginGroup("Settings");
     QString band = m_settings->value("current_band", "ITU Region 1 - Europe, Africa").toString();

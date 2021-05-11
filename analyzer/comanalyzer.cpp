@@ -426,14 +426,9 @@ void comAnalyzer::searchAnalyzer()
     analyzerDetected = false;
     closeComPort();
 
-    //QString name = ReDeviceInfo::deviceName(list.at(0));
-    bool opened = false;
-    opened = openComPort(m_serialPortName,38400);
-    // ??? TODO speed
-//        if(name == "AA-230 ZOOM")
-//        {
-//            opened = openComPort(list.at(0).portName(),115200);
-//        }
+    ReDeviceInfo info = ReDeviceInfo::byPort(m_serialPortName);
+    int speed = (info.systemName() == "AA-230 ZOOM") ? 115200 : 38400;
+    bool opened = openComPort(m_serialPortName, speed);
     if (opened) {
         analyzerDetected = true;
         versionRequest();

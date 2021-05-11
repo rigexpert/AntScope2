@@ -73,6 +73,9 @@ public:
     void on_translate();
     void changeColorTheme(bool _dark);
     void changeMarkersHint();
+    MarkersPopUp * markersHint() { return m_markersHint; }
+    QList<QList<QVariant>> updateInfo(QList<int> _columnTypes);
+    bool markersHintEnabled() { return m_markersHintEnabled; }
 
 private:
     QCustomPlot *m_swrWidget;
