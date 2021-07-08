@@ -100,6 +100,7 @@ qint32 NanovnaAnalyzer::parse (QByteArray arr)
         } else if (getParseState() == WAIT_NANO_VER_COMPLETE) {
             if (data.contains("ch>")) {
                 setParseState(WAIT_NANO_NO);
+                sendData("sweep 100000 1000000 101\r\n");
             } else {
                 if (data.contains("Board:")) {
                     QString board = data.replace("Board:", "");
@@ -324,6 +325,9 @@ void NanovnaAnalyzer::versionRequest()
 {
     setParseState(WAIT_NANO_VER);
     sendData("info\r\n");
+//    sendData("help\r\n");
+//    sendData("version\r\n");
+//    sendData("info\r\n");
 }
 
 void NanovnaAnalyzer::portClosed()

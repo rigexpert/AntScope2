@@ -172,7 +172,6 @@ void SelectDeviceDialog::onScan(int type)
         foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
         {
             showPortInfo(info);
-            QString desc = info.description();
             if (info.description().contains("Bluetooth", Qt::CaseInsensitive)) {
                 QTableWidgetItem* item = new QTableWidgetItem("AA-55 ZOOM");
                 item->setData(Qt::UserRole+1, (int)ReDeviceInfo::Serial);

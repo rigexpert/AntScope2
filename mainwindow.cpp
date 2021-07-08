@@ -2358,6 +2358,13 @@ void MainWindow::on_analyzerFound(QString name)
         });
     }
     ui->labelMarquee->request();
+
+    if (name.contains("NanoVNA", Qt::CaseInsensitive)) {
+        ui->spinBoxPoints->setEnabled(false);
+        ui->spinBoxPoints->setValue(100);
+    } else {
+        ui->spinBoxPoints->setEnabled(true);
+    }
 }
 
 void MainWindow::on_analyzerDisconnected()
@@ -2370,6 +2377,7 @@ void MainWindow::on_analyzerDisconnected()
     ui->continuousStartBtn->setEnabled(false);
     ui->analyzerDataBtn->setEnabled(false);
     ui->screenshotAA->setEnabled(false);
+    ui->spinBoxPoints->setEnabled(true);
 
     PopUpIndicator::hideIndicator(this);
     m_analyzer->setIsMeasuring(false);

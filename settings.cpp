@@ -1445,6 +1445,9 @@ void Settings::fillSerials()
         QString port = info.portName();
         if (ports.contains(port))
             continue;
+        if (port == "COM1")
+            continue;
+
         ports << port;
 
         quint16 vendorIdentifier = info.vendorIdentifier() ;
@@ -1452,6 +1455,10 @@ void Settings::fillSerials()
 
         if (vendorIdentifier == NANOVNA_VID && productIdentifier == NANOVNA_PID) {
             QString name("NanoVNA ?");
+            QString text = QString("%1  (%2)").arg(port, name);
+            ui->serialPortComboBox->addItem(text, (int)ReDeviceInfo::NANO);
+        } else if (vendorIdentifier == 0x4b4 && productIdentifier == 0x08) {
+            QString name("NanoVNA-SAA2");
             QString text = QString("%1  (%2)").arg(port, name);
             ui->serialPortComboBox->addItem(text, (int)ReDeviceInfo::NANO);
         } else if (info.description().contains("Bluetooth", Qt::CaseInsensitive)) {
