@@ -371,6 +371,8 @@ qint32 comAnalyzer::parse (QByteArray arr)
                                 m_bAA55modeNewProtocol = true;
                                 g_bAA55modeNewProtocol = true;
                             }
+                            m_bPingStarted = true;
+                            m_pingTimer->start(1000);
                         }
                         m_analyzerModel = param->index();
                         m_analyzerPresent = true;
@@ -413,7 +415,7 @@ void comAnalyzer::searchAnalyzer()
     static int messageWasShown = 5;
     static int state = 0;
 
-    if (m_isMeasuring)
+    if (m_isMeasuring || m_bPingStarted)
         return;
 
     if(analyzerDetected && (--messageWasShown == 0))
@@ -433,7 +435,7 @@ void comAnalyzer::searchAnalyzer()
         analyzerDetected = true;
         versionRequest();
         m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
-        m_pingTimer->start(1000);
+//        m_pingTimer->start(1000);
     } else {
         QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
     }
@@ -1018,7 +1020,9 @@ void comAnalyzer::sendPing()
 void comAnalyzer::handlePing()
 {
     if ( ! (m_bAA55mode || m_bAA55modeNewProtocol)) {
+        m_bPingStarted = false;
         m_pingTimer->stop();
+        //qDebug() << "comAnalyzer::handlePing(): STOP";
         return;
     }
 
@@ -1028,6 +1032,8 @@ void comAnalyzer::handlePing()
         if (m_bWaitingPing) {
             // error
             AnalyzerParameters::setCurrent(nullptr);
+            //qDebug() << "comAnalyzer::handlePing(): STOP";
+            m_bPingStarted = false;
             m_pingTimer->stop();
             emit analyzerDisconnected();
         } else {

@@ -624,7 +624,7 @@ process in the settings menu!</string>
            <item>
             <widget class="QTableWidget" name="tableWidget_presets">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -632,8 +632,11 @@ process in the settings menu!</string>
              <property name="maximumSize">
               <size>
                <width>2000</width>
-               <height>1000</height>
+               <height>160</height>
               </size>
+             </property>
+             <property name="verticalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
              </property>
              <property name="sizeAdjustPolicy">
               <enum>QAbstractScrollArea::AdjustToContents</enum>

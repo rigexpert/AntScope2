@@ -67,6 +67,7 @@ private:
     QString m_revision;
     QString m_serialNumber;
     long m_lastReadTimeMS;
+    bool m_bPingStarted = false;
     bool m_bWaitingPing = false;
 
     bool m_bAA55mode = false;
