@@ -163,7 +163,7 @@ private:
     bool m_autoUpdateEnabled;
     bool m_autoFirmwareUpdateEnabled;
 
-    int m_swrZoomState;
+    //double m_swrZoomState;
     int m_phaseZoomState;
     int m_rsZoomState;
     int m_rpZoomState;

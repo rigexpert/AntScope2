@@ -50,6 +50,12 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
         m_current = 0;
 
 	QPainter paint(this);
+
+// Huck. High DPI Scaling 125%
+//    QFont font = paint.font();
+//    font.setPointSizeF(font.pointSizeF()*0.75);
+//    paint.setFont(font);
+
     QColor color = m_strings[m_current].color();
     if (color.isValid() && color != QColor(Qt::transparent))
         paint.setPen(m_strings[m_current].color());
@@ -57,6 +63,9 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
 	{
 		m_px -= m_speed;
         if ((m_px >= 0 && m_px < m_speed) || (m_px <= 0 && m_px > m_speed)) {
+            QRectF boundingRect = paint.boundingRect(0, 0, 3080, 20, Qt::AlignLeft|Qt::AlignHCenter, text());
+            m_textLength = boundingRect.width();
+
             m_px = 0;
             m_waitForDelay = true;
             m_timer.stop();
@@ -66,7 +75,6 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
                 m_timer.start(m_speedTimerMs);
             });
         } else  if(m_px <= (-m_textLength)) {
-           //m_px = (-m_textLength);
            m_waitForDelay = true;
            m_timer.stop();
            QTimer::singleShot(m_strings[m_current].delay()*1000, this, [=]() { next(); });
@@ -76,14 +84,12 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
 	{
 		m_px += m_speed;
         if(m_px >= width()) {
-            //m_px = width();
             m_waitForDelay = true;
             m_timer.stop();
             QTimer::singleShot(m_strings[m_current].delay()*1000, this, [=]() { next(); });
         }
 	}
     paint.drawText(m_px, -3, width()-m_px, height()+3, Qt::AlignLeft|Qt::AlignVCenter ,text());
-    //paint.translate(m_px, 0);
 }
 
 void MarqueeLabel::next()
@@ -99,7 +105,7 @@ void MarqueeLabel::next()
         m_speed = m_strings[m_current].speed();
         updateCoordinates();
         setDirection(m_direction);
-        m_px = (m_direction==RightToLeft) ? width() : 0;//(- m_textLength);
+        m_px = (m_direction==RightToLeft) ? width() : 0;
     }
     if (!m_strings[m_current].link().isEmpty()) {
         setCursor(Qt::PointingHandCursor);
@@ -152,7 +158,8 @@ void MarqueeLabel::updateCoordinates()
 			break;
 	}
     m_fontSize = font().pointSize()/2;
-	m_textLength = fontMetrics().width(text());
+    m_textLength = fontMetrics().width(text());
+    qDebug() << "MarqueeLabel::updateCoordinates() m_fontSize: " << m_fontSize << "m_textLength: " << m_textLength;
 }
 
 void MarqueeLabel::setSpeed(int _speed)
@@ -169,7 +176,7 @@ void MarqueeLabel::setDirection(int _direction)
 {
 	m_direction = _direction;
 	if (m_direction == RightToLeft)
-        m_px = width();// - m_textLength;
+        m_px = width();
 	else
 		m_px = 0;
     //repaint();
@@ -231,6 +238,9 @@ bool MarqueeLabel::load(QByteArray& data)
         qDebug() << "MarqueeLabel::load()" << parseError.errorString() << parseError.offset;
         return false;
     }
+
+    //QString str_data(data);
+    //qDebug() << "MarqueeLabel::load" << str_data;
 
     QJsonObject mainObj = doc.object();
     QJsonArray array = mainObj["messages"].toArray();

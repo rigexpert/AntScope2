@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/new/prefix1">
         <file>rig_logo.png</file>
+        <file>logo_watermark.png</file>  
         <file>pencil.png</file>
         <file>AntScope2.png</file>
     </qresource>

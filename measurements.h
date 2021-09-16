@@ -123,6 +123,7 @@ public:
     void setContinuous(bool _state) { m_isContinuing = _state; m_currentPoint = 0; }
     ProgressDlg* progressDlg() { return m_autoCalibrateProgressDlg; }
     void redrawTDR(int _index=-1);
+    void drawSmithImage(void);
 
 private:
 //    QVector <rawData> m_rawDataVector;
@@ -221,7 +222,6 @@ private:
     double computeZ (double R, double X);
 
     void NormRXtoSmithPoint(double Rnorm, double Xnorm, double &x, double &y);    
-    void drawSmithImage(void);
     void calcFarEnd(bool _incrementally=false);
     rawData calcFarEnd(const rawData& data, int idx, bool refreshGraphs=true);
     void prepareGraphs(rawData _rawData, GraphData& data, GraphData& calibData);

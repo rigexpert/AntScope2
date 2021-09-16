@@ -6433,7 +6433,7 @@ int QCPAxisPainterPrivate::size() const
     QFontMetrics fontMetrics(labelFont);
     QRect bounds;
     bounds = fontMetrics.boundingRect(0, 0, 0, 0, Qt::TextDontClip | Qt::AlignHCenter | Qt::AlignVCenter, label);
-    result += bounds.height() + labelPadding;
+    result += bounds.height() + labelPadding + 2;
   }
   
   return result;

@@ -285,13 +285,20 @@ void Print::on_printBtn_clicked()
 
         painter.drawText(50, 10, 600, 20, Qt::TextExpandTabs , ui->lineEditHead->text());
 
-        painter.drawImage(QRect(10,50,700,400),map.toImage());
+        QRect rmap(10,50,700,400);
+        painter.drawImage(rmap, map.toImage());
 
-        //painter.drawImage(QRect(70, 460, 700, 300),markersMap.toImage());
         painter.drawImage(QRect(70, 460, 700, qMin(markersMap.height(), 300)),markersMap.toImage());
 
         painter.drawText(70, 760, 700, 300, Qt::TextExpandTabs , ui->textEditComment->toPlainText());
-
+/*
+        QPixmap logo(":/new/prefix1/logo_watermark.png");
+        painter.drawPixmap(10, 50, logo);
+        QString text = "RigExpert AntScope: antenna and cable analysis software";
+        painter.setPen(qRgb(0x55, 0x7b, 0xce));
+        QRect bound = painter.boundingRect(rmap, Qt::AlignBottom|Qt::AlignRight, text);
+        painter.drawText(bound.left(), bound.bottom()+12, text);
+*/
         painter.end();
     }
 
@@ -328,12 +335,20 @@ void Print::on_pdfPrintBtn_clicked()
 
     painter.drawText(50, 10, 600, 30, Qt::TextExpandTabs , ui->lineEditHead->text());
 
-    painter.drawImage(QRect(10,60,700,400),map.toImage());
+    QRect rmap(10,60,700,400);
+    painter.drawImage(rmap,map.toImage());
 
     painter.drawImage(QRect(70, 470, markersMap.width(), markersMap.height()),markersMap.toImage());
 
     painter.drawText(70, 760, 700, 300, Qt::TextExpandTabs , ui->textEditComment->toPlainText());
-
+/*
+    QPixmap logo(":/new/prefix1/logo_watermark.png");
+    painter.drawPixmap(10, 60, logo);
+    QString text = "RigExpert AntScope: antenna and cable analysis software";
+    painter.setPen(qRgb(0x55, 0x7b, 0xce));
+    QRect bound = painter.boundingRect(rmap, Qt::AlignBottom|Qt::AlignRight, text);
+    painter.drawText(bound.left(), bound.bottom()+12, text);
+*/
     painter.end();
 }
 
@@ -365,7 +380,14 @@ void Print::on_pngPrintBtn_clicked()
     painter.drawImage(rMark, markersMap.toImage());
 
     painter.drawText(140, 1520, 1400, 600, Qt::TextExpandTabs , ui->textEditComment->toPlainText());
-
+/*
+    QPixmap logo(":/new/prefix1/logo_watermark.png");
+    painter.drawPixmap(20, 100, logo);
+    QString text = "RigExpert AntScope: antenna and cable analysis software";
+    painter.setPen(qRgb(0x55, 0x7b, 0xce));
+    QRect bound = painter.boundingRect(rGraph, Qt::AlignBottom|Qt::AlignRight, text);
+    painter.drawText(bound.left(), bound.bottom()+20, text);
+*/
     painter.end();
 
     if(path.indexOf(".png") < 0)

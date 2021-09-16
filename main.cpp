@@ -98,7 +98,23 @@ void setAbsoluteFqMaximum()
 int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+// Fix for 4K Display Issues Disabled
+#ifdef DUMB_Q_OS_WIN
+    char** params;
+    params = new char*[argc+2];
+    int ip=0;
+    for (; ip<argc; ip++) {
+        params[ip] = argv[ip];
+    }
+    params[ip++] = (char*)"--platform";
+    params[ip] = (char*)"windows:dpiawareness=0";
+    int cntp = argc + 2;
+    QApplication a(cntp, params);
+#else
     QApplication a(argc, argv);
+#endif
+
     QStringList args = a.arguments();
 
 #ifdef LOG_TO_FILE
