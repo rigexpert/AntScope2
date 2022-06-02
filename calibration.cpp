@@ -1,5 +1,7 @@
 #include "calibration.h"
 #include "settings.h"
+#include "popupindicator.h"
+
 
 Calibration::Calibration(QObject *parent) : QObject(parent),
     m_state(CALIB_NONE),
@@ -176,6 +178,7 @@ void Calibration::on_newData(rawData _rawData)
     if(m_dotsCount == m_dotsNumber+1)
     {
         m_dotsCount = 0;
+        PopUpIndicator::hideIndicator();
 
 //        m_measurements->setCalibrationMode(false);//TODO
         emit setCalibrationMode(false);
@@ -188,11 +191,14 @@ void Calibration::on_newData(rawData _rawData)
             m_openCalibFilePath = dir.absoluteFilePath("cal_open.s1p");
             if(!m_onlyOneCalib)
             {
+                PopUpIndicator::hideIndicator();
                 if (QMessageBox::information(NULL, tr("Short"),
                                      tr("Please connect SHORT standard and press OK.")) == QMessageBox::Ok)
+                    PopUpIndicator::showIndicator();
                     on_startCalibration();
             }else
             {
+                PopUpIndicator::hideIndicator();
                 m_state = CALIB_NONE;
                 m_onlyOneCalib = false;
                 disconnect(m_analyzer,SIGNAL(newData(rawData)),
@@ -204,11 +210,14 @@ void Calibration::on_newData(rawData _rawData)
             m_shortCalibFilePath = dir.absoluteFilePath("cal_short.s1p");
             if(!m_onlyOneCalib)
             {
+                PopUpIndicator::hideIndicator();
                 if (QMessageBox::information(NULL, tr("Load"),
                                      tr("Please connect LOAD standard and press OK.")) == QMessageBox::Ok)
+                    PopUpIndicator::showIndicator();
                     on_startCalibration();
             }else
             {
+                PopUpIndicator::hideIndicator();
                 m_state = CALIB_NONE;
                 m_onlyOneCalib = false;
                 disconnect(m_analyzer,SIGNAL(newData(rawData)),
@@ -224,6 +233,7 @@ void Calibration::on_newData(rawData _rawData)
                 m_OSLCalibrationPerformed = true;
                 QMessageBox::information(NULL, tr("Finish"),
                              tr("Calibration finished!"));
+                PopUpIndicator::hideIndicator();
             }
             m_onlyOneCalib = false;
             disconnect(m_analyzer,SIGNAL(newData(rawData)),
@@ -245,6 +255,7 @@ void Calibration::clearCalibration(void)
 
 void Calibration::on_startCalibration()
 {
+    m_dotsCount = 0;
     if(m_state == CALIB_NONE)
     {
         clearCalibration();
@@ -263,8 +274,10 @@ void Calibration::on_startCalibration()
 void Calibration::on_startCalibrationOpen()
 {
     m_state = CALIB_OPEN;
+    m_dotsCount = 0;
     m_onlyOneCalib = true;
     m_openData.clear();
+    PopUpIndicator::showIndicator();
     if(m_analyzer != NULL)
     {
         connect(m_analyzer,SIGNAL(newData(rawData)),
@@ -277,6 +290,7 @@ void Calibration::on_startCalibrationOpen()
 void Calibration::on_startCalibrationShort()
 {
     m_state = CALIB_SHORT;
+    m_dotsCount = 0;
     m_onlyOneCalib = true;
     m_shortData.clear();
     if(m_analyzer != NULL)
@@ -291,6 +305,7 @@ void Calibration::on_startCalibrationShort()
 void Calibration::on_startCalibrationLoad()
 {
     m_state = CALIB_LOAD;
+    m_dotsCount = 0;
     m_onlyOneCalib = true;
     m_loadData.clear();
     if(m_analyzer != NULL)

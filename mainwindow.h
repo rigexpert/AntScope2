@@ -159,7 +159,6 @@ private:
     AntScopeUpdateDialog * m_updateDialog;
 
     bool m_deferredUpdate;
-
     bool m_autoUpdateEnabled;
     bool m_autoFirmwareUpdateEnabled;
 
@@ -210,6 +209,8 @@ private:
     void changeMeasurmentsColor(int _row, QColor& _color);
     void changeColorTheme(bool _dark);
     void getEnteredFq(double& start, double& stop);
+    void setChartBackground(QColor color);
+    void newSoftwareRequest();
 
 signals:
     void measure(qint64,qint64,int);
@@ -304,7 +305,6 @@ private slots:
     void on_lineEdit_fqFrom_editingFinished();
     void on_lineEdit_fqTo_editingFinished();
     void resizeWnd(void);
-    void on_newVersionAvailable();
     void on_downloadAfterClosing();
     void on_firmwareAutoUpdateStateChanged( bool state);
     void on_antScopeAutoUpdateStateChanged( bool state);

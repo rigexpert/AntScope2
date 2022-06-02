@@ -24,7 +24,7 @@ private:
 
 signals:
     void progress(int);
-    void newVersionAvailable();
+    void newVersionAvailable(QString msg, QString url);
 
 public slots:
     void on_checkUpdates();

@@ -27,9 +27,15 @@ Downloader::State Downloader::startDownloadInfo(QUrl url)
     }
 
     QNetworkRequest request(url);
+
+    m_mng.clearAccessCache();
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+
     m_mng.get(request);
 
-    //qCDebug(DOWNLOADER) << "start download " << url;
+    qCDebug(DOWNLOADER) << "start download info " << url;
 
     m_state = InProgress;
 
@@ -47,9 +53,18 @@ Downloader::State Downloader::startDownloadFw()
     m_isInfo = false;
     m_sendStatisics = false;
 
+    //m_link = "https://www.rigexpert.com/files/get/asscroll/latest/AntScope_scroll.json";
     QUrl url(m_link);
+
+    qCDebug(DOWNLOADER) << "start download link " << url;
+
     QNetworkRequest request(url);
     QNetworkReply *reply;
+
+    m_mng.clearAccessCache();
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
 
     reply = m_mng.get(request);
     connect(reply, SIGNAL(downloadProgress(qint64,qint64)),
@@ -90,12 +105,14 @@ Downloader::State Downloader::state() const
 
 void Downloader::fileDownloaded(QNetworkReply *reply)
 {
-    QByteArray arr;
-
     m_state = Finished;
     m_timer.stop();
 
     m_arr = reply->readAll();
+
+    //QString str_data(m_arr);
+    //qDebug() << "Downloader::fileDownloaded" << str_data;
+
 
     if (reply->error() != QNetworkReply::NoError ) {
         m_lastError = reply->errorString();

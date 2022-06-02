@@ -303,6 +303,7 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
         m_ok = false;
         sendData(FQ);
         m_sendTimer->start(10);
+        m_chartTimer->stop();
         state++;
         break;
     case 2:
@@ -323,6 +324,7 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
             m_parseState = m_isFRX ? WAIT_DATA : WAIT_USER_DATA;
             state = 1;
             m_sendTimer->stop();
+            m_chartTimer->start(5);
         }
         break;
     default:

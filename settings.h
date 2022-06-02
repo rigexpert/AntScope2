@@ -56,6 +56,7 @@ public:
 
     static QString programDataPath(QString _fileName);
     static QString localDataPath(QString _fileName);
+    static QString localDataFolder();
     static QString languageDataFolder();
     static QString setIniFile();
 
@@ -66,6 +67,7 @@ public:
     void setLanguages(QStringList list, int number);
     void on_translate();
     void fillSerials();
+    void showColorDialog();
 
 private:
     Ui::Settings *ui;
@@ -149,6 +151,7 @@ signals:
     void connectBluetooth(QString port);
     void disconnectBluetooth();
     void disconnectDevice();
+    void chartBackgroundChanged(QColor color);
 
 private slots:
     void on_browseBtn_clicked();

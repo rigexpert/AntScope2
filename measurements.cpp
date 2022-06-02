@@ -161,7 +161,8 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
     {
         m_graphBriefHint->setPenColor(QColor(0,0,0,0));
         m_graphBriefHint->setBackgroundColor(QColor(0,0,0,0));
-        m_graphBriefHint->setTextColor("black");
+        //m_graphBriefHint->setTextColor("black");
+        setBriefHintColor();
     }
     connect(m_tableWidget, &QTableWidget::cellClicked, [=](int row, int col) {
         if (col == COL_MENU) {
@@ -428,7 +429,7 @@ void Measurements::on_newMeasurement(QString name)
         {
             const measurement& mm = m_measurements.at(i);
             QTableWidgetItem *item;
-// DEBUG uncomment
+
             item = new QTableWidgetItem();
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
             item->setCheckState(mm.visible ? Qt::Checked : Qt::Unchecked);
@@ -997,7 +998,7 @@ void Measurements::prepareGraphs(rawData _rawData, GraphData& _data, GraphData& 
     NormRXtoSmithPoint(Rnorm, Xnorm, ptX, ptY);
     _data.ptX = ptX;
     _data.ptY = ptY;
-    qDebug() << "*calc smith" << _rawData.fq << ptX << ptY;
+    //qDebug() << "*calc smith" << _rawData.fq << ptX << ptY;
 
 }
 
@@ -2511,6 +2512,7 @@ void Measurements::importData(QString _name)
         do//while (ifs.isOpen() && (!ifs.eof()))
         {
             line = in.readLine();
+            line = line.toUpper();
             iLines++;
 
             if ( (line.length() > 2) && (line[0] == '#')) // Option line
@@ -2521,16 +2523,16 @@ void Measurements::importData(QString _name)
                 {
                     // Frequency unit
 
-                    if (!strcmp(strn[i], "GHz"))
+                    if (!strcmp(strn[i], "GHZ"))
                         fqmul = 1000.0;
                     else
-                    if (!strcmp(strn[i], "MHz"))
+                    if (!strcmp(strn[i], "MHZ"))
                         fqmul = 1.0;
                     else
-                    if (!strcmp(strn[i], "KHz"))
+                    if (!strcmp(strn[i], "KHZ"))
                         fqmul = 0.001;
                     else
-                    if (!strcmp(strn[i], "Hz"))
+                    if (!strcmp(strn[i], "HZ"))
                         fqmul = 0.000001;
                     else
 
@@ -3494,6 +3496,7 @@ void Measurements::drawSmithImage (void)
     down02->setColor(QColor(0, 0, 0, 150));
 
 }
+
 //Cable-------------------------------------------------------------------------
 void Measurements::setCableVelFactor(double value)
 {
@@ -4012,15 +4015,34 @@ void Measurements::showOneFqWidget(QWidget* _parent, int _dots)
     m_oneFqMode = true;
     if (m_graphHint != nullptr)
         m_graphHint->focusHide();
-    delete m_oneFqWidget;
-    m_oneFqWidget = new OneFqWidget(_dots, _parent);
+//    delete m_oneFqWidget;
+//    m_oneFqWidget = new OneFqWidget(_dots, _parent);
+    if (m_oneFqWidget == nullptr) {
+        m_oneFqWidget = new OneFqWidget(_dots, _parent);
+        connect(m_oneFqWidget, &OneFqWidget::canceled, this, &Measurements::hideOneFqWidget);
+        connect(m_oneFqWidget, &OneFqWidget::udpReceived, this, [=](QString cmd, qreal data) {
+            extern MainWindow* g_mainWindow;
+            //g_mainWindow->on_pressEsc();
+            g_mainWindow->analyzer()->on_stopMeasure();
+            g_mainWindow->analyzer()->on_measureOneFq(g_mainWindow, quint64(data*1000), _dots);
+            m_oneFqWidget->needBroadcast(data*1000);
+        });
+        m_oneFqWidget->show();
+        m_oneFqWidget->saveHintFlags(QPair<bool,bool>(m_graphHintEnabled, m_graphBriefHintEnabled));
+        m_graphHintEnabled = false;
+        m_graphBriefHintEnabled = false;
+    }
+//    m_oneFqWidget->saveHintFlags(QPair<bool,bool>(m_graphHintEnabled, m_graphBriefHintEnabled));
+//    m_graphHintEnabled = false;
+//    m_graphBriefHintEnabled = false;
 
-    m_oneFqWidget->saveHintFlags(QPair<bool,bool>(m_graphHintEnabled, m_graphBriefHintEnabled));
-    m_graphHintEnabled = false;
-    m_graphBriefHintEnabled = false;
-
-    connect(m_oneFqWidget, &OneFqWidget::canceled, this, &Measurements::hideOneFqWidget);
-    m_oneFqWidget->show();
+//    connect(m_oneFqWidget, &OneFqWidget::canceled, this, &Measurements::hideOneFqWidget);
+//    connect(m_oneFqWidget, &OneFqWidget::udpReceived, this, [=](QString cmd, qreal data) {
+//        extern MainWindow* g_mainWindow;
+//        g_mainWindow->on_pressEsc();
+//        g_mainWindow->on_startOneFq(quint64(data*1000), _dots);
+//    });
+//    m_oneFqWidget->show();
 }
 
 void Measurements::updateOneFqWidget(GraphData& _data)
@@ -5274,3 +5296,18 @@ int Measurements::nextPrefix()
         next = 1;
     return next;
 }
+
+void Measurements::setBriefHintColor()
+{
+    if (m_graphBriefHint != nullptr) {
+        m_settings->beginGroup("Settings");
+        QString strColor = m_settings->value("chart-background", "#ffffff").toString();
+        m_settings->endGroup();
+
+        QColor color;
+        color.setNamedColor(strColor);
+        QColor inverse(255-color.red(), 255-color.green(), 255-color.blue());
+        m_graphBriefHint->setTextColor(inverse.name());
+    }
+}
+

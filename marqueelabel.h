@@ -84,10 +84,12 @@ public:
     int getSpeed();
     void setStrings(QList<MarqueeString>& list);
     void addStrings(QList<MarqueeString>& list);
+    QList<MarqueeString> strings() { return m_strings; }
     bool load(QString& path);
     bool load(QByteArray& data);
     bool isEmpty() { return m_strings.isEmpty(); }
     void request();
+    void reset();
 
 signals:
     void clicked(const QString& link);

@@ -148,7 +148,7 @@ void Analyzer::on_downloadInfoComplete()
                 {
                     settings.setValue(key, QDateTime::currentMSecsSinceEpoch());
                     emit showNotification(
-                                QString(tr("New version of firmware is available now!")),
+                                QString(tr("New version of firmware is available! Click here to get more details")),
                                 m_downloader->downloadLink());
                 }
                 settings.endGroup();
@@ -778,17 +778,18 @@ void Analyzer::on_newData(rawData _rawData)
     }
 
     //qDebug() << "Analyzer::on_newData" << (1+m_chartCounter) << (m_dotsNumber+1);
-    if(++m_chartCounter >= m_dotsNumber+1 || !m_isMeasuring)
+    if(m_chartCounter > m_dotsNumber || !m_isMeasuring)
     {
-        int cnt = m_chartCounter;
-        setIsMeasuring(false);
         m_chartCounter = 0;
+        setIsMeasuring(false);
         PopUpIndicator::setIndicatorVisible(false);
         if(!m_calibrationMode)
         {
             emit measurementComplete();
         }
+        return;
     }
+    m_chartCounter++;
 }
 
 void Analyzer::on_newUserData(rawData _rawData, UserData _userData)
@@ -951,7 +952,7 @@ void Analyzer::on_checkUpdatesBtn_clicked()
                 this, SLOT(on_progress(qint64,qint64)));
     }
 
-    QString url = "https://www.rigexpert.com/getfirmware?model=";
+    QString url = "https://www.rigexpert.com/getfirmware?app=antscope2&model=";
     //QString url = "https://www.rigexpert.com/get.php?part=antscope2&model=";
 #ifndef NEW_ANALYZER
     url += names[m_analyzerModel].toLower().remove(" ").remove("-");
@@ -995,6 +996,7 @@ void Analyzer::on_measureCalib(int dotsNumber)
 {
     setIsMeasuring(true);
     m_dotsNumber = dotsNumber;
+    m_chartCounter = 0;
 #ifndef NEW_ANALYZER
     qint64 minFq_ = minFq[m_analyzerModel].toULongLong()*1000;
     qint64 maxFq_ = maxFq[m_analyzerModel].toULongLong()*1000;
@@ -1253,7 +1255,7 @@ void Analyzer::sendStatistics()
                 this, SLOT(on_progress(qint64,qint64)));
     }
 
-    QString url = "https://www.rigexpert.com/getfirmware?model=";
+    QString url = "https://www.rigexpert.com/getfirmware?part=antscope2&model=";
     //QString url = "https://www.rigexpert.com/get.php?part=antscope2&model=";
 #ifndef NEW_ANALYZER
     url += names[m_analyzerModel].toLower().remove(" ").remove("-");

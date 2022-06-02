@@ -71,7 +71,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QString path = Settings::setIniFile();
     m_settings = new QSettings(path, QSettings::IniFormat);
     m_settings->beginGroup("MainWindow");
-    createTabs(m_settings->value("tabSequence","0123456").toString());
+    QString sequence = m_settings->value("tabSequence","0123456").toString();
+
+    m_settings->endGroup();
+    createTabs(sequence);
+    m_settings->beginGroup("MainWindow");
+
     ui->tabWidget->setCurrentIndex(m_settings->value("currentTab",0).toInt());
 
     //if (g_developerMode)
@@ -432,13 +437,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QString str = ui->tabWidget->currentWidget()->objectName();
     emit currentTab (str);
-    QTimer::singleShot(100, this, SLOT(updateGraph()));
+    QTimer::singleShot(100, this, [this](){
+        updateGraph();
+    });
 
-    if (!g_developerMode) {
-        m_updater = new Updater();
-        connect(m_updater,SIGNAL(newVersionAvailable()), this, SLOT(on_newVersionAvailable()));
-        connect(m_updater,SIGNAL(progress(int)), this, SIGNAL(updateProgress(int)));
-    }
+    QTimer::singleShot(100, this, [this](){
+        newSoftwareRequest();
+    });
 
     m_1secTimer = new QTimer(this);
     connect(m_1secTimer, SIGNAL(timeout()), this, SLOT(on_1secTimerTick()));
@@ -490,17 +495,6 @@ MainWindow::MainWindow(QWidget *parent) :
         QDesktopServices::openUrl(QUrl(link));
     });
     ui->labelMarquee->hide();
-
-
-
-//{ TODO test
-#if 0
-    QString path1 = "c:/0/AntScope_scroll.json";
-    ui->labelMarquee->load(path1);
-    ui->labelMarquee->show();
-#endif
-//} TODO test
-
 
 #ifdef NEW_CONNECTION
     m_settings->beginGroup("Connection");
@@ -632,6 +626,7 @@ void MainWindow::changeEvent(QEvent* event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+/*
     if(m_deferredUpdate)
     {
         if(m_updateDialog == NULL)
@@ -644,6 +639,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
     {
         QMainWindow::closeEvent(event);
     }
+*/
+    QMainWindow::closeEvent(event);
 }
 
 bool MainWindow::event(QEvent * e)
@@ -2374,11 +2371,32 @@ void MainWindow::on_analyzerFound(QString name)
     }
 
     if (!g_developerMode) {
+        ui->labelMarquee->request();
         QTimer::singleShot(1000, this, [=]() {
+            newSoftwareRequest();
+        });
+        QTimer::singleShot(1100, this, [=]() {
+            m_analyzer->checkFirmwareUpdate();
+        });
+    } else {
+        QString json_path = Settings::localDataFolder();
+        QDir dir(json_path);
+        QDir json_dir = dir.absoluteFilePath("RigExpert/AntScope2/");
+        QStringList filters;
+        filters << "*.json";
+        QFileInfoList fil = json_dir.entryInfoList(filters, QDir::Files, QDir::Name);
+        if (!fil.isEmpty()) {
+            QString fname = fil[0].absoluteFilePath();
+            ui->labelMarquee->load(fname);
+            ui->labelMarquee->show();
+        }
+        QTimer::singleShot(1000, this, [=]() {
+            newSoftwareRequest();
+        });
+        QTimer::singleShot(1100, this, [=]() {
             m_analyzer->checkFirmwareUpdate();
         });
     }
-    ui->labelMarquee->request();
 
     if (name.contains("NanoVNA", Qt::CaseInsensitive)) {
         ui->spinBoxPoints->setEnabled(false);
@@ -3326,6 +3344,13 @@ void MainWindow::createTabs (QString sequence)
         ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_8), QApplication::translate("MainWindow", "User defined", 0));
         m_mapWidgets.insert(QStringLiteral("user_widget"), m_userWidget);
     }
+
+    m_settings->beginGroup("Settings");
+    QString strColor = m_settings->value("chart-background", "#ffffff").toString();
+    QColor color;
+    color.setNamedColor(strColor);
+    setChartBackground(color);
+    m_settings->endGroup();
 }
 
 void MainWindow::on_fqSettingsBtn_clicked()
@@ -3475,7 +3500,6 @@ void MainWindow::on_singleStart_clicked()
 {
     m_measurements->setContinuous(false);
 
-    bool use_min_max = isMeasuring() && m_fqRestrict;
     if (isMeasuring())
     {
         m_bInterrupted = true;
@@ -3524,7 +3548,7 @@ void MainWindow::on_singleStart_clicked()
             QString strMax = ca->maxFq();
             maxFreq = strMax.toULongLong();
         }
-        if (use_min_max)
+        if (m_fqRestrict)
         {
             start = minFreq;
             stop = maxFreq;
@@ -3537,7 +3561,7 @@ void MainWindow::on_singleStart_clicked()
             getEnteredFq(start, stop);
         }
     } else {
-        if (use_min_max)
+        if (m_fqRestrict)
         {
             start = minFreq;
             stop = maxFreq;
@@ -3983,14 +4007,14 @@ void MainWindow::resizeWnd(void)
         double range = 14 * alfa;
         m_smithWidget->xAxis->setRangeLower((-1)*range/2);
         m_smithWidget->xAxis->setRangeUpper(range/2);
-        m_smithWidget->yAxis->setRange(m_smithWidget->xAxis->range());
+        //m_smithWidget->yAxis->setRange(m_smithWidget->xAxis->range());
     }else
     {
         double alfa = (double)height/width;
         double range = 14 * alfa;
         m_smithWidget->yAxis->setRangeLower((-1)*range/2);
         m_smithWidget->yAxis->setRangeUpper(range/2);
-        m_smithWidget->xAxis->setRange(m_smithWidget->yAxis->range());
+        //m_smithWidget->xAxis->setRange(m_smithWidget->yAxis->range());
     }
 }
 
@@ -4128,6 +4152,11 @@ void MainWindow::on_settingsBtn_clicked()
     connect(m_settingsDialog, &Settings::reloadBands, [=](QString band) {
         loadBands();
         on_bandChanged(band);
+    });
+    connect(m_settingsDialog, &Settings::chartBackgroundChanged, [=](QColor color) {
+        setChartBackground(color);
+        if (m_measurements != nullptr)
+            m_measurements->setBriefHintColor();
     });
 
     bool was_customized = CustomAnalyzer::customized();
@@ -5011,44 +5040,6 @@ void MainWindow::on_lineEdit_fqTo_editingFinished()
     changeFqTo(true);
 }
 
-void MainWindow::on_newVersionAvailable()
-{
-    if (g_developerMode)
-        return;
-
-#ifdef Q_OS_WIN
-    if(m_updateDialog == NULL)
-    {
-        m_updateDialog = new AntScopeUpdateDialog();
-        connect(m_updateDialog,SIGNAL(downloadAfterClosing()),this,SLOT(on_downloadAfterClosing()));
-        connect(m_updateDialog,SIGNAL(downloadNow()),m_updater,SLOT(on_startDownload()));
-        connect(m_updater,SIGNAL(progress(int)),m_updateDialog,SLOT(on_progress(int)));
-    }
-    m_updateDialog->setAsNewVersion();
-    m_updateDialog->show();
-#endif
-
-#ifdef Q_OS_DARWIN
-    if (m_updater != nullptr)
-    {
-        const Downloader* downloader = m_updater->downloader();
-        if (downloader != nullptr)
-        {
-            QMessageBox msgBox;
-            msgBox.setTextFormat(Qt::RichText);   //this is what makes the links clickable
-            QString text = QString("<a href='%1' style='color:#01B2FF;'><br><br>%2<center>%3</center><br></a>")
-                    .arg(downloader->downloadLink())
-                    .arg(tr("New version of AntScope2 is available!"))
-                    .arg(tr("Click to Download"));
-            msgBox.setWindowTitle(tr("AntScope2 update"));
-            msgBox.setText(text);
-            msgBox.setStandardButtons(QMessageBox::Close);
-            msgBox.exec();
-        }
-    }
-#endif
-}
-
 void MainWindow::on_downloadAfterClosing()
 {
     m_deferredUpdate = true;
@@ -5543,7 +5534,8 @@ void MainWindow::on_showNotification(QString msg, QString url)
     QJsonObject json;
     json["message"] = msg;
     json["linkto"] = url;
-    json["textcolor"] = QColor(Qt::darkRed).name();
+    json["textcolor"] = QString("#ff8888");
+    json["waittime"] = 5;
     MarqueeString str(json);
     QList<MarqueeString> list;
     list << str;
@@ -5683,4 +5675,42 @@ void MainWindow::getEnteredFq(double& start, double& stop)
         start = ui->lineEdit_fqFrom->text().remove(' ').toDouble();
         stop = ui->lineEdit_fqTo->text().remove(' ').toDouble();
     }
+}
+
+void MainWindow::setChartBackground(QColor _color)
+{
+    if (!_color.isValid())
+        return;
+    QBrush brush(_color);
+    QColor inverse(255-_color.red(), 255-_color.green(), 255-_color.blue());
+    QPen pen(inverse);
+    pen.setWidth(1);
+
+    foreach (QCustomPlot *_plot, m_mapWidgets) {
+        if (_plot == m_smithWidget) {
+            continue;
+        }
+        _plot->setBackground(brush);
+        _plot->xAxis->setTickLabelColor(inverse);
+        _plot->xAxis->setLabelColor(inverse);
+        _plot->xAxis->setSubTickPen(pen);
+        _plot->xAxis->setBasePen(pen);
+        _plot->xAxis->setTickPen(pen);
+
+        _plot->yAxis->setTickLabelColor(inverse);
+        _plot->yAxis->setLabelColor(inverse);
+        _plot->yAxis->setSubTickPen(pen);
+        _plot->yAxis->setBasePen(pen);
+        _plot->yAxis->setTickPen(pen);
+    }
+}
+
+void MainWindow::newSoftwareRequest()
+{
+    if (m_updater == nullptr) {
+        m_updater = new Updater();
+        connect(m_updater, &Updater::newVersionAvailable, this, &MainWindow::on_showNotification);
+        connect(m_updater,SIGNAL(progress(int)), this, SIGNAL(updateProgress(int)));
+    }
+    m_updater->on_checkUpdates();
 }

@@ -124,6 +124,7 @@ public:
     ProgressDlg* progressDlg() { return m_autoCalibrateProgressDlg; }
     void redrawTDR(int _index=-1);
     void drawSmithImage(void);
+    void setBriefHintColor();
 
 private:
 //    QVector <rawData> m_rawDataVector;

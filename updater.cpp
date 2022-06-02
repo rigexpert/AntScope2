@@ -48,17 +48,22 @@ void Updater::on_downloadInfoComplete()
 
     QStringList list = QString(ANTSCOPE2VER).split('.');
     quint64 local_ver = list[2].toInt() + 1000 * list[1].toInt() + 1000000 * list[0].toInt();
+
+#ifdef _DEBUG
+    local_ver = 1002002;
+#endif
+
     quint64 remote_ver = local_ver;
     list = QString(str).split('.');
     if (list.size() > 2)
         remote_ver = list[2].toInt() + 1000 * list[1].toInt() + 1000000 * list[0].toInt();
 
-    // TODO DEBUG
     if (remote_ver > local_ver)
     {
-        emit newVersionAvailable();
+        emit newVersionAvailable(
+                QString(tr("         New AntScope2 is available!      Click here to get more details.")),
+                QString("https://rigexpert.com/products/software/antscope2/"));
     }
-    //}
 }
 
 void Updater::on_downloadFileComplete()

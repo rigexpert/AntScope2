@@ -12,19 +12,11 @@ MarqueeLabel::MarqueeLabel(QWidget *parent)
     : QLabel(parent), m_downloader(nullptr), m_px(0), m_py(10), m_speed(1), m_direction(RightToLeft)
 {	
     connect(&m_timer, &QTimer::timeout, this, [=](){ repaint(); });
-//    QSettings set(Settings::setIniFile(), QSettings::IniFormat);
-//    set.beginGroup("MainWindow");
-//    m_speedTimerMs = set.value("scroll_timer_ms", 100).toInt();
-//    set.endGroup();
 }
 
 MarqueeLabel::~MarqueeLabel()
 {
     delete m_downloader;
-//    QSettings set(Settings::setIniFile(), QSettings::IniFormat);
-//    set.beginGroup("MainWindow");
-//    set.setValue("scroll_timer_ms", m_speedTimerMs );
-//    set.endGroup();
 }
 
 void MarqueeLabel::show()
@@ -42,7 +34,7 @@ void MarqueeLabel::setAlignment(Qt::Alignment _align)
 void MarqueeLabel::paintEvent(QPaintEvent *event)
 {
     if (m_strings.isEmpty() || m_waitForDelay) {
-        setText("");
+        //setText("");
         QLabel::paintEvent(event);
         return;
     }
@@ -159,7 +151,6 @@ void MarqueeLabel::updateCoordinates()
 	}
     m_fontSize = font().pointSize()/2;
     m_textLength = fontMetrics().width(text());
-    qDebug() << "MarqueeLabel::updateCoordinates() m_fontSize: " << m_fontSize << "m_textLength: " << m_textLength;
 }
 
 void MarqueeLabel::setSpeed(int _speed)
@@ -236,11 +227,12 @@ bool MarqueeLabel::load(QByteArray& data)
     QJsonDocument doc(QJsonDocument::fromJson(data, &parseError));
     if (parseError.error != QJsonParseError::NoError) {
         qDebug() << "MarqueeLabel::load()" << parseError.errorString() << parseError.offset;
+        QString str_data(data);
+        qDebug() << "MarqueeLabel::load" << str_data;
         return false;
     }
 
-    //QString str_data(data);
-    //qDebug() << "MarqueeLabel::load" << str_data;
+    reset();
 
     QJsonObject mainObj = doc.object();
     QJsonArray array = mainObj["messages"].toArray();
@@ -260,11 +252,11 @@ bool MarqueeLabel::load(QByteArray& data)
                 QMapIterator<QString, QString> i(mstring.keywords());
                 while (i.hasNext()) {
                     i.next();
-                    if (i.key()=="type" && analyzer->name().contains(i.value())) {
+                    if (i.key()=="type" && analyzer->name()==i.value()) {
                         m_strings << mstring;
                         break;
                     }
-                    if (i.key()=="sn" && analyzer->serilal().contains(i.value())) {
+                    if (i.key()=="sn" && analyzer->serilal()==i.value()) {
                         m_strings << mstring;
                         break;
                     }
@@ -316,3 +308,12 @@ void MarqueeLabel::on_downloadFileComplete()
     }
 }
 
+void MarqueeLabel::reset()
+{
+    m_timer.stop();
+    m_strings.clear();
+    m_px = 0;
+    m_py = 10;
+    m_speed = 1;
+    m_direction = RightToLeft;
+}

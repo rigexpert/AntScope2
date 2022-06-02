@@ -6,8 +6,14 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QtNetwork>
 #include "analyzerparameters.h"
 #include "settings.h"
+
+#define UDP_SEND_VERSION "AA1"
+#define UDP_RECEIVE_VERSION "AA2"
+#define UDP_PORT_SEND 6050
+#define UDP_PORT_RECEIVE 6051
 
 class OneFqWidget : public QWidget
 {
@@ -34,6 +40,11 @@ class OneFqWidget : public QWidget
     int m_mainBiasY;
     int m_parentX;
     int m_parentY;
+    QUdpSocket* m_udpSender=nullptr;
+    QUdpSocket* m_udpReceiver=nullptr;
+    QHostAddress m_udpAddress;
+    bool m_needBroadcast = false;
+    qreal m_broadcastFq = 0;
 
 public:
     explicit OneFqWidget(int _points, QWidget *parent = 0);
@@ -56,7 +67,7 @@ public:
     bool needUpdate() { return (m_added >= m_points); }
     void saveHintFlags(QPair<bool, bool> _hints) { m_hints=_hints; }
     QPair<bool, bool> resoreHintFlags() { return m_hints; }
-
+    void needBroadcast(qreal fq) { m_needBroadcast=true; m_broadcastFq=fq; }
     void MainWindowPos(int x, int y);
     void setX(int x){m_x = x;}
     void setY(int y){m_y = y;}
@@ -73,11 +84,14 @@ protected:
     void mouseMoveEvent(QMouseEvent *);
     void addValue(double src, double& dst);
     void updateText();
+    void broadcastDatagram();
 
 signals:
     void canceled(bool);
+    void udpReceived(QString cmd, qreal data);
 
 public slots:
+    void processPendingDatagrams();
     void setText(const QString& text);
     QString getText();
 };

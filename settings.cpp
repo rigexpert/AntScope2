@@ -125,6 +125,12 @@ Settings::Settings(QWidget *parent) :
         //QMessageBox::warning(this, tr("Color Theme"), tr("You must reload the program to change the color theme."), QMessageBox::Ok);
     });
 
+    QString strColor = m_settings->value("chart-background", "#ffffff").toString();
+    ui->bkgButton->setStyleSheet("QToolButton{background-color: " + strColor + ";}");
+    connect(ui->bkgButton, &QToolButton::clicked, [=]() {
+        showColorDialog();
+    });
+
     ui->tabWidget->setCurrentIndex(m_settings->value("currentIndex",0).toInt());
     ui->markersHintCheckBox->setChecked(m_markersHintEnabled);
     ui->graphHintCheckBox->setChecked(m_graphHintEnabled);
@@ -133,9 +139,9 @@ Settings::Settings(QWidget *parent) :
     ui->spinBoxMeasurements->setValue(g_maxMeasurements);
     // TODO developer(?)
     ui->fqRestrictCheckBox->setChecked(g_developerMode ? m_restrictFq : true);
-    //if (!g_developerMode) {
+    if (!g_developerMode) {
         ui->fqRestrictCheckBox->setVisible(false);
-    //}
+    }
     // ///
     ui->checkBoxBandName->setChecked(m_settings->value("show-band-name", false).toBool());
     m_settings->endGroup();
@@ -577,6 +583,7 @@ void Settings::on_openCalibBtn_clicked()
 {
     enableButtons(false);
     m_onlyOneCalib = true;
+    PopUpIndicator::hideIndicator();
     if (QMessageBox::information(NULL, tr("Open"),
                          tr("Please connect OPEN standard and press OK.")) == QMessageBox::Ok)
         emit startCalibrationOpen();
@@ -586,6 +593,7 @@ void Settings::on_shortCalibBtn_clicked()
 {
     enableButtons(false);
     m_onlyOneCalib = true;
+    PopUpIndicator::hideIndicator();
     QMessageBox::information(NULL, tr("Short"),
                          tr("Please connect SHORT standard and press OK."));
     emit startCalibrationShort();
@@ -595,6 +603,7 @@ void Settings::on_loadCalibBtn_clicked()
 {
     enableButtons(false);
     m_onlyOneCalib = true;
+    PopUpIndicator::hideIndicator();
     QMessageBox::information(NULL, tr("Load"),
                          tr("Please connect LOAD standard and press OK."));
     emit startCalibrationLoad();
@@ -1000,6 +1009,28 @@ QString Settings::localDataPath(QString _fileName)
   return QString();
 }
 
+QString Settings::localDataFolder()
+{
+// Mac OS X and iOS
+#ifdef Q_OS_DARWIN
+    return QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+#endif
+// Linux
+#ifdef Q_OS_LINUX
+    extern bool g_raspbian;
+    if (g_raspbian)
+    {
+        return "/usr/share/RigExpert/AntScope2/";
+    }
+    return QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+#endif
+// Windows
+#ifdef Q_OS_WIN
+    return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+#endif
+  qDebug("TODO Settings::localDataPath");
+  return QString();
+}
 
 QString Settings::languageDataFolder()
 {
@@ -1508,3 +1539,20 @@ void Settings::setConnectButtonText(bool _connect)
         ui->connectSerialBtn->setText(tr("Disconnect analyser"));
     ui->connectSerialBtn->update();
 }
+
+void Settings::showColorDialog()
+{
+    m_settings->beginGroup("Settings");
+    QString strColor = m_settings->value("chart-background", "#ffffff").toString();
+    QColor color;
+    color.setNamedColor(strColor);
+    color = QColorDialog::getColor(color, this );
+    if (color.isValid()) {
+        strColor = color.name();
+        m_settings->setValue("chart-background", strColor);
+        ui->bkgButton->setStyleSheet("QToolButton{background-color: " + strColor + ";}");
+        emit chartBackgroundChanged(color);
+    }
+    m_settings->endGroup();
+}
+

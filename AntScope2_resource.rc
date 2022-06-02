@@ -1,8 +1,4 @@
-# if defined(UNDER_CE)
-#  include <winbase.h>
-# else
-#  include <windows.h>
-# endif
+#include <windows.h>
 
 IDI_ICON1	ICON	DISCARDABLE	"C:\\Projects\\AntScope2\\AntScope2.ico"
 
