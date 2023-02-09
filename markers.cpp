@@ -1,4 +1,5 @@
 #include "markers.h"
+#include "mainwindow.h"
 
 Markers::Markers(QObject *parent) : QObject(parent),
     m_swrWidget(NULL),
@@ -164,34 +165,34 @@ void Markers::rescale()
         double offsetX;
         double offsetY;
 
-        if(m_currentTab == "tab_1")
+        if(m_currentTab == "tab_swr")
         {
             offsetX = (m_swrWidget->xAxis->range().upper - m_swrWidget->xAxis->range().lower)/40;
             offsetY = (m_swrWidget->yAxis->range().upper - m_swrWidget->yAxis->range().lower)/10;
             m_markersList.at(i)->swrLineText->position->setCoords(fq + offsetX/2, m_swrWidget->yAxis->range().center()-offsetY);
-        }else if(m_currentTab == "tab_2")
+        }else if(m_currentTab == "tab_phase")
         {
             offsetX = (m_phaseWidget->xAxis->range().upper - m_phaseWidget->xAxis->range().lower)/40;
             offsetY = (m_phaseWidget->yAxis->range().upper - m_phaseWidget->yAxis->range().lower)/10;
             m_markersList.at(i)->phaseLineText->position->setCoords(fq + offsetX/2, m_phaseWidget->yAxis->range().center()-offsetY);
-        }else if(m_currentTab == "tab_3")
+        }else if(m_currentTab == "tab_rs")
         {
             offsetX = (m_rsWidget->xAxis->range().upper - m_rsWidget->xAxis->range().lower)/40;
             offsetY = (m_rsWidget->yAxis->range().upper - m_rsWidget->yAxis->range().lower)/10;
             m_markersList.at(i)->rsLineText->position->setCoords(fq + offsetX/2, m_rsWidget->yAxis->range().center()-offsetY);
-        }else if(m_currentTab == "tab_4")
+        }else if(m_currentTab == "tab_rp")
         {
             offsetX = (m_rpWidget->xAxis->range().upper - m_rpWidget->xAxis->range().lower)/40;
             offsetY = (m_rpWidget->yAxis->range().upper - m_rpWidget->yAxis->range().lower)/10;
             m_markersList.at(i)->rpLineText->position->setCoords(fq + offsetX/2, m_rpWidget->yAxis->range().center()-offsetY);
-        }else if(m_currentTab == "tab_5")
+        }else if(m_currentTab == "tab_rl")
         {
             offsetX = (m_rlWidget->xAxis->range().upper - m_rlWidget->xAxis->range().lower)/40;
             offsetY = (m_rlWidget->yAxis->range().upper - m_rlWidget->yAxis->range().lower)/10;
             m_markersList.at(i)->rlLineText->position->setCoords(fq + offsetX/2, m_rlWidget->yAxis->range().center()-offsetY);
-        }else if(m_currentTab == "tab_6")
+        }else if(m_currentTab == "tab_tdr")
         {
-        }else if(m_currentTab == "tab_7")
+        }else if(m_currentTab == "tab_smith")
         {
         }
     }
@@ -564,28 +565,40 @@ marker Markers::getMarker( quint32 number)
 void Markers::redraw(void)
 {
     rescale();
-    if(m_currentTab == "tab_1")
+    if(m_currentTab == "tab_swr")
     {
         m_swrWidget->replot();
-    }else if(m_currentTab == "tab_2")
+    }else if(m_currentTab == "tab_phase")
     {
         m_phaseWidget->replot();
-    }else if(m_currentTab == "tab_3")
+    }else if(m_currentTab == "tab_rs")
     {
         m_rsWidget->replot();
-    }else if(m_currentTab == "tab_4")
+    }else if(m_currentTab == "tab_rp")
     {
         m_rpWidget->replot();
-    }else if(m_currentTab == "tab_5")
+    }else if(m_currentTab == "tab_rl")
     {
         m_rlWidget->replot();
-    }else if(m_currentTab == "tab_6")
+    }else if(m_currentTab == "tab_tdr")
     {
         m_tdrWidget->replot();
-    }else if(m_currentTab == "tab_7")
+    }else if(m_currentTab == "tab_smith")
     {
         m_smithWidget->replot();
     }
+#ifndef NO_MULTITAB
+    else if(m_currentTab == "tab_multi")
+    {
+        QString old_m_currentTab = m_currentTab;
+        const QList<QString>& tabs = MainWindow::m_mainWindow->multiTabs();
+        foreach (const QString& tab, tabs) {
+            QCustomPlot* plot = MainWindow::m_mainWindow->plotForTab(tab);
+            plot->replot();
+        }
+        m_currentTab = old_m_currentTab;
+    }
+#endif
 }
 
 void Markers::on_removeMarker(int number)

@@ -38,9 +38,9 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
         QLabel::paintEvent(event);
         return;
     }
-    if (m_current >= m_strings.size())
+    if (m_current >= m_strings.size()) {
         m_current = 0;
-
+    }
 	QPainter paint(this);
 
 // Huck. High DPI Scaling 125%
@@ -68,8 +68,12 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
             });
         } else  if(m_px <= (-m_textLength)) {
            m_waitForDelay = true;
+           int delay_ms = m_strings[m_current].delay()*1000;
            m_timer.stop();
-           QTimer::singleShot(m_strings[m_current].delay()*1000, this, [=]() { next(); });
+           setText("");
+           QTimer::singleShot(delay_ms, this, [=]() {
+               next();
+           });
         }
 	}
 	else
@@ -80,7 +84,7 @@ void MarqueeLabel::paintEvent(QPaintEvent *event)
             m_timer.stop();
             QTimer::singleShot(m_strings[m_current].delay()*1000, this, [=]() { next(); });
         }
-	}
+    }
     paint.drawText(m_px, -3, width()-m_px, height()+3, Qt::AlignLeft|Qt::AlignVCenter ,text());
 }
 
@@ -231,6 +235,8 @@ bool MarqueeLabel::load(QByteArray& data)
         qDebug() << "MarqueeLabel::load" << str_data;
         return false;
     }
+//    QString str_data(data);
+//    qInfo() << "MarqueeLabel::load" << str_data;
 
     reset();
 
@@ -240,8 +246,12 @@ bool MarqueeLabel::load(QByteArray& data)
     {
         QJsonObject dataObject = array[i].toObject();
         MarqueeString mstring(dataObject);
-        if (mstring.enddate().isValid() && QDate::currentDate() > mstring.enddate()) {
-            qDebug() << "JSON expired";
+        if (mstring.startdate().isValid() && (QDate::currentDate() < mstring.startdate())) {
+            //qDebug() << "JSON wait for start date";
+            continue;
+        }
+        if (mstring.enddate().isValid() && (QDate::currentDate() > mstring.enddate())) {
+            //qDebug() << "JSON expired";
             continue;
         }
         if (mstring.keywords().isEmpty()) {
@@ -292,6 +302,8 @@ void MarqueeLabel::request()
     url += "&lang=" + QLocale::languageToString(QLocale::system().language());
     url += "&sw=" + QString(ANTSCOPE2VER);
 
+    qDebug() << "----> MarqueeLabel::request():" << url;
+
     m_downloader->startDownloadInfo(QUrl(url));
 }
 
@@ -302,6 +314,10 @@ void MarqueeLabel::on_downloadInfoComplete()
 
 void MarqueeLabel::on_downloadFileComplete()
 {
+//    if (!m_downloader->error().isEmpty()) {
+//        QString msg = tr("Network error: ")+m_downloader->error();
+//        QMessageBox::information(nullptr, "QpenSSL", msg);
+//    }
     QByteArray arr = m_downloader->file();
     if (load(arr)) {
         show();

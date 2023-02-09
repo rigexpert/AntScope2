@@ -133,7 +133,7 @@ void Screenshot::savePDF(QString path, QString comment)
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
 #endif
-    bool full = model == "AA-2000 ZOOM";
+    bool full = (model == "AA-2000 ZOOM") || (model == "AA-3000 ZOOM");
 
     QRect rect = printer.pageRect();
 
@@ -230,7 +230,7 @@ void Screenshot::on_newData(QByteArray data)
             }
         }
     }
-    else if (model == "Stick 230") {
+    else if (model == "Stick 230" || model == "Stick 500") {
         while (!m_inputData.isEmpty()) {
             unsigned char data = m_inputData.takeFirst();
             //if (data != 0)
@@ -243,7 +243,7 @@ void Screenshot::on_newData(QByteArray data)
                 mask >>= 1;
             }
         }
-    }else if (model == "Stick Pro") {
+    }else if (model == "Stick Pro" || model == "Stick XPro") {
         // TODO not implemented yet
         while(m_inputData.length() > 3)
         {
@@ -289,7 +289,7 @@ void Screenshot::on_newData(QByteArray data)
             int blue = (data>>11)&0x1F;
 
             //if (model == "AA-230 ZOOM" || model == "AA-2000") {
-            if (model == "AA-2000 ZOOM") {
+            if ((model == "AA-2000 ZOOM") || (model == "AA-3000 ZOOM")) {
                 int tmp = red;
                 red = blue;
                 blue = tmp;
@@ -342,7 +342,7 @@ void Screenshot::on_newData(QByteArray data)
             m_imageVector.clear();
             repaint();
         }
-    } else if (model == "Stick 230") {
+    } else if (model == "Stick 230" || model == "Stick 500") {
         qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
         {
@@ -360,7 +360,7 @@ void Screenshot::on_newData(QByteArray data)
             m_imageVector.clear();
             repaint();
         }
-    } else if (model == "Stick Pro") {
+    } else if (model == "Stick Pro" || model == "Stick XPro") {
         //qDebug() << "AA-230 Stick: estimated = " << QString("%1 , obtained = %2").arg(m_lcdHeight*m_lcdWidth).arg(m_imageVector.length());
         if(m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
         {

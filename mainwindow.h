@@ -57,6 +57,13 @@ static QString languages_small[LANGUAGES_QUANTITY]={
     "ja"
 };
 
+
+struct MultiTab {
+    QList<QString> tabs;
+    bool isVisible() { return !tabs.isEmpty(); }
+    bool isFull() { return tabs.size() >= 8; }
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -88,22 +95,15 @@ private:
 
     Presets * m_presets;
 
-    QWidget *m_tab_1;
-    QWidget *m_tab_2;
-    QWidget *m_tab_3;
-    QWidget *m_tab_4;
-    QWidget *m_tab_5;
-    QWidget *m_tab_6;
-    QWidget *m_tab_7;
-    QWidget *m_tab_8;
-    QHBoxLayout *m_horizontalLayout_1;
-    QHBoxLayout *m_horizontalLayout_2;
-    QHBoxLayout *m_horizontalLayout_3;
-    QHBoxLayout *m_horizontalLayout_4;
-    QHBoxLayout *m_horizontalLayout_5;
-    QHBoxLayout *m_horizontalLayout_6;
-    QHBoxLayout *m_horizontalLayout_7;
-    QHBoxLayout *m_horizontalLayout_8;
+    QWidget *m_tab_swr=nullptr;
+    QWidget *m_tab_phase=nullptr;
+    QWidget *m_tab_rs=nullptr;
+    QWidget *m_tab_rp=nullptr;
+    QWidget *m_tab_rl=nullptr;
+    QWidget *m_tab_tdr=nullptr;
+    QWidget *m_tab_smith=nullptr;
+    QWidget *m_tab_user=nullptr;
+
     QCustomPlot *m_swrWidget;
     QCustomPlot *m_phaseWidget;
     QCustomPlot *m_rsWidget;
@@ -123,7 +123,7 @@ private:
     QSettings *m_settings;
     Calibration *m_calibration;
 
-    Print *m_print;
+    Print *m_print = nullptr;
 
     bool m_isContinuos;
     int m_dotsNumber;
@@ -189,6 +189,7 @@ private:
     void addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2);
     void addBand (QCustomPlot * widget, double x1, double x2, double y1, double y2, QString& name);
     void createTabs (QString sequence);
+    void createUserTab();
     void moveEvent(QMoveEvent *);
     void resizeEvent(QResizeEvent *e);
     bool event(QEvent *event);
@@ -323,6 +324,26 @@ private slots:
     void onFullRange(bool);
     void onMeasurementError();
     void on_tableWidgetMeasurmentsContextMenu(const QPoint& pos);
+
+    // multi-tab
+#ifndef NO_MULTITAB
+private:
+    QWidget *m_tab_multi=nullptr;
+    MultiTab m_multiTabData;
+
+protected:
+    void showMultiTab();
+    void toMultiTab(int tab_index);
+    void fromMultiTab(int tab_index);
+    QMenu& menuMultiTab(QMenu& menu);
+    void buildMultiTabLayout();
+    void restoreMultitab(const QString& tabs);
+
+public:
+    void replot_multiTab();
+    QCustomPlot* plotForTab(const QString& tab);
+    const QList<QString>& multiTabs() { return m_multiTabData.tabs; }
+#endif
 };
 
 

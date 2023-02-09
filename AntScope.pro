@@ -12,10 +12,16 @@ QT       += xml
 QT       += concurrent
 QT       += opengl
 
+message ("!!!  set path 5.15.2/MSVC19")
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 DEFINES += ANTSCOPE2VER='\\"1.2.6\\"'
 DEFINES += OLD_TDR
+
+#{ debug
+#DEFINES += NO_MULTITAB
+#} debug
 
 #-------------------------------------------------
 # under construction
@@ -60,30 +66,32 @@ message("       ["$${UI_DIR}"]")
 message("       ["$${RCC_DIR}"]")
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-        qcustomplot.cpp \
-        analyzer/analyzer.cpp \
-        analyzer/hidanalyzer.cpp \
-        analyzer/comanalyzer.cpp \
-        presets.cpp \
-        measurements.cpp \
-        analyzer/analyzerdata.cpp \
-        screenshot.cpp \
-        popup.cpp \
-        analyzer/updater/downloader.cpp \
-        settings.cpp \
-        fqsettings.cpp \
-        crc32.cpp \
-        updatedialog.cpp \
-        devinfo/redeviceinfo.cpp \
-        ftdi/ftdiinfo.cpp \
-        markers.cpp \
-        calibration.cpp \
-        print.cpp \
-        export.cpp \
-        markerspopup.cpp \
-        updater.cpp \
-        antscopeupdatedialog.cpp \
+    mainwindow.cpp \
+    printmulti.cpp \
+    qcustomplot.cpp \
+    analyzer/analyzer.cpp \
+    analyzer/hidanalyzer.cpp \
+    analyzer/comanalyzer.cpp \
+    presets.cpp \
+    measurements.cpp \
+    analyzer/analyzerdata.cpp \
+    screenshot.cpp \
+    popup.cpp \
+    analyzer/updater/downloader.cpp \
+    settings.cpp \
+    fqsettings.cpp \
+    crc32.cpp \
+    updatedialog.cpp \
+    devinfo/redeviceinfo.cpp \
+    ftdi/ftdiinfo.cpp \
+    markers.cpp \
+    calibration.cpp \
+    print.cpp \
+    printmarkers.cpp \
+    export.cpp \
+    markerspopup.cpp \
+    updater.cpp \
+    antscopeupdatedialog.cpp \
     popupindicator.cpp \
     analyzer/customanalyzer.cpp \
     analyzer/updater/aa30zerofirmwareupdater.cpp \
@@ -107,32 +115,34 @@ SOURCES += main.cpp\
     analyzer/baseanalyzer.cpp
 
 HEADERS  += mainwindow.h \
-        qcustomplot.h \
-        analyzer/analyzer.h \
-        analyzer/hidanalyzer.h \
-        analyzer/comanalyzer.h \
-        analyzer/analyzerparameters.h \
-        analyzer/usbhid/hidapi/hidapi.h \
-        presets.h \
-        measurements.h \
-        analyzer/analyzerdata.h \
-        screenshot.h \
-        popup.h \
-        analyzer/updater/downloader.h \
-        settings.h \
-        fqsettings.h \
-        crc32.h \
-        updatedialog.h \
-        devinfo/redeviceinfo.h \
-        ftdi/ftd2xx.h \
-        ftdi/ftdiinfo.h \
-        markers.h \
-        calibration.h \
-        print.h \
-        export.h \
-        markerspopup.h \
-        updater.h \
-        antscopeupdatedialog.h \
+    printmulti.h \
+    qcustomplot.h \
+    analyzer/analyzer.h \
+    analyzer/hidanalyzer.h \
+    analyzer/comanalyzer.h \
+    analyzer/analyzerparameters.h \
+    analyzer/usbhid/hidapi/hidapi.h \
+    presets.h \
+    measurements.h \
+    analyzer/analyzerdata.h \
+    screenshot.h \
+    popup.h \
+    analyzer/updater/downloader.h \
+    settings.h \
+    fqsettings.h \
+    crc32.h \
+    updatedialog.h \
+    devinfo/redeviceinfo.h \
+    ftdi/ftd2xx.h \
+    ftdi/ftdiinfo.h \
+    markers.h \
+    calibration.h \
+    print.h \
+    printmarkers.h \
+    export.h \
+    markerspopup.h \
+    updater.h \
+    antscopeupdatedialog.h \
     popupindicator.h \
     analyzer/customanalyzer.h \
     fqinputvalidator.h \
@@ -166,14 +176,14 @@ HEADERS  += mainwindow.h \
 #        ui_updatedialog.h \
 
 FORMS    += mainwindow.ui \
-        analyzer/analyzerdata.ui \
-        screenshot.ui \
-        settings.ui \
-        fqsettings.ui \
-        updatedialog.ui \
-        print.ui \
-        export.ui \
-        antscopeupdatedialog.ui \
+    analyzer/analyzerdata.ui \
+    screenshot.ui \
+    settings.ui \
+    fqsettings.ui \
+    updatedialog.ui \
+    print.ui \
+    export.ui \
+    antscopeupdatedialog.ui \
     ProgressDlg.ui \
     licensesdialog.ui \
     tdrprogressdialog.ui \
@@ -225,6 +235,7 @@ unix:!macx {
 }
 
 macx {
+    DEFINES += NO_MULTITAB
     SOURCES += analyzer/usbhid/hidapi/mac/hid.c
     LIBS += -framework CoreFoundation
     DEFINES += _NO_WINDOWS_

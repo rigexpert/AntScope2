@@ -7,6 +7,7 @@
 #include "glwidget.h"
 
 extern bool g_developerMode;
+extern QMap<QString, QString> g_mapTabPlotNames;
 int g_maxMeasurements = MAX_MEASUREMENTS;
 
 QVector<QColor> generateColors(int number) {
@@ -1395,7 +1396,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
         if (!m_measurements[index].visible) {
             return;
         }
-        if(m_currentTab == "tab_6")
+        if(m_currentTab == "tab_tdr")
         {
             QCPDataMap *tdrmapImp;
             QCPDataMap *tdrmapStep;
@@ -1799,19 +1800,19 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                                 }
                             }
                             str += " kHz\n";
-                            if(m_currentTab == "tab_1")
+                            if(m_currentTab == "tab_swr")
                             {
                                 str += QString::number(swr,'f',2);
-                            }else if(m_currentTab == "tab_2")
+                            }else if(m_currentTab == "tab_phase")
                             {
                                 str += QString::number(phase,'f',2) + "°";
-                            }else if(m_currentTab == "tab_3")
+                            }else if(m_currentTab == "tab_rs")
                             {
                                 //str += QString::number(computeZ(r,x),'f',2);
-                            }else if(m_currentTab == "tab_4")
+                            }else if(m_currentTab == "tab_rp")
                             {
                                 //str += QString::number(computeZ(r,x),'f',2);
-                            }else if(m_currentTab == "tab_5")
+                            }else if(m_currentTab == "tab_rl")
                             {
                                 str += QString::number(rl,'f',2) + " dB";
                             }
@@ -1821,7 +1822,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                     }
                 }
             }
-            if(m_currentTab == "tab_1")
+            if(m_currentTab == "tab_swr")
             {
                 if(!m_swrLine)
                 {
@@ -1840,7 +1841,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
 
                 m_swrLine2->point1->setCoords(m_swrWidget->yAxis->getRangeLower(), swr);
                 m_swrLine2->point2->setCoords(m_swrWidget->yAxis->getRangeUpper(), swr);
-            }else if(m_currentTab == "tab_2")
+            }else if(m_currentTab == "tab_phase")
             {
                 if(!m_phaseLine)
                 {
@@ -1858,7 +1859,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                 m_phaseLine->point2->setCoords(frequency, 2000);
                 m_phaseLine2->point1->setCoords(m_phaseWidget->yAxis->getRangeLower(), phase);
                 m_phaseLine2->point2->setCoords(m_phaseWidget->yAxis->getRangeUpper(), phase);
-            }else if(m_currentTab == "tab_3")
+            }else if(m_currentTab == "tab_rs")
             {
                 if(!m_rsLine)
                 {
@@ -1868,7 +1869,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                 }
                 m_rsLine->point1->setCoords(frequency, -2000);
                 m_rsLine->point2->setCoords(frequency, 2000);
-            }else if(m_currentTab == "tab_4")
+            }else if(m_currentTab == "tab_rp")
             {
                 if(!m_rpLine)
                 {
@@ -1878,7 +1879,7 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                 }
                 m_rpLine->point1->setCoords(frequency, -2000);
                 m_rpLine->point2->setCoords(frequency, 2000);
-            }else if(m_currentTab == "tab_5")
+            }else if(m_currentTab == "tab_rl")
             {
                 if(!m_rlLine)
                 {
@@ -2611,9 +2612,9 @@ void Measurements::importData(QString _name)
                     return;
                 }
 */
-                if(! ((iUnit == 1) && (iFormat == 1) // S, MA
-                        || (iUnit == 1) && (iFormat == 2)  // S, RI
-                        || (iUnit == 2) && (iFormat == 2)  // Z, RI
+                if(! (((iUnit == 1) && (iFormat == 1)) // S, MA
+                        || ((iUnit == 1) && (iFormat == 2))  // S, RI
+                        || ((iUnit == 2) && (iFormat == 2))  // Z, RI
                     ))
                 {
                     return;
@@ -3049,8 +3050,8 @@ int Measurements::CalcTdr(QVector <rawData> *data)
         m_pdTdrZ[i] = (Z > VALUE_LIMIT) ? VALUE_LIMIT : Z;
     }
 
-    delete TdrReal;
-    delete TdrImag;
+    delete[] TdrReal;
+    delete[] TdrImag;
     return m_iTdrFftSize;
 }
 
@@ -3143,7 +3144,7 @@ void Measurements::on_dotsNumberChanged(int number)
 void Measurements::on_changeMeasureSystemMetric (bool state)
 {
     m_measureSystemMetric = state;
-    qDebug() << "Measurements::on_changeMeasureSystemMetric" << m_tdrWidget->graphCount();
+    //qDebug() << "Measurements::on_changeMeasureSystemMetric" << m_tdrWidget->graphCount();
     if(m_tdrWidget->graphCount()>2)
     {
         if(m_measureSystemMetric)
@@ -3185,30 +3186,33 @@ void Measurements::on_redrawGraphs(bool _incrementally)
         calcFarEnd(_incrementally);
     }
 
-    if( m_currentTab == "tab_1")//SWR
+    if( m_currentTab == "tab_swr")//SWR
     {
         redrawSWR(_incrementally);
-    } else if( m_currentTab == "tab_2")//Phase
+    } else if( m_currentTab == "tab_phase")//Phase
     {
         redrawPhase(_incrementally);
-    } else if( m_currentTab == "tab_3")//Rs
+    } else if( m_currentTab == "tab_rs")//Rs
     {
         redrawRs(_incrementally);
-    } else if( m_currentTab == "tab_4")//Rp
+    } else if( m_currentTab == "tab_rp")//Rp
     {
         redrawRp(_incrementally);
-    } else if( m_currentTab == "tab_5")//Rl
+    } else if( m_currentTab == "tab_rl")//Rl
     {
         redrawRl(_incrementally);
-    } else if( m_currentTab == "tab_6")//TDR
+    } else if( m_currentTab == "tab_tdr")//TDR
     {
         redrawTDR();
-    } else if( m_currentTab == "tab_7")//Smith
+    } else if( m_currentTab == "tab_smith")//Smith
     {
         redrawSmith(_incrementally);
-    } else if( m_currentTab == "tab_8")//User
+    } else if( m_currentTab == "tab_user")//User
     {
         redrawUser(_incrementally);
+    } else if( m_currentTab == "tab_multi")
+    {
+        redrawMultiGraph(_incrementally);
     }
 }
 
@@ -3225,31 +3229,44 @@ void Measurements::replot()
         return;
     }
 
-    if(m_currentTab == "tab_1")
+    if(m_currentTab == "tab_swr")
     {
         m_swrWidget->replot();
-    }else if(m_currentTab == "tab_2")
+    }else if(m_currentTab == "tab_phase")
     {
         m_phaseWidget->replot();
-    }else if(m_currentTab == "tab_3")
+    }else if(m_currentTab == "tab_rs")
     {
         m_rsWidget->replot();
-    }else if(m_currentTab == "tab_4")
+    }else if(m_currentTab == "tab_rp")
     {
         m_rpWidget->replot();
-    }else if(m_currentTab == "tab_5")
+    }else if(m_currentTab == "tab_rl")
     {
         m_rlWidget->replot();
-    }else if(m_currentTab == "tab_6")
+    }else if(m_currentTab == "tab_tdr")
     {
         m_tdrWidget->replot();
-    }else if(m_currentTab == "tab_7")
+    }else if(m_currentTab == "tab_smith")
     {
         m_smithWidget->replot();
-    }else if(m_currentTab == "tab_8")
+    }else if(m_currentTab == "tab_user")
     {
         m_userWidget->replot();
     }
+#ifndef NO_MULTITAB
+    else if(m_currentTab == "tab_multi")
+    {
+        QString old_m_currentTab = m_currentTab;
+        const QList<QString>& tabs = MainWindow::m_mainWindow->multiTabs();
+        foreach (const QString& tab, tabs) {
+            QCustomPlot* plot = MainWindow::m_mainWindow->plotForTab(tab);
+            plot->replot();
+        }
+        m_currentTab = old_m_currentTab;
+    }
+#endif
+
 //    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
 //    QTabWidget* tabWidget = mainWindow->tabWidget();
 //    QWidget* tab = tabWidget->currentWidget();
@@ -3605,6 +3622,7 @@ void Measurements::calcFarEnd(bool _incrementally)
 
 int Measurements::CalcTdr2(QVector <rawData> *data)
 {
+    Q_UNUSED(data);
     // not used
     return 0;
 #if 0
@@ -3768,6 +3786,8 @@ int Measurements::CalcTdr2(QVector <rawData> *data)
 
 qint16 Measurements::DTF_FindRadix2Length(qint16 length, int *log2N)
 {
+    Q_UNUSED(length);
+    Q_UNUSED(log2N);
     // not used
 #if 0
     qint8 log;
@@ -3789,6 +3809,12 @@ qint16 Measurements::DTF_FindRadix2Length(qint16 length, int *log2N)
 
 void  Measurements::FFT2(double *Rdat, double *Idat, int N, int LogN, int Ft_Flag)
 {
+    Q_UNUSED(Rdat);
+    Q_UNUSED(Idat);
+    Q_UNUSED(N);
+    Q_UNUSED(LogN);
+    Q_UNUSED(Ft_Flag);
+
 #if 0
   register int  i, j, n, k, io, ie, in, nn;
   double        ru, iu, rtp, itp, rtq, itq, rw, iw, sr;
@@ -4472,12 +4498,12 @@ QPair<double, double> Measurements::autoCalibrate()
         int total = 0;
         double leStep = (cable_length_max-cable_length_min)/cable_length_steps;
         double reStep = (cable_res_max-cable_res_min)/cable_res_steps;
-        for (double dLen = cable_length_min; dLen <cable_length_max; dLen += leStep)
+        for (double dLen = cable_length_min; dLen < cable_length_max; dLen += leStep)
         {
             total++;
             m_cableLength = dLen;
 
-            for (double dRes = cable_res_min; dRes <cable_res_max; dRes += reStep)
+            for (double dRes = cable_res_min; dRes < cable_res_max; dRes += reStep)
             {
                 total++;
                 m_cableResistance = dRes;
@@ -5155,80 +5181,43 @@ void Measurements::on_drawPoint()
 {
     //qint64 t0 = QDateTime::currentMSecsSinceEpoch();
 
-    CustomPlot* plot = qobject_cast<CustomPlot*>(m_rpWidget);
-    if(m_currentTab == "tab_1")
+    CustomPlot* plot = nullptr;
+    if(m_currentTab == "tab_swr")
     {
         plot = qobject_cast<CustomPlot*>(m_swrWidget);
-    }else if(m_currentTab == "tab_2")
+    }else if(m_currentTab == "tab_phase")
     {
         plot = qobject_cast<CustomPlot*>(m_phaseWidget);
-    }else if(m_currentTab == "tab_3")
+    }else if(m_currentTab == "tab_rs")
     {
         plot = qobject_cast<CustomPlot*>(m_rsWidget);
-    }else if(m_currentTab == "tab_4")
+    }else if(m_currentTab == "tab_rp")
     {
         plot = qobject_cast<CustomPlot*>(m_rpWidget);
-    }else if(m_currentTab == "tab_5")
+    }else if(m_currentTab == "tab_rl")
     {
         plot = qobject_cast<CustomPlot*>(m_rlWidget);
-    }else if(m_currentTab == "tab_6")
+    }else if(m_currentTab == "tab_tdr")
     {
         plot = qobject_cast<CustomPlot*>(m_tdrWidget);
-    }else if(m_currentTab == "tab_7")
+    }else if(m_currentTab == "tab_smith")
     {
         plot = qobject_cast<CustomPlot*>(m_smithWidget);
         plot->replot();
         return;
-    }else if(m_currentTab == "tab_8")
+    }else if(m_currentTab == "tab_user")
     {
         plot = qobject_cast<CustomPlot*>(m_userWidget);
     }
-
-    plot->drawIncrementally();
-//    QCPPainter painter;
-//    painter.begin(&plot->paintBuffer());
-
-//    plot->setIncremental(true);
-//    plot->draw(&painter);
-//    plot->setIncremental(false);
-
-//    painter.end();
-
-//    QRect _clip = plot->getClipRect();
-//    plot->update(_clip);
-
-//    qDebug() << "Measurements::on_drawPoint()" << (QDateTime::currentMSecsSinceEpoch()-t0);
-}
-
-CustomPlot* Measurements::activePlot()
-{
-    QCustomPlot* plot = m_swrWidget;
-    if(m_currentTab == "tab_1")
+#ifndef NO_MULTITAB
+    else if(m_currentTab == "tab_multi")
     {
-        plot = m_swrWidget;
-    }else if(m_currentTab == "tab_2")
-    {
-        plot = m_phaseWidget;
-    }else if(m_currentTab == "tab_3")
-    {
-        plot = m_rsWidget;
-    }else if(m_currentTab == "tab_4")
-    {
-        plot = m_rpWidget;
-    }else if(m_currentTab == "tab_5")
-    {
-        plot = m_rlWidget;
-    }else if(m_currentTab == "tab_6")
-    {
-        plot = m_tdrWidget;
-    }else if(m_currentTab == "tab_7")
-    {
-        plot = m_smithWidget;
-    }else if(m_currentTab == "tab_8")
-    {
-        plot = m_userWidget;
+        MainWindow::m_mainWindow->replot_multiTab();
+        return;
     }
-    return qobject_cast<CustomPlot*>(plot);
+#endif
+    if (plot != nullptr)
+        plot->drawIncrementally();
 }
 
 void Measurements::on_measurementComplete()
@@ -5309,5 +5298,18 @@ void Measurements::setBriefHintColor()
         QColor inverse(255-color.red(), 255-color.green(), 255-color.blue());
         m_graphBriefHint->setTextColor(inverse.name());
     }
+}
+
+void Measurements::redrawMultiGraph(bool _incrementally)
+{
+#ifndef NO_MULTITAB
+    QString old_m_currentTab = m_currentTab;
+    const QList<QString>& tabs = MainWindow::m_mainWindow->multiTabs();
+    foreach (const QString& tab, tabs) {
+        m_currentTab = tab;
+        on_redrawGraphs(_incrementally);
+    }
+    m_currentTab = old_m_currentTab;
+#endif
 }
 

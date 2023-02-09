@@ -119,7 +119,6 @@ public:
     QPair<double, double> autoCalibrate();
     void interrupt() { m_interrupted = true; }
     bool isTDRMode() { return m_tdrProgressDlg != nullptr; }
-    CustomPlot* activePlot();
     void setContinuous(bool _state) { m_isContinuing = _state; m_currentPoint = 0; }
     ProgressDlg* progressDlg() { return m_autoCalibrateProgressDlg; }
     void redrawTDR(int _index=-1);
@@ -279,6 +278,9 @@ public slots:
     void on_drawPoint();
     void on_measurementComplete();
     void toggleVisibility(int row, bool _state);
+
+    void redrawMultiGraph(bool _incrementally);
+
 };
 
 #endif // MEASUREMENTS_H

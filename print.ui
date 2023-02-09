@@ -28,7 +28,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_5">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
+       <layout class="QVBoxLayout" name="widgetsLayout">
         <item>
          <widget class="QLabel" name="lineEditHead">
           <property name="text">
@@ -55,7 +55,7 @@
        </layout>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <layout class="QVBoxLayout" name="markersLayout">
         <item>
          <widget class="QLabel" name="labelMarkers">
           <property name="sizePolicy">
@@ -253,7 +253,7 @@
   <customwidget>
    <class>PrintMarkers</class>
    <extends>QWidget</extends>
-   <header location="global">markerspopup.h</header>
+   <header location="global">printmarkers.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

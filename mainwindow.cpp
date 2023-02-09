@@ -6,7 +6,7 @@
 #include "glwidget.h"
 #include "CustomPlot.h"
 #include "selectdevicedialog.h"
-
+#include "printmulti.h"
 
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
@@ -14,7 +14,7 @@ extern int g_maxMeasurements; // see measurements.cpp
 extern void setAbsoluteFqMaximum();
 extern bool g_bAA55modeNewProtocol;
 MainWindow* MainWindow::m_mainWindow = nullptr;
-
+QMap<QString, QString> g_mapTabPlotNames;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -48,7 +48,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+    qInfo() << "* 1 sslLibraryBuildVersion: " << QSslSocket::sslLibraryBuildVersionString();
+    qInfo() << "* 2 supportsSsl: " << QSslSocket::supportsSsl();
+    qInfo() << "* 3 sslLibraryVersion: " << QSslSocket::sslLibraryVersionString();
+    qInfo() << "* 4 Qt version: " << qVersion();
+
     setAbsoluteFqMaximum();
+
+    g_mapTabPlotNames["tab_swr"] = "swr_widget";
+    g_mapTabPlotNames["tab_phase"] = "phase_widget";
+    g_mapTabPlotNames["tab_rs"] = "rs_widget";
+    g_mapTabPlotNames["tab_rp"] = "rp_widget";
+    g_mapTabPlotNames["tab_rl"] = "rl_widget";
+    g_mapTabPlotNames["tab_tdr"] = "tdr_widget";
+    g_mapTabPlotNames["tab_smith"] = "smith_widget";
+    g_mapTabPlotNames["tab_user"] = "user_widget";
 
     if (g_developerMode) {
         ui->spinBoxPoints->setRange(1, 1000000);
@@ -71,16 +85,45 @@ MainWindow::MainWindow(QWidget *parent) :
     QString path = Settings::setIniFile();
     m_settings = new QSettings(path, QSettings::IniFormat);
     m_settings->beginGroup("MainWindow");
-    QString sequence = m_settings->value("tabSequence","0123456").toString();
+    QString sequence = m_settings->value("tabOrder","tab_swr,tab_phase,tab_rs,tab_rp,tab_rl,tab_tdr,tab_smith,tab_multi,tab_user").toString();
 
-    m_settings->endGroup();
+#ifndef NO_MULTITAB
+    bool hide_multi = true;
+    if (!sequence.contains("tab_multi")) {
+        sequence += ",tab_multi";
+        hide_multi = false;
+    }
+#endif
+
+    QString multi_tab = m_settings->value("multiTab","").toString();
+    int cur_index = m_settings->value("currentTab",0).toInt();
+
     createTabs(sequence);
-    m_settings->beginGroup("MainWindow");
 
-    ui->tabWidget->setCurrentIndex(m_settings->value("currentTab",0).toInt());
+#ifndef NO_MULTITAB
+    if (hide_multi) {
+        ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+        ui->tabWidget->setCurrentWidget(m_tab_swr);
+    }
+#endif
 
-    //if (g_developerMode)
-      //  m_swrZoomState = m_settings->value("swrZoomState", 10).toDouble();
+
+#ifndef NO_MULTITAB
+    restoreMultitab(multi_tab);
+
+    if (!ui->tabWidget->widget(cur_index)->isVisible()) {
+        for(int i=0; i<ui->tabWidget->count(); i++) {
+            if (ui->tabWidget->widget(i)->isVisible()) {
+                cur_index = i;
+                break;
+            }
+        }
+    }
+#endif
+
+    ui->tabWidget->setCurrentIndex(0);
+    ui->tabWidget->setCurrentIndex(cur_index);
+
     m_phaseZoomState = m_settings->value("phaseZoomState", 10).toInt();
     m_rsZoomState = m_settings->value("rsZoomState", 10).toInt();
     m_rpZoomState = m_settings->value("rpZoomState", 10).toInt();
@@ -124,7 +167,6 @@ MainWindow::MainWindow(QWidget *parent) :
         if (item == nullptr)
             return;
         if (item != nullptr && item->column() == COL_VISIBLE) {
-            int row = item->row();
             m_measurements->toggleVisibility(item->row(), item->checkState()==Qt::Checked);
         }
     });
@@ -262,8 +304,7 @@ MainWindow::MainWindow(QWidget *parent) :
                                m_tdrWidget,
                                m_smithWidget,
                                ui->tableWidget_measurments);
-    if (g_developerMode)
-        m_measurements->setUserWidget(m_userWidget);
+    m_measurements->setUserWidget(m_userWidget);
 
     connect(m_analyzer, SIGNAL(newData(rawData)), m_measurements, SLOT(on_newDataRedraw(rawData)));
     connect(m_analyzer, SIGNAL(newAnalyzerData(rawData)), m_measurements, SLOT(on_newAnalyzerData(rawData)));
@@ -496,6 +537,16 @@ MainWindow::MainWindow(QWidget *parent) :
     });
     ui->labelMarquee->hide();
 
+#ifdef _DEBUG
+//{ test marquee
+//    QTimer::singleShot(3000, this, [=](){
+//        ui->labelMarquee->show();
+//        QString fname = "c:\\Downloads\\AntScope_scroll.json";
+//        ui->labelMarquee->load(fname);
+//    });
+//}
+#endif
+
 #ifdef NEW_CONNECTION
     m_settings->beginGroup("Connection");
     bool start = m_settings->value("same", false).toBool();
@@ -548,14 +599,30 @@ MainWindow::~MainWindow()
     m_settings->setValue("isRange", m_isRange);
 
     QString str;
-    str.append(QString::number(ui->tabWidget->indexOf(m_tab_1)));
-    str.append(QString::number(ui->tabWidget->indexOf(m_tab_2)));
-    str.append(QString::number(ui->tabWidget->indexOf(m_tab_3)));
-    str.append(QString::number(ui->tabWidget->indexOf(m_tab_4)));
-    str.append(QString::number(ui->tabWidget->indexOf(m_tab_5)));
-    str.append(QString::number(ui->tabWidget->indexOf(m_tab_6)));
-    str.append(QString::number(ui->tabWidget->indexOf(m_tab_7)));
-    m_settings->setValue("tabSequence",str);
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_swr)));
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_phase)));
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_rs)));
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_rp)));
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_rl)));
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_tdr)));
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_smith)));
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_user)));
+//    str.append(QString::number(ui->tabWidget->indexOf(m_tab_multi)));
+//    m_settings->setValue("tabSequence", str);
+
+    for (int i=0; i<ui->tabWidget->count(); i++) {
+        str += ui->tabWidget->widget(i)->objectName() + ",";
+    }
+    m_settings->setValue("tabOrder", str);
+
+#ifndef NO_MULTITAB
+    QString str_multi;
+    foreach (auto tab, m_multiTabData.tabs) {
+        str_multi += tab + ",";
+    }
+    m_settings->setValue("multiTab", str_multi);
+#endif
+
     m_settings->setValue("currentTab",ui->tabWidget->currentIndex());
     m_settings->setValue("systemImpedance", m_Z0);
     m_settings->setValue("rangeLower", m_swrWidget->xAxis->range().lower);
@@ -719,7 +786,7 @@ void MainWindow::setWidgetsSettings()
     setBands(m_phaseWidget, bands, -180, 180);
     m_phaseWidget->graph(0)->setPen(pen);
     m_phaseWidget->xAxis->setLabel(tr("Frequency, kHz"));
-    m_phaseWidget->yAxis->setLabel(tr("Angle"));
+    m_phaseWidget->yAxis->setLabel(tr("Phase, Angle"));
     m_phaseWidget->xAxis->setRange(0,1400000);
     m_phaseWidget->yAxis->setRangeMin(-180);
     m_phaseWidget->yAxis->setRangeMax(180);
@@ -837,7 +904,7 @@ void MainWindow::setWidgetsSettings()
         setBands(m_userWidget, bands, MIN_USER_RANGE, MAX_USER_RANGE);
         m_userWidget->graph(0)->setPen(pen);
         m_userWidget->xAxis->setLabel(tr("Frequency, kHz"));
-        m_userWidget->yAxis->setLabel(tr("Rs, Ohm"));
+        m_userWidget->yAxis->setLabel(tr("User defined"));
         m_userWidget->xAxis->setRange(0,1400000);
         m_userWidget->yAxis->setRangeMin(MIN_USER_RANGE);
         m_userWidget->yAxis->setRangeMax(MAX_USER_RANGE);
@@ -1017,7 +1084,7 @@ void MainWindow::on_pressDelete ()
 void MainWindow::on_pressPlus ()
 {
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if( str == "tab_1")
+    if( str == "tab_swr")
     {
         double from = m_swrWidget->xAxis->getRangeLower();
         double to = m_swrWidget->xAxis->getRangeUpper();
@@ -1061,7 +1128,7 @@ void MainWindow::on_pressPlus ()
             m_userWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         }
         m_swrWidget->replot();
-    }else if(str == "tab_2")
+    }else if(str == "tab_phase")
     {
         double from = m_phaseWidget->xAxis->getRangeLower();
         double to = m_phaseWidget->xAxis->getRangeUpper();
@@ -1105,7 +1172,7 @@ void MainWindow::on_pressPlus ()
             m_userWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         }
         m_phaseWidget->replot();
-    }else if(str == "tab_3")
+    }else if(str == "tab_rs")
     {
         double from = m_rsWidget->xAxis->getRangeLower();
         double to = m_rsWidget->xAxis->getRangeUpper();
@@ -1149,7 +1216,7 @@ void MainWindow::on_pressPlus ()
             m_userWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         }
         m_rsWidget->replot();
-    }else if(str == "tab_4")
+    }else if(str == "tab_rp")
     {
         double from = m_rpWidget->xAxis->getRangeLower();
         double to = m_rpWidget->xAxis->getRangeUpper();
@@ -1193,7 +1260,7 @@ void MainWindow::on_pressPlus ()
             m_userWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         }
         m_rpWidget->replot();
-    }else if(str == "tab_5")
+    }else if(str == "tab_rl")
     {
         double from = m_rlWidget->xAxis->getRangeLower();
         double to = m_rlWidget->xAxis->getRangeUpper();
@@ -1237,7 +1304,7 @@ void MainWindow::on_pressPlus ()
             m_userWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         }
         m_rlWidget->replot();
-    }else if(str == "tab_6")
+    }else if(str == "tab_tdr")
     {
         double from = m_tdrWidget->xAxis->getRangeLower();
         double to = m_tdrWidget->xAxis->getRangeUpper();
@@ -1254,7 +1321,7 @@ void MainWindow::on_pressPlus ()
             m_tdrWidget->xAxis->setRangeUpper(center + band);
         }
         m_tdrWidget->replot();
-    }else if(str == "tab_8")
+    }else if(str == "tab_user")
     {
         double from = m_userWidget->xAxis->getRangeLower();
         double to = m_userWidget->xAxis->getRangeUpper();
@@ -1302,7 +1369,7 @@ void MainWindow::on_pressPlus ()
 void MainWindow::on_pressCtrlPlus ()
 {    
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if( str == "tab_1")
+    if( str == "tab_swr")
     {
         QWheelEvent event(rect().center(), 1, Qt::NoButton, Qt::ControlModifier, Qt::Vertical);
         on_mouseWheel_swr(&event);
@@ -1323,9 +1390,9 @@ void MainWindow::on_pressCtrlPlus ()
 //            }
 //        }
 
-    }else if(str == "tab_2")
+    }else if(str == "tab_phase")
     {
-    }else if(str == "tab_3")
+    }else if(str == "tab_rs")
     {
         if(m_rsZoomState > 1)
         {
@@ -1343,7 +1410,7 @@ void MainWindow::on_pressCtrlPlus ()
                 QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
-    }else if(str == "tab_4")
+    }else if(str == "tab_rp")
     {
         if(m_rpZoomState > 1)
         {
@@ -1361,7 +1428,7 @@ void MainWindow::on_pressCtrlPlus ()
                 QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
-    }else if(str == "tab_5")
+    }else if(str == "tab_rl")
     {
         int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
         if(m_rlZoomState > limit)
@@ -1378,10 +1445,10 @@ void MainWindow::on_pressCtrlPlus ()
                 QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
-    }else if(str == "tab_6")
+    }else if(str == "tab_tdr")
     {
         m_tdrWidget->replot();
-    }else if(str == "tab_8")
+    }else if(str == "tab_user")
     {
         if(m_userZoomState > 1)
         {
@@ -1405,7 +1472,7 @@ void MainWindow::on_pressCtrlPlus ()
 void MainWindow::on_pressMinus ()
 {
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if( str == "tab_1")
+    if( str == "tab_swr")
     {
         double from = m_swrWidget->xAxis->getRangeLower();
         double to = m_swrWidget->xAxis->getRangeUpper();
@@ -1446,7 +1513,7 @@ void MainWindow::on_pressMinus ()
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_swrWidget->replot();
-    }else if(str == "tab_2")
+    }else if(str == "tab_phase")
     {
         double from = m_phaseWidget->xAxis->getRangeLower();
         double to = m_phaseWidget->xAxis->getRangeUpper();
@@ -1487,7 +1554,7 @@ void MainWindow::on_pressMinus ()
         m_rpWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_phaseWidget->replot();
-    }else if(str == "tab_3")
+    }else if(str == "tab_rs")
     {
         double from = m_rsWidget->xAxis->getRangeLower();
         double to = m_rsWidget->xAxis->getRangeUpper();
@@ -1528,7 +1595,7 @@ void MainWindow::on_pressMinus ()
         m_rpWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rsWidget->replot();
-    }else if(str == "tab_4")
+    }else if(str == "tab_rp")
     {
         double from = m_rpWidget->xAxis->getRangeLower();
         double to = m_rpWidget->xAxis->getRangeUpper();
@@ -1569,7 +1636,7 @@ void MainWindow::on_pressMinus ()
         m_rsWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rpWidget->replot();
-    }else if(str == "tab_5")
+    }else if(str == "tab_rl")
     {
         double from = m_rlWidget->xAxis->getRangeLower();
         double to = m_rlWidget->xAxis->getRangeUpper();
@@ -1610,7 +1677,7 @@ void MainWindow::on_pressMinus ()
         m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rlWidget->replot();
-    }else if(str == "tab_6")
+    }else if(str == "tab_tdr")
     {
         double from = m_tdrWidget->xAxis->getRangeLower();
         double to = m_tdrWidget->xAxis->getRangeUpper();
@@ -1627,7 +1694,7 @@ void MainWindow::on_pressMinus ()
             m_tdrWidget->xAxis->setRangeUpper(center + band);
         }
         m_tdrWidget->replot();
-    }else if(str == "tab_8")
+    }else if(str == "tab_user")
     {
         double from = m_userWidget->xAxis->getRangeLower();
         double to = m_userWidget->xAxis->getRangeUpper();
@@ -1676,7 +1743,7 @@ void MainWindow::on_pressMinus ()
 void MainWindow::on_pressCtrlMinus ()
 {
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if( str == "tab_1")
+    if( str == "tab_swr")
     {
         QWheelEvent event(rect().center(), -1, Qt::NoButton, Qt::ControlModifier, Qt::Vertical);
         on_mouseWheel_swr(&event);
@@ -1696,10 +1763,10 @@ void MainWindow::on_pressCtrlMinus ()
 //                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
 //            }
 //        }
-    }else if(str == "tab_2")
+    }else if(str == "tab_phase")
     {
 //        m_phaseWidget->replot();
-    }else if(str == "tab_3")
+    }else if(str == "tab_rs")
     {
         if(m_rsZoomState < 19)
         {
@@ -1717,7 +1784,7 @@ void MainWindow::on_pressCtrlMinus ()
                 QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
-    }else if(str == "tab_4")
+    }else if(str == "tab_rp")
     {
         if(m_rpZoomState < 19)
         {
@@ -1735,7 +1802,7 @@ void MainWindow::on_pressCtrlMinus ()
                 QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
-    }else if(str == "tab_5")
+    }else if(str == "tab_rl")
     {
         if(m_rlZoomState <= 9)
         {
@@ -1752,10 +1819,10 @@ void MainWindow::on_pressCtrlMinus ()
                 QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
-    }else if(str == "tab_6")
+    }else if(str == "tab_tdr")
     {
         m_tdrWidget->replot();
-    }else if(str == "tab_8")
+    }else if(str == "tab_user")
     {
         if(m_userZoomState < 19)
         {
@@ -1779,7 +1846,7 @@ void MainWindow::on_pressCtrlMinus ()
 void MainWindow::on_pressCtrlZero()
 {
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if( str == "tab_1")
+    if( str == "tab_swr")
     {
         if (g_developerMode) {
 
@@ -1797,10 +1864,10 @@ void MainWindow::on_pressCtrlZero()
                 QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
             }
         }
-    }else if(str == "tab_2")
+    }else if(str == "tab_phase")
     {
 //        m_phaseWidget->replot();
-    }else if(str == "tab_3")
+    }else if(str == "tab_rs")
     {
         int val = m_rsZoomState*80;
         m_rsWidget->yAxis->setRangeLower(-val);
@@ -1814,7 +1881,7 @@ void MainWindow::on_pressCtrlZero()
         {
             QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
-    }else if(str == "tab_4")
+    }else if(str == "tab_rp")
     {
         int val = m_rpZoomState*80;
         m_rpWidget->yAxis->setRangeLower(-val);
@@ -1828,7 +1895,7 @@ void MainWindow::on_pressCtrlZero()
         {
             QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
-    }else if(str == "tab_5")
+    }else if(str == "tab_rl")
     {
         m_rlWidget->yAxis->setRangeUpper(m_rlZoomState*5);
         m_rlWidget->yAxis->setRangeLower(0);
@@ -1841,10 +1908,10 @@ void MainWindow::on_pressCtrlZero()
         {
             QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
-    }else if(str == "tab_6")
+    }else if(str == "tab_tdr")
     {
         m_tdrWidget->replot();
-    }else if(str == "tab_8")
+    }else if(str == "tab_user")
     {
         int val = m_userZoomState*80;
         m_userWidget->yAxis->setRangeLower(-val);
@@ -1864,7 +1931,7 @@ void MainWindow::on_pressCtrlZero()
 void MainWindow::on_pressLeft()
 {
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if( str == "tab_1")
+    if( str == "tab_swr")
     {
         double from = m_swrWidget->xAxis->getRangeLower();
         double to = m_swrWidget->xAxis->getRangeUpper();
@@ -1897,7 +1964,7 @@ void MainWindow::on_pressLeft()
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_swrWidget->replot();
-    }else if(str == "tab_2")
+    }else if(str == "tab_phase")
     {
         double from = m_phaseWidget->xAxis->getRangeLower();
         double to = m_phaseWidget->xAxis->getRangeUpper();
@@ -1930,7 +1997,7 @@ void MainWindow::on_pressLeft()
         m_rpWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_phaseWidget->replot();
-    }else if(str == "tab_3")
+    }else if(str == "tab_rs")
     {
         double from = m_rsWidget->xAxis->getRangeLower();
         double to = m_rsWidget->xAxis->getRangeUpper();
@@ -1963,7 +2030,7 @@ void MainWindow::on_pressLeft()
         m_rpWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rsWidget->replot();
-    }else if(str == "tab_4")
+    }else if(str == "tab_rp")
     {
         double from = m_rpWidget->xAxis->getRangeLower();
         double to = m_rpWidget->xAxis->getRangeUpper();
@@ -1996,7 +2063,7 @@ void MainWindow::on_pressLeft()
         m_rsWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rpWidget->replot();
-    }else if(str == "tab_5")
+    }else if(str == "tab_rl")
     {
         double from = m_rlWidget->xAxis->getRangeLower();
         double to = m_rlWidget->xAxis->getRangeUpper();
@@ -2029,7 +2096,7 @@ void MainWindow::on_pressLeft()
         m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rlWidget->replot();
-    }else if(str == "tab_6")
+    }else if(str == "tab_tdr")
     {
         double from = m_tdrWidget->xAxis->getRangeLower();
         double to = m_tdrWidget->xAxis->getRangeUpper();
@@ -2044,7 +2111,7 @@ void MainWindow::on_pressLeft()
             m_tdrWidget->xAxis->setRangeLower(0);
         }
         m_tdrWidget->replot();
-    }else if(str == "tab_8")
+    }else if(str == "tab_user")
     {
         double from = m_userWidget->xAxis->getRangeLower();
         double to = m_userWidget->xAxis->getRangeUpper();
@@ -2084,7 +2151,7 @@ void MainWindow::on_pressLeft()
 void MainWindow::on_pressRight()
 {
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if( str == "tab_1")
+    if( str == "tab_swr")
     {
         double from = m_swrWidget->xAxis->getRangeLower();
         double to = m_swrWidget->xAxis->getRangeUpper();
@@ -2117,7 +2184,7 @@ void MainWindow::on_pressRight()
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_swrWidget->replot();
-    }else if(str == "tab_2")
+    }else if(str == "tab_phase")
     {
         double from = m_phaseWidget->xAxis->getRangeLower();
         double to = m_phaseWidget->xAxis->getRangeUpper();
@@ -2150,7 +2217,7 @@ void MainWindow::on_pressRight()
         m_rpWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_phaseWidget->replot();
-    }else if(str == "tab_3")
+    }else if(str == "tab_rs")
     {
         double from = m_rsWidget->xAxis->getRangeLower();
         double to = m_rsWidget->xAxis->getRangeUpper();
@@ -2183,7 +2250,7 @@ void MainWindow::on_pressRight()
         m_rpWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rsWidget->replot();
-    }else if(str == "tab_4")
+    }else if(str == "tab_rp")
     {
         double from = m_rpWidget->xAxis->getRangeLower();
         double to = m_rpWidget->xAxis->getRangeUpper();
@@ -2216,7 +2283,7 @@ void MainWindow::on_pressRight()
         m_rsWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rpWidget->replot();
-    }else if(str == "tab_5")
+    }else if(str == "tab_rl")
     {
         double from = m_rlWidget->xAxis->getRangeLower();
         double to = m_rlWidget->xAxis->getRangeUpper();
@@ -2249,7 +2316,7 @@ void MainWindow::on_pressRight()
         m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rlWidget->replot();
-    }else if(str == "tab_6")
+    }else if(str == "tab_tdr")
     {
         double from = m_tdrWidget->xAxis->getRangeLower();
         double to = m_tdrWidget->xAxis->getRangeUpper();
@@ -2264,7 +2331,7 @@ void MainWindow::on_pressRight()
             m_tdrWidget->xAxis->setRangeUpper(10000);
         }
         m_tdrWidget->replot();
-    }else if(str == "tab_8")
+    }else if(str == "tab_user")
     {
         double from = m_userWidget->xAxis->getRangeLower();
         double to = m_userWidget->xAxis->getRangeUpper();
@@ -2305,29 +2372,29 @@ void MainWindow::on_pressCtrlC ()
 {
     QCustomPlot* plot = nullptr;
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if( str == "tab_1")
+    if( str == "tab_swr")
     {
         plot = m_swrWidget;
-    }else if(str == "tab_2")
+    }else if(str == "tab_phase")
     {
         plot = m_phaseWidget;
-    }else if(str == "tab_3")
+    }else if(str == "tab_rs")
     {
         plot = m_rsWidget;
-    }else if(str == "tab_4")
+    }else if(str == "tab_rp")
     {
         plot = m_rpWidget;
-    }else if(str == "tab_5")
+    }else if(str == "tab_rl")
     {
         plot = m_rlWidget;
-    }else if(str == "tab_6")
+    }else if(str == "tab_tdr")
     {
         plot = m_tdrWidget;
-    }else if(str == "tab_7")
+    }else if(str == "tab_smith")
     {
         resizeWnd();
         plot = m_smithWidget;
-    }else if(str == "tab_8")
+    }else if(str == "tab_user")
     {
         plot = m_userWidget;
     }
@@ -2503,7 +2570,7 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
     m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
     m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
 
-    int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
+    //int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
     if (e->modifiers() == Qt::ControlModifier)
     {
         if(m_measurements)
@@ -3158,191 +3225,207 @@ void MainWindow::on_mouseMove_user(QMouseEvent *e)
 void MainWindow::createTabs (QString sequence)
 {
     QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    for(quint32 i = 0; i < 7; ++i)
+    QStringList tabs = sequence.split(',', QString::SkipEmptyParts);
+    foreach (const QString tab, tabs)
     {
-        int byte = sequence.indexOf(QString::number(i));
-        switch(byte)
-        {
-        case 0:
-            m_tab_1 = new GLWidget();
-            m_tab_1->setObjectName(QStringLiteral("tab_1"));
-            m_horizontalLayout_1 = new QHBoxLayout(m_tab_1);
-            m_horizontalLayout_1->setSpacing(6);
-            m_horizontalLayout_1->setContentsMargins(11, 11, 11, 11);
-            m_horizontalLayout_1->setObjectName(QStringLiteral("horizontalLayout_1"));
-            m_swrWidget = new CustomPlot(1, m_tab_1);
-            qobject_cast<GLWidget*>(m_tab_1)->setPlotter(m_swrWidget);
+        if (tab == "tab_swr") {
+            m_tab_swr = new GLWidget();
+            m_tab_swr->setObjectName(QStringLiteral("tab_swr"));
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_swr);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_1"));
+            m_swrWidget = new CustomPlot(1, m_tab_swr);
+            qobject_cast<GLWidget*>(m_tab_swr)->setPlotter(m_swrWidget);
             m_swrWidget->setObjectName(QStringLiteral("swr_widget"));
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
             sizePolicy.setHeightForWidth(m_swrWidget->sizePolicy().hasHeightForWidth());
             m_swrWidget->setSizePolicy(sizePolicy);
-            m_horizontalLayout_1->addWidget(m_swrWidget);
-            ui->tabWidget->addTab(m_tab_1, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_1), QApplication::translate("MainWindow", "SWR", 0));
+            layout->addWidget(m_swrWidget);
+            ui->tabWidget->addTab(m_tab_swr, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_swr), QApplication::translate("MainWindow", "SWR", 0));
             m_mapWidgets.insert(QStringLiteral("swr_widget"), m_swrWidget);
-            break;
-        case 1:
-            m_tab_2 = new GLWidget();
-            m_tab_2->setObjectName(QStringLiteral("tab_2"));
+        }
+        if (tab == "tab_phase") {
+            m_tab_phase = new GLWidget();
+            m_tab_phase->setObjectName(QStringLiteral("tab_phase"));
 
-            m_horizontalLayout_2 = new QHBoxLayout(m_tab_2);
-            m_horizontalLayout_2->setSpacing(6);
-            m_horizontalLayout_2->setContentsMargins(11, 11, 11, 11);
-            m_horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
-            m_phaseWidget = new CustomPlot(1, m_tab_2);
-            qobject_cast<GLWidget*>(m_tab_2)->setPlotter(m_phaseWidget);
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_phase);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_2"));
+            m_phaseWidget = new CustomPlot(1, m_tab_phase);
+            qobject_cast<GLWidget*>(m_tab_phase)->setPlotter(m_phaseWidget);
             m_phaseWidget->setObjectName(QStringLiteral("phase_widget"));
 
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
             sizePolicy.setHeightForWidth(m_phaseWidget->sizePolicy().hasHeightForWidth());
             m_phaseWidget->setSizePolicy(sizePolicy);
-            m_horizontalLayout_2->addWidget(m_phaseWidget);
+            layout->addWidget(m_phaseWidget);
 
-            ui->tabWidget->addTab(m_tab_2, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_2), QApplication::translate("MainWindow", "Phase", 0));
+            ui->tabWidget->addTab(m_tab_phase, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_phase), QApplication::translate("MainWindow", "Phase", 0));
             m_mapWidgets.insert(QStringLiteral("phase_widget"), m_phaseWidget);
-            break;
-        case 2:
-            m_tab_3 = new GLWidget();
-            m_tab_3->setObjectName(QStringLiteral("tab_3"));
+        }
+        if (tab == "tab_rs") {
+            m_tab_rs = new GLWidget();
+            m_tab_rs->setObjectName(QStringLiteral("tab_rs"));
 
-            m_horizontalLayout_3 = new QHBoxLayout(m_tab_3);
-            m_horizontalLayout_3->setSpacing(6);
-            m_horizontalLayout_3->setContentsMargins(11, 11, 11, 11);
-            m_horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
-            m_rsWidget = new CustomPlot(3, m_tab_3);
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_rs);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_3"));
+            m_rsWidget = new CustomPlot(3, m_tab_rs);
 
-            qobject_cast<GLWidget*>(m_tab_3)->setPlotter(m_rsWidget);
+            qobject_cast<GLWidget*>(m_tab_rs)->setPlotter(m_rsWidget);
             m_rsWidget->setObjectName(QStringLiteral("rs_widget"));
 
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
             sizePolicy.setHeightForWidth(m_rsWidget->sizePolicy().hasHeightForWidth());
             m_rsWidget->setSizePolicy(sizePolicy);
-            m_horizontalLayout_3->addWidget(m_rsWidget);
+            layout->addWidget(m_rsWidget);
 
-            ui->tabWidget->addTab(m_tab_3, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_3), QApplication::translate("MainWindow", "Z=R+jX", 0));
+            ui->tabWidget->addTab(m_tab_rs, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rs), QApplication::translate("MainWindow", "Z=R+jX", 0));
             m_mapWidgets.insert(QStringLiteral("rs_widget"), m_rsWidget);
-            break;
-        case 3:
-            m_tab_4 = new GLWidget();
-            m_tab_4->setObjectName(QStringLiteral("tab_4"));
+        }
+        if (tab == "tab_rp") {
+            m_tab_rp = new GLWidget();
+            m_tab_rp->setObjectName(QStringLiteral("tab_rp"));
 
-            m_horizontalLayout_4 = new QHBoxLayout(m_tab_4);
-            m_horizontalLayout_4->setSpacing(6);
-            m_horizontalLayout_4->setContentsMargins(11, 11, 11, 11);
-            m_horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
-            m_rpWidget = new CustomPlot(3, m_tab_4);
-            qobject_cast<GLWidget*>(m_tab_4)->setPlotter(m_rpWidget);
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_rp);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_4"));
+            m_rpWidget = new CustomPlot(3, m_tab_rp);
+            qobject_cast<GLWidget*>(m_tab_rp)->setPlotter(m_rpWidget);
             m_rpWidget->setObjectName(QStringLiteral("rp_widget"));
 
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
             sizePolicy.setHeightForWidth(m_rpWidget->sizePolicy().hasHeightForWidth());
             m_rpWidget->setSizePolicy(sizePolicy);
-            m_horizontalLayout_4->addWidget(m_rpWidget);
+            layout->addWidget(m_rpWidget);
 
-            ui->tabWidget->addTab(m_tab_4, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_4), QApplication::translate("MainWindow", "Z=R||+jX", 0));
+            ui->tabWidget->addTab(m_tab_rp, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rp), QApplication::translate("MainWindow", "Z=R||+jX", 0));
             m_mapWidgets.insert(QStringLiteral("rp_widget"), m_rpWidget);
-            break;
-        case 4:
-            m_tab_5 = new GLWidget();
-            m_tab_5->setObjectName(QStringLiteral("tab_5"));
-            m_horizontalLayout_5 = new QHBoxLayout(m_tab_5);
-            m_horizontalLayout_5->setSpacing(6);
-            m_horizontalLayout_5->setContentsMargins(11, 11, 11, 11);
-            m_horizontalLayout_5->setObjectName(QStringLiteral("horizontalLayout_2"));
-            m_rlWidget = new CustomPlot(1, m_tab_5);
-            qobject_cast<GLWidget*>(m_tab_5)->setPlotter(m_rlWidget);
+        }
+        if (tab == "tab_rl") {
+            m_tab_rl = new GLWidget();
+            m_tab_rl->setObjectName(QStringLiteral("tab_rl"));
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_rl);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_2"));
+            m_rlWidget = new CustomPlot(1, m_tab_rl);
+            qobject_cast<GLWidget*>(m_tab_rl)->setPlotter(m_rlWidget);
             m_rlWidget->setObjectName(QStringLiteral("rl_widget"));
 
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
             sizePolicy.setHeightForWidth(m_rlWidget->sizePolicy().hasHeightForWidth());
             m_rlWidget->setSizePolicy(sizePolicy);
-            m_horizontalLayout_5->addWidget(m_rlWidget);
-            ui->tabWidget->addTab(m_tab_5, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_5), QApplication::translate("MainWindow", "RL", 0));
+            layout->addWidget(m_rlWidget);
+            ui->tabWidget->addTab(m_tab_rl, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rl), QApplication::translate("MainWindow", "RL", 0));
             m_mapWidgets.insert(QStringLiteral("rl_widget"), m_rlWidget);
-            break;
-        case 5:
-            m_tab_6 = new GLWidget();
-            m_tab_6->setObjectName(QStringLiteral("tab_6"));
+        }
+        if (tab == "tab_tdr") {
+            m_tab_tdr = new GLWidget();
+            m_tab_tdr->setObjectName(QStringLiteral("tab_tdr"));
 
-            m_horizontalLayout_6 = new QHBoxLayout(m_tab_6);
-            m_horizontalLayout_6->setSpacing(6);
-            m_horizontalLayout_6->setContentsMargins(11, 11, 11, 11);
-            m_horizontalLayout_6->setObjectName(QStringLiteral("horizontalLayout_6"));
-            m_tdrWidget = new CustomPlot(2, m_tab_6);
-            qobject_cast<GLWidget*>(m_tab_6)->setPlotter(m_tdrWidget);
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_tdr);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_6"));
+            m_tdrWidget = new CustomPlot(2, m_tab_tdr);
+            qobject_cast<GLWidget*>(m_tab_tdr)->setPlotter(m_tdrWidget);
             m_tdrWidget->setObjectName(QStringLiteral("tdr_widget"));
 
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
             sizePolicy.setHeightForWidth(m_tdrWidget->sizePolicy().hasHeightForWidth());
             m_tdrWidget->setSizePolicy(sizePolicy);
-            m_horizontalLayout_6->addWidget(m_tdrWidget);
+            layout->addWidget(m_tdrWidget);
 
-            ui->tabWidget->addTab(m_tab_6, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_6), QApplication::translate("MainWindow", "TDR", 0));
+            ui->tabWidget->addTab(m_tab_tdr, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_tdr), QApplication::translate("MainWindow", "TDR", 0));
             m_mapWidgets.insert(QStringLiteral("tdr_widget"), m_tdrWidget);
-            break;
-        case 6:
-            m_tab_7 = new GLWidget();
-            m_tab_7->setObjectName(QStringLiteral("tab_7"));
+        }
+        if (tab == "tab_smith") {
+            m_tab_smith = new GLWidget();
+            m_tab_smith->setObjectName(QStringLiteral("tab_smith"));
 
-            m_horizontalLayout_7 = new QHBoxLayout(m_tab_7);
-            m_horizontalLayout_7->setSpacing(6);
-            m_horizontalLayout_7->setContentsMargins(11, 11, 11, 11);
-            m_horizontalLayout_7->setObjectName(QStringLiteral("horizontalLayout_7"));
-            m_smithWidget = new CustomPlot(1, m_tab_7);
-            qobject_cast<GLWidget*>(m_tab_7)->setPlotter(m_smithWidget);
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_smith);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_7"));
+            m_smithWidget = new CustomPlot(1, m_tab_smith);
+            qobject_cast<GLWidget*>(m_tab_smith)->setPlotter(m_smithWidget);
             m_smithWidget->setObjectName(QStringLiteral("smith_widget"));
 
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
             sizePolicy.setHeightForWidth(m_smithWidget->sizePolicy().hasHeightForWidth());
             m_smithWidget->setSizePolicy(sizePolicy);
-            m_horizontalLayout_7->addWidget(m_smithWidget);
+            layout->addWidget(m_smithWidget);
 
-            ui->tabWidget->addTab(m_tab_7, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_7), QApplication::translate("MainWindow", "Smith", 0));
+            ui->tabWidget->addTab(m_tab_smith, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_smith), QApplication::translate("MainWindow", "Smith", 0));
 
             m_smithWidget->xAxis->setTicks(false);
             m_smithWidget->yAxis->setTicks(false);
             m_smithWidget->xAxis->setVisible(false);
             m_smithWidget->yAxis->setVisible(false);
             m_mapWidgets.insert(QStringLiteral("smith_widget"), m_smithWidget);
-            break;
-        default:
-            break;
         }
+        if (tab == "tab_user") {
+            //createUserTab();
+            m_tab_user = new GLWidget();
+            m_tab_user->setObjectName(QStringLiteral("tab_user"));
+
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_user);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_8"));
+            m_userWidget = new CustomPlot(1, m_tab_user);
+            qobject_cast<GLWidget*>(m_tab_user)->setPlotter(m_userWidget);
+            m_userWidget->setObjectName(QStringLiteral("user_widget"));
+
+            sizePolicy.setHorizontalStretch(0);
+            sizePolicy.setVerticalStretch(2);
+            sizePolicy.setHeightForWidth(m_userWidget->sizePolicy().hasHeightForWidth());
+            m_userWidget->setSizePolicy(sizePolicy);
+            layout->addWidget(m_userWidget);
+
+            ui->tabWidget->addTab(m_tab_user, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_user), QApplication::translate("MainWindow", "User defined", 0));
+            m_mapWidgets.insert(QStringLiteral("user_widget"), m_userWidget);
+        }
+#ifndef NO_MULTITAB
+        if (tab == "tab_multi") {
+            m_tab_multi = new GLWidget();
+            m_tab_multi->setObjectName(QStringLiteral("tab_multi"));
+            QVBoxLayout* layout = new QVBoxLayout(m_tab_multi);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("layout_multi"));
+
+            ui->tabWidget->addTab(m_tab_multi, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_multi), QApplication::translate("MainWindow", "Multi", 0));
+            ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+            //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
+        }
+#endif
     }
-    if (g_developerMode) {
-        m_tab_8 = new GLWidget();
-        m_tab_8->setObjectName(QStringLiteral("tab_8"));
 
-        m_horizontalLayout_8 = new QHBoxLayout(m_tab_8);
-        m_horizontalLayout_8->setSpacing(6);
-        m_horizontalLayout_8->setContentsMargins(11, 11, 11, 11);
-        m_horizontalLayout_8->setObjectName(QStringLiteral("horizontalLayout_8"));
-        m_userWidget = new CustomPlot(1, m_tab_8);
-        qobject_cast<GLWidget*>(m_tab_8)->setPlotter(m_userWidget);
-        m_userWidget->setObjectName(QStringLiteral("user_widget"));
-
-        sizePolicy.setHorizontalStretch(0);
-        sizePolicy.setVerticalStretch(2);
-        sizePolicy.setHeightForWidth(m_rsWidget->sizePolicy().hasHeightForWidth());
-        m_userWidget->setSizePolicy(sizePolicy);
-        m_horizontalLayout_8->addWidget(m_userWidget);
-
-        ui->tabWidget->addTab(m_tab_8, QString());
-        ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_8), QApplication::translate("MainWindow", "User defined", 0));
-        m_mapWidgets.insert(QStringLiteral("user_widget"), m_userWidget);
+    if (!g_developerMode) {
+        ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_user), false);
+//        ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_user))->setVisible(false);
     }
 
     m_settings->beginGroup("Settings");
@@ -3351,6 +3434,65 @@ void MainWindow::createTabs (QString sequence)
     color.setNamedColor(strColor);
     setChartBackground(color);
     m_settings->endGroup();
+
+    ui->tabWidget->setCurrentIndex(0);
+
+#ifndef NO_MULTITAB
+    ui->tabWidget->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tabWidget->tabBar(), &QTabBar::customContextMenuRequested, [=](const QPoint& point) {
+        if (point.isNull())
+            return;
+        QMenu menu(this);
+
+        QTabBar* tabBar = ui->tabWidget->tabBar()         ;
+        int tabIndex = tabBar->tabAt(point);
+        QWidget* tab = ui->tabWidget->widget(tabBar->tabAt(point));
+        QString tabName = tab->objectName();
+        if (tabName != "tab_multi") {
+            if (m_multiTabData.isFull())
+                return;
+            menu.addAction(tr("Move chart to the tab Multi"), this, [=]() {
+                toMultiTab(tabIndex);
+            });
+        } else {
+            menuMultiTab(menu);
+        }
+        menu.exec(tabBar->mapToGlobal(point));
+    });
+
+    QToolButton *btn = new QToolButton();
+    btn->setText("+");
+    btn->setToolTip("Add multi-charts");
+    connect(btn, &QAbstractButton::clicked, this, [=]() {
+        showMultiTab();
+    });
+    btn->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(btn, &QToolButton::customContextMenuRequested, [=](const QPoint& point) {
+        if (point.isNull())
+            return;
+        QMenu menu(this);
+        menuMultiTab(menu);
+        if (menu.exec(btn->mapToGlobal(point)) != nullptr) {
+            if (!m_multiTabData.tabs.isEmpty()) {
+                ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), true);
+                //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(true);
+                ui->tabWidget->setCurrentWidget(m_tab_multi);
+            } else {
+                ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+                //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
+                ui->tabWidget->setCurrentWidget(m_tab_swr);
+            }
+        }
+    });
+    ui->tabWidget->setCornerWidget(btn, Qt::TopRightCorner);
+#endif
+
+//    qDebug() << "createTabs:";
+//    for (int i=0; i<ui->tabWidget->count(); i++) {
+//        QWidget* plot = ui->tabWidget->widget(i);
+//        QString name = plot->objectName();
+//        qDebug() << name;
+//    }
 }
 
 void MainWindow::on_fqSettingsBtn_clicked()
@@ -3548,31 +3690,21 @@ void MainWindow::on_singleStart_clicked()
             QString strMax = ca->maxFq();
             maxFreq = strMax.toULongLong();
         }
-        if (m_fqRestrict)
-        {
-            start = minFreq;
-            stop = maxFreq;
-        }
-        else
-        {
-            // 20210423
-            //start = getFqFrom();
-            //stop = getFqTo();
-            getEnteredFq(start, stop);
-        }
+        getEnteredFq(start, stop);
     } else {
+        getEnteredFq(start, stop);
         if (m_fqRestrict)
         {
-            start = minFreq;
-            stop = maxFreq;
-        }
-        else
-        {
-            // 20210423
-            //start = getFqFrom();
-            //stop = getFqTo();
-            getEnteredFq(start, stop);
             AnalyzerParameters::normalizeFq(start, stop);
+            if(!m_isRange)
+            {
+                setFqFrom(start);
+                setFqTo(stop);
+            }else
+            {
+                setFqTo((stop-start)/2);
+                setFqFrom((stop+start)/2);
+            }
         }
     }
 
@@ -3623,7 +3755,7 @@ void MainWindow::on_singleStart_clicked()
     m_settings->setValue("dotsNumber", m_dotsNumber);
     m_settings->endGroup();
 
-    if(ui->tabWidget->currentWidget()->objectName() == "tab_6")
+    if(ui->tabWidget->currentWidget()->objectName() == "tab_tdr")
     {
 #ifdef OLD_TDR
 
@@ -3654,7 +3786,7 @@ void MainWindow::on_singleStart_clicked()
         m_measurements->startTDRProgress(analyzer(), this);
 #endif
     }
-    else if(ui->tabWidget->currentWidget()->objectName() == "tab_8")
+    else if(ui->tabWidget->currentWidget()->objectName() == "tab_user")
     {
         emit measureUser(start*1000, stop*1000, m_dotsNumber);
     }
@@ -3686,7 +3818,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         }
         return;
     }
-    if(ui->tabWidget->currentWidget()->objectName() == "tab_6") {
+    if(ui->tabWidget->currentWidget()->objectName() == "tab_tdr") {
         ui->continuousStartBtn->setChecked(false);
         return;
     }
@@ -3778,7 +3910,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         m_settings->setValue("dotsNumber", m_dotsNumber);
         m_settings->endGroup();
 
-        if(ui->tabWidget->currentWidget()->objectName() == "tab_8")
+        if(ui->tabWidget->currentWidget()->objectName() == "tab_user")
         {
             emit measureUser(start*1000, stop*1000, m_dotsNumber);
         } else {
@@ -4047,6 +4179,7 @@ void MainWindow::on_settingsBtn_clicked()
     m_settingsDialog->setFirmwareAutoUpdate(m_autoFirmwareUpdateEnabled);
     m_settingsDialog->setAntScopeAutoUpdate(m_autoUpdateEnabled);
     m_settingsDialog->setAntScopeVersion(ANTSCOPE2VER);
+    m_settingsDialog->setRestrictFq(m_fqRestrict);
 
     QStringList list;
     for(int i = 0; i < LANGUAGES_QUANTITY; ++i)
@@ -4219,8 +4352,9 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
         qint64 from = m_lastEnteredFqFrom;
         qint64 to =  m_lastEnteredFqTo;
         qint64 range = (to - from);
-        on_dataChanged(from + range/2, range, m_dotsNumber);
-
+        //{ Fedoseev's request 2022-11-11
+        //on_dataChanged(from + range/2, range, m_dotsNumber);
+        //}
         ui->measurmentsSaveBtn->setEnabled(false);
         ui->measurmentsDeleteBtn->setEnabled(false);
         ui->measurmentsClearBtn->setEnabled(false);
@@ -4260,7 +4394,9 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
     double to =  m_lastEnteredFqTo;
     AnalyzerParameters::normalizeFq(from, to);
     qint64 range = (to - from);
-    on_dataChanged(from + range/2, range, m_dotsNumber);
+    //{ Fedoseev's request 2022-11-11
+    //on_dataChanged(from + range/2, range, m_dotsNumber);
+    //}
     //}
 
     if(ui->tableWidget_measurments->rowCount() == 0)
@@ -4375,7 +4511,7 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
         m_userWidget->xAxis->setRange(range);
 
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if (str == "tab_6") {
+    if (str == "tab_tdr") {
         int dist = m_measurements->calcTdrDist(&mm->dataRX);
         if (dist != 0) {
             range.lower = 0;
@@ -4442,13 +4578,14 @@ void MainWindow::on_screenshot_clicked()
 
 void MainWindow::on_printBtn_clicked()
 {
-    m_print = new Print();
+    QString name = ui->tabWidget->currentWidget()->objectName();
+    if (name == "tab_multi") {
+        return;
+        //m_print = new Printmulti(m_multiTabData.tabs);
+    } else {
+        m_print = new Print();
+    }
     m_print->setAttribute(Qt::WA_DeleteOnClose);
-//    QList <QStringList> lst = m_markers->getMarkersHintList();
-//    for(int i = 0; i < lst.length(); ++i)
-//    {
-//        m_print->addRowText(lst.at(i));
-//    }
     m_print->updateMarkers(m_markers->getMarkersCount(), m_measurements->getMeasurementLength(),
                            m_markers->updateInfo(m_markers->markersHint()->getColumns()));
 
@@ -4469,17 +4606,17 @@ void MainWindow::on_printBtn_clicked()
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzer->getModel()];
 #endif
-    QString name = ui->tabWidget->currentWidget()->objectName();
     QString string;
     string += model + ", ";
     QDateTime datetime = QDateTime::currentDateTime();
     string += datetime.toString("dd.MM.yyyy-hh:mm, ");
 
-    if(name == "tab_1")
+    if(name == "tab_swr")
     {
         string += "SWR graph";
         m_print->drawBands(bands, MIN_SWR, MAX_SWR);
-        m_print->setRange(m_swrWidget->xAxis->range(),m_swrWidget->yAxis->range());
+        //m_print->setRange(m_swrWidget->xAxis->range(),m_swrWidget->yAxis->range());
+        m_print->setRange(m_swrWidget);
         m_print->setLabel(m_swrWidget->xAxis->label(), m_swrWidget->yAxis->label());
         int cnt = m_swrWidget->graphCount();
         for(int i = 1; i < cnt; ++i)
@@ -4490,11 +4627,12 @@ void MainWindow::on_printBtn_clicked()
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_swrWidget->graph(i)->data(), pen, myIndex.data().toString());
         }
-    }else if(name == "tab_2")
+    }else if(name == "tab_phase")
     {
         string += "Phase graph";
         m_print->drawBands(bands, m_phaseWidget->yAxis->range().lower, m_phaseWidget->yAxis->range().upper);
-        m_print->setRange(m_phaseWidget->xAxis->range(),m_phaseWidget->yAxis->range());
+        //m_print->setRange(m_phaseWidget->xAxis->range(),m_phaseWidget->yAxis->range());
+        m_print->setRange(m_phaseWidget);
         m_print->setLabel(m_phaseWidget->xAxis->label(), m_phaseWidget->yAxis->label());
         for(int i = 1; i < m_phaseWidget->graphCount(); ++i)
         {
@@ -4504,11 +4642,12 @@ void MainWindow::on_printBtn_clicked()
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_phaseWidget->graph(i)->data(), pen, myIndex.data().toString());
         }
-    }else if(name == "tab_3")
+    }else if(name == "tab_rs")
     {
         string += "RXZ graph";
         m_print->drawBands(bands, m_rsWidget->yAxis->range().lower, m_rsWidget->yAxis->range().upper);
-        m_print->setRange(m_rsWidget->xAxis->range(),m_rsWidget->yAxis->range());
+        //m_print->setRange(m_rsWidget->xAxis->range(),m_rsWidget->yAxis->range());
+        m_print->setRange(m_rsWidget);
         m_print->setLabel(m_rsWidget->xAxis->label(), m_rsWidget->yAxis->label());
         for(int i = 1; i < m_rsWidget->graphCount(); ++i)
         {
@@ -4516,11 +4655,12 @@ void MainWindow::on_printBtn_clicked()
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_rsWidget->graph(i)->data(), pen, m_rsWidget->graph(i)->name());
         }
-    }else if(name == "tab_4")
+    }else if(name == "tab_rp")
     {
         string += "RXZ parallel graph";
         m_print->drawBands(bands, m_rpWidget->yAxis->range().lower, m_rpWidget->yAxis->range().upper);
-        m_print->setRange(m_rpWidget->xAxis->range(),m_rpWidget->yAxis->range());
+        //m_print->setRange(m_rpWidget->xAxis->range(),m_rpWidget->yAxis->range());
+        m_print->setRange(m_rpWidget);
         m_print->setLabel(m_rpWidget->xAxis->label(), m_rpWidget->yAxis->label());
         for(int i = 1; i < m_rpWidget->graphCount(); ++i)
         {
@@ -4528,11 +4668,12 @@ void MainWindow::on_printBtn_clicked()
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_rpWidget->graph(i)->data(), pen, m_rpWidget->graph(i)->name());
         }
-    }else if(name == "tab_5")
+    }else if(name == "tab_rl")
     {
         string += "RL graph";
         m_print->drawBands(bands, m_rlWidget->yAxis->range().lower, m_rlWidget->yAxis->range().upper);
-        m_print->setRange(m_rlWidget->xAxis->range(),m_rlWidget->yAxis->range());
+        //m_print->setRange(m_rlWidget->xAxis->range(),m_rlWidget->yAxis->range());
+        m_print->setRange(m_rlWidget);
         m_print->setLabel(m_rlWidget->xAxis->label(), m_rlWidget->yAxis->label());
         for(int i = 1; i < m_rlWidget->graphCount(); ++i)
         {
@@ -4542,11 +4683,12 @@ void MainWindow::on_printBtn_clicked()
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_rlWidget->graph(i)->data(), pen, myIndex.data().toString());
         }
-    }else if(name == "tab_6")
+    }else if(name == "tab_tdr")
     {
         string += "TDR graph";
         m_print->drawBands(bands, m_tdrWidget->yAxis->range().lower, m_tdrWidget->yAxis->range().upper);
-        m_print->setRange(m_tdrWidget->xAxis->range(),m_tdrWidget->yAxis->range());
+        //m_print->setRange(m_tdrWidget->xAxis->range(),m_tdrWidget->yAxis->range());
+        m_print->setRange(m_tdrWidget);
         m_print->setLabel(m_tdrWidget->xAxis->label(), m_tdrWidget->yAxis->label());
         for(int i = 1; i < m_tdrWidget->graphCount(); ++i)
         {
@@ -4554,11 +4696,12 @@ void MainWindow::on_printBtn_clicked()
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_tdrWidget->graph(i)->data(), pen, m_tdrWidget->graph(i)->name());
         }
-    }else if(name == "tab_7")
+    }else if(name == "tab_smith")
     {
         string += "Smith graph";
         m_print->drawSmithImage();
-        m_print->setRange(m_smithWidget->xAxis->range(),m_smithWidget->yAxis->range());
+        //m_print->setRange(m_smithWidget->xAxis->range(),m_smithWidget->yAxis->range());
+        m_print->setRange(m_smithWidget);
         m_print->setLabel(m_smithWidget->xAxis->label(), m_smithWidget->yAxis->label());
 
         for(int i = 0; i < m_measurements->getMeasurementLength(); ++i)
@@ -4569,19 +4712,38 @@ void MainWindow::on_printBtn_clicked()
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setSmithData(&m_measurements->getMeasurement(i)->smithGraph, pen, myIndex.data().toString());
         }
-    }else if(name == "tab_8")
+    }else if(name == "tab_user")
     {
         string += "User defined";
         m_print->drawBands(bands, m_userWidget->yAxis->range().lower, m_userWidget->yAxis->range().upper);
-        m_print->setRange(m_userWidget->xAxis->range(),m_userWidget->yAxis->range());
+        //m_print->setRange(m_userWidget->xAxis->range(),m_userWidget->yAxis->range());
+        m_print->setRange(m_userWidget);
         m_print->setLabel(m_userWidget->xAxis->label(), m_userWidget->yAxis->label());
         for(int i = 1; i < m_userWidget->graphCount(); ++i)
         {
             m_print->setData(m_userWidget->graph(i)->data(), m_userWidget->graph(i)->pen(), m_userWidget->graph(i)->name());
         }
     }
-
-    if(name != "tab_7")
+#ifndef NO_MULTITAB
+    else if(name == "tab_multi") {
+        string += "Multi";
+        foreach (auto tab, m_multiTabData.tabs) {
+            QCustomPlot* plot = plotForTab(tab);
+            if (plot != nullptr) {
+                m_print->drawBands(bands, plot->yAxis->range().lower, plot->yAxis->range().upper);
+                ((Printmulti*)m_print)->setRange(tab, plot);
+                m_print->setLabel(plot->xAxis->label(), plot->yAxis->label());
+                for(int i = 1; i < plot->graphCount(); ++i)
+                {
+                    QPen pen = plot->graph(i)->pen();
+                    pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                    ((Printmulti*)m_print)->setData(tab, plot->graph(i)->data(), pen, plot->graph(i)->name());
+                }
+            }
+        }
+    }
+#endif
+    if(name != "tab_smith")
     {
         qint32 markersCount = m_markers->getMarkersCount();
         for(int i = 0; i < markersCount; ++i)
@@ -4696,53 +4858,50 @@ void MainWindow::on_Z0Changed(double _Z0)
 
 void MainWindow::updateGraph ()
 {
+    QCustomPlot* plot = nullptr;
     try {
-        QCustomPlot* plot = nullptr;
         QString str = ui->tabWidget->currentWidget()->objectName();
-        if( str == "tab_1")
+        if( str == "tab_swr")
         {
             plot = m_swrWidget;
-            m_swrWidget->replot();
-        }else if(str == "tab_2")
+        }else if(str == "tab_phase")
         {
             plot = m_phaseWidget;
-            m_phaseWidget->replot();
-        }else if(str == "tab_3")
+        }else if(str == "tab_rs")
         {
             plot = m_rsWidget;
-
-    //        int count = m_rsWidget->legend->itemCount();
-    //        for (int i=4; i<count; i++) {
-    //            m_rsWidget->legend->removeItem(m_rsWidget->legend->itemCount()-1);
-    //        }
-    //        qDebug() << "Legend: " << count;
-
-            m_rsWidget->replot();
-        }else if(str == "tab_4")
+        }else if(str == "tab_rp")
         {
             plot = m_rpWidget;
-            m_rpWidget->replot();
-        }else if(str == "tab_5")
+        }else if(str == "tab_rl")
         {
             plot = m_rlWidget;
-            m_rlWidget->replot();
-        }else if(str == "tab_6")
+        }else if(str == "tab_tdr")
         {
             plot = m_tdrWidget;
-            m_tdrWidget->replot();
-        }else if(str == "tab_7")
+        }else if(str == "tab_smith")
         {
             resizeWnd();
             plot = m_smithWidget;
-            m_smithWidget->replot();
-        }else if(str == "tab_8")
+        }else if(str == "tab_user")
         {
             plot = m_userWidget;
-            m_userWidget->replot();
         }
+#ifndef NO_MULTITAB
+        else if(str == "tab_multi") {
+            for (int idx=0; idx<m_multiTabData.tabs.size(); idx++) {
+                QString tab_name = m_multiTabData.tabs[idx];
+                QString plot_name = g_mapTabPlotNames[tab_name];
+                m_mapWidgets[plot_name]->replot();
+            }
+            return;
+        }
+#endif
     } catch(...) {
-
+        return;
     }
+    if (plot != nullptr)
+        plot->replot();
 }
 
 void MainWindow::on_settingsParamsChanged()
@@ -5058,7 +5217,7 @@ void MainWindow::on_antScopeAutoUpdateStateChanged(bool state)
 void MainWindow::on_1secTimerTick()
 {
     QString str = ui->tabWidget->currentWidget()->objectName();
-    if(str == "tab_6" || str == "tab_7")
+    if(str == "tab_tdr" || str == "tab_smith")
     {
         m_measurements->hideGraphBriefHint();
         return;
@@ -5086,7 +5245,7 @@ bool MainWindow::loadLanguage(QString locale)
     m_swrWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_swrWidget->yAxis->setLabel(tr("SWR"));
     m_phaseWidget->xAxis->setLabel(tr("Frequency, kHz"));
-    m_phaseWidget->yAxis->setLabel(tr("Angle"));
+    m_phaseWidget->yAxis->setLabel(tr("Phase, Angle"));
     m_rsWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_rsWidget->yAxis->setLabel(tr("Rs, Ohm"));
     m_rpWidget->xAxis->setLabel(tr("Frequency, kHz"));
@@ -5095,15 +5254,15 @@ bool MainWindow::loadLanguage(QString locale)
     m_rlWidget->yAxis->setLabel(tr("RL, dB"));
     m_tdrWidget->xAxis->setLabel(tr("Length, m"));
 
-    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_1), QApplication::translate("MainWindow", "SWR", 0));
-    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_2), QApplication::translate("MainWindow", "Phase", 0));
-    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_3), QApplication::translate("MainWindow", "Z=R+jX", 0));
-    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_4), QApplication::translate("MainWindow", "Z=R||+jX", 0));
-    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_5), QApplication::translate("MainWindow", "RL", 0));
-    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_6), QApplication::translate("MainWindow", "TDR", 0));
-    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_7), QApplication::translate("MainWindow", "Smith", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_swr), QApplication::translate("MainWindow", "SWR", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_phase), QApplication::translate("MainWindow", "Phase", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rs), QApplication::translate("MainWindow", "Z=R+jX", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rp), QApplication::translate("MainWindow", "Z=R||+jX", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rl), QApplication::translate("MainWindow", "RL", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_tdr), QApplication::translate("MainWindow", "TDR", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_smith), QApplication::translate("MainWindow", "Smith", 0));
     if (g_developerMode)
-        ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_8), QApplication::translate("MainWindow", "User defined", 0));
+        ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_user), QApplication::translate("MainWindow", "User defined", 0));
 
     for (int i=0; i<ui->tabWidget->count(); i++)
     {
@@ -5340,7 +5499,7 @@ QString appendSpaces(const QString& str) {
 
 void MainWindow::onFullRange(bool)
 {
-    int model = m_analyzer->getModel();
+    //int model = m_analyzer->getModel();
 
 #ifdef NEW_ANALYZER
     AnalyzerParameters* param = AnalyzerParameters::current();
@@ -5412,8 +5571,8 @@ void MainWindow::autoCalibrate()
 
     QPair<double, double> calibr = m_measurements->autoCalibrate(); // <CableResistance, CableLength>
     QString cmd = QString("calrl%1,%2\r")
-            .arg((double)calibr.first, 0, 'f', 1, QLatin1Char(' '))
-            .arg((double)calibr.second, 0, 'f', 3, QLatin1Char(' '));
+            .arg((double)calibr.first, 0, 'f', 8, QLatin1Char(' '))
+            .arg((double)calibr.second, 0, 'f', 8, QLatin1Char(' '));
     m_analyzer->sendCommand(cmd);
 
     QString style = "QPushButton:checked{"
@@ -5422,8 +5581,8 @@ void MainWindow::autoCalibrate()
     QApplication::restoreOverrideCursor();
 
     QString notify = QString("Autocalibration: CableResistance=%1, CableLength=%2")
-            .arg((double)calibr.first, 0, 'f', 1, QLatin1Char(' '))
-            .arg((double)calibr.second, 0, 'f', 3, QLatin1Char(' '));
+            .arg((double)calibr.first, 0, 'f', 8, QLatin1Char(' '))
+            .arg((double)calibr.second, 0, 'f', 8, QLatin1Char(' '));
     QRect rn(0, 0, rect().width(), 40);
     Notification::showMessage(notify, QColor(Qt::white), rn, 5000, ui->tabWidget->currentWidget());
     return;
@@ -5714,3 +5873,197 @@ void MainWindow::newSoftwareRequest()
     }
     m_updater->on_checkUpdates();
 }
+
+
+void MainWindow::createUserTab()
+{
+    m_tab_user = new GLWidget();
+    m_tab_user->setObjectName(QStringLiteral("tab_user"));
+
+    QHBoxLayout* layout = new QHBoxLayout(m_tab_user);
+    layout->setSpacing(6);
+    layout->setContentsMargins(11, 11, 11, 11);
+    layout->setObjectName(QStringLiteral("horizontalLayout_user"));
+    m_userWidget = new CustomPlot(1, m_tab_user);
+    qobject_cast<GLWidget*>(m_tab_user)->setPlotter(m_userWidget);
+    m_userWidget->setObjectName(QStringLiteral("user_widget"));
+
+    QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    sizePolicy.setHorizontalStretch(0);
+    sizePolicy.setVerticalStretch(2);
+    sizePolicy.setHeightForWidth(m_userWidget->sizePolicy().hasHeightForWidth());
+    m_userWidget->setSizePolicy(sizePolicy);
+    layout->addWidget(m_userWidget);
+
+    ui->tabWidget->addTab(m_tab_user, QString());
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_user), QApplication::translate("MainWindow", "User defined", 0));
+    m_mapWidgets.insert(QStringLiteral("user_widget"), m_userWidget);
+}
+
+
+#ifndef NO_MULTITAB
+void MainWindow::toMultiTab(int tab_index)
+{
+    QWidget* tab = ui->tabWidget->widget(tab_index);
+    m_multiTabData.tabs << tab->objectName();
+    buildMultiTabLayout();
+    ui->tabWidget->setTabVisible(tab_index, false);
+    ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), true);
+//    ui->tabWidget->widget(tab_index)->setVisible(false);
+//    ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(true);
+}
+
+void MainWindow::fromMultiTab(int tab_index)  // ???? tab_index ????
+{
+    QString tab_name = ui->tabWidget->widget(tab_index)->objectName();
+    m_multiTabData.tabs.removeOne(tab_name);
+    buildMultiTabLayout();
+
+    QWidget* tab = ui->tabWidget->widget(tab_index);
+    QString plot_name = g_mapTabPlotNames[tab_name];
+    tab->layout()->addWidget(m_mapWidgets[plot_name]);
+    ui->tabWidget->setTabVisible(tab_index, true);
+    //ui->tabWidget->widget(tab_index)->setVisible(true);
+
+    if (m_multiTabData.tabs.isEmpty())
+        ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+        //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
+}
+
+QMenu& MainWindow::menuMultiTab(QMenu &menu)
+{
+    QMap<QString, QPair<int, QString>> tab_title; // <tab_name, <index, title> >
+    for (int i=0; i<ui->tabWidget->count(); i++) {
+        QString tab_name = ui->tabWidget->widget(i)->objectName();
+        if (tab_name != "tab_multi") {
+            if (!g_developerMode && tab_name == "tab_user")
+                continue;
+            tab_title[tab_name] = QPair<int, QString>(i, ui->tabWidget->tabText(i));
+        }
+    }
+    foreach (const QString& tab_name, tab_title.keys()) {
+        if (tab_name.isEmpty())
+            continue;
+        if (!m_multiTabData.tabs.contains(tab_name)) {
+            QPair<int, QString> pair = tab_title[tab_name];
+            QString plot_name = pair.second;
+            menu.addAction(tr("Join ") + plot_name, this, [this, pair]() {
+                toMultiTab(pair.first);
+            });
+        }
+    }
+    menu.addSeparator();
+    foreach (const QString& tab_name, m_multiTabData.tabs) {
+        if (tab_name.isEmpty())
+            continue;
+        QPair<int, QString> pair = tab_title[tab_name];
+        QString plot_name = pair.second;
+        menu.addAction(tr("Close ") + plot_name, this, [this, pair]() {
+            fromMultiTab(pair.first);
+        });
+    }
+    if (!m_multiTabData.tabs.isEmpty()) {
+        menu.addSeparator();
+        menu.addAction(tr("Close all "), this, [this, tab_title]() {
+            foreach(const QString& tab_name, m_multiTabData.tabs) {
+                QPair<int, QString> pair = tab_title[tab_name];
+                fromMultiTab(pair.first);
+            }
+            ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+            //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
+        });
+    }
+    return menu;
+}
+
+void MainWindow::buildMultiTabLayout()
+{
+    int tabs = m_multiTabData.tabs.size();
+    if (tabs == 0) {
+        return;
+    }
+//    if (tabs == 4) {
+//        return;
+//    }
+
+    if (m_tab_multi == nullptr)
+        return;
+
+    QLayout* layout = m_tab_multi->layout();
+    if (layout != nullptr) {
+        QLayoutItem *item;
+        while ((item = layout->takeAt(0)) != 0)
+            layout->removeItem (item);
+    }
+
+    foreach(const QString& tab, m_multiTabData.tabs) {
+        QString plot = g_mapTabPlotNames[tab];
+        QWidget* widget = m_mapWidgets[plot];
+        layout->addWidget(widget);
+    }
+    if (m_multiTabData.tabs.contains("tab_smith")) {
+        QSize sz = size();
+        sz += QSize(-2, -2);
+        resize(sz);
+        resizeWnd();
+        m_smithWidget->replot();
+        sz += QSize(2, 2);
+        QTimer::singleShot(1, this, [this, sz]() {
+            resize(sz);
+            resizeWnd();
+            m_smithWidget->replot();
+        });
+    }
+    m_tab_multi->show();
+}
+
+void MainWindow::showMultiTab()
+{
+    QMenu menu;
+    menuMultiTab(menu);
+    if (menu.exec(QCursor::pos()) != nullptr) {
+        if (!m_multiTabData.tabs.isEmpty()) {
+            ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), true);
+            //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(true);
+            ui->tabWidget->setCurrentWidget(m_tab_multi);
+        } else {
+            ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+            //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
+            ui->tabWidget->setCurrentWidget(m_tab_swr);
+        }
+    }
+}
+
+void MainWindow::replot_multiTab()
+{
+    for (int idx=0; idx<MainWindow::m_mainWindow->m_multiTabData.tabs.size(); idx++) {
+        QString tab_name = MainWindow::m_mainWindow->m_multiTabData.tabs[idx];
+        QString plot_name = g_mapTabPlotNames[tab_name];
+        CustomPlot* plot = qobject_cast<CustomPlot*>(m_mapWidgets[plot_name]);
+        plot->drawIncrementally();
+    }
+}
+
+QCustomPlot* MainWindow::plotForTab(const QString& tab)
+{
+    QString plot_name = g_mapTabPlotNames[tab];
+    return m_mapWidgets[plot_name];
+}
+
+void MainWindow::restoreMultitab(const QString& tabs)
+{
+    if (!tabs.isEmpty()) {
+        QStringList list = tabs.split(',', QString::SkipEmptyParts);
+        foreach (auto tab_name, list) {
+            if (tab_name == "tab_user" && !g_developerMode)
+                continue;
+            for (int idx = 0; idx<ui->tabWidget->count(); idx++) {
+                if (ui->tabWidget->widget(idx)->objectName() == tab_name) {
+                    toMultiTab(idx);
+                    break;
+                }
+            }
+        }
+    }
+}
+#endif

@@ -52,6 +52,8 @@ public:
     int getCableFarEndMeasurement(void)const;
     void setCableIndex(int value);
     int getCableIndex(void)const;
+    void setRestrictFq(bool value);
+    bool getRestrictFq();
     void setBands(QList<QString> list);
 
     static QString programDataPath(QString _fileName);

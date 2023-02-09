@@ -341,11 +341,16 @@ struct measurement
 #define PREFIX_SERIAL_NUMBER_AA650_ZOOM	1650
 #define PREFIX_SERIAL_NUMBER_AA230_STICK 4230
 #define PREFIX_SERIAL_NUMBER_AA2000	4002
+#define PREFIX_SERIAL_NUMBER_AA3000	4003
 #define PREFIX_SERIAL_NUMBER_STICK_PRO 4600
 #define PREFIX_SERIAL_NUMBER_AA1500_ZOOM	1015
 #define PREFIX_SERIAL_NUMBER_ZEROII	4001
 #define PREFIX_SERIAL_NUMBER_TOUCH 4003
 #define PREFIX_SERIAL_NUMBER_TOUCH_EINK 4004
+#define PREFIX_SERIAL_NUMBER_STICK_XPRO 4999
+#define PREFIX_SERIAL_NUMBER_STICK_500 4500
+#define PREFIX_SERIAL_NUMBER_WILSON_PRO 1016
+
 
 class AnalyzerParameters {
     QString m_name;
@@ -478,10 +483,16 @@ public:
         m_analyzers << new AnalyzerParameters(idx++, "AA-1400", "100", "1400000", 240, 320);
         m_analyzers << new AnalyzerParameters(idx++, "AA-1500 ZOOM", "100", "1500000", 240, 320, PREFIX_SERIAL_NUMBER_AA1500_ZOOM);
         m_analyzers << new AnalyzerParameters(idx++, "AA-2000 ZOOM", "100", "2000000", 480, 746, PREFIX_SERIAL_NUMBER_AA2000);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-3000 ZOOM", "100", "3000000", 480, 746, PREFIX_SERIAL_NUMBER_AA3000);
         m_analyzers << new AnalyzerParameters(idx++, "NanoVNA", "100", "1000000", 0, 0);
-        m_analyzers << new AnalyzerParameters(idx++, "Zero II", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_ZEROII);
+        // 08.06.2022 - not supported except of Android Antscope
+        //m_analyzers << new AnalyzerParameters(idx++, "Zero II", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_ZEROII);
         m_analyzers << new AnalyzerParameters(idx++, "Touch", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH);
         m_analyzers << new AnalyzerParameters(idx++, "Touch E-Ink", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH_EINK);
+
+        m_analyzers << new AnalyzerParameters(idx++, "Stick XPro", "100", "1000000", 220, 220, PREFIX_SERIAL_NUMBER_STICK_XPRO);
+        m_analyzers << new AnalyzerParameters(idx++, "Stick 500", "100", "500000", 200, 200, PREFIX_SERIAL_NUMBER_STICK_500);
+        m_analyzers << new AnalyzerParameters(idx++, "WilsonPro CAA", "100", "1500000", 240, 320, PREFIX_SERIAL_NUMBER_WILSON_PRO);
     }
 
     static QList<AnalyzerParameters*>& analyzers() { return m_analyzers; }

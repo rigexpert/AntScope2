@@ -619,7 +619,7 @@ void Analyzer::on_hidAnalyzerFound (quint32 analyzerNumber)
 #else
     QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentAlias() : AnalyzerParameters::getName();
 #endif
-    sendStatistics();
+    applyAnalyzer();
     emit analyzerFound(str);
 
     // ------- moved to MainWindow::on_analyzerFound
@@ -642,6 +642,8 @@ void Analyzer::on_hidAnalyzerDisconnected ()
 
 void Analyzer::on_comAnalyzerFound (quint32 analyzerNumber)
 {
+    Q_UNUSED(analyzerNumber);
+
     if(m_hidAnalyzer)
     {
         delete m_hidAnalyzer;
@@ -654,7 +656,7 @@ void Analyzer::on_comAnalyzerFound (quint32 analyzerNumber)
 #else
     QString str = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getName();
 #endif
-    sendStatistics();
+    applyAnalyzer();
     emit analyzerFound(str);
 }
 
@@ -727,7 +729,7 @@ void Analyzer::on_nanovnaAnalyzerFound (QString name)
 #else
     AnalyzerParameters::setCurrent(AnalyzerParameters::byName("NanoVNA"));
 #endif
-    sendStatistics();
+    applyAnalyzer();
     emit analyzerFound(name);
 }
 
@@ -771,15 +773,18 @@ void Analyzer::on_nanovnaAnalyzerDisconnected()
 
 void Analyzer::on_newData(rawData _rawData)
 {
+    qDebug() << "Analyzer::on_newData" << (m_chartCounter) << (m_dotsNumber);
     if (m_getAnalyzerData) {
         emit newAnalyzerData (_rawData);
     } else {
         emit newData (_rawData);
     }
 
-    //qDebug() << "Analyzer::on_newData" << (1+m_chartCounter) << (m_dotsNumber+1);
-    if(m_chartCounter > m_dotsNumber || !m_isMeasuring)
+    // ???? if(m_chartCounter >= m_dotsNumber || !m_isMeasuring)
+    quint32 finNum = m_calibrationMode ? m_dotsNumber : (m_dotsNumber-1);
+    if(m_chartCounter > finNum || !m_isMeasuring)
     {
+        qDebug() << "Analyzer::on_newData COMPLETE";
         m_chartCounter = 0;
         setIsMeasuring(false);
         PopUpIndicator::setIndicatorVisible(false);
@@ -953,7 +958,6 @@ void Analyzer::on_checkUpdatesBtn_clicked()
     }
 
     QString url = "https://www.rigexpert.com/getfirmware?app=antscope2&model=";
-    //QString url = "https://www.rigexpert.com/get.php?part=antscope2&model=";
 #ifndef NEW_ANALYZER
     url += names[m_analyzerModel].toLower().remove(" ").remove("-");
 #else
@@ -1239,8 +1243,7 @@ void Analyzer::on_connectBluetooth(QString portName)
     m_connectionType = ReDeviceInfo::BT;
 }
 
-//{ under construction
-void Analyzer::sendStatistics()
+void Analyzer::applyAnalyzer()
 {
     if(m_downloader == nullptr)
     {
@@ -1256,7 +1259,6 @@ void Analyzer::sendStatistics()
     }
 
     QString url = "https://www.rigexpert.com/getfirmware?part=antscope2&model=";
-    //QString url = "https://www.rigexpert.com/get.php?part=antscope2&model=";
 #ifndef NEW_ANALYZER
     url += names[m_analyzerModel].toLower().remove(" ").remove("-");
 #else
@@ -1360,7 +1362,7 @@ void Analyzer::on_disconnectDevice()
     if (m_NanovnaAnalyzer != nullptr)
         on_disconnectNanoNVA();
     AnalyzerParameters::setCurrent(nullptr);
-    m_connectionType == ReDeviceInfo::WRONG;
+    m_connectionType = ReDeviceInfo::WRONG;
 
     QTimer::singleShot(2000, this, [&](){
         if (m_comAnalyzer != nullptr && m_comAnalyzer->connected())

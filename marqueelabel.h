@@ -18,6 +18,7 @@ class MarqueeString
     double m_width = 100; // ??????
     QMap<QString, QString> m_keywords;
     int m_speed = 1;
+    QDate m_startDate=QDate::currentDate();
     QDate m_endDate=QDate::currentDate();
     int m_waitTimeSec = 0;
 
@@ -34,6 +35,7 @@ public:
     double width() { return m_width ; }
     int speed() { return m_speed; }
     QDate enddate() { return m_endDate; }
+    QDate startdate() { return m_startDate; }
     QMap<QString, QString> keywords() { return m_keywords; }
     int waitTime() { return m_waitTimeSec; }
 
@@ -54,6 +56,8 @@ public:
         m_width = obj["size"].toDouble(100.0);
         tmp = obj["enddate"].toString("");
         m_endDate = QDate::fromString(tmp, "yyyyMMdd");
+        tmp = obj["startdate"].toString("");
+        m_startDate = QDate::fromString(tmp, "yyyyMMdd");
         QJsonArray array = obj["keywords"].toArray();
         for(int i=0; i<array.size(); ++i)
         {

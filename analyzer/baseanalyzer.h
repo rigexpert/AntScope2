@@ -14,8 +14,8 @@ public:
     virtual QString getRevision() const { return m_revision; }
     virtual void setRevision(QString rev){ m_revision = rev; }
     virtual QString getSerial() const { return m_serialNumber; }
-    virtual bool update(QIODevice *fw) { return false; }
-    virtual bool openComPort(const QString& portName, quint32 portSpeed) { return false; }
+    virtual bool update(QIODevice *) { return false; }
+    virtual bool openComPort(const QString& portName, quint32 portSpeed) { Q_UNUSED(portSpeed); Q_UNUSED(portName); return false; }
     virtual void closeComPort() {}
 
     virtual void setIsMeasuring (bool isMeasuring) {m_isMeasuring = isMeasuring;}

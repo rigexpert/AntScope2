@@ -213,7 +213,7 @@ public slots:
     void on_disconnectHid();
     void on_disconnectDevice();
 
-    void sendStatistics();
+    void applyAnalyzer();
 };
 
 #endif // ANALYZER_H

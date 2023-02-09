@@ -175,7 +175,9 @@ void Calibration::on_newData(rawData _rawData)
     }
     emit progress(m_state, percent);
 
-    if(m_dotsCount == m_dotsNumber+1)
+    //qDebug() << "Cal::on_newData: state=" << m_state << ", count=" << m_dotsCount << ", num=" << m_dotsNumber;
+    // ??? if(m_dotsCount == m_dotsNumber+1)
+    if(m_dotsCount > m_dotsNumber)
     {
         m_dotsCount = 0;
         PopUpIndicator::hideIndicator();
@@ -193,9 +195,11 @@ void Calibration::on_newData(rawData _rawData)
             {
                 PopUpIndicator::hideIndicator();
                 if (QMessageBox::information(NULL, tr("Short"),
-                                     tr("Please connect SHORT standard and press OK.")) == QMessageBox::Ok)
+                                     tr("Please connect SHORT standard and press OK.")) == QMessageBox::Ok) {
                     PopUpIndicator::showIndicator();
                     on_startCalibration();
+                }
+                //qDebug() << "SHORT";
             }else
             {
                 PopUpIndicator::hideIndicator();
@@ -212,9 +216,11 @@ void Calibration::on_newData(rawData _rawData)
             {
                 PopUpIndicator::hideIndicator();
                 if (QMessageBox::information(NULL, tr("Load"),
-                                     tr("Please connect LOAD standard and press OK.")) == QMessageBox::Ok)
+                                     tr("Please connect LOAD standard and press OK.")) == QMessageBox::Ok) {
                     PopUpIndicator::showIndicator();
                     on_startCalibration();
+                }
+                //qDebug() << "LOAD";
             }else
             {
                 PopUpIndicator::hideIndicator();

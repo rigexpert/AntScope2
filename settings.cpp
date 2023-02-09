@@ -509,6 +509,7 @@ void Settings::on_fqRestrictCheckBox_clicked(bool checked)
 {
     emit fqRestrictChecked(!checked);
     m_restrictFq = !checked;
+    m_settings->setValue("restrictFq", m_restrictFq);
 }
 
 void Settings::on_calibWizard_clicked()
@@ -1182,7 +1183,7 @@ void Settings::initCustomizeTab()
     //CustomAnalyzer::load(m_settings);
     QString curAlias = CustomAnalyzer::currentAlias();
 #ifdef NEW_ANALYZER
-    QList<AnalyzerParameters*> analyzers = AnalyzerParameters::analyzers();
+    //QList<AnalyzerParameters*> analyzers = AnalyzerParameters::analyzers();
     foreach (AnalyzerParameters* param, AnalyzerParameters::analyzers()) {
         ui->comboBoxPrototype->addItem(param->name());
     }
@@ -1532,7 +1533,7 @@ void Settings::fillSerials()
 void Settings::setConnectButtonText(bool _connect)
 {
     m_connectedButton = _connect;
-    ReDeviceInfo::InterfaceType type = m_analyzer->connectionType();
+    //ReDeviceInfo::InterfaceType type = m_analyzer->connectionType();
     if (_connect)
         ui->connectSerialBtn->setText(tr("Connect analyser"));
     else
@@ -1554,5 +1555,16 @@ void Settings::showColorDialog()
         emit chartBackgroundChanged(color);
     }
     m_settings->endGroup();
+}
+
+void Settings::setRestrictFq(bool value)
+{
+    m_restrictFq = value;
+    ui->fqRestrictCheckBox->setChecked(!m_restrictFq);
+}
+
+bool Settings::getRestrictFq()
+{
+    return m_restrictFq;
 }
 

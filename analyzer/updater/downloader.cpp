@@ -53,7 +53,6 @@ Downloader::State Downloader::startDownloadFw()
     m_isInfo = false;
     m_sendStatisics = false;
 
-    //m_link = "https://www.rigexpert.com/files/get/asscroll/latest/AntScope_scroll.json";
     QUrl url(m_link);
 
     qCDebug(DOWNLOADER) << "start download link " << url;

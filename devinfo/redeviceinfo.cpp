@@ -1,4 +1,6 @@
 #include "redeviceinfo.h"
+#include "analyzerparameters.h"
+
 
 const quint16 ReDeviceInfo::m_bootVid = 0x0483;
 const quint16 ReDeviceInfo::m_bootPid = 0xA1DA;
@@ -154,6 +156,15 @@ QString ReDeviceInfo::deviceName(const ReDeviceInfo &dev)
     if (dev.serial().length() < 9) {
         return "Unknown "+ dev.serial();
     }
+
+    int pref = dev.serial().mid(0, 4).toInt();
+    switch (pref) {
+    case PREFIX_SERIAL_NUMBER_STICK_XPRO: return "Stick XPro";
+    case PREFIX_SERIAL_NUMBER_STICK_500: return "Stick 500";
+    case PREFIX_SERIAL_NUMBER_WILSON_PRO: return "WilsonPro CAA";
+    default:
+        break;
+    };
 
     id = dev.serial().mid(0, 1).toInt();
     modelCode = dev.serial().mid(1, 3);
