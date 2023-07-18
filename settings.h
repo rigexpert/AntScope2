@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QFileDialog>
 #include <QTimer>
-#include <analyzer/analyzer.h>
+#include <analyzer/analyzerpro.h>
 #include <analyzer/analyzerparameters.h>
 #include <crc32.h>
 #include <QSettings>
@@ -24,7 +24,7 @@ public:
     explicit Settings(QWidget *parent = 0);
     ~Settings();
 
-    void setAnalyzer(Analyzer * analyzer);
+    void setAnalyzer(AnalyzerPro * analyzer);
     void setCalibration(Calibration * calibration);
     void setGraphHintChecked(bool checked);
     void setGraphBriefHintChecked(bool checked);
@@ -68,12 +68,11 @@ public:
 
     void setLanguages(QStringList list, int number);
     void on_translate();
-    void fillSerials();
     void showColorDialog();
 
 private:
     Ui::Settings *ui;
-    Analyzer * m_analyzer;
+    AnalyzerPro * m_analyzer;
     Calibration * m_calibration;
 
     bool m_isComplete;
@@ -146,13 +145,14 @@ signals:
     void languageChanged(int);
     void bandChanged(QString);
     void exportCableSettings(QString _description);
-    void connectNanoVNA(QString port);
-    void disconnectNanoVNA();
-    void connectSerial(QString port);
-    void disconnectSerial();
-    void connectBluetooth(QString port);
-    void disconnectBluetooth();
+//    void connectNanoVNA(QString port);
+//    void disconnectNanoVNA();
+//    void connectSerial(QString port);
+//    void disconnectSerial();
+//    void connectBluetooth(QString port);
+//    void disconnectBluetooth();
     void disconnectDevice();
+    void connectDevice();
     void chartBackgroundChanged(QColor color);
 
 private slots:
@@ -201,9 +201,9 @@ private slots:
     void on_PointsFinished();
     void on_systemImpedance();
     void on_exportCableSettings();
-    void on_connectNanovna();
-    void on_connectSerial();
-    void on_connectBluetooth();
+//    void on_connectNanovna();
+//    void on_connectSerial();
+//    void on_connectBluetooth();
 };
 
 #endif // SETTINGS_H

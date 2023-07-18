@@ -2,24 +2,36 @@
 #include "ui_selectdevicedialog.h"
 #include "settings.h"
 #include "nanovna_analyzer.h"
+#include "ble_analyzer.h"
 
 // static
 SelectionParameters SelectionParameters::selected;
 
 
-SelectDeviceDialog::SelectDeviceDialog(QWidget *parent) :
+SelectDeviceDialog::SelectDeviceDialog(bool silent, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SelectDeviceDialog)
 {
     ui->setupUi(this);
 
+    QString style = "QPushButton:disabled{"
+            "background-color: rgb(59, 59, 59);"
+            "color: rgb(119, 119, 119);}"
+            "QPushButton:checked{"
+            "background-color: rgb(1, 178, 255);}";
+    ui->pushButtonConnect->setStyleSheet(style);
+    ui->pushButtonScan->setStyleSheet(style);
+
     QString path = Settings::setIniFile();
     QSettings set(path, QSettings::IniFormat);
     set.beginGroup("Connection");
     bool same = set.value("same", false).toBool();
-    int _type = set.value("type", ReDeviceInfo::HID).toInt();
-    QString name = set.value("name", "").toString();
+    ReDeviceInfo::InterfaceType _type = (ReDeviceInfo::InterfaceType)set.value("type", ReDeviceInfo::HID).toInt();
     set.endGroup();
+
+    ui->radioButtonCOM->setChecked(false);
+    ui->radioButtonUSB->setChecked(false);
+    ui->radioButtonBLE->setChecked(false);
 
     ui->checkBox->setChecked(same);
     switch(_type) {
@@ -34,47 +46,54 @@ SelectDeviceDialog::SelectDeviceDialog(QWidget *parent) :
         break;
     }
 
-    connect(ui->radioButtonUSB, &QRadioButton::toggled, [this](bool checked) {
-        onScan(ReDeviceInfo::HID);
+    connect(ui->radioButtonUSB, &QRadioButton::toggled, this, [=](bool checked) {
+        if (checked)
+            onScan(ReDeviceInfo::HID);
     });
-    connect(ui->radioButtonCOM, &QRadioButton::toggled, [&](bool checked) {
-        onScan(ReDeviceInfo::Serial);
+    connect(ui->radioButtonCOM, &QRadioButton::toggled, this, [=](bool checked) {
+        if (checked)
+            onScan(ReDeviceInfo::Serial);
     });
-    connect(ui->radioButtonBLE, &QRadioButton::toggled, [=](bool checked) {
-        onScan(ReDeviceInfo::BLE);
+    connect(ui->radioButtonBLE, &QRadioButton::toggled, this, [=](bool checked) {
+        if (checked)
+            onScan(ReDeviceInfo::BLE);
     });
-    connect(ui->tableWidget, &QTableWidget::itemDoubleClicked, [&](QTableWidgetItem* _item) {
+    connect(ui->tableWidget, &QTableWidget::itemDoubleClicked, this, [=](QTableWidgetItem* _item) {
         if (_item == nullptr)
             return;
-        QTableWidgetItem* item = ui->tableWidget->item(_item->row(), 0);
+        QTableWidgetItem* name = ui->tableWidget->item(_item->row(), 0);
         QTableWidgetItem* column = ui->tableWidget->item(_item->row(), 1);
-        onApply((ReDeviceInfo::InterfaceType)item->data(Qt::UserRole+1).toInt(),
-                item->data(Qt::DisplayRole).toString(),
+        ReDeviceInfo::InterfaceType _type = (ReDeviceInfo::InterfaceType)(name->data(Qt::UserRole+1).toInt());
+        onApply(_type,
+                name->data(Qt::DisplayRole).toString(),
                 column->data(Qt::DisplayRole).toString());
     });
-    connect(ui->checkBox, &QCheckBox::toggled, [&](bool checked){
+    connect(ui->pushButtonConnect, &QPushButton::clicked, this, [=]{
+        QTableWidgetItem* item = ui->tableWidget->currentItem();
+        if (item == nullptr)
+            return;
+        QTableWidgetItem* name = ui->tableWidget->item(item->row(), 0);
+        QTableWidgetItem* id = ui->tableWidget->item(item->row(), 1);
+        ReDeviceInfo::InterfaceType _type = (ReDeviceInfo::InterfaceType)(name->data(Qt::UserRole+1).toInt());
+        onApply(_type,
+                name->data(Qt::DisplayRole).toString(),
+                id->data(Qt::DisplayRole).toString());
+    });
+    connect(ui->checkBox, &QCheckBox::toggled, this, [=](bool checked){
         QString path = Settings::setIniFile();
         QSettings set(path, QSettings::IniFormat);
         set.beginGroup("Connection");
         set.setValue("same", checked);
         set.endGroup();
     });
-    connect(ui->pushButtonScan, &QPushButton::clicked, [&](){
+    connect(ui->pushButtonScan, &QPushButton::clicked, this, [=](){
         onScan(type());
     });
-    connect(ui->pushButtonConnect, &QPushButton::clicked, [&]{
-        QTableWidgetItem* item = ui->tableWidget->currentItem();
-        if (item == nullptr)
-            return;
-        QTableWidgetItem* column = ui->tableWidget->item(item->row(), 1);
-        onApply((ReDeviceInfo::InterfaceType)item->data(Qt::UserRole+1).toInt(),
-                item->data(Qt::DisplayRole).toString(),
-                column->data(Qt::DisplayRole).toString());
-    });
-    connect(ui->pushButtonCancel, &QPushButton::clicked, [&]{
+    connect(ui->pushButtonCancel, &QPushButton::clicked, this, [=]() {
         this->reject();
     });
-    onScan(_type);
+    if (!silent)
+        onScan(type());
 }
 
 SelectDeviceDialog::~SelectDeviceDialog()
@@ -97,25 +116,29 @@ void SelectDeviceDialog::changeEvent(QEvent *e)
 void SelectDeviceDialog::onApply(ReDeviceInfo::InterfaceType type,
                                  QString name, QString port_or_serial)
 {
-    qDebug() << "SelectDeviceDialog::onApply" << (int)type << name;
+    int _type = (int)type;
+    qDebug() << "SelectDeviceDialog::onApply" << (int)type << name << port_or_serial;
     AnalyzerParameters* param=nullptr;
-    if (type == ReDeviceInfo::HID) {
+    if (type == (int)ReDeviceInfo::HID) {
         int prefix = AnalyzerParameters::prefixFromSerial(port_or_serial);
         param = AnalyzerParameters::byPrefix(prefix);
         if (prefix == 0 || param == nullptr) {
             QMessageBox::warning(this, tr("Select deice"), tr("Serial number does not match the type of device"));
             return;
         }
-    } else if (type == ReDeviceInfo::Serial || type == ReDeviceInfo::NANO) {
+    } else if (type == (int)ReDeviceInfo::NANO) {
         param = AnalyzerParameters::byName(name);
-    } else if (type == ReDeviceInfo::BLE) {
-        // TODO
+    } else if (type == (int)ReDeviceInfo::Serial) {
+        //name = "COMPORT";
+        param = AnalyzerParameters::byName(name);
+    } else if (type == (int)ReDeviceInfo::BLE) {
+        param = AnalyzerParameters::byName(name);
     }
     if (param == nullptr)
         return;
     SelectionParameters::selected.name = param->name();
     SelectionParameters::selected.type = type;
-    SelectionParameters::selected.port = port_or_serial;
+    SelectionParameters::selected.id = port_or_serial;
     SelectionParameters::selected.modelIndex = param->index();
 
     AnalyzerParameters::setCurrent(param);
@@ -126,6 +149,7 @@ void SelectDeviceDialog::onApply(ReDeviceInfo::InterfaceType type,
     set.setValue("same", ui->checkBox->isChecked());
     set.setValue("type", SelectionParameters::selected.type);
     set.setValue("name", SelectionParameters::selected.name);
+    set.setValue("id", SelectionParameters::selected.id);
     set.endGroup();
 
     QDialog::accept();
@@ -133,8 +157,9 @@ void SelectDeviceDialog::onApply(ReDeviceInfo::InterfaceType type,
 
 extern void showPortInfo(const QSerialPortInfo& info);
 
-void SelectDeviceDialog::onScan(int type)
+void SelectDeviceDialog::onScan(ReDeviceInfo::InterfaceType type)
 {
+    reset();
     ui->tableWidget->clear();
     ui->tableWidget->setColumnCount(2);;
     ui->tableWidget->setHorizontalHeaderItem(0,  new QTableWidgetItem(tr("Device name")));
@@ -148,13 +173,6 @@ void SelectDeviceDialog::onScan(int type)
         NanovnaAnalyzer::detectPorts();
         int bluetooth_rows = 6;
         int rows = list.size() + NanovnaAnalyzer::portsCount() + bluetooth_rows;
-
-// TODO
-//        if (rows == 0) {
-//            list.append(ReDeviceInfo(ReDeviceInfo::Serial, "AA-30 ZERO", "AA-30 ZERO"));
-//        }
-// TODO
-
         ui->tableWidget->setRowCount(rows);
         int row = 0;
         foreach (const ReDeviceInfo &info, list)
@@ -194,11 +212,44 @@ void SelectDeviceDialog::onScan(int type)
             ui->tableWidget->setItem(row, 1, item);
             row++;
         }
+        ui->pushButtonConnect->setEnabled(row != 0);
+        ui->pushButtonScan->setEnabled(true);
     }
         break;
-    case ReDeviceInfo::BLE:
+    case ReDeviceInfo::BLE:    
+        ui->pushButtonConnect->setEnabled(false);
+        ui->pushButtonScan->setEnabled(false);
+        ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        m_analyzer = new BleAnalyzer();
+        ((BleAnalyzer*)m_analyzer)->searchAnalyzer();
+        ui->tableWidget->horizontalHeaderItem(0)->setText(tr("Name"));
         ui->tableWidget->horizontalHeaderItem(1)->setText(tr("Address"));
-        ui->tableWidget->setRowCount(0);
+        ui->tableWidget->setRowCount(10);
+        connect((BleAnalyzer*)m_analyzer, &BleAnalyzer::devicesChanged, this, [=](BleDeviceInfo* info){
+            BleAnalyzer* analyzer = (BleAnalyzer*)m_analyzer;
+            auto dev = analyzer->devices();
+            int row = dev.size()-1;
+            QString name = info->getName();
+            QTableWidgetItem* item = new QTableWidgetItem(name);
+            item->setData(Qt::UserRole+1, (int)ReDeviceInfo::BLE);
+            ui->tableWidget->setItem(row, 0, item);
+            QString addr = info->getAddress().trimmed();
+            item = new QTableWidgetItem(addr);
+            ui->tableWidget->setItem(row, 1, item);
+            //qDebug() << row << name << addr;
+        });
+        connect((BleAnalyzer*)m_analyzer, &BleAnalyzer::scanningChanged, this, [=](int state) {
+            if (state == 0) {
+                if (m_analyzer != nullptr) {
+                    BleAnalyzer* analyzer = (BleAnalyzer*)m_analyzer;
+                    auto dev = analyzer->devices();
+                    if (dev.size() != 0) {
+                        ui->pushButtonConnect->setEnabled(true);
+                    }
+                }
+                ui->pushButtonScan->setEnabled(true);
+            }
+        });
         break;
     default:
     {
@@ -218,15 +269,51 @@ void SelectDeviceDialog::onScan(int type)
             ui->tableWidget->setItem(row, 1, item);
             row++;
         }
+        ui->pushButtonConnect->setEnabled(row != 0);
+        ui->pushButtonScan->setEnabled(true);
     }
         break;
     }
     ui->tableWidget->setCurrentIndex(ui->tableWidget->model()->index(0, 0));
 }
 
-int SelectDeviceDialog::type()
+QString SelectDeviceDialog::scanSilent(QString& device_name)
 {
-    int type = ReDeviceInfo::HID;
+    QString name = device_name;
+    QString address;
+    if (m_analyzer == nullptr)
+        m_analyzer = new BleAnalyzer();
+    m_foundBle = false;
+    ((BleAnalyzer*)m_analyzer)->searchAnalyzer();
+    connect((BleAnalyzer*)m_analyzer, &BleAnalyzer::devicesChanged, this, [=](BleDeviceInfo* info) {
+        if (info != nullptr)
+            qDebug() << "BleAnalyzer::devicesChanged" << info->getName() << info->getAddress();
+        else
+            qDebug() << "BleAnalyzer::devicesChanged NULL";
+    });
+    connect((BleAnalyzer*)m_analyzer, &BleAnalyzer::scanningChanged, this, [=, &address](int state) {
+        if (state == 0) {
+            BleAnalyzer* analyzer = (BleAnalyzer*)m_analyzer;
+            auto devices = analyzer->devices();
+            for (auto dev : devices) {
+                if (dev->getName() == name) {
+                    m_foundBle = true;
+                    address = dev->getAddress();
+                    qDebug() << "scanSilent 0" << address << analyzer->devices().size();
+                    break;
+                }
+            }
+        }
+        qDebug() << "scanSilent 1" << address << ((BleAnalyzer*)m_analyzer)->devices().size();
+        return address;
+    });
+    qDebug() << "scanSilent 0" << address << ((BleAnalyzer*)m_analyzer)->devices().size();
+    return address;
+}
+
+ReDeviceInfo::InterfaceType SelectDeviceDialog::type()
+{
+    ReDeviceInfo::InterfaceType type = ReDeviceInfo::HID;
     if (ui->radioButtonCOM->isChecked())
         type = ReDeviceInfo::Serial;
     else if (ui->radioButtonBLE->isChecked())
@@ -246,6 +333,7 @@ bool SelectDeviceDialog::connectSilent(int _type, QString _device_name)
     AnalyzerParameters* analyzer = AnalyzerParameters::byName(_device_name);
     if (analyzer == nullptr)
         return false;
+
     switch(_type) {
     case ReDeviceInfo::Serial:
     {
@@ -268,9 +356,17 @@ bool SelectDeviceDialog::connectSilent(int _type, QString _device_name)
         }
     }
         break;
-    case ReDeviceInfo::BLE:
-//        ui->tableWidget->horizontalHeaderItem(1)->setText(tr("Address"));
-//        ui->tableWidget->setRowCount(0);
+    case ReDeviceInfo::BLE: {
+        QString address;
+        int attempt = 3;
+        while (!m_foundBle) {
+            address = scanSilent(_device_name);
+            if (--attempt == 0)
+                break;
+            QThread::msleep(500);
+        }
+        port_or_serial = address;
+    }
         break;
     case ReDeviceInfo::HID:
     {
@@ -281,7 +377,6 @@ bool SelectDeviceDialog::connectSilent(int _type, QString _device_name)
                 port_or_serial = info.serial().trimmed();
                 break;
             }
-
         }
     }
         break;
@@ -289,11 +384,20 @@ bool SelectDeviceDialog::connectSilent(int _type, QString _device_name)
     if (!port_or_serial.isEmpty()) {
         SelectionParameters::selected.name = _device_name;
         SelectionParameters::selected.type = (ReDeviceInfo::InterfaceType)_type;
-        SelectionParameters::selected.port = port_or_serial;
+        SelectionParameters::selected.id = port_or_serial;
         SelectionParameters::selected.modelIndex = analyzer->index();
 
         AnalyzerParameters::setCurrent(analyzer);
         return true;
     }
     return false;
+}
+
+void SelectDeviceDialog::reset()
+{
+    if (m_analyzer != nullptr) {
+      BaseAnalyzer* tmp = m_analyzer;
+      m_analyzer = nullptr;
+      tmp->deleteLater();
+    }
 }

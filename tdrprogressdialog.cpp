@@ -2,7 +2,7 @@
 #include "ui_tdrprogressdialog.h"
 #include "settings.h"
 
-TDRProgressDialog::TDRProgressDialog(Analyzer* _analyzer, QWidget *parent)
+TDRProgressDialog::TDRProgressDialog(AnalyzerPro* _analyzer, QWidget *parent)
     : QDialog(parent), m_analyzer(_analyzer),
     ui(new Ui::TDRProgressDialog)
 {
@@ -38,7 +38,7 @@ TDRProgressDialog::TDRProgressDialog(Analyzer* _analyzer, QWidget *parent)
     ui->spinBoxCable->setValue(cable);
 
     connect(ui->startButton, &QPushButton::clicked, this, &TDRProgressDialog::on_startButton);
-    connect(this, &TDRProgressDialog::startTDR, m_analyzer, &Analyzer::on_measure);
+    connect(this, &TDRProgressDialog::startTDR, m_analyzer, &AnalyzerPro::on_measure);
     connect(ui->stopButton, &QPushButton::clicked, this, &TDRProgressDialog::canceled);
     connect(ui->sliderCable, &QSlider::valueChanged, this, [=] (int value){
         ui->spinBoxCable->setValue(value);

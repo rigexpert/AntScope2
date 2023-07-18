@@ -2,7 +2,7 @@
 #define TDRPROGRESSDIALOG_H
 
 #include <QDialog>
-#include "analyzer.h"
+#include "analyzerpro.h"
 
 
 #ifndef FEETINMETER
@@ -22,13 +22,13 @@ class TDRProgressDialog : public QDialog
 {
     Q_OBJECT
 
-    Analyzer* m_analyzer;
+    AnalyzerPro* m_analyzer;
     int m_iMaxValue = 1024;
     double m_cableVelFactor=1;
     bool m_measureSystemMetric = true;
 
 public:
-    explicit TDRProgressDialog(Analyzer* _analyzer, QWidget *parent = 0);
+    explicit TDRProgressDialog(AnalyzerPro* _analyzer, QWidget *parent = 0);
     ~TDRProgressDialog();
 
     void setStatusInfo(QString _strInfo);

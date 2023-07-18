@@ -1,7 +1,7 @@
 #include "popup.h"
 #include <QPainter>
 #include <QApplication>
-#include <QDesktopWidget>
+//#include <QDesktopWidget>
 #include <QDebug>
 #include <mainwindow.h>
 
@@ -62,8 +62,12 @@ void PopUp::setName(QString name)
         m_mainBiasY = m_settings->value("mainBiasY",541).toInt();
     }
 
-    int widthDesc = qApp->desktop()->width();
-    int heightDesc = qApp->desktop()->height();
+//    QWidget* widget = parentWidget() != nullptr ? parentWidget() : qApp->activeWindow();
+//    QPoint pt = widget->mapToGlobal(widget->rect().center());
+//    QScreen* pScreen = QGuiApplication::screenAt(pt);
+//    QRect availableScreenSize = pScreen->availableGeometry();
+    int widthDesc = MainWindow::m_mainWindow->width();
+    int heightDesc = MainWindow::m_mainWindow->height();
     if((m_x > widthDesc - width()) || (m_x < 0))
     {
         m_x = 500;

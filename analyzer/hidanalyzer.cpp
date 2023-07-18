@@ -44,7 +44,7 @@ void hidAnalyzer::startResresh()
         QObject::connect(m_watcherRefresh, SIGNAL(finished()), this, SLOT(refreshReady()));
     }
 
-    *m_futureRefresh = QtConcurrent::run(this, &hidAnalyzer::refreshThreadStarted);
+    *m_futureRefresh = QtConcurrent::run(&hidAnalyzer::refreshThreadStarted, this);
     m_watcherRefresh->setFuture(*m_futureRefresh);
 }
 
@@ -164,8 +164,8 @@ bool hidAnalyzer::searchAnalyzer(bool arrival)
         cur_dev = devs;
         while (cur_dev != nullptr) {
             if (QString::fromWCharArray(cur_dev->serial_number) == m_serialNumber) {
-                if (cur_dev->vendor_id == RE_VID && cur_dev->product_id == RE_PID ||
-                    cur_dev->vendor_id == RE_BOOT_VID && cur_dev->product_id == RE_BOOT_PID ) {
+                if (((cur_dev->vendor_id == RE_VID) && (cur_dev->product_id == RE_PID)) ||
+                    ((cur_dev->vendor_id == RE_BOOT_VID) && (cur_dev->product_id == RE_BOOT_PID)) ) {
                     m_mutexSearch.unlock();
                     return false;
                 }
@@ -297,9 +297,9 @@ void hidAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber)
             band = 0;
             center = fqFrom;
         }
-        FQ  = "FQ"  + QString::number(center) + 0x0D;
-        SW  = "SW"  + QString::number(band) + 0x0D;
-        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + 0x0D;
+        FQ  = "FQ"  + QString::number(center) + QChar(0x0D);
+        SW  = "SW"  + QString::number(band) + QChar(0x0D);
+        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + QChar(0x0D);
         m_ok = false;
         sendData(FQ);
         m_sendTimer->start(10);
@@ -381,7 +381,7 @@ void hidAnalyzer::timeoutChart()
         while(stringList.length() >= 3)
         {            
             bool ok;
-            rawData data;
+            RawData data;
 
             str = stringList.takeFirst();
             data.fq = str.toDouble(&ok);
@@ -418,7 +418,7 @@ void hidAnalyzer::timeoutChartUser()
             return;
         }
 
-        rawData rdata;
+        RawData rdata;
         UserData udata;
         bool ok;
         QString field = fields.takeFirst();

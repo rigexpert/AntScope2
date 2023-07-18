@@ -49,10 +49,6 @@ kernel & user mode
 // FTD2XX_API functions as being imported from a DLL, whereas this DLL
 // sees symbols defined with this macro as being exported.
 
-#ifdef Q_OS_WIN
-#include <Windows.h>
-#endif
-
 #ifdef FTD2XX_EXPORTS
 #define FTD2XX_API __declspec(dllexport)
 #else

@@ -104,7 +104,7 @@ bool Calibration::getCalibrationEnabled(void)
     return m_OSLCalibrationEnabled;
 }
 
-void Calibration::setAnalyzer(Analyzer *analyzer)
+void Calibration::setAnalyzer(AnalyzerPro *analyzer)
 {
     m_analyzer = analyzer;
 }
@@ -144,7 +144,7 @@ QString Calibration::getLoadFileName()
     return list.last();
 }
 
-void Calibration::on_newData(rawData _rawData)
+void Calibration::on_newData(RawData _rawData)
 {
     double R = _rawData.r;
     double X = _rawData.x;

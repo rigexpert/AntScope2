@@ -90,12 +90,12 @@ bool ComAnalyzer::openComPort(const QString& portName, quint32 portSpeed)
     bool result = m_comPort->open(QSerialPort::ReadWrite);
     if (!result) {
         QString str = m_comPort->errorString();
-        qDebug() << "ComAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
+        //qDebug() << "ComAnalyzer::openComPort: " << portName << " " << str << " [" << m_comPort->error() << "]";
         // TODO show dialog
         // ...
     }
     else {
-        qDebug() << "ComAnalyzer::openComPort: " << portName << (m_comPort ? " opened" : "NOT opened");
+        // << "ComAnalyzer::openComPort: " << portName << (m_comPort ? " opened" : "NOT opened");
         connect(m_comPort, SIGNAL(readyRead()), this, SLOT(dataArrived()));
     }
     return result;
@@ -123,7 +123,7 @@ void ComAnalyzer::dataArrived()
     QByteArray ar = m_comPort->readAll();
     m_incomingBuffer += ar;
 
-    qDebug() << "com dataArrived: " << m_lastReadTimeMS << QString::fromLatin1(ar);
+    //qDebug() << "com dataArrived: " << m_lastReadTimeMS << QString::fromLatin1(ar);
 
     int count = parse(m_incomingBuffer);
     m_incomingBuffer.remove(0, count);
@@ -131,55 +131,12 @@ void ComAnalyzer::dataArrived()
 
 qint32 ComAnalyzer::parse (QByteArray arr)
 {
+    QString rrr = QString(arr);
+    //qDebug() << "ComAnalyzer::parse " << rrr;
+
     quint32 retVal = 0;
-#ifndef NEW_ANALYZER
-    QString model = CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
-#else
     QString model = AnalyzerParameters::getName();
-#endif
-    if (getParseState() == WAIT_LICENSE_LIST)
-    {
-        int pos = arr.indexOf("\r\n");
-        QString result = arr.left(pos);
-        if (result == "OK") {
-            setParseState(WAIT_NO);
-            return 4;
-        }
-        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
-        if (analyzer != nullptr) {
-            emit analyzer->licensesList(result);
-        }
-        return result.length()+2;
-    } else if (getParseState() == WAIT_LICENSE_REQUEST)
-    {
-        int pos = arr.indexOf("\r\n");
-        QString result = arr.left(pos);
-        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
-        if (analyzer != nullptr) {
-            emit analyzer->licenseRequest(result);
-        }
-        setParseState(WAIT_NO);
-        return result.length()+2;
-    } else if (getParseState() == WAIT_LICENSE_APPLY1)
-    {
-        setParseState(WAIT_LICENSE_APPLY2);
-        QString cmd = "ALICS-" + m_license.mid(m_license.length()/2);
-        sendData(cmd);
-        retVal += arr.length();
-        return retVal;
-    } else if (getParseState() == WAIT_LICENSE_APPLY2)
-    {
-        setParseState(WAIT_NO);
-        int pos = arr.indexOf("\r\n");
-        QString result = arr.left(pos);
-        Analyzer* analyzer = qobject_cast<Analyzer*>(parent());
-        if (analyzer != nullptr) {
-            m_license.clear();
-            emit analyzer->licenseApplyResult(result);
-        }
-        retVal += arr.length();
-        return retVal;
-    } else if(m_parseState == WAIT_SCREENSHOT_DATA)
+    if(m_parseState == WAIT_SCREENSHOT_DATA)
     {
         int pos = arr.indexOf("screencomp: ");
         if(pos == 0 || pos == 2)
@@ -316,9 +273,14 @@ qint32 ComAnalyzer::parse (QByteArray arr)
                 AnalyzerParameters* param = AnalyzerParameters::current();
                 if (param != nullptr) {
                     QString analyzer = param->name();
-                    int namePos = str.indexOf(analyzer);
+                    //int namePos = str.indexOf(analyzer);
+                    int namePos = analyzer=="COMPORT" ? str.indexOf("AA-") : str.indexOf(analyzer);
                     if(namePos >= 0 )
                     {
+                        int name_end = str.indexOf(' ');
+                        QString name = str.mid(namePos, name_end - namePos);
+                        AnalyzerParameters* param = AnalyzerParameters::byName(name);
+                        AnalyzerParameters::setCurrent(param);
                         if(m_analyzerModel != 0)
                         {
                             m_analyzerPresent = true;
@@ -360,7 +322,7 @@ qint32 ComAnalyzer::parse (QByteArray arr)
                                     g_bAA55modeNewProtocol = true;
                                 }
                             }
-                            emit analyzerFound (m_analyzerModel);
+                            emit analyzerFound (param->index());
                             //QTimer::singleShot(1000, this, SLOT(checkAnalyzer()));
                         }
                     }
@@ -436,7 +398,7 @@ quint32 ComAnalyzer::compareStrings (QString arr, QString arr1)
     {
         if(result < arr1.length())
         {
-            if(arr.at(result) == 10 || arr.at(result) == 13)
+            if(arr.at(result) == QChar(10) || arr.at(result) == QChar(13))
             {
                 arr.remove(result,1);
             }else if(arr.at(result) != arr1.at(result))
@@ -558,12 +520,20 @@ qDebug() << "ComAnalyzer::searchAnalyzer() 0";
     }
 }
 #endif
-qint64 ComAnalyzer::sendData(QString data)
+qint64 ComAnalyzer::sendData(const QByteArray& data)
 {
-    qDebug() << "ComAnalyzer::sendData> " << data;
+    //qDebug() << "ComAnalyzer::sendData> " << data;
+    qint64 res = m_comPort->write(data);
+    return res;
+}
+
+qint64 ComAnalyzer::sendCommand(const QString& data)
+{
+    //qDebug() << "comAnalyzer::sendData> " << data;
     qint64 res = m_comPort->write(data.toLocal8Bit());
     return res;
 }
+
 /*
 void ComAnalyzer::startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx)
 {
@@ -645,7 +615,6 @@ void ComAnalyzer::stopMeasure()
 */
 void ComAnalyzer::timeoutChart()
 {
-    quint32 len;
     QStringList stringList;
     QString str;
 
@@ -669,7 +638,7 @@ void ComAnalyzer::timeoutChart()
         if (str.size() != 14) {
             QString err = QString("z%1\r\n").arg(AA55BTPacket::dot());
             AA55BTPacket::setWait(true);
-            sendData(err);
+            sendData(err.toLocal8Bit());
             return;
         }
 
@@ -678,7 +647,7 @@ void ComAnalyzer::timeoutChart()
         if (!packet.valid()) {
             QString err = QString("z%1\r\n").arg(packet.dot());
             packet.setWait(true);
-            sendData(err);
+            sendData(err.toLocal8Bit());
         } else {
             if (packet.waitForLost() && packet.id() != packet.dot()) {
                 if (packet.disconnect()) {
@@ -687,11 +656,11 @@ void ComAnalyzer::timeoutChart()
                 }
                 if (packet.repeat()) {
                     QString err = QString("z%1\r\n").arg(packet.dot());
-                    sendData(err);
+                    sendData(err.toLocal8Bit());
                 }
                 return; // skip queued packets
             }
-          rawData data;
+          RawData data;
           data.fq = packet.fq()/1000000.0;
           data.r = packet.r();
           data.x = packet.x();
@@ -710,7 +679,7 @@ void ComAnalyzer::timeoutChart()
     for (int idx=0; idx<count; idx+=3)
     {
         bool ok=true;
-        rawData data;
+        RawData data;
         data.fq = stringList[idx+0].toDouble(&ok);
         if (!ok)
             qDebug() << "***** ERROR: " << stringList[idx+0];
@@ -740,7 +709,7 @@ void ComAnalyzer::timeoutChartUser()
             return;
         }
 
-        rawData rdata;
+        RawData rdata;
         UserData udata;
         bool ok;
         QString field = fields.takeFirst();
@@ -810,7 +779,7 @@ void ComAnalyzer::makeScreenshot()
     if(model == "AA-230 ZOOM" || model == "AA-55 ZOOM")
     {
         QString str = "screenshot\r";
-        sendData(str);
+        sendData(str.toLocal8Bit());
     }
 }
 /*
@@ -1138,14 +1107,6 @@ void ComAnalyzer::versionRequest()
 
 }
 
-void ComAnalyzer::applyLicense(QString _license)
-{
-    m_license = _license;
-    setParseState(WAIT_LICENSE_APPLY1);
-    QString cmd = "ALICF-" + _license.left(_license.length()/2) + "\r\n";
-    sendData(cmd);
-}
-
 void ComAnalyzer::sendPing()
 {
     m_bWaitingPing = true;
@@ -1191,7 +1152,7 @@ bool ComAnalyzer::connectAnalyzer()
     if (analyzer == nullptr)
         return false;
 
-    QString _serialPortName = SelectionParameters::selected.port;
+    QString _serialPortName = SelectionParameters::selected.id;
 
     // TODO
     //_serialPortName = "COM4";
@@ -1218,7 +1179,7 @@ bool ComAnalyzer::connectAnalyzer()
         versionRequest();
         m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
         m_pingTimer->start(1000);
-        qDebug() << "ComAnalyzer::connectAnalyzer " << name << "opened " << m_serialPortName;
+        //qDebug() << "ComAnalyzer::connectAnalyzer " << name << "opened " << m_serialPortName;
     }
     return false;
 }
@@ -1227,3 +1188,9 @@ void ComAnalyzer::disconnectAnalyzer()
 {
 
 }
+
+bool ComAnalyzer::refreshConnection()
+{
+    return connectAnalyzer();
+}
+

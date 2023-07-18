@@ -105,13 +105,8 @@ qint32 NanovnaAnalyzer::parse (QByteArray arr)
                 if (data.contains("Board:")) {
                     QString board = data.replace("Board:", "");
                     AnalyzerParameters* param = AnalyzerParameters::byName("NanoVNA");
-#ifdef NEW_CONNECTION
                     if (param != nullptr)
                         emit analyzerFound(param->index());
-#else
-                    if (param != nullptr)
-                        emit analyzerFound(param->name());
-#endif
                 }
             }
         } else if (getParseState() == WAIT_NANO_SWEEP) {
@@ -146,7 +141,7 @@ qint32 NanovnaAnalyzer::parse (QByteArray arr)
                         emit completeMeasurement();
                     } else {
                       QString s1p = m_listFQ.takeFirst() + " " + data;
-                      rawData raw = toRawData(s1p);
+                      RawData raw = toRawData(s1p);
                       if (raw.fq > 0) {
                           emit newData(raw);
                       } else {
@@ -315,6 +310,7 @@ void NanovnaAnalyzer::on_measurementComplete()
 
 void NanovnaAnalyzer::on_changedSerialPort(QString portName, int analyzerIndex)
 {
+    Q_UNUSED(analyzerIndex)
     m_serialPortName = portName;
     closeComPort();
     //m_analyzerModel = 0;
@@ -350,9 +346,9 @@ void NanovnaAnalyzer::detectPorts()
     }
 }
 
-rawData NanovnaAnalyzer::toRawData(QString& s1p)
+RawData NanovnaAnalyzer::toRawData(QString& s1p)
 {
-    rawData data;
+    RawData data;
     data.fq = -1;
     data.r = 0;
     data.x = 0;
@@ -389,7 +385,7 @@ bool NanovnaAnalyzer::connectAnalyzer()
     if (analyzer == nullptr)
         return false;
 
-    QString _serialPortName = SelectionParameters::selected.port;
+    QString _serialPortName = SelectionParameters::selected.id;
     bool connected = openComPort(_serialPortName);
 //    connect(this, &NanovnaAnalyzer::completeMeasurement, this, [=](){
 //       emit measurementCompleteNano();
@@ -402,4 +398,9 @@ bool NanovnaAnalyzer::connectAnalyzer()
 void NanovnaAnalyzer::disconnectAnalyzer()
 {
 
+}
+
+bool NanovnaAnalyzer::refreshConnection()
+{
+    return connectAnalyzer();
 }

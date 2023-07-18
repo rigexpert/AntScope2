@@ -36,10 +36,11 @@ public:
     bool openComPort(const QString& portName, quint32 portSpeed);
     void closeComPort();
 
-    qint64 sendData(QString data);
-    void applyLicense(QString _license);
+    virtual qint64 sendData(const QByteArray& data);
+    virtual qint64 sendCommand(const QString& data);
 
     void setTakeData(bool _state) { m_isTakeData = _state; }
+    virtual bool refreshConnection();
     virtual bool connectAnalyzer();
     virtual void disconnectAnalyzer();
 

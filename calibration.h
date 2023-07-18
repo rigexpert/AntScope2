@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <analyzer/analyzerparameters.h>
-#include <analyzer/analyzer.h>
+#include <analyzer/analyzerpro.h>
 #include <QSettings>
 //#include <shlobj.h>
 
@@ -329,7 +329,7 @@ public:
     void start(bool force=false);
     bool getCalibrationPerformed(void);
     bool getCalibrationEnabled(void);
-    void setAnalyzer(Analyzer *analyzer);//, Measurements *measurements);
+    void setAnalyzer(AnalyzerPro *analyzer);//, Measurements *measurements);
     bool isCalibrationPerformed(){return m_OSLCalibrationPerformed;}
     bool interpolateS(double fq, double &reO, double &imO, double &reS, double &imS, double &reL, double &imL);
     void applyCalibration(double MMR, double MMI, // Measured
@@ -361,7 +361,7 @@ private:
     bool m_OSLCalibrationEnabled;
     bool m_OSLCalibrationPerformed;
 
-    Analyzer *m_analyzer;
+    AnalyzerPro *m_analyzer;
     QSettings * m_settings;
 
     QString m_openCalibFilePath;
@@ -378,7 +378,7 @@ signals:
     void setCalibrationMode(bool);
 
 public slots:
-    void on_newData(rawData _rawData);
+    void on_newData(RawData _rawData);
     void on_startCalibration();
     void on_startCalibrationOpen();
     void on_startCalibrationShort();

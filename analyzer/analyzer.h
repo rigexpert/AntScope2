@@ -136,18 +136,18 @@ private:
 signals:
     void analyzerFound(QString);
     void analyzerDisconnected();
-    void newData (rawData);
-    void newUserData (rawData, UserData);
+    void newData (RawData);
+    void newUserData (RawData, UserData);
     void newUserDataHeader (QStringList);
-    void newAnalyzerData (rawData);
+    void newAnalyzerData (RawData);
     void newMeasurement(QString);
     void newMeasurement(QString, qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void continueMeasurement(qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void measurementComplete();
     void measurementCompleteNano();
-    void analyzerDataStringArrived(QString);
-    void analyzerScreenshotDataArrived(QByteArray);
-    void screenshotComplete(void);
+        void analyzerDataStringArrived(QString);
+        void analyzerScreenshotDataArrived(QByteArray);
+        void screenshotComplete(void);
     void updatePercentChanged(qint32);
     void aa30bootFound();
     void aa30updateComplete();
@@ -171,8 +171,8 @@ public slots:
     void on_measureUser (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void on_measureContinuous(qint64 fqFrom, qint64 fqTo, qint32 dotsNumber);
     void on_measureOneFq(QWidget* parent, qint64 fqFrom, qint32 dotsNumber);
-    void on_newData(rawData _rawData);
-    void on_newUserData(rawData,UserData);
+    void on_newData(RawData _rawData);
+    void on_newUserData(RawData,UserData);
     void on_newUserDataHeader(QStringList);
     void on_analyzerDataStringArrived(QString str);
     void on_stopMeasuring();

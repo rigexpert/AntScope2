@@ -1,10 +1,8 @@
 #include "ftdiinfo.h"
-
+#include <QApplication>
+#include <QDir>
 
 #ifdef Q_OS_WIN
- #include <Windows.h>
- #include <ftdi/ftd2xx.h>
-
  QList<FtdiInfo::Info> FtdiInfo::m_lastInfo;
  QList<QSerialPortInfo> FtdiInfo::m_lastPorts;
 #endif
@@ -28,7 +26,7 @@ QList <FtdiInfo::Info> FtdiInfo::info()
 {
     FT_STATUS status;
     DWORD num = 0;
-    FT_DEVICE_LIST_INFO_NODE *nodes = nullptr;
+    FT_DEVICE_LIST_INFO_NODE *nodes = NULL;
     QList<QSerialPortInfo> info;
     QString desc;
     QString number;
@@ -36,31 +34,57 @@ QList <FtdiInfo::Info> FtdiInfo::info()
     LONG serialNum;
     QList<FtdiInfo::Info> ftdiInfo;
     FtdiInfo::Info item;
-//    bool state;
+    bool state;
 
     info = QSerialPortInfo::availablePorts();
-//    state = equalLists(info, m_lastPorts);
+    state = equalLists(info, m_lastPorts);
 
-//    if (state && !m_lastInfo.isEmpty()) {
-//        return m_lastInfo;
-//    }
+    if (state && !m_lastInfo.isEmpty()) {
+        return m_lastInfo;
+    }
 
-    status = FT_CreateDeviceInfoList(&num);
+    QDir dir = qApp->applicationDirPath();
+    QString libName = dir.absoluteFilePath("ftd2xx.dll");
+    QLibrary lib(libName);
+    bool ret = lib.load();
+    qDebug() << lib.errorString();
+    if (!ret) {
+        return m_lastInfo;
+    }
 
-//    if (status != FT_OK || num == 0)
-//    {
-//        return QList<FtdiInfo::Info>();
-//    }
+    fnFT_CreateDeviceInfoList ftCreateDeviceInfoList = (fnFT_CreateDeviceInfoList)lib.resolve("FT_CreateDeviceInfoList");
+    fnFT_GetDeviceInfoList ftGetDeviceInfoList = (fnFT_GetDeviceInfoList)lib.resolve("FT_GetDeviceInfoList");
+    fnFT_Open ftOpen = (fnFT_Open)lib.resolve("FT_Open");
+    fnFT_GetComPortNumber ftGetComPortNumber = (fnFT_GetComPortNumber)lib.resolve("FT_GetComPortNumber");
+    fnFT_Close ftClose = (fnFT_Close)lib.resolve("FT_Close");
+
+    if ( ftCreateDeviceInfoList == nullptr ||
+            ftGetDeviceInfoList == nullptr ||
+            ftOpen == nullptr ||
+            ftGetComPortNumber == nullptr ||
+            ftClose == nullptr )
+    {
+        return QList<FtdiInfo::Info>();
+    }
+
+    //status = FT_CreateDeviceInfoList(&num);
+    status = ftCreateDeviceInfoList(&num);
+
+    if (status != FT_OK || num == 0)
+    {
+        return QList<FtdiInfo::Info>();
+    }
 
     nodes = new FT_DEVICE_LIST_INFO_NODE [num];
 
-    status = FT_GetDeviceInfoList(nodes, &num);
+    //status = FT_GetDeviceInfoList(nodes, &num);
+    status = ftGetDeviceInfoList(nodes, &num);
 
-//    if (status != FT_OK)
-//    {
-//        delete [] nodes;
-//        return QList<FtdiInfo::Info>();
-//    }
+    if (status != FT_OK)
+    {
+        delete [] nodes;
+        return QList<FtdiInfo::Info>();
+    }
 
     for(unsigned int i = 0; i < num; ++i)
     {
@@ -71,9 +95,11 @@ QList <FtdiInfo::Info> FtdiInfo::info()
         {
             number.clear();
 
-            if (FT_Open(i, &handle) == FT_OK)
+            //if (FT_Open(i, &handle) == FT_OK)
+            if (ftOpen(i, &handle) == FT_OK)
             {
-                status = FT_GetComPortNumber(handle, &serialNum);
+                //status = FT_GetComPortNumber(handle, &serialNum);
+                status = ftGetComPortNumber(handle, &serialNum);
 
                 if (status == FT_OK)
                 {
@@ -85,7 +111,8 @@ QList <FtdiInfo::Info> FtdiInfo::info()
                     qWarning() << Q_FUNC_INFO << "Err FT_GetComPortNumber";
                 }
 
-                FT_Close(handle);
+                //FT_Close(handle);
+                ftClose(handle);
             }
 
             if (number.isEmpty())
@@ -135,7 +162,7 @@ bool FtdiInfo::equalLists(const QList<QSerialPortInfo> &a, const QList<QSerialPo
     return true;
 }
 
-#elif defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+#elif defined(Q_OS_MAC)
 QList <FtdiInfo::Info> FtdiInfo::info()
 {
     QList<QSerialPortInfo> infoList = QSerialPortInfo::availablePorts();

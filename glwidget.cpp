@@ -1,5 +1,5 @@
 #include "glwidget.h"
-#include <QGLFunctions>
+#include <QOpenGLFunctions>
 #include <QPainter>
 #include <QOpenGLTexture>
 #include <QTransform>

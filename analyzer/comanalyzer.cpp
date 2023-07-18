@@ -397,7 +397,7 @@ quint32 comAnalyzer::compareStrings (QString arr, QString arr1)
     {
         if(result < arr1.length())
         {
-            if(arr.at(result) == 10 || arr.at(result) == 13)
+            if(arr.at(result) == QChar(10) || arr.at(result) == QChar(13))
             {
                 arr.remove(result,1);
             }else if(arr.at(result) != arr1.at(result))
@@ -488,9 +488,9 @@ void comAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool 
             band = 0;
             center = fqFrom;
         }
-        FQ  = "FQ"  + QString::number(center) + 0x0D;
-        SW  = "SW"  + QString::number(band) + 0x0D;
-        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + 0x0D;
+        FQ  = "FQ"  + QString::number(center) + QChar(0x0D);
+        SW  = "SW"  + QString::number(band) + QChar(0x0D);
+        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + QChar(0x0D);
         m_ok = false;
 
         sendData(FQ);
@@ -575,7 +575,7 @@ void comAnalyzer::timeoutChart()
                 }
                 return; // skip queued packets
             }
-          rawData data;
+          RawData data;
           data.fq = packet.fq()/1000000.0;
           data.r = packet.r();
           data.x = packet.x();
@@ -597,7 +597,7 @@ void comAnalyzer::timeoutChart()
         for (int idx=0; idx<count; idx+=3)
         {
             bool ok=true;
-            rawData data;
+            RawData data;
             data.fq = stringList[idx+0].toDouble(&ok);
             if (!ok)
                 qDebug() << "***** ERROR: " << stringList[idx+0];
@@ -628,7 +628,7 @@ void comAnalyzer::timeoutChartUser()
             return;
         }
 
-        rawData rdata;
+        RawData rdata;
         UserData udata;
         bool ok;
         QString field = fields.takeFirst();

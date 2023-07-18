@@ -50,8 +50,12 @@ OneFqWidget::OneFqWidget(int _points, QWidget *parent) :
     m_mainBiasX = m_settings->value("mainBiasX",16).toInt();
     m_mainBiasY = m_settings->value("mainBiasY",541).toInt();
 
-    int widthDesc = qApp->desktop()->width();
-    int heightDesc = qApp->desktop()->height();
+//    QWidget* widget = parent != nullptr ? parent : qApp->activeWindow();
+//    QPoint pt = widget->mapToGlobal(widget->rect().center());
+//    QScreen* pScreen = QGuiApplication::screenAt(pt);
+//    QRect availableScreenSize = pScreen->availableGeometry();
+    int widthDesc = MainWindow::m_mainWindow->width();
+    int heightDesc = MainWindow::m_mainWindow->height();
     if((m_x > widthDesc - width()) || (m_x < 0))
     {
         m_x = 500;

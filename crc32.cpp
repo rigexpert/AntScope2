@@ -126,7 +126,7 @@ quint8 CRC32::crc8(const QByteArray& buf)
 {
     quint8 crc8_calculation_register = 0;
 
-    for(int i = 0; i < buf.length(); ++i)
+    for(int i = 0; i < buf.length()-1; ++i)
     {
         crc8_calculation_register = CRC8Table[crc8_calculation_register ^ (unsigned char)(buf.at(i))];
         crc8_calculation_register &= 0xFF;

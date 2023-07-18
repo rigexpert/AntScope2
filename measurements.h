@@ -84,11 +84,11 @@ public:
     double getZ0(void) const{ return m_Z0;}
     void setZ0(double _Z0);
 
-    int CalcTdr(QVector<rawData> *data);
+    int CalcTdr(QVector<RawData> *data);
     void FFT(float real[], float imag[], int length, int Inverse = 0);
-    int calcTdrDist(QVector<rawData> *data);
+    int calcTdrDist(QVector<RawData> *data);
 
-    int CalcTdr2(QVector <rawData> *data);
+    int CalcTdr2(QVector <RawData> *data);
     qint16 DTF_FindRadix2Length(qint16 length, int *log2N);
     void FFT2(double *Rdat, double *Idat, int N, int LogN, int Ft_Flag);
 
@@ -223,8 +223,8 @@ private:
 
     void NormRXtoSmithPoint(double Rnorm, double Xnorm, double &x, double &y);    
     void calcFarEnd(bool _incrementally=false);
-    rawData calcFarEnd(const rawData& data, int idx, bool refreshGraphs=true);
-    void prepareGraphs(rawData _rawData, GraphData& data, GraphData& calibData);
+    RawData calcFarEnd(const RawData& data, int idx, bool refreshGraphs=true);
+    void prepareGraphs(RawData _rawData, GraphData& data, GraphData& calibData);
     void restrictData(qreal _min, qreal _max, QCPData& _data);
     void redrawSWR(bool _incrementally);
     void redrawPhase(bool _incrementally);
@@ -233,7 +233,7 @@ private:
     void redrawRl(bool _incrementally);
     void redrawSmith(bool _incrementally);
     void redrawUser(bool _incrementally);
-    void exportData(QString _name, int _type, QVector<rawData>& vector, QString _description=QString());
+    void exportData(QString _name, int _type, QVector<RawData>& vector, QString _description=QString());
 
 signals:
     void calibrationChanged();
@@ -243,11 +243,11 @@ signals:
     void selectMeasurement(int row, int col);
 
 public slots:
-    void on_newAnalyzerData(rawData _rawData);
-    void on_newDataRedraw(rawData _rawData);
-    void on_newData(rawData _rawData, bool _redraw=false);
+    void on_newAnalyzerData(RawData _rawData);
+    void on_newDataRedraw(RawData _rawData);
+    void on_newData(RawData _rawData, bool _redraw=false);
     void on_newUserDataHeader(QStringList);
-    void on_newUserData(rawData, UserData);
+    void on_newUserData(RawData, UserData);
     void on_newMeasurement(QString name);
     void on_newMeasurement(QString name, qint64 from, qint64 to, qint32 dots);
     void on_newMeasurementOneFq(QWidget*, qint64 fq, qint32 dots);

@@ -19,51 +19,50 @@ public:
     virtual void closeComPort() {}
 
     virtual void setIsMeasuring (bool isMeasuring) {m_isMeasuring = isMeasuring;}
-    virtual bool isMeasuring (void) const { return m_isMeasuring;}
+    virtual bool isMeasuring (void) const { return m_isMeasuring; }
     virtual void setContinuos(bool continuos){m_isContinuos = continuos;}
     virtual bool getContinuos(void){ return m_isContinuos;}
     virtual void setAnalyzerModel (int model) {m_analyzerModel = model;}
     virtual int getAnalyzerModel (void) const { return m_analyzerModel;}
     virtual void setIsFRXMode(bool _mode=true) { m_isFRX = _mode;}
     virtual bool getIsFRXMode() { return m_isFRX; }
-    virtual qint64 sendData(QString data) { qDebug() << "BaseAnalyzer::sendData"; return 0; }
+    virtual qint64 sendData(const QByteArray& ) { return 0; }
+    virtual qint64 sendCommand(const QString& ) { return 0; }
     virtual void setParseState(int _state) { m_parseState=_state; } // analyzerparameters.h: enum parse{}
     virtual int getParseState() { return m_parseState; }
     virtual void applyLicense(QString _license) {}
     virtual void setTakeData(bool _state) { m_isTakeData = _state; }
+    virtual bool refreshConnection() { return false; }
     virtual bool connectAnalyzer() = 0;
     virtual void disconnectAnalyzer() = 0;
-    ReDeviceInfo::InterfaceType type() { return m_type; }
+    ReDeviceInfo::InterfaceType connectionType() { return m_type; }
 
 signals:
-#ifdef NEW_CONNECTION
-    void analyzerFound (quint32);
-#else
-    void analyzerFound (QString);
-#endif
+    void analyzerFound (int analyzerIndex);
     void analyzerDisconnected();
-    void newData(rawData);
+    void newData(RawData);
     void newUserDataHeader(QStringList);
-    void newUserData(rawData, UserData);
+    void newUserData(RawData, UserData);
     void analyzerDataStringArrived(QString);
     void analyzerScreenshotDataArrived(QByteArray);
     void updatePercentChanged(int);
-    void signalFullInfo(QString str);
+    void signalFullInfo(const QString& _info);
     void signalMeasurementError();
+    void signalAnalyzerError(const QString& msg);
     void signalOk();
     void completeMeasurement(); // emited by NanoVNA
 
 public slots:
-    void searchAnalyzer() {}
+    virtual void searchAnalyzer() {}
     virtual void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool frx=true);
-    void startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx=true);
-    void stopMeasure();
-    void getAnalyzerData();
-    void getAnalyzerData(QString number);
-    void makeScreenshot() {}
-    void on_screenshotComplete();
-    void on_measurementComplete();
-    void continueMeasurement();
+    virtual void startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx=true);
+    virtual void stopMeasure();
+    virtual void getAnalyzerData();
+    virtual void getAnalyzerData(QString number);
+    virtual void makeScreenshot() {}
+    virtual void on_screenshotComplete();
+    virtual void on_measurementComplete();
+    virtual void continueMeasurement();
 
 protected:
     QString m_version;

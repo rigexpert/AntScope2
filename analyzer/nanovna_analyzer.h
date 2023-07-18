@@ -41,7 +41,8 @@ public:
 
     qint64 sendData(QString data);
     QSerialPort* comport() { return m_comPort; }
-    rawData toRawData(QString& s1p);
+    RawData toRawData(QString& s1p);
+    virtual bool refreshConnection();
     virtual bool connectAnalyzer();
     virtual void disconnectAnalyzer();
 

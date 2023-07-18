@@ -59,39 +59,22 @@ public:
 
     bool update(QIODevice *fw);
 
-    qint64 sendData(QString data);
-    void applyLicense(QString _license);
-
     void nonblocking (int nonblock);
     void preUpdate();
     QString hidError(hid_device* _device);
     virtual bool connectAnalyzer();
     virtual void disconnectAnalyzer();
+    bool closeHid();
+    qint64 sendCommand(const QString& data);
+    virtual bool refreshConnection();
 
 signals:
-    //void analyzerFound (quint32);
-    //void analyzerDisconnected();
-    //void newData(rawData);
-    //void newUserDataHeader(QStringList);
-    //void newUserData(rawData, UserData);
-    //void analyzerDataStringArrived(QString);
-    //void analyzerScreenshotDataArrived(QByteArray);
-    //void updatePercentChanged(int);
-    void signalFullInfo(QString str);
-    void signalMeasurementError();
-    void signalOk();
 
 public slots:
     bool searchAnalyzer(bool arrival);
-    //void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber);
-    //void startMeasureOneFq(qint64 fqFrom, int dotsNumber);
-    //void stopMeasure();
-    //void getAnalyzerData();
-    //void getAnalyzerData(QString number);
     void makeScreenshot();
-    //void on_screenshotComplete();
-    //void on_measurementComplete();
-    //void continueMeasurement();
+//    void startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool frx=true);
+//    void startMeasureOneFq(qint64 fqFrom, int dotsNumber, bool frx=true);
 
 private slots:
     void refreshReady();
@@ -106,32 +89,19 @@ private:
     hid_device *m_hidDevice;
     QTimer *m_checkTimer;
     QTimer * m_chartTimer;
-    //QTimer * m_sendTimer;
     QTimer * m_hidReadTimer;
-    //QByteArray m_incomingBuffer;
-    //QList <QString> m_stringList;
-
     bool m_analyzerPresent;
-
     volatile bool m_bootMode;
-
     QMutex m_mutexSearch;
     QMutex m_mutexRead;
     struct hid_device_info* m_devices;
     QThread* m_refreshThread;
-
-//    unsigned char m_inputBuffer[INPUT_BUFFER_SIZE];
-//    int m_inputBufferHead;
-//    int m_inputBufferTail;
-
     bool connect(quint32 vid, quint32 pid);
     bool disconnect(void);
     qint32 parse (QByteArray arr);
     bool waitAnswer();
     QFuture<struct hid_device_info*> *m_futureRefresh;
     QFutureWatcher<struct hid_device_info*> *m_watcherRefresh;
-    QString m_license;
-
 };
 
 #endif // HID_ANALYZER_H

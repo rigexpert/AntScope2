@@ -18,6 +18,8 @@ namespace
     const int DISPLAY_TIME = 1500;
 }
 
+QQueue<Notification*> Notification::queue;
+bool Notification::underProcessing = false;
 
 Notification::Notification(const QString& text, QWidget* parent)
     : Notification(text, FONT, DISPLAY_TIME, parent)
@@ -68,6 +70,7 @@ void Notification::showImmediatly()
 
 void Notification::run()
 {
+    underProcessing = true;
     show();
     update();
     QTimer::singleShot(m_milliseconds, this, &Notification::fadeOut);
@@ -76,7 +79,12 @@ void Notification::run()
 void Notification::fadeOut()
 {
     m_animation = new QPropertyAnimation(this, "opacity", this);
-    connect(m_animation, &QPropertyAnimation::finished, this, &Notification::deleteLater);
+    connect(m_animation, &QPropertyAnimation::finished, this, [=] () {
+        underProcessing = false;
+        if (!queue.isEmpty())
+            queue.dequeue()->run();
+        this->deleteLater();
+    });
 
     m_animation->setDuration(500);
     m_animation->setStartValue(opacity());
@@ -100,12 +108,13 @@ void Notification::showMessage(const QString& message, QColor textColor, QRect r
     Notification* notification = new Notification(message, FONT, milliseconds, parent);
     notification->setTextColor(textColor);
     notification->setGeometry(rect);
-    notification->run();
+    //notification->run();
+    append(notification);
 }
 
 void Notification::showMessage(const QString& message, const QFont& font, int milliseconds, QWidget* parent)
 {
-    (new Notification(message, font, milliseconds, parent))->run();
+    append(new Notification(message, font, milliseconds, parent));
 }
 
 void Notification::showMessage(const QString& message, QWidget* parent)
@@ -123,7 +132,8 @@ void Notification::showMessage(const QString& message, QString& url, QRect rect,
     Notification* notification = new Notification(message, FONT, milliseconds, parent);
     notification->m_url = url;
     notification->setGeometry(rect);
-    notification->run();
+    //notification->run();
+    append(notification);
 }
 
 void Notification::paintEvent(QPaintEvent* event)
@@ -138,5 +148,14 @@ void Notification::paintEvent(QPaintEvent* event)
 
     QSize halfSize = m_label.size().toSize() / 2;
     p.drawStaticText(rect().center() - QPoint(halfSize.width(), halfSize.height()), m_label);
+}
+
+void Notification::append(Notification *notification)
+{
+    if (!underProcessing) {
+        notification->run();
+    } else {
+        queue.enqueue(notification);
+    }
 }
 

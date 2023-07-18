@@ -6,7 +6,8 @@
 #include <QCheckBox>
 #include <QPushButton>
 #include <QShortcut>
-#include <analyzer/analyzer.h>
+//#include <analyzer/analyzer.h>
+#include <analyzer/analyzerpro.h>
 #include <qcustomplot.h>
 #include <presets.h>
 #include <measurements.h>
@@ -78,7 +79,7 @@ public:
 
     void openFile(QString path);
     QString& lastSavePath() { return m_lastSaveOpenPath; }
-    Analyzer* analyzer() { return m_analyzer; }
+    AnalyzerPro* analyzer() { return m_analyzer; }
     bool isMeasuring() { return analyzer()->isMeasuring(); }
     QTabWidget* tabWidget();
 \
@@ -90,7 +91,7 @@ private:
 
     Ui::MainWindow *ui;
     AnalyzerData *m_analyzerData;
-    Analyzer *m_analyzer;
+    AnalyzerPro *m_analyzer;
     Screenshot *m_screenshot;
 
     Presets * m_presets;
@@ -251,8 +252,9 @@ public slots:
     void on_pressCtrlC();
     void on_presssCtrlAltShiftM();
     void on_presssCtrlAltShiftN();
-    void on_analyzerFound(QString name);
-    void on_analyzerDisconnected();
+    void on_analyzerFound(int index);
+    void on_analyzerNameFound(QString name);
+    void on_deviceDisconnected();
     void on_mouseWheel_swr(QWheelEvent *e);
     void on_mouseMove_swr(QMouseEvent *);
     void on_mouseWheel_phase(QWheelEvent *e);
@@ -281,6 +283,8 @@ public slots:
     void on_translate(int number);
     void on_startOneFq(quint64 fq, int dots);
     void on_showNotification(QString msg, QString url);
+    void on_selectDeviceDialog();
+    void on_refreshConnection();
 
 private slots:
     void on_analyzerDataBtn_clicked();

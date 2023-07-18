@@ -98,9 +98,9 @@ private:
 signals:
     void analyzerFound (quint32);
     void analyzerDisconnected();
-    void newData(rawData);
+    void newData(RawData);
     void newUserDataHeader(QStringList);
-    void newUserData(rawData, UserData);
+    void newUserData(RawData, UserData);
     void analyzerDataStringArrived(QString);
     void analyzerScreenshotDataArrived(QByteArray);
     void updatePercentChanged(int);

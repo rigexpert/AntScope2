@@ -3120,7 +3120,7 @@ Qt::Alignment QCPLayoutInset::insetAlignment(int index) const
   else
   {
     qDebug() << Q_FUNC_INFO << "Invalid element index:" << index;
-    return 0;
+    return Qt::AlignCenter;
   }
 }
 
@@ -7574,12 +7574,12 @@ QCPItemAnchor::QCPItemAnchor(QCustomPlot *parentPlot, QCPAbstractItem *parentIte
 QCPItemAnchor::~QCPItemAnchor()
 {
   // unregister as parent at children:
-  foreach (QCPItemPosition *child, mChildrenX.toList())
+  foreach (QCPItemPosition *child, mChildrenX)
   {
     if (child->parentAnchorX() == this)
       child->setParentAnchorX(0); // this acts back on this anchor and child removes itself from mChildrenX
   }
-  foreach (QCPItemPosition *child, mChildrenY.toList())
+  foreach (QCPItemPosition *child, mChildrenY)
   {
     if (child->parentAnchorY() == this)
       child->setParentAnchorY(0); // this acts back on this anchor and child removes itself from mChildrenY
@@ -7752,12 +7752,12 @@ QCPItemPosition::~QCPItemPosition()
   // unregister as parent at children:
   // Note: this is done in ~QCPItemAnchor again, but it's important QCPItemPosition does it itself, because only then
   //       the setParentAnchor(0) call the correct QCPItemPosition::pixelPoint function instead of QCPItemAnchor::pixelPoint
-  foreach (QCPItemPosition *child, mChildrenX.toList())
+  foreach (QCPItemPosition *child, mChildrenX)
   {
     if (child->parentAnchorX() == this)
       child->setParentAnchorX(0); // this acts back on this anchor and child removes itself from mChildrenX
   }
-  foreach (QCPItemPosition *child, mChildrenY.toList())
+  foreach (QCPItemPosition *child, mChildrenY)
   {
     if (child->parentAnchorY() == this)
       child->setParentAnchorY(0); // this acts back on this anchor and child removes itself from mChildrenY
@@ -10966,7 +10966,7 @@ void QCustomPlot::mouseReleaseEvent(QMouseEvent *event)
 void QCustomPlot::wheelEvent(QWheelEvent *event)
 {
     // call event of affected layout element:
-    if (QCPLayoutElement *el = layoutElementAt(event->pos()))
+    if (QCPLayoutElement *el = layoutElementAt(event->position()))
         el->wheelEvent(event);
 
     emit mouseWheel(event);
@@ -10989,6 +10989,19 @@ void QCustomPlot::draw(QCPPainter *painter)
   
   // draw viewport background pixmap:
   drawBackground(painter);
+
+  if (mShowHint) {
+      painter->save();
+      QColor _color = mBackgroundBrush.color();
+      QColor inverse(255-_color.red(), 255-_color.green(), 255-_color.blue());
+      inverse.setAlpha(128);
+      painter->setPen(inverse);
+      QString txt = tr(" Use Control(Command) with Mouse scroll to change Y-axis scale ");
+      painter->drawText(mViewport, Qt::AlignLeft | Qt::AlignBottom, txt);
+      txt = tr(" Use Mouse scroll to change X-axis scale ");
+      painter->drawText(mViewport, Qt::AlignRight | Qt::AlignBottom, txt);
+      painter->restore();
+  }
 
   // draw all layered objects (grid, axes, plottables, items, legend,...):
   foreach (QCPLayer *layer, mLayers)
@@ -11333,7 +11346,7 @@ void QCPColorGradient::setLevelCount(int n)
   
   \see clearColorStops
 */
-void QCPColorGradient::setColorStops(const QMap<double, QColor> &colorStops)
+void QCPColorGradient::setColorStops(const QMultiMap<double, QColor> &colorStops)
 {
   mColorStops = colorStops;
   mColorBufferInvalidated = true;
@@ -11631,7 +11644,7 @@ QCPColorGradient QCPColorGradient::inverted() const
 {
   QCPColorGradient result(*this);
   result.clearColorStops();
-  for (QMap<double, QColor>::const_iterator it=mColorStops.constBegin(); it!=mColorStops.constEnd(); ++it)
+  for (QMultiMap<double, QColor>::const_iterator it=mColorStops.constBegin(); it!=mColorStops.constEnd(); ++it)
     result.setColorStopAt(1.0-it.key(), it.value());
   return result;
 }
@@ -11651,7 +11664,7 @@ void QCPColorGradient::updateColorBuffer()
     for (int i=0; i<mLevelCount; ++i)
     {
       double position = i*indexToPosFactor;
-      QMap<double, QColor>::const_iterator it = mColorStops.lowerBound(position);
+      QMultiMap<double, QColor>::const_iterator it = mColorStops.lowerBound(position);
       if (it == mColorStops.constEnd()) // position is on or after last stop, use color of last stop
       {
         mColorBuffer[i] = (it-1).value().rgb();
@@ -11660,8 +11673,8 @@ void QCPColorGradient::updateColorBuffer()
         mColorBuffer[i] = it.value().rgb();
       } else // position is in between stops (or on an intermediate stop), interpolate color
       {
-        QMap<double, QColor>::const_iterator high = it;
-        QMap<double, QColor>::const_iterator low = it-1;
+        QMultiMap<double, QColor>::const_iterator high = it;
+        QMultiMap<double, QColor>::const_iterator low = it-1;
         double t = (position-low.key())/(high.key()-low.key()); // interpolation factor 0..1
         switch (mColorInterpolation)
         {
@@ -12739,12 +12752,12 @@ void QCPAxisRect::wheelEvent(QWheelEvent *event)
           if (mRangeZoom != 0)
           {
             double factor;
-            double wheelSteps = event->delta()/120.0; // a single step delta is +/-120 usually
+            double wheelSteps = event->pixelDelta().y()/120.0; // a single step delta is +/-120 usually
             if (mRangeZoom.testFlag(Qt::Horizontal))
             {
               factor = qPow(mRangeZoomFactorHorz, wheelSteps);
               if (mRangeZoomHorzAxis.data())
-                mRangeZoomHorzAxis.data()->scaleRange(factor, mRangeZoomHorzAxis.data()->pixelToCoord(event->pos().x()));
+                mRangeZoomHorzAxis.data()->scaleRange(factor, mRangeZoomHorzAxis.data()->pixelToCoord(event->position().x()));
             }
 //            if (mRangeZoom.testFlag(Qt::Vertical))
 //            {
@@ -14190,7 +14203,7 @@ void QCPColorScale::setRangeDrag(bool enabled)
   if (enabled)
     mAxisRect.data()->setRangeDrag(QCPAxis::orientation(mType));
   else
-    mAxisRect.data()->setRangeDrag(0);
+    mAxisRect.data()->setRangeDrag(Qt::Horizontal);
 }
 
 /*!
@@ -14210,7 +14223,7 @@ void QCPColorScale::setRangeZoom(bool enabled)
   if (enabled)
     mAxisRect.data()->setRangeZoom(QCPAxis::orientation(mType));
   else
-    mAxisRect.data()->setRangeZoom(0);
+    mAxisRect.data()->setRangeZoom(Qt::Horizontal);
 }
 
 /*!

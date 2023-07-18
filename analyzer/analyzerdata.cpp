@@ -77,7 +77,7 @@ void AnalyzerData::on_btnReadAll_clicked()
 
     mainWindow->lastSavePath() = strSaveDir;
 
-    connect(mainWindow->analyzer(), &Analyzer::measurementComplete, this, &AnalyzerData::on_complete);
+    connect(mainWindow->analyzer(), &AnalyzerPro::measurementComplete, this, &AnalyzerData::on_complete);
 
     progressDialog = new QProgressDialog("Reading data...", "Abort", 0, ui->listWidget->count(), this);
     connect(progressDialog, &QProgressDialog::canceled, this, &AnalyzerData::on_finish);
@@ -141,7 +141,7 @@ void AnalyzerData::nextStep()
 void AnalyzerData::on_finish()
 {
     MainWindow* mainWindow = qobject_cast<MainWindow*>(parentWidget());
-    disconnect(mainWindow->analyzer(), &Analyzer::measurementComplete, this, &AnalyzerData::on_complete);
+    disconnect(mainWindow->analyzer(), &AnalyzerPro::measurementComplete, this, &AnalyzerData::on_complete);
     delete progressDialog;
     progressDialog = nullptr;
     this->close();

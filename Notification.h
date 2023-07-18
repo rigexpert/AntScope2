@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <QStaticText>
 #include <QPropertyAnimation>
+#include <QQueue>
+#include <QTimer>
 
 class QLabel;
 
@@ -27,15 +29,20 @@ public:
     qreal opacity() const;
 
 public:
-    static void showMessage(const QString& message, QWidget* parent);
+    static void showMessage(const QString& message, QWidget* parent=nullptr);
     static void showMessage(const QString& message, QString& url, QRect rect, int milliseconds, QWidget* parent);
     static void showMessage(const QString& message, const QFont& font, QWidget* parent);
     static void showMessage(const QString& message, const QFont& font, int milliseconds, QWidget* parent);
     static void showMessage(const QString& message, QColor color, QRect rect, int milliseconds, QWidget* parent);
+    static void append(Notification*);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
+protected:
+    static QQueue<Notification*> queue;
+    static bool underProcessing;
 
 private:
     QStaticText m_label;

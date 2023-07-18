@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>280</width>
-    <height>335</height>
+    <width>500</width>
+    <height>316</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -61,6 +61,12 @@
      </item>
      <item>
       <widget class="QTableWidget" name="tableWidget">
+       <property name="minimumSize">
+        <size>
+         <width>480</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::DoubleClicked</set>
        </property>
@@ -106,16 +112,16 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButtonScan">
+        <widget class="QPushButton" name="pushButtonConnect">
          <property name="text">
-          <string>Scan</string>
+          <string>Connect</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButtonConnect">
+        <widget class="QPushButton" name="pushButtonScan">
          <property name="text">
-          <string>Connect</string>
+          <string>Scan</string>
          </property>
         </widget>
        </item>

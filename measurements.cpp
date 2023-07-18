@@ -190,8 +190,10 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
 
 void Measurements::setUserWidget(QCustomPlot * user) {
     m_userWidget = user;
-    m_userWidget->legend->setVisible(true);
-    m_userWidget->legend->removeAt(0);
+    if (m_userWidget != nullptr && m_userWidget->legend != nullptr) {
+        m_userWidget->legend->setVisible(true);
+        m_userWidget->legend->removeAt(0);
+    }
 }
 
 void Measurements::setCalibration(Calibration * _calibration)
@@ -483,12 +485,12 @@ void Measurements::on_continueMeasurement(qint64 from, qint64 to, qint32 dots)
     m_farEndMeasurementsSub.last().smithCurve = new QCPCurve(m_smithWidget->xAxis, m_smithWidget->yAxis);
 }
 
-void Measurements::on_newAnalyzerData(rawData _rawData)
+void Measurements::on_newAnalyzerData(RawData _rawData)
 {
     on_newData(_rawData, false);
 }
 
-void Measurements::on_newDataRedraw(rawData _rawData)
+void Measurements::on_newDataRedraw(RawData _rawData)
 {
     on_newData(_rawData, true);
 }
@@ -514,7 +516,7 @@ void Measurements::on_newUserDataHeader(QStringList fields)
     }
 }
 
-void Measurements::on_newUserData(rawData _rawData, UserData _userData)
+void Measurements::on_newUserData(RawData _rawData, UserData _userData)
 {
     on_newData(_rawData);
 
@@ -548,7 +550,7 @@ double regulate(double val, double limit)
     return _val;
 }
 
-void Measurements::on_newData(rawData _rawData, bool _redraw)
+void Measurements::on_newData(RawData _rawData, bool _redraw)
 {
     if (m_oneFqMode) {
         GraphData _data;
@@ -769,7 +771,7 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
             calX *= m_Z0;
             double calZ = computeZ(calR,calX);
 
-            rawData rawDataCalib = _rawData;
+            RawData rawDataCalib = _rawData;
             rawDataCalib.r = calR;
             rawDataCalib.x = calX;
 
@@ -887,7 +889,7 @@ void Measurements::on_newData(rawData _rawData, bool _redraw)
     //qDebug() << "on_newData: calc " << (t1-t0) << " msec, draw " << (QDateTime::currentMSecsSinceEpoch()-t1) << " msec";
 }
 
-void Measurements::prepareGraphs(rawData _rawData, GraphData& _data, GraphData& _calibData)
+void Measurements::prepareGraphs(RawData _rawData, GraphData& _data, GraphData& _calibData)
 {
     _data.FQ = _rawData.fq;
     _data.R = _rawData.r;
@@ -2109,7 +2111,7 @@ void Measurements::saveData(quint32 number, QString path)
             return;
         }
 
-        QVector <rawData> data;
+        QVector <RawData> data;
         if(m_calibration != NULL)
         {
             if(m_calibration->getCalibrationEnabled())
@@ -2197,7 +2199,7 @@ void Measurements::loadData(QString path)
         for(int i = 0; i < size; ++i)
         {
             QJsonObject dataObject = measureArray[i].toObject();
-            rawData data;
+            RawData data;
             data.read(dataObject);
             on_newData(data);
             fqMin = qMin(fqMin, data.fq);
@@ -2224,7 +2226,7 @@ void Measurements::exportData(QString _name, int _type, int _number, bool _apply
         return;
 
     bool calibr = (m_calibration != nullptr) && (m_calibration->getCalibrationEnabled());
-    QVector<rawData> vector;
+    QVector<RawData> vector;
     if (_applyCable)
     {
         switch(m_farEndMeasurement) {
@@ -2244,7 +2246,7 @@ void Measurements::exportData(QString _name, int _type, int _number, bool _apply
     exportData(_name, _type, vector, _description);
 }
 
-void Measurements::exportData(QString _name, int _type, QVector<rawData>& vector, QString _description)
+void Measurements::exportData(QString _name, int _type, QVector<RawData>& vector, QString _description)
 {
     int len = vector.length();;
 
@@ -2427,7 +2429,7 @@ void Measurements::importData(QString _name, bool /*user_format*/)
             if (str.isEmpty())
                 continue;
             QStringList fields = str.split(',');
-            rawData rdata;
+            RawData rdata;
             UserData udata;
             bool ok;
             QString field = fields.takeFirst();
@@ -2669,7 +2671,7 @@ void Measurements::importData(QString _name)
                 x = 0;
             }
 
-            rawData data;
+            RawData data;
             data.fq = f*fqmul;
             data.r =r*(Z0);
             data.x =x*(Z0);
@@ -2730,7 +2732,7 @@ void Measurements::importData(QString _name)
                 QStringList dList = strFQ.split(',');
                 if(dList.length() == 3)
                 {
-                    rawData data;
+                    RawData data;
                     data.fq = dList.at(0).toDouble()*mul;
                     data.r = dList.at(1).toDouble();
                     data.x = dList.at(2).toDouble();
@@ -2745,7 +2747,7 @@ void Measurements::importData(QString _name)
                 QStringList dList = nList.at(i).split(',');
                 if(dList.length() == 3)
                 {
-                    rawData data;
+                    RawData data;
                     data.fq = dList.at(0).toDouble()*mul;
                     data.r = dList.at(1).toDouble();
                     data.x = dList.at(2).toDouble();
@@ -2793,7 +2795,7 @@ void Measurements::importData(QString _name)
                 QStringList dList = nList.at(i).split(' ');
                 if(dList.length() ==3)
                 {
-                    rawData data;
+                    RawData data;
                     data.fq = dList.at(0).toDouble()*mul;
                     data.r = dList.at(1).toDouble();
                     data.x = dList.at(2).toDouble();
@@ -2857,7 +2859,7 @@ void Measurements::importData(QString _name)
     */
 }
 
-int Measurements::calcTdrDist(QVector<rawData> *data)
+int Measurements::calcTdrDist(QVector<RawData> *data)
 {
     if (data == nullptr || data->length() == 0)
         return 0;
@@ -2899,7 +2901,7 @@ int Measurements::calcTdrDist(QVector<rawData> *data)
     return tdrRange;
 }
 
-int Measurements::CalcTdr(QVector <rawData> *data)
+int Measurements::CalcTdr(QVector <RawData> *data)
 {
     if (data == nullptr || data->length() == 0)
         return 0;
@@ -3566,7 +3568,7 @@ void Measurements::calcFarEnd(bool _incrementally)
     {
         int count = m_measurements.length();
         int dataCount;
-        QVector <rawData> data;
+        QVector <RawData> data;
         int i = _incrementally ? (count-1) : 0;
         for( ; i < count; ++i)
         {
@@ -3620,7 +3622,7 @@ void Measurements::calcFarEnd(bool _incrementally)
     }
 }
 
-int Measurements::CalcTdr2(QVector <rawData> *data)
+int Measurements::CalcTdr2(QVector <RawData> *data)
 {
     Q_UNUSED(data);
     // not used
@@ -4128,9 +4130,9 @@ void Measurements::on_newMeasurementOneFq(QWidget* parent, qint64 fq, qint32 dot
 }
 
 
-rawData Measurements::calcFarEnd(const rawData& data, int idx, bool refreshGraphs)
+RawData Measurements::calcFarEnd(const RawData& data, int idx, bool refreshGraphs)
 {
-    rawData da = data;
+    RawData da = data;
 
     double Rpar;
     double Xpar;
@@ -4518,14 +4520,14 @@ QPair<double, double> Measurements::autoCalibrate()
                 }
                 measurement* mm = getMeasurement(count-1);
                 m_farEndMeasurementsSub[count-1].dataRX.clear();
-                const QVector<rawData>& data = mm->dataRX;
+                const QVector<RawData>& data = mm->dataRX;
 
 //                double dSqrDist0 = 0;
                 for (int i=0; i<data.size(); i++) {
-                    const rawData& inData = data.at(i);
+                    const RawData& inData = data.at(i);
                     if (inData.fq*1000 > 10000)
                     {
-                        rawData outData = calcFarEnd(inData, count-1, true);
+                        RawData outData = calcFarEnd(inData, count-1, true);
                         double R = outData.r;
                         double X = outData.x;
 
@@ -4980,7 +4982,7 @@ void Measurements::redrawRp(bool _incrementally)
     if (m_measurements.isEmpty())
         return;
 
-    qint64 t0 = QDateTime::currentMSecsSinceEpoch();
+    //qint64 t0 = QDateTime::currentMSecsSinceEpoch();
 
     bool calibr = m_calibration->getCalibrationEnabled();
     int i = _incrementally ? (m_measurements.length()-1) : 0;
@@ -5049,9 +5051,9 @@ void Measurements::redrawRp(bool _incrementally)
             m_rpWidget->graph(i*3+1)->addData(m_viewMeasurements[i].rprGraph.last());
         }
     }
-    qint64 t1 = QDateTime::currentMSecsSinceEpoch();
+    //qint64 t1 = QDateTime::currentMSecsSinceEpoch();
     replot();
-    qint64 t2 = QDateTime::currentMSecsSinceEpoch();
+    //qint64 t2 = QDateTime::currentMSecsSinceEpoch();
 
     //qDebug() << "Measurements::redrawRp() redraw " << (t1-t0) << ", replot " << (t2-t1) << ", total " << (t2-t1);
 }
@@ -5158,7 +5160,7 @@ void Measurements::redrawUser(bool _incrementally)
             {
                 QCPData data = map->value(list.at(n));
                 restrictData(minVal, maxVal, data);
-                vmap->insertMulti(data.key,data);
+                vmap->insert(data.key,data);
             }
             int index = getBaseUserGraphIndex(i)+idx;
             m_userWidget->graph(index)->setData(m_viewMeasurements[i].userGraphs[idx], true);

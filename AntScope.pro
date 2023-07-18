@@ -11,12 +11,14 @@ QT       += network
 QT       += xml
 QT       += concurrent
 QT       += opengl
+QT       += bluetooth
 
-message ("!!!  set path 5.15.2/MSVC19")
+#Kit: Desktop Qt 6.2.4 MSVC2015 32 bit
+message ("!!!  set path 6.2.4/MSVC19")
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.2.6\\"'
+DEFINES += ANTSCOPE2VER='\\"1.3.0\\"'
 DEFINES += OLD_TDR
 
 #{ debug
@@ -27,13 +29,13 @@ DEFINES += OLD_TDR
 # under construction
 
 # add connection dialog
-#DEFINES += NEW_CONNECTION
+DEFINES += NEW_CONNECTION
 
 # improve analyzer selection
 DEFINES += NEW_ANALYZER
 
 #-------------------------------------------------
-
+#DEFINES += Q_OS_WIN_FTDI
 
 TARGET = AntScope2
 
@@ -66,12 +68,14 @@ message("       ["$${UI_DIR}"]")
 message("       ["$${RCC_DIR}"]")
 
 SOURCES += main.cpp\
+    analyzer/analyzerpro.cpp \
     mainwindow.cpp \
     printmulti.cpp \
     qcustomplot.cpp \
-    analyzer/analyzer.cpp \
+    #analyzer/analyzer.cpp \
     analyzer/hidanalyzer.cpp \
     analyzer/comanalyzer.cpp \
+    analyzer/ble_analyzer.cpp \
     presets.cpp \
     measurements.cpp \
     analyzer/analyzerdata.cpp \
@@ -102,7 +106,7 @@ SOURCES += main.cpp\
     iprof.cpp \
     onefqwidget.cpp \
     Notification.cpp \
-    licensesdialog.cpp \
+    #licensesdialog.cpp \
     glwidget.cpp \
     CustomPlot.cpp \
     customgraph.cpp \
@@ -115,13 +119,15 @@ SOURCES += main.cpp\
     analyzer/baseanalyzer.cpp
 
 HEADERS  += mainwindow.h \
+    analyzer/analyzerpro.h \
     printmulti.h \
     qcustomplot.h \
-    analyzer/analyzer.h \
+    #analyzer/analyzer.h \
     analyzer/hidanalyzer.h \
     analyzer/comanalyzer.h \
     analyzer/analyzerparameters.h \
     analyzer/usbhid/hidapi/hidapi.h \
+    analyzer/ble_analyzer.h \
     presets.h \
     measurements.h \
     analyzer/analyzerdata.h \
@@ -155,7 +161,7 @@ HEADERS  += mainwindow.h \
     htime.h \
     onefqwidget.h \
     Notification.h \
-    licensesdialog.h \
+    #licensesdialog.h \
     glwidget.h \
     CustomPlot.h \
     customgraph.h \
@@ -185,7 +191,7 @@ FORMS    += mainwindow.ui \
     export.ui \
     antscopeupdatedialog.ui \
     ProgressDlg.ui \
-    licensesdialog.ui \
+    #licensesdialog.ui \
     tdrprogressdialog.ui \
     editbandsdialog.ui \
     selectdevicedialog.ui
@@ -211,9 +217,14 @@ win32{
     LIBS += -lsetupapi
     RC_ICONS += AntScope2.ico
 
-    INCLUDEPATH +=  $$PWD/ftdi/windows
-    DEPENDPATH += $$PWD/ftdi/windows
-    LIBS += -L$$PWD/ftdi/windows/win32/ -lftd2xx
+    INCLUDEPATH += $$PWD/ftdi
+    DEPENDPATH += $$PWD/ftdi
+    FTDI_DLL = $$PWD/ftdi/amd64/ftd2xx.dll
+    win32:FTDI_DLL ~= s,/,\\,g
+    win32:DESTDIR ~= s,/,\\,g
+    QMAKE_POST_LINK += $$QMAKE_COPY_DIR $$shell_quote($$FTDI_DLL) $$shell_quote($$DESTDIR) $$escape_expand(\\n\\t)
+    #QMAKE_POST_LINK += $$QMAKE_COPY_DIR "$$PWD/ftdi/amd64/ftd2xx.dll" "$$DESTDIR"
+    #QMAKE_POST_LINK += $$quote(copy $${PWD}/ftdi/amd64/ftd2xx.dll $${DESTDIR}$$escape_expand(\\n\\t))
 }
 
 win64{
@@ -221,10 +232,9 @@ win64{
     LIBS += -lsetupapi
     RC_ICONS += AntScope2.ico
 
-    INCLUDEPATH +=  $$PWD/ftdi/windows
-    DEPENDPATH += $$PWD/ftdi/windows
-    LIBS += -L$$PWD/ftdi/windows/win64/ -lftd2xx
-    QMAKE_POST_LINK = COPY .\ftdi\windows\win64\ftd2xx.dll $$APPDIR\ftd2xx.dll &&
+    INCLUDEPATH += $$PWD/ftdi
+    DEPENDPATH += $$PWD/ftdi
+    QMAKE_POST_LINK = COPY $$PWD\ftdi\amd64\ftd2xx.dll $$DESTDIR
 }
 
 # Linux

@@ -19,8 +19,8 @@ QMap<QString, QString> g_mapTabPlotNames;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_fqSettings(NULL),
     m_measurements(NULL),
+    m_fqSettings(NULL),
     m_markers(NULL),
     m_settings(NULL),
     m_settingsDialog(NULL),
@@ -203,19 +203,24 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(m_userWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_user(QWheelEvent*)));
         connect(m_userWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_user(QMouseEvent*)));
     }
-    m_analyzer = new Analyzer(this);
-    connect(m_analyzer,SIGNAL(analyzerFound(QString)),this,SLOT(on_analyzerFound(QString)));
-    connect(m_analyzer,SIGNAL(analyzerDisconnected()),this,SLOT(on_analyzerDisconnected()));
+    m_analyzer = new AnalyzerPro(this);
+    //connect(m_analyzer, &AnalyzerPro::analyzerFound, static_cast<void (MainWindow::*)(int)>(&MainWindow::on_analyzerFound));
+    connect(m_analyzer, &AnalyzerPro::analyzerFound,this,&MainWindow::on_analyzerFound);
+    connect(m_analyzer,&AnalyzerPro::deviceDisconnected,this, &MainWindow::on_deviceDisconnected);
     connect(this,SIGNAL(measure(qint64,qint64,int)),m_analyzer,SLOT(on_measure(qint64,qint64,int)));
     connect(this,SIGNAL(measureUser(qint64,qint64,int)),m_analyzer,SLOT(on_measureUser(qint64,qint64,int)));
     connect(this,SIGNAL(measureContinuous(qint64,qint64,int)),m_analyzer,SLOT(on_measureContinuous(qint64,qint64,int)));
     connect(m_analyzer,SIGNAL(measurementComplete()),this,SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
     connect(m_analyzer,SIGNAL(measurementCompleteNano()),this,SLOT(on_measurementCompleteNano()));//, Qt::QueuedConnection);
     connect(this,SIGNAL(stopMeasure()), m_analyzer, SLOT(on_stopMeasure()));
-    connect(this,&MainWindow::measureOneFq, m_analyzer,&Analyzer::on_measureOneFq);
-    connect(m_analyzer, &Analyzer::signalMeasurementError, this, &MainWindow::onMeasurementError);
-    connect(m_analyzer, &Analyzer::showNotification, this, &MainWindow::on_showNotification);
-
+    connect(this,&MainWindow::measureOneFq, m_analyzer,&AnalyzerPro::on_measureOneFq);
+    connect(m_analyzer, &AnalyzerPro::signalMeasurementError, this, &MainWindow::onMeasurementError);
+    connect(m_analyzer, &AnalyzerPro::showNotification, this, &MainWindow::on_showNotification);
+    connect(m_analyzer, &AnalyzerPro::signalAnalyzerError, this, [=] (const QString& error) {
+        QRect r = ui->tabWidget->rect();
+        QRect rr = QRect(40, 50, r.width()-80, 40);
+        Notification::showMessage(error, Qt::red, rr, 5000, m_mainWindow);
+    });
     QShortcut *shortF1 = new QShortcut(QKeySequence("F1"),this);
     connect(shortF1,SIGNAL(activated()),this,SLOT(on_pressF1()));
 
@@ -260,19 +265,19 @@ MainWindow::MainWindow(QWidget *parent) :
     QShortcut *shortDoun = new QShortcut(QKeySequence(Qt::Key_Down),this);
     connect(shortDoun,SIGNAL(activated()),this,SLOT(on_pressMinus()));
 
-    QShortcut *shortCtrlPlus = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Plus),this);
+    QShortcut *shortCtrlPlus = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Plus),this);
     connect(shortCtrlPlus,SIGNAL(activated()),this,SLOT(on_pressCtrlPlus()));
-    QShortcut *shortCtrlEqual = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Equal),this);
+    QShortcut *shortCtrlEqual = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Equal),this);
     connect(shortCtrlEqual,SIGNAL(activated()),this,SLOT(on_pressCtrlPlus()));
-    QShortcut *shortCtrlUp = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Up),this);
+    QShortcut *shortCtrlUp = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Up),this);
     connect(shortCtrlUp,SIGNAL(activated()),this,SLOT(on_pressCtrlPlus()));
-    QShortcut *shortCtrlMinus = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Minus),this);
+    QShortcut *shortCtrlMinus = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Minus),this);
     connect(shortCtrlMinus,SIGNAL(activated()),this,SLOT(on_pressCtrlMinus()));
-    QShortcut *shortCtrlDoun = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Down),this);
+    QShortcut *shortCtrlDoun = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Down),this);
     connect(shortCtrlDoun,SIGNAL(activated()),this,SLOT(on_pressCtrlMinus()));
-    QShortcut *shortCtrlIns = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Asterisk),this);
+    QShortcut *shortCtrlIns = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Asterisk),this);
     connect(shortCtrlIns,SIGNAL(activated()),this,SLOT(on_pressCtrlZero()));
-    QShortcut *shortCtrlZero = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_0),this);
+    QShortcut *shortCtrlZero = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_0),this);
     connect(shortCtrlZero,SIGNAL(activated()),this,SLOT(on_pressCtrlZero()));
 
     QShortcut *shortLeft = new QShortcut(QKeySequence(Qt::Key_Left),this);
@@ -281,13 +286,13 @@ MainWindow::MainWindow(QWidget *parent) :
     QShortcut *shortRight = new QShortcut(QKeySequence(Qt::Key_Right),this);
     connect(shortRight,SIGNAL(activated()),this,SLOT(on_pressRight()));
 
-    QShortcut *shortCtrlC = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_C),this);
+    QShortcut *shortCtrlC = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C),this);
     connect(shortCtrlC,SIGNAL(activated()),this,SLOT(on_pressCtrlC()));
 
-    QShortcut *shortCtrlAltShiftM = new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::ALT + Qt::Key_M),this);
+    QShortcut *shortCtrlAltShiftM = new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::ALT | Qt::Key_M),this);
     connect(shortCtrlAltShiftM,SIGNAL(activated()),this,SLOT(on_presssCtrlAltShiftM()));
 
-    QShortcut *shortCtrlAltShiftN = new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::ALT + Qt::Key_N),this);
+    QShortcut *shortCtrlAltShiftN = new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::ALT | Qt::Key_N),this);
     connect(shortCtrlAltShiftN,SIGNAL(activated()),this,SLOT(on_presssCtrlAltShiftN()));
 
     m_presets = new Presets(this);
@@ -306,18 +311,18 @@ MainWindow::MainWindow(QWidget *parent) :
                                ui->tableWidget_measurments);
     m_measurements->setUserWidget(m_userWidget);
 
-    connect(m_analyzer, SIGNAL(newData(rawData)), m_measurements, SLOT(on_newDataRedraw(rawData)));
-    connect(m_analyzer, SIGNAL(newAnalyzerData(rawData)), m_measurements, SLOT(on_newAnalyzerData(rawData)));
-    connect(m_analyzer, SIGNAL(newUserData(rawData,UserData)), m_measurements, SLOT(on_newUserData(rawData,UserData)));
-    connect(m_analyzer, SIGNAL(newUserDataHeader(QStringList)), m_measurements, SLOT(on_newUserDataHeader(QStringList)));
+    connect(m_analyzer, &AnalyzerPro::newData, m_measurements, &Measurements::on_newDataRedraw);
+    connect(m_analyzer, &AnalyzerPro::newAnalyzerData, m_measurements, &Measurements::on_newAnalyzerData);
+    connect(m_analyzer, &AnalyzerPro::newUserData, m_measurements, &Measurements::on_newUserData);
+    connect(m_analyzer, &AnalyzerPro::newUserDataHeader, m_measurements, &Measurements::on_newUserDataHeader);
     connect(m_analyzer, SIGNAL(newMeasurement(QString)), m_measurements, SLOT(on_newMeasurement(QString)));
     connect(m_analyzer, SIGNAL(newMeasurement(QString, qint64, qint64, qint32)), m_measurements, SLOT(on_newMeasurement(QString, qint64, qint64, qint32)));
-    connect(m_analyzer, SIGNAL(continueMeasurement(qint64, qint64, qint32)), m_measurements, SLOT(on_continueMeasurement(qint64, qint64, qint32)));
-    connect(this, SIGNAL(currentTab(QString)), m_measurements, SLOT(on_currentTab(QString)));
-    connect(this, SIGNAL(focus(bool)), m_measurements,SLOT(on_focus(bool)));
-    connect(this, SIGNAL(newCursorFq(double, int, int, int)), m_measurements,SLOT(on_newCursorFq(double, int, int, int)));
-    connect(this, SIGNAL(newCursorSmithPos(double, double, int)), m_measurements,SLOT(on_newCursorSmithPos(double, double, int)));
-    connect(this, SIGNAL(mainWindowPos(int,int)), m_measurements,SLOT(on_mainWindowPos(int,int)));
+    connect(m_analyzer, &AnalyzerPro::continueMeasurement, m_measurements, &Measurements::on_continueMeasurement);
+    connect(this, &MainWindow::currentTab, m_measurements, &Measurements::on_currentTab);
+    connect(this, &MainWindow::focus, m_measurements, &Measurements::on_focus);
+    connect(this, &MainWindow::newCursorFq, m_measurements, &Measurements::on_newCursorFq);
+    connect(this, &MainWindow::newCursorSmithPos, m_measurements, &Measurements::on_newCursorSmithPos);
+    connect(this, &MainWindow::mainWindowPos, m_measurements, &Measurements::on_mainWindowPos);
     connect(this, &MainWindow::measureOneFq, m_measurements, &Measurements::on_newMeasurementOneFq);
     connect(m_measurements, SIGNAL(calibrationChanged()), this,SLOT(on_calibrationChanged()));
     connect(m_measurements, &Measurements::import_finished, this, &MainWindow::on_importFinished);
@@ -547,33 +552,33 @@ MainWindow::MainWindow(QWidget *parent) :
 //}
 #endif
 
-#ifdef NEW_CONNECTION
     m_settings->beginGroup("Connection");
     bool start = m_settings->value("same", false).toBool();
-    int _type = m_settings->value("type", ReDeviceInfo::HID).toInt();
+    ReDeviceInfo::InterfaceType _type = (ReDeviceInfo::InterfaceType)m_settings->value("type", ReDeviceInfo::HID).toInt();
     QString device_name = m_settings->value("name", "").toString();
+    QString device_address = m_settings->value("id", "").toString();
     m_settings->endGroup();
 
-    if (start && !device_name.isEmpty()) {
-        SelectDeviceDialog dlg(this);
-        if (dlg.connectSilent(_type, device_name)) {
-            AnalyzerParameters* selected = AnalyzerParameters::current();
-            if (selected != nullptr) {
-                m_analyzer->connectDevice();
-            }
-        }
+    SelectionParameters::selected.type = (ReDeviceInfo::InterfaceType)_type;
+    SelectionParameters::selected.name = device_name;
+    SelectionParameters::selected.id = device_address;
+
+    if (start && SelectionParameters::selected.valid() && !device_name.isEmpty() && !device_address.isEmpty()) {
+//        SelectDeviceDialog dlg(true, this);
+//        if (dlg.connectSilent(_type, device_name)) {
+//            AnalyzerParameters* selected = AnalyzerParameters::current();
+//            if (selected != nullptr) {
+//                m_analyzer->on_connectDevice();
+//            }
+//        }
+        QTimer::singleShot(500, this, [&](){
+            on_refreshConnection();
+        });
     } else {
         QTimer::singleShot(500, this, [&](){
-            SelectDeviceDialog dlg(this);
-            if (dlg.exec() == QDialog::Accepted) {
-                AnalyzerParameters* selected = AnalyzerParameters::current();
-                if (selected != nullptr) {
-                    m_analyzer->connectDevice();
-                }
-            }
+            on_selectDeviceDialog();
         });
     }
-#endif
 }
 
 MainWindow::~MainWindow()
@@ -1371,7 +1376,9 @@ void MainWindow::on_pressCtrlPlus ()
     QString str = ui->tabWidget->currentWidget()->objectName();
     if( str == "tab_swr")
     {
-        QWheelEvent event(rect().center(), 1, Qt::NoButton, Qt::ControlModifier, Qt::Vertical);
+        QPointF pos = rect().center();
+        QPoint delta = QPoint(0,1);
+        Qt::ScrollPhase phase = Qt::NoScrollPhase;        QWheelEvent event(pos, pos, delta, delta, Qt::NoButton, Qt::ControlModifier, phase, false);
         on_mouseWheel_swr(&event);
 //        int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
 //        if(m_swrZoomState > limit)
@@ -1745,7 +1752,12 @@ void MainWindow::on_pressCtrlMinus ()
     QString str = ui->tabWidget->currentWidget()->objectName();
     if( str == "tab_swr")
     {
-        QWheelEvent event(rect().center(), -1, Qt::NoButton, Qt::ControlModifier, Qt::Vertical);
+        QPointF pos = rect().center();
+        QPoint delta = QPoint(0,-1);
+        Qt::ScrollPhase phase = Qt::NoScrollPhase;
+        QWheelEvent event(pos, pos, delta, delta, Qt::NoButton, Qt::ControlModifier, phase, false);
+
+        on_mouseWheel_swr(&event);
         on_mouseWheel_swr(&event);
 
 //        if(m_swrZoomState <= 9)
@@ -2418,7 +2430,13 @@ void MainWindow::on_pressCtrlC ()
     pClipboard->setPixmap(pixmap);
 }
 
-void MainWindow::on_analyzerFound(QString name)
+void MainWindow::on_analyzerFound(int index)
+{
+    QString name = AnalyzerParameters::byIndex(index)->name();
+    on_analyzerNameFound(name);
+}
+
+void MainWindow::on_analyzerNameFound(QString name)
 {
     QString name1 = "AntScope2 v." + QString(ANTSCOPE2VER);
     setWindowTitle(name1 + " - " + name);
@@ -2473,7 +2491,7 @@ void MainWindow::on_analyzerFound(QString name)
     }
 }
 
-void MainWindow::on_analyzerDisconnected()
+void MainWindow::on_deviceDisconnected()
 {
     QWidget::setCursor(Qt::ArrowCursor);
     QString name = "AntScope2 v." + QString(ANTSCOPE2VER);
@@ -2580,10 +2598,10 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
         QCPRange range = m_swrWidget->yAxis->range();
 
         double length = range.size();
-        if ((length >= 10 && e->delta() > 0) || (length <= 0.1 && e->delta() < 0))
+        if ((length >= 10 && e->pixelDelta().y() > 0) || (length <= 0.1 && e->pixelDelta().y() < 0))
             return;
 
-        if (!g_developerMode && (length <= SWR_ZOOM_LIMIT) && (e->delta() < 0))
+        if (!g_developerMode && (length <= SWR_ZOOM_LIMIT) && (e->pixelDelta().y() < 0))
             return;
 
         double lower = range.lower - 0.02;
@@ -2599,7 +2617,7 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
             delta = 0.1;
         }
 
-        if(e->delta() < 0)
+        if(e->pixelDelta().y() < 0)
         {
             delta = -delta;
         }
@@ -2754,7 +2772,7 @@ void MainWindow::on_mouseWheel_rs(QWheelEvent * e)
     if (e->modifiers() == Qt::ControlModifier)
     {
         int val;
-        if(e->delta() < 0)
+        if(e->pixelDelta().y() < 0)
         {
             if(g_developerMode || state <= 19)
             {
@@ -2863,7 +2881,7 @@ void MainWindow::on_mouseWheel_rp(QWheelEvent *e)
 
     if (e->modifiers() == Qt::ControlModifier)
     {
-        if(e->delta() < 0)
+        if(e->pixelDelta().y() < 0)
         {
             if(g_developerMode || state <= 19)
             {
@@ -2975,7 +2993,7 @@ void MainWindow::on_mouseWheel_rl(QWheelEvent *e)
         {
             QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
-        if(e->delta() < 0)
+        if(e->pixelDelta().y() < 0)
         {
             if(g_developerMode || m_rlZoomState <= 9)
             {
@@ -3059,7 +3077,7 @@ void MainWindow::on_mouseWheel_tdr(QWheelEvent* e)
 //        double up = m_tdrWidget->yAxis->getRangeUpper();
 //        double lo = m_tdrWidget->yAxis->getRangeLower();
 
-        if(e->delta() < 0)
+        if(e->pixelDelta().y() < 0)
         {
             if(state <= 30)
             {
@@ -3134,7 +3152,7 @@ void MainWindow::on_mouseWheel_user(QWheelEvent * e)
     if (e->modifiers() == Qt::ControlModifier)
     {
         int val;
-        if(e->delta() < 0)
+        if(e->pixelDelta().y() < 0)
         {
             if(g_developerMode || state <= 19)
             {
@@ -3225,7 +3243,7 @@ void MainWindow::on_mouseMove_user(QMouseEvent *e)
 void MainWindow::createTabs (QString sequence)
 {
     QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    QStringList tabs = sequence.split(',', QString::SkipEmptyParts);
+    QStringList tabs = sequence.split(',', Qt::SkipEmptyParts);
     foreach (const QString tab, tabs)
     {
         if (tab == "tab_swr") {
@@ -3367,6 +3385,7 @@ void MainWindow::createTabs (QString sequence)
             m_smithWidget = new CustomPlot(1, m_tab_smith);
             qobject_cast<GLWidget*>(m_tab_smith)->setPlotter(m_smithWidget);
             m_smithWidget->setObjectName(QStringLiteral("smith_widget"));
+            m_smithWidget->mShowHint = false;
 
             sizePolicy.setHorizontalStretch(0);
             sizePolicy.setVerticalStretch(2);
@@ -3423,10 +3442,12 @@ void MainWindow::createTabs (QString sequence)
 #endif
     }
 
+#ifndef NO_MULTITAB
     if (!g_developerMode) {
         ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_user), false);
 //        ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_user))->setVisible(false);
     }
+#endif
 
     m_settings->beginGroup("Settings");
     QString strColor = m_settings->value("chart-background", "#ffffff").toString();
@@ -3620,7 +3641,7 @@ void MainWindow::on_screenshotAA_clicked()
         }
     }
 
-    if (analyzer()->analyzerType() == ReDeviceInfo::Serial && param->name() != "AA-230 ZOOM") {
+    if (analyzer()->connectionType() == ReDeviceInfo::Serial && param->name() != "AA-230 ZOOM") {
         QMessageBox::warning(nullptr, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
         return;
     }
@@ -3944,7 +3965,7 @@ void MainWindow::on_startOneFq(quint64 _fq, int _dots)
 
 void MainWindow::on_measurementComplete()
 {
-    if (m_analyzer->isNanovna())
+    if (m_analyzer->connectionType() == ReDeviceInfo::NANO)
         return;
     if (g_developerMode) {
         if (m_measurements->isOneFqMode()) {
@@ -4206,27 +4227,26 @@ void MainWindow::on_settingsBtn_clicked()
         connect(m_settingsDialog, SIGNAL(markersHintChecked(bool)),
                 m_markers,SLOT(setMarkersHintEnabled(bool)));
     }
-    connect(m_settingsDialog, SIGNAL(checkUpdatesBtn()),
-            m_analyzer,SLOT(on_checkUpdatesBtn_clicked()));
-    connect(m_settingsDialog, SIGNAL(autoUpdatesCheckBox(bool)),
-            m_analyzer,SLOT(setAutoCheckUpdate(bool)));
-    connect(m_settingsDialog, SIGNAL(updateBtn(QString)),
-            m_analyzer,SLOT(readFile(QString)));
 
+    // TODO
+    // ui->pushButtonConnect, use SelectionParameters::selected
+    //connect(m_settingsDialog, &Settings::connectDevice, m_analyzer, &AnalyzerPro::on_connectDevice);
+/*
     connect(m_settingsDialog, &Settings::connectNanoVNA,
-            m_analyzer, &Analyzer::on_connectNanoNVA);
+            m_analyzer, &AnalyzerPro::on_connectNanoNVA);
     connect(m_settingsDialog, &Settings::disconnectNanoVNA,
-            m_analyzer, &Analyzer::on_disconnectNanoNVA);
+            m_analyzer, &AnalyzerPro::on_disconnectNanoNVA);
     connect(m_settingsDialog, &Settings::connectSerial,
-            m_analyzer, &Analyzer::on_connectSerial);
+            m_analyzer, &AnalyzerPro::on_connectSerial);
     connect(m_settingsDialog, &Settings::disconnectSerial,
-            m_analyzer, &Analyzer::on_disconnectSerial);
+            m_analyzer, &AnalyzerPro::on_disconnectSerial);
     connect(m_settingsDialog, &Settings::connectBluetooth,
-            m_analyzer, &Analyzer::on_connectBluetooth);
+            m_analyzer, &AnalyzerPro::on_connectBluetooth);
     connect(m_settingsDialog, &Settings::disconnectBluetooth,
-            m_analyzer, &Analyzer::on_disconnectBluetooth);
+            m_analyzer, &AnalyzerPro::on_disconnectBluetooth);
+*/
     connect(m_settingsDialog, &Settings::disconnectDevice,
-            m_analyzer, &Analyzer::on_disconnectDevice);
+            m_analyzer, &AnalyzerPro::on_disconnectDevice);
 
     connect(m_settingsDialog,SIGNAL(startCalibration()),
             m_calibration,SLOT(on_startCalibration()));
@@ -4306,7 +4326,7 @@ void MainWindow::on_settingsBtn_clicked()
     if (CustomAnalyzer::customized()) {
         CustomAnalyzer* ca = CustomAnalyzer::getCurrent();
         if (ca != nullptr) {
-            on_analyzerFound(ca->alias());
+            on_analyzerNameFound(ca->alias());
         }
     } else if (was_customized) {
         m_analyzer->searchAnalyzer();
@@ -4349,10 +4369,10 @@ void MainWindow::on_measurmentsDeleteBtn_clicked()
     if(ui->tableWidget_measurments->rowCount() == 0)
     {
         //onFullRange(true);
-        qint64 from = m_lastEnteredFqFrom;
-        qint64 to =  m_lastEnteredFqTo;
-        qint64 range = (to - from);
         //{ Fedoseev's request 2022-11-11
+        //qint64 from = m_lastEnteredFqFrom;
+        //qint64 to =  m_lastEnteredFqTo;
+        //qint64 range = (to - from);
         //on_dataChanged(from + range/2, range, m_dotsNumber);
         //}
         ui->measurmentsSaveBtn->setEnabled(false);
@@ -4393,8 +4413,8 @@ void MainWindow::on_measurementsClearBtn_clicked(bool)
     double from = m_lastEnteredFqFrom;
     double to =  m_lastEnteredFqTo;
     AnalyzerParameters::normalizeFq(from, to);
-    qint64 range = (to - from);
     //{ Fedoseev's request 2022-11-11
+    //qint64 range = (to - from);
     //on_dataChanged(from + range/2, range, m_dotsNumber);
     //}
     //}
@@ -5715,7 +5735,7 @@ void MainWindow::on_presssCtrlAltShiftN()
     if (!ui->singleStart->isEnabled())
         return;
 
-    connect(m_analyzer, &Analyzer::updateAutocalibrate5, this, [this](int _dots, QString _msg){
+    connect(m_analyzer, &AnalyzerPro::updateAutocalibrate5, this, [this](int _dots, QString _msg){
         if (_msg.contains("START")) {
             m_measurements->startAutocalibrateProgress(this, _dots);
             m_measurements->progressDlg()->updateActionInfo("Adjustment of signal scaling factor");
@@ -5727,9 +5747,9 @@ void MainWindow::on_presssCtrlAltShiftN()
             m_measurements->progressDlg()->updateStatusInfo(QString(tr("Remains %1").arg(_dots)));
         }
     });
-    QObject::connect(m_analyzer, &Analyzer::stopAutocalibrate5, this, [this]() {
-        QObject::disconnect(m_analyzer, &Analyzer::stopAutocalibrate5, this, nullptr);
-        QObject::disconnect(m_analyzer, &Analyzer::updateAutocalibrate5, this, nullptr);
+    QObject::connect(m_analyzer, &AnalyzerPro::stopAutocalibrate5, this, [this]() {
+        QObject::disconnect(m_analyzer, &AnalyzerPro::stopAutocalibrate5, this, nullptr);
+        QObject::disconnect(m_analyzer, &AnalyzerPro::updateAutocalibrate5, this, nullptr);
         m_measurements->stopAutocalibrateProgress();
     });
 
@@ -5745,11 +5765,11 @@ void MainWindow::changeColorTheme(bool _dark)
     if (m_darkColorTheme) {
         qApp->setStyle(QStyleFactory::create("fusion"));
         QPalette asPalette;
-        asPalette.setColor(QPalette::Foreground, QColor(1,178,255));
+        asPalette.setColor(QPalette::WindowText, QColor(1,178,255));
         asPalette.setColor(QPalette::Button, QColor(89, 89, 89));
         asPalette.setColor(QPalette::ButtonText, QColor(255,255,255));
         asPalette.setColor(QPalette::Highlight, QColor(1,178,255));
-        asPalette.setColor(QPalette::Background, QColor(79, 79, 79));
+        asPalette.setColor(QPalette::Window, QColor(79, 79, 79));
         asPalette.setColor(QPalette::Dark, QColor(1,178,255));
         asPalette.setColor(QPalette::Light, QColor(1,178,255));
 
@@ -6053,7 +6073,7 @@ QCustomPlot* MainWindow::plotForTab(const QString& tab)
 void MainWindow::restoreMultitab(const QString& tabs)
 {
     if (!tabs.isEmpty()) {
-        QStringList list = tabs.split(',', QString::SkipEmptyParts);
+        QStringList list = tabs.split(',', Qt::SkipEmptyParts);
         foreach (auto tab_name, list) {
             if (tab_name == "tab_user" && !g_developerMode)
                 continue;
@@ -6067,3 +6087,32 @@ void MainWindow::restoreMultitab(const QString& tabs)
     }
 }
 #endif
+
+void MainWindow::on_selectDeviceDialog()
+{
+    SelectDeviceDialog dlg(false, this);
+    if (dlg.exec() == QDialog::Accepted) {
+        AnalyzerParameters* selected = AnalyzerParameters::current();
+        if (selected != nullptr) {
+            m_analyzer->on_connectDevice(dlg.analyzer());
+            emit m_analyzer->analyzerFound(selected->index());
+        }
+    }
+}
+
+void MainWindow::on_refreshConnection()
+{
+    AnalyzerParameters* ap = AnalyzerParameters::byName(SelectionParameters::selected.name);
+    if (ap != nullptr) {
+        SelectionParameters::selected.modelIndex = ap->index();
+         AnalyzerParameters::setCurrent(ap);
+         if (m_analyzer->refreshConnection()) {
+            return;
+         }
+    }
+    QTimer::singleShot(100, this, [=](){
+       on_selectDeviceDialog();
+    });
+
+}
+

@@ -120,6 +120,8 @@ void MarqueeLabel::repeate(int delay)
     }
     QTimer::singleShot(delay*1000, this, [=](){
         m_current = 0;
+        if (m_strings.isEmpty())
+            return;
         setText(m_strings[m_current].text());
         m_speed = m_strings[m_current].speed();
         updateCoordinates();
@@ -154,7 +156,7 @@ void MarqueeLabel::updateCoordinates()
 			break;
 	}
     m_fontSize = font().pointSize()/2;
-    m_textLength = fontMetrics().width(text());
+    m_textLength = fontMetrics().horizontalAdvance(text());
 }
 
 void MarqueeLabel::setSpeed(int _speed)

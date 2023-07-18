@@ -771,7 +771,7 @@ void Analyzer::on_nanovnaAnalyzerDisconnected()
     emit analyzerDisconnected();
 }
 
-void Analyzer::on_newData(rawData _rawData)
+void Analyzer::on_newData(RawData _rawData)
 {
     qDebug() << "Analyzer::on_newData" << (m_chartCounter) << (m_dotsNumber);
     if (m_getAnalyzerData) {
@@ -797,7 +797,7 @@ void Analyzer::on_newData(rawData _rawData)
     m_chartCounter++;
 }
 
-void Analyzer::on_newUserData(rawData _rawData, UserData _userData)
+void Analyzer::on_newUserData(RawData _rawData, UserData _userData)
 {
     if(++m_chartCounter == m_dotsNumber+1 || !m_isMeasuring)
     {

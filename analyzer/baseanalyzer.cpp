@@ -47,12 +47,12 @@ void BaseAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool
             band = 0;
             center = fqFrom;
         }
-        FQ  = "FQ"  + QString::number(center) + 0x0D;
-        SW  = "SW"  + QString::number(band) + 0x0D;
-        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + 0x0D;
+        FQ  = "FQ"  + QString::number(center) + QChar(0x0D);
+        SW  = "SW"  + QString::number(band) + QChar(0x0D);
+        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + QChar(0x0D);
         m_ok = false;
 
-        sendData(FQ);
+        sendCommand(FQ);
         m_sendTimer->start(10);
         state++;
         break;
@@ -61,7 +61,7 @@ void BaseAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool
         {
             setIsMeasuring(true);
             m_ok = false;
-            sendData(SW);
+            sendCommand(SW);
             state++;
         }
         break;
@@ -70,7 +70,7 @@ void BaseAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool
         {
             setIsMeasuring(true);
             m_ok = false;
-            sendData(FRX);
+            sendCommand(FRX);
             setParseState(m_isFRX ? WAIT_DATA : WAIT_USER_DATA);
             state = 1;
             m_sendTimer->stop();
@@ -109,7 +109,7 @@ void BaseAnalyzer::getAnalyzerData()
     setIsMeasuring(true);
     m_parseState = WAIT_ANALYZER_DATA;
     m_incomingBuffer.clear();
-    sendData("FLASHH\r");
+    sendCommand("FLASHH\r");
 }
 
 void BaseAnalyzer::getAnalyzerData(QString number)
@@ -119,7 +119,7 @@ void BaseAnalyzer::getAnalyzerData(QString number)
     m_parseState = WAIT_DATA;
     m_incomingBuffer.clear();
     QString str = "FLASHFRX" + number + "\r";
-    sendData(str);
+    sendCommand(str);
 }
 
 void BaseAnalyzer::on_measurementComplete()

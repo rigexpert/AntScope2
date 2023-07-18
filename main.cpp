@@ -48,7 +48,7 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext &context, cons
 class MyNativeEventFilter : public QAbstractNativeEventFilter {
 public :
     virtual bool nativeEventFilter( const QByteArray &eventType, void *message, long * /*result*/ )
-    Q_DECL_OVERRIDE
+    //Q_DECL_OVERRIDE
     {
         if (eventType == "windows_generic_MSG")
         {

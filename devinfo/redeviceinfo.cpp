@@ -123,14 +123,7 @@ QList<ReDeviceInfo> ReDeviceInfo::availableSerial()
     foreach (FtdiInfo::Info item, infolist)
     {
         item.portInfo.remove("RigExpert ");
-        if (item.portInfo.contains("AA-170"))
-            item.portInfo = "AA-170";
         list.append(ReDeviceInfo(Serial, item.portInfo, item.portName));
-    }
-
-    if (list.isEmpty()) {
-        // ???? obsolete
-        //list.append(ReDeviceInfo(Serial, "AA-30 ZERO", "AA-30 ZERO"));
     }
     return list;
 }
@@ -151,6 +144,15 @@ QString ReDeviceInfo::deviceName(const ReDeviceInfo &dev)
 
     analyzers.insert("550", "55 ZOOM");
     analyzers.insert("551", "55 ZOOM");
+    analyzers.insert("350", "35 ZOOM");
+    analyzers.insert("351", "35 ZOOM");
+    analyzers.insert("230", "230 ZOOM");
+    analyzers.insert("232", "230 ZOOM");
+    analyzers.insert("650", "650 ZOOM");
+    analyzers.insert("015", "1500 ZOOM");
+    analyzers.insert("002", "2000 ZOOM"); // 4002
+    analyzers.insert("998", "RedFox 3500"); // 2998
+
     interfases.insert("080", "8");
 
     if (dev.serial().length() < 9) {
@@ -162,6 +164,8 @@ QString ReDeviceInfo::deviceName(const ReDeviceInfo &dev)
     case PREFIX_SERIAL_NUMBER_STICK_XPRO: return "Stick XPro";
     case PREFIX_SERIAL_NUMBER_STICK_500: return "Stick 500";
     case PREFIX_SERIAL_NUMBER_WILSON_PRO: return "WilsonPro CAA";
+    case PREFIX_SERIAL_NUMBER_AA3000: return "AA-3000 ZOOM";
+    case PREFIX_SERIAL_NUMBER_AA1500SE: return "AA-1500 ZOOM SE";
     default:
         break;
     };
@@ -180,6 +184,27 @@ QString ReDeviceInfo::deviceName(const ReDeviceInfo &dev)
         name = "TI-";
         type = interfases.value(modelCode);
         break;
+
+    case 4:
+    {
+        if (modelCode == "230")
+            return "Stick 230";
+        if (modelCode == "600")
+            return "Stick Pro";
+        if (modelCode == "001")
+            return "Zero II";
+        if (modelCode == "005")
+            return "Touch";
+        if (modelCode == "004")
+            return "Touch E-Ink";
+        if (analyzers.contains(modelCode)) {
+            name = "AA-";
+            type = analyzers.value(modelCode);
+            break;
+        } else {
+            return "Unknown";
+        }
+    }
 
     default:
         return "Unknown";

@@ -35,7 +35,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="General">
       <attribute name="title">
@@ -46,6 +46,33 @@
         <layout class="QHBoxLayout" name="horizontalLayout_38">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_19">
+           <item>
+            <widget class="QLabel" name="label_15">
+             <property name="text">
+              <string> </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="connectSerialBtn">
+             <property name="text">
+              <string>Coonect analyzer</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
            <item>
             <widget class="QGroupBox" name="groupBox_7">
              <property name="title">
@@ -100,19 +127,6 @@
             </widget>
            </item>
            <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
             <widget class="QGroupBox" name="groupBox_12">
              <property name="minimumSize">
               <size>
@@ -121,34 +135,9 @@
               </size>
              </property>
              <property name="title">
-              <string>Analyzer connection</string>
+              <string/>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_14">
-              <item>
-               <widget class="QLabel" name="label_15">
-                <property name="text">
-                 <string>Serial port:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QComboBox" name="serialPortComboBox">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="connectSerialBtn">
-                <property name="text">
-                 <string>Coonect analyzer</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
+             <layout class="QVBoxLayout" name="verticalLayout_14"/>
             </widget>
            </item>
           </layout>
@@ -1567,7 +1556,6 @@
   <tabstop>tabWidget</tabstop>
   <tabstop>measureSystemMetric</tabstop>
   <tabstop>measureSystemAmerican</tabstop>
-  <tabstop>serialPortComboBox</tabstop>
   <tabstop>graphHintCheckBox</tabstop>
   <tabstop>markersHintCheckBox</tabstop>
   <tabstop>graphBriefHintCheckBox</tabstop>

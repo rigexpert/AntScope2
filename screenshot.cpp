@@ -121,8 +121,8 @@ void Screenshot::savePDF(QString path, QString comment)
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setColorMode(QPrinter::Color);
     printer.setOutputFileName(path);
-    printer.setPageSize(QPrinter::A4);
-    printer.setOrientation(QPrinter::Portrait);
+    printer.setPageSize(QPageSize::A4);
+    printer.setPageOrientation(QPageLayout::Portrait);
 
 #ifdef NEW_ANALYZER
     AnalyzerParameters* param = AnalyzerParameters::current();
@@ -133,9 +133,9 @@ void Screenshot::savePDF(QString path, QString comment)
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
 #endif
-    bool full = (model == "AA-2000 ZOOM") || (model == "AA-3000 ZOOM");
+    bool full = (model == "AA-2000 ZOOM") || (model == "AA-3000 ZOOM") || (model == "AA-1500 ZOOM SE");
 
-    QRect rect = printer.pageRect();
+    QRectF rect = printer.paperRect(QPrinter::DevicePixel);
 
     QPainter painter(&printer);
     int iwd = m_image->width();
@@ -258,11 +258,6 @@ void Screenshot::on_newData(QByteArray data)
             int green = (data>>5)&0x3F;
             int red = (data>>11)&0x1F;
 
-//            if (model == "AA-2000") {
-//                int tmp = red;
-//                red = blue;
-//                blue = tmp;
-//            }
             red = (red<<3) + ( (red&0x10) ? 0x07 : 0 );
             green = (green<<2) + ( (green&0x20) ? 0x03 : 0 );
             blue = (blue<<3)+ ( (blue&0x10) ? 0x07 : 0 );
@@ -289,7 +284,7 @@ void Screenshot::on_newData(QByteArray data)
             int blue = (data>>11)&0x1F;
 
             //if (model == "AA-230 ZOOM" || model == "AA-2000") {
-            if ((model == "AA-2000 ZOOM") || (model == "AA-3000 ZOOM")) {
+            if ((model == "AA-2000 ZOOM") || (model == "AA-3000 ZOOM") || (model == "AA-1500 ZOOM SE")) {
                 int tmp = red;
                 red = blue;
                 blue = tmp;
