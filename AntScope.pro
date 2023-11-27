@@ -18,7 +18,7 @@ message ("!!!  set path 6.2.4/MSVC19")
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.3.0\\"'
+DEFINES += ANTSCOPE2VER='\\"1.3.4\\"'
 DEFINES += OLD_TDR
 
 #{ debug
@@ -42,7 +42,6 @@ TARGET = AntScope2
 
 TRANSLATIONS += QtLanguage.ts
 TRANSLATIONS += QtLanguage_uk.ts
-TRANSLATIONS += QtLanguage_ru.ts
 TRANSLATIONS += QtLanguage_ja.ts
 CODECFORSRC   = UTF-8
 
@@ -257,8 +256,7 @@ macx {
     TRANSLATION_FILES.path = Contents/MacOS
     TRANSLATION_FILES.files = \
         $$PWD/QtLanguage_ja.qm \
-        $$PWD/QtLanguage_uk.qm \
-        $$PWD/QtLanguage_ru.qm
+        $$PWD/QtLanguage_uk.qm
 
     ICON_FILES.path = Contents
     ICON_FILES.files = \

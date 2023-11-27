@@ -2434,6 +2434,7 @@ void MainWindow::on_analyzerFound(int index)
 {
     QString name = AnalyzerParameters::byIndex(index)->name();
     on_analyzerNameFound(name);
+    m_analyzer->applyAnalyzer();
 }
 
 void MainWindow::on_analyzerNameFound(QString name)
@@ -2573,6 +2574,7 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
 {
     double from  = m_swrWidget->xAxis->getRangeLower();
     double to = m_swrWidget->xAxis->getRangeUpper();
+
     if(!m_isRange)
     {
         setFqFrom(from);
@@ -2598,14 +2600,14 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
         QCPRange range = m_swrWidget->yAxis->range();
 
         double length = range.size();
-        if ((length >= 10 && e->pixelDelta().y() > 0) || (length <= 0.1 && e->pixelDelta().y() < 0))
+        if ((length >= 10 && e->angleDelta().y() > 0) || (length <= 0.1 && e->angleDelta().y() < 0))
             return;
 
-        if (!g_developerMode && (length <= SWR_ZOOM_LIMIT) && (e->pixelDelta().y() < 0))
+        if (!g_developerMode && (length <= SWR_ZOOM_LIMIT) && (e->angleDelta().y() < 0))
             return;
 
         double lower = range.lower - 0.02;
-        m_swrWidget->yAxis->setRangeLower((lower < MIN_SWR) ? MIN_SWR : lower);
+        m_swrWidget->yAxis->setRangeLower(qMin(lower, MIN_SWR));
         double upper = range.upper;
         double delta = 0.1;
         if(length >= 5)
@@ -2617,7 +2619,7 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
             delta = 0.1;
         }
 
-        if(e->pixelDelta().y() < 0)
+        if(e->angleDelta().y() < 0)
         {
             delta = -delta;
         }
@@ -2772,7 +2774,7 @@ void MainWindow::on_mouseWheel_rs(QWheelEvent * e)
     if (e->modifiers() == Qt::ControlModifier)
     {
         int val;
-        if(e->pixelDelta().y() < 0)
+        if(e->angleDelta().y() < 0)
         {
             if(g_developerMode || state <= 19)
             {
@@ -2881,7 +2883,7 @@ void MainWindow::on_mouseWheel_rp(QWheelEvent *e)
 
     if (e->modifiers() == Qt::ControlModifier)
     {
-        if(e->pixelDelta().y() < 0)
+        if(e->angleDelta().y() < 0)
         {
             if(g_developerMode || state <= 19)
             {
@@ -2993,7 +2995,7 @@ void MainWindow::on_mouseWheel_rl(QWheelEvent *e)
         {
             QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
-        if(e->pixelDelta().y() < 0)
+        if(e->angleDelta().y() < 0)
         {
             if(g_developerMode || m_rlZoomState <= 9)
             {
@@ -3077,7 +3079,7 @@ void MainWindow::on_mouseWheel_tdr(QWheelEvent* e)
 //        double up = m_tdrWidget->yAxis->getRangeUpper();
 //        double lo = m_tdrWidget->yAxis->getRangeLower();
 
-        if(e->pixelDelta().y() < 0)
+        if(e->angleDelta().y() < 0)
         {
             if(state <= 30)
             {
@@ -3152,7 +3154,7 @@ void MainWindow::on_mouseWheel_user(QWheelEvent * e)
     if (e->modifiers() == Qt::ControlModifier)
     {
         int val;
-        if(e->pixelDelta().y() < 0)
+        if(e->angleDelta().y() < 0)
         {
             if(g_developerMode || state <= 19)
             {
@@ -5387,7 +5389,7 @@ QCustomPlot* MainWindow::getCurrentPlot()
 
 bool MainWindow::loadBands()
 {
-    QString ituPath = Settings::localDataPath("itu-regions.txt");
+    QString ituPath = Settings::programDataPath("itu-regions.txt");
     QFile file(ituPath);
     if (!file.exists()) {
         file.setFileName(Settings::programDataPath("itu-regions-defaults.txt"));

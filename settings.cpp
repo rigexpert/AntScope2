@@ -45,7 +45,6 @@ void showPortReDeviceInfo(const ReDeviceInfo& info)
     qDebug() << "  systemName" << info.systemName();
 }
 
-QString Settings::iniFilePath;
 Settings::Settings(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Settings),
@@ -957,9 +956,7 @@ void Settings::on_updateGraphsBtn_clicked()
 
 QString Settings::setIniFile()
 {
-    //iniFilePath = Settings::localDataPath() + "AntScope2.ini";
-    iniFilePath = Settings::localDataPath("AntScope2.ini");
-    return iniFilePath;
+    return localDataPath("antscope2.ini");
 }
 
 QString Settings::localDataPath(QString _fileName)
@@ -969,6 +966,7 @@ QString Settings::localDataPath(QString _fileName)
     QDir dir_ini3 = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     return dir_ini3.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
 #endif
+
 // Linux
 #ifdef Q_OS_LINUX
     extern bool g_raspbian;
@@ -976,9 +974,10 @@ QString Settings::localDataPath(QString _fileName)
     {
         return "/usr/share/RigExpert/AntScope2/" + _fileName;
     }
-    QDir dir_ini2 = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    return dir_ini2.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+    QDir dir = localDataFolder();
+    return dir.absoluteFilePath(_fileName);
 #endif
+
 // Windows
 #ifdef Q_OS_WIN
     QDir dir_ini1 = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
@@ -1001,7 +1000,8 @@ QString Settings::localDataFolder()
     {
         return "/usr/share/RigExpert/AntScope2/";
     }
-    return QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    QDir dir = QCoreApplication::applicationDirPath() + "/..";
+    return dir.canonicalPath();
 #endif
 // Windows
 #ifdef Q_OS_WIN
@@ -1013,11 +1013,14 @@ QString Settings::localDataFolder()
 
 QString Settings::languageDataFolder()
 {
+#ifdef Q_OS_LINUX
     extern bool g_raspbian;
     if (g_raspbian)
     {
         return "/usr/share/RigExpert/AntScope2";
     }
+    return localDataFolder();
+#endif
     return QCoreApplication::applicationDirPath();
 }
 
@@ -1029,36 +1032,29 @@ QString Settings::programDataPath(QString _fileName)
     return dir.absoluteFilePath("Resources/" + _fileName);
 #endif
 
-// win32 and win64
-#ifdef Q_OS_WIN
-    QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
-
-    qDebug() << list;
-    for (int idx=0; idx<list.size(); idx++)
-    {
-        QDir dir = list[idx];
-        QString path = dir.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
-        if (QFile::exists(path)) {
-            return path;
-        }
-    }
-    return QString();
-#endif
-  //qDebug("TODO Settings::programDataPath");
 // Linux
 #ifdef Q_OS_LINUX
-    extern bool g_raspbian;
-    if (g_raspbian)
-    {
-        return "/usr/share/RigExpert/AntScope2";
-    }
-
-    QDir dir = QCoreApplication::applicationDirPath();
-    QString name = dir.absoluteFilePath("Resources/" + _fileName);
-    return name;
+    return localDataPath(_fileName);
 #endif
 
-  return QString();
+// win32 and win64
+//    QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
+//
+//    qDebug() << list;
+//    for (int idx=0; idx<list.size(); idx++)
+//    {
+//        QDir dir = list[idx];
+//        QString path = dir.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+//        QString msg = QString("fname:%1\ndir: %2\npath:%3\n%4").arg(_fileName, dir.absolutePath(), path).arg(QFile::exists(path)?"EXIST":"NO");
+//        QMessageBox::information(nullptr, "programDataPath", msg);
+//        if (QFile::exists(path)) {
+//            return path;
+//        }
+//    }
+    QString configDataDirString = QStandardPaths::standardLocations(QStandardPaths::AppConfigLocation).at(1);
+    QDir dir(configDataDirString); // "C:/ProgramData/<APPNAME>"
+    dir.cdUp(); // cd ..
+    return dir.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
 }
 
 void Settings::on_aa30bootFound()

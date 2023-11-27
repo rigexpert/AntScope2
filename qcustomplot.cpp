@@ -12752,7 +12752,7 @@ void QCPAxisRect::wheelEvent(QWheelEvent *event)
           if (mRangeZoom != 0)
           {
             double factor;
-            double wheelSteps = event->pixelDelta().y()/120.0; // a single step delta is +/-120 usually
+            double wheelSteps = event->angleDelta().y()/120.0; // a single step delta is +/-120 usually
             if (mRangeZoom.testFlag(Qt::Horizontal))
             {
               factor = qPow(mRangeZoomFactorHorz, wheelSteps);

@@ -43,17 +43,17 @@ enum {
 namespace Ui {
 class MainWindow;
 }
-#define LANGUAGES_QUANTITY 4
+#define LANGUAGES_QUANTITY 3
 static QString languages[LANGUAGES_QUANTITY]={
     "English",
-    "Русский",
+//    "Русский",
     "Українська",
     "日本語"
 };
 
 static QString languages_small[LANGUAGES_QUANTITY]={
     "en",
-    "ru",
+//    "ru",
     "uk",
     "ja"
 };

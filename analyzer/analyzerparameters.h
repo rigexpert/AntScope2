@@ -198,17 +198,28 @@ public:
         return nullptr;
     }
     static AnalyzerParameters* byName(QString _name) {
-        foreach (AnalyzerParameters* par, m_analyzers) {
-            if (par->name() == _name)
-                return par;
+        //{ HUCK
+        if (_name.contains("AA-3000")) {
+            foreach (AnalyzerParameters* par, m_analyzers) {
+                if (par->name().contains("AA-3000")) {
+                    return par;
+                }
+            }
         }
-        foreach (AnalyzerParameters* par, m_analyzers) {
-            if (_name.contains(par->name()))
-                return par;
-        }
+        //} HUCK
         foreach (AnalyzerParameters* par, m_analyzers) {
             if (!par->alias().isEmpty() &&_name.contains(par->alias()))
                 return par;
+        }
+        foreach (AnalyzerParameters* par, m_analyzers) {
+            if (par->name() == _name) {
+                return par;
+            }
+        }
+        foreach (AnalyzerParameters* par, m_analyzers) {
+            if (_name.contains(par->name())){
+                return par;
+            }
         }
         return nullptr;
     }
@@ -283,6 +294,7 @@ public:
         int idx=0;
         m_analyzers << new AnalyzerParameters(idx++, "NONE", "NONE", "NONE", 0, 0);
         m_analyzers << new AnalyzerParameters(idx++, "COMPORT", "60", "30000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-3000 ZOOM", "100", "3000000", 480, 746, PREFIX_SERIAL_NUMBER_AA3000);
         m_analyzers << new AnalyzerParameters(idx++, "AA-30 ZERO", "60", "30000", 0, 0);
         m_analyzers << new AnalyzerParameters(idx++, "AA-30.ZERO", "60", "170000", 0, 0);
         m_analyzers << new AnalyzerParameters(idx++, "AA-30", "100", "30000", 64, 133);
@@ -307,7 +319,6 @@ public:
         m_analyzers << new AnalyzerParameters(idx++, "AA-1400", "100", "1400000", 240, 320);
         m_analyzers << new AnalyzerParameters(idx++, "AA-1500 ZOOM", "100", "1500000", 240, 320, PREFIX_SERIAL_NUMBER_AA1500_ZOOM);
         m_analyzers << new AnalyzerParameters(idx++, "AA-2000 ZOOM", "100", "2000000", 480, 746, PREFIX_SERIAL_NUMBER_AA2000);
-        m_analyzers << new AnalyzerParameters(idx++, "AA-3000 ZOOM", "100", "3000000", 480, 746, PREFIX_SERIAL_NUMBER_AA3000);
         m_analyzers << new AnalyzerParameters(idx++, "NanoVNA", "100", "1000000", 0, 0);
         // 08.06.2022 - not supported except of Android Antscope
         //m_analyzers << new AnalyzerParameters(idx++, "Zero II", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_ZEROII);

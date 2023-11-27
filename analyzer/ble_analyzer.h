@@ -38,9 +38,9 @@ enum {
 };
 
 enum {
-    BLE_NONE = 0,
-    BLE_PARTIAL,
-    BLE_FULL
+    BLE_SUPPORT_NONE = 0,
+    BLE_SUPPORT_PARTIAL,
+    BLE_SUPPORT_FULL
 };
 
 #define BLE_PACKET_SIZE 20

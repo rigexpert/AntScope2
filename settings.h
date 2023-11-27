@@ -99,7 +99,6 @@ private:
     QString m_manualDetectComString;
 
     int m_farEndMeasurement;
-    static QString iniFilePath;
 
     QList <QString> m_cablesList;
 

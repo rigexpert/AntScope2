@@ -4,6 +4,8 @@
 #include "nanovna_analyzer.h"
 #include "ble_analyzer.h"
 
+
+
 // static
 SelectionParameters SelectionParameters::selected;
 
@@ -94,6 +96,19 @@ SelectDeviceDialog::SelectDeviceDialog(bool silent, QWidget *parent) :
     });
     if (!silent)
         onScan(type());
+
+    int support = BleAnalyzer::supported();
+    if (support == BLE_SUPPORT_NONE) {
+        ui->labelSupported->hide();
+        ui->radioButtonBLE->hide();
+    } else if (support == BLE_SUPPORT_PARTIAL) {
+        QString style = "color: white; background: red";
+        ui->labelSupported->setStyleSheet(style);
+        QString txt = tr("This version of the operating system does not guarantee the correct operation of the BLE.");
+        ui->labelSupported->setText(txt);
+    } else {
+        ui->labelSupported->hide();
+    }
 }
 
 SelectDeviceDialog::~SelectDeviceDialog()
@@ -401,3 +416,5 @@ void SelectDeviceDialog::reset()
       tmp->deleteLater();
     }
 }
+
+

@@ -186,5 +186,9 @@ QList <FtdiInfo::Info> FtdiInfo::info()
     return ftdiList;
 }
 #else
- #error "Add code for your OS"
+QList <FtdiInfo::Info> FtdiInfo::info()
+{
+    QList<FtdiInfo::Info> ftdiList;
+    return ftdiList;
+}
 #endif

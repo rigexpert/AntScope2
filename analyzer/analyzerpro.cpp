@@ -227,7 +227,7 @@ QString AnalyzerPro::getSerialNumber(void) const
 
 void AnalyzerPro::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
 {
-    qDebug() << "AnalyzerPro::on_measure()";
+    //qDebug() << "AnalyzerPro::on_measure()";
     m_getAnalyzerData = false;
     if(!m_isMeasuring)
     {
@@ -334,7 +334,7 @@ void AnalyzerPro::makeScreenshot()
 
 void AnalyzerPro::on_newData(RawData _rawData)
 {
-    qDebug() << "AnalyzerPro::on_newData" << _rawData.fq << _rawData.r << _rawData.x << (m_chartCounter) << (m_dotsNumber);
+    //qDebug() << "AnalyzerPro::on_newData" << _rawData.fq << _rawData.r << _rawData.x << (m_chartCounter) << (m_dotsNumber);
     if (m_getAnalyzerData) {
         emit newAnalyzerData (_rawData);
     } else {
@@ -345,7 +345,7 @@ void AnalyzerPro::on_newData(RawData _rawData)
     quint32 finNum = m_calibrationMode ? m_dotsNumber : (m_dotsNumber-1);
     if(m_chartCounter > finNum || !m_isMeasuring)
     {
-        qDebug() << "AnalyzerPro::on_newData COMPLETE";
+        //qDebug() << "AnalyzerPro::on_newData COMPLETE";
         m_chartCounter = 0;
         setIsMeasuring(false);
         PopUpIndicator::setIndicatorVisible(false);

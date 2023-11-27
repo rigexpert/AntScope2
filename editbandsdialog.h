@@ -25,6 +25,7 @@ protected:
 
 private:
     Ui::EditBandsDialog *ui;
+    QString m_filePath;
 };
 
 #endif // EDITBANDSDIALOG_H

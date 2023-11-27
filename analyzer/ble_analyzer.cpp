@@ -35,15 +35,23 @@ BleAnalyzer::~BleAnalyzer()
 
 int BleAnalyzer::supported()
 {
+#ifdef Q_OS_DARWIN
+    return BLE_SUPPORT_FULL;
+#endif
+
+#ifdef Q_OS_LINUX
+    return BLE_SUPPORT_FULL;
+#endif
+
     auto OSInfo = QOperatingSystemVersion ::current();
     auto OSType= OSInfo.type();
     if (OSType != 1)
-        return BLE_NONE;
+        return BLE_SUPPORT_NONE;
     if (OSInfo < QOperatingSystemVersion::Windows10)
-        return BLE_NONE;
+        return BLE_SUPPORT_NONE;
     if (OSInfo.microVersion() < 1607)
-        return BLE_PARTIAL;
-    return BLE_FULL;
+        return BLE_SUPPORT_PARTIAL;
+    return BLE_SUPPORT_FULL;
 }
 
 QString BleAnalyzer::error() const
@@ -127,7 +135,13 @@ void BleAnalyzer::addDevice(const QBluetoothDeviceInfo &device)
 {
     if (device.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
         auto deviceInfo = new BleDeviceInfo(device);
-        if (!AnalyzerParameters::supported(deviceInfo->getName()))
+        QString name = deviceInfo->getName();
+        QString str = name.contains("Stick") ? "  FOUND!" : "  SKIP";
+        if (name.contains("Stick")) {
+            str = "FOUND";
+        }
+        qDebug() << "BleAnalyzer::addDevice.name: " << name << str;
+        if (!AnalyzerParameters::supported(name))
             return;
         m_devices.append(deviceInfo);
         setInfo(tr("Low Energy device found. Scanning more..."));
