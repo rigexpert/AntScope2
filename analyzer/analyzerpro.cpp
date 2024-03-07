@@ -248,6 +248,29 @@ void AnalyzerPro::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
     on_stopMeasure();
 }
 
+void AnalyzerPro::on_measureS21 (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
+{
+    //qDebug() << "AnalyzerPro::on_measureS21()";
+    m_getAnalyzerData = false;
+    if(!m_isMeasuring)
+    {
+        setIsMeasuring(true);
+        QDateTime datetime = QDateTime::currentDateTime();
+        QString name = datetime.toString("##dd.MM.yyyy-hh:mm:ss");
+        emit newMeasurement(name, fqFrom, fqTo, dotsNumber);
+        m_dotsNumber = dotsNumber;
+        m_chartCounter = 0;
+        if (m_baseAnalyzer != nullptr)
+        {
+            m_baseAnalyzer->setIsS21Mode(true);
+            m_baseAnalyzer->startMeasure(fqFrom, fqTo, m_dotsNumber);
+            PopUpIndicator::setIndicatorVisible(true);
+            return;
+        }
+    }
+    on_stopMeasure();
+}
+
 void AnalyzerPro::on_measureContinuous(qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
 {
     if(!m_isMeasuring)
@@ -346,6 +369,27 @@ void AnalyzerPro::on_newData(RawData _rawData)
     if(m_chartCounter > finNum || !m_isMeasuring)
     {
         //qDebug() << "AnalyzerPro::on_newData COMPLETE";
+        m_chartCounter = 0;
+        setIsMeasuring(false);
+        PopUpIndicator::setIndicatorVisible(false);
+        if(!m_calibrationMode)
+        {
+            emit measurementComplete();
+        }
+        return;
+    }
+    m_chartCounter++;
+}
+
+void AnalyzerPro::on_newS21Data(S21Data _s21Data)
+{
+    emit newS21Data (_s21Data);
+
+    // ???? if(m_chartCounter >= m_dotsNumber || !m_isMeasuring)
+    quint32 finNum = m_calibrationMode ? m_dotsNumber : (m_dotsNumber-1);
+    if(m_chartCounter > finNum || !m_isMeasuring)
+    {
+        qDebug() << "AnalyzerPro::on_newS21Data COMPLETE";
         m_chartCounter = 0;
         setIsMeasuring(false);
         PopUpIndicator::setIndicatorVisible(false);
@@ -610,6 +654,7 @@ void AnalyzerPro::connectSignals()
     connect(m_baseAnalyzer, &BaseAnalyzer::signalFullInfo, this, &AnalyzerPro::slotFullInfo);
     connect(m_baseAnalyzer, &BaseAnalyzer::signalMeasurementError, this, &AnalyzerPro::signalMeasurementError);
     connect(m_baseAnalyzer, &BaseAnalyzer::newData,this,&AnalyzerPro::on_newData);
+    connect(m_baseAnalyzer, &BaseAnalyzer::newS21Data,this, &AnalyzerPro::on_newS21Data);
     connect(m_baseAnalyzer, &BaseAnalyzer::newUserData,this, &AnalyzerPro::on_newUserData);
     connect(m_baseAnalyzer,&BaseAnalyzer::newUserDataHeader,this, &AnalyzerPro::on_newUserDataHeader);
     connect(m_baseAnalyzer, &BaseAnalyzer::analyzerDataStringArrived,this, &AnalyzerPro::on_analyzerDataStringArrived);

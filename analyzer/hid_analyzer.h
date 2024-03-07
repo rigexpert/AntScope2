@@ -82,6 +82,7 @@ private slots:
     void checkTimerTick ();
     void timeoutChart();
     void timeoutChartUser();
+    void timeoutChartS21();
     void hidRead (void);
     struct hid_device_info* refreshThreadStarted();
 

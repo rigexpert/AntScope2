@@ -26,6 +26,8 @@ public:
     virtual int getAnalyzerModel (void) const { return m_analyzerModel;}
     virtual void setIsFRXMode(bool _mode=true) { m_isFRX = _mode;}
     virtual bool getIsFRXMode() { return m_isFRX; }
+    virtual void setIsS21Mode(bool _mode=true) { m_isS21 = _mode;}
+    virtual bool getIsS21Mode() { return m_isS21; }
     virtual qint64 sendData(const QByteArray& ) { return 0; }
     virtual qint64 sendCommand(const QString& ) { return 0; }
     virtual void setParseState(int _state) { m_parseState=_state; } // analyzerparameters.h: enum parse{}
@@ -41,6 +43,7 @@ signals:
     void analyzerFound (int analyzerIndex);
     void analyzerDisconnected();
     void newData(RawData);
+    void newS21Data(S21Data);
     void newUserDataHeader(QStringList);
     void newUserData(RawData, UserData);
     void analyzerDataStringArrived(QString);
@@ -73,6 +76,7 @@ protected:
     volatile bool m_isMeasuring;
     volatile bool m_isContinuos;
     volatile bool m_isFRX = true;
+    volatile bool m_isS21 = false;
     bool m_ok = false;
     QTimer * m_sendTimer;
     bool m_isTakeData = false;

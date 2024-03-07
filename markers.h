@@ -18,12 +18,14 @@ struct marker
     QCPItemStraightLine *rsLine = NULL;
     QCPItemStraightLine *rpLine = NULL;
     QCPItemStraightLine *rlLine = NULL;
+    QCPItemStraightLine *s21Line = NULL;
 //    QCPItemStraightLine *smithTracer = NULL;
     QCPItemText *swrLineText = NULL;
     QCPItemText *phaseLineText = NULL;
     QCPItemText *rsLineText = NULL;
     QCPItemText *rpLineText = NULL;
     QCPItemText *rlLineText = NULL;
+    QCPItemText *s21LineText = NULL;
 //    QCPItemText *smithTracerText = NULL;
 
     void clear()
@@ -48,6 +50,8 @@ struct marker
             delete rpLineText;
         if(rlLineText)
             delete rlLineText;
+        if(s21LineText)
+            delete s21LineText;
     }
 };
 
@@ -59,7 +63,7 @@ public:
     ~Markers();
 
     void setWidgets(QCustomPlot * swr, QCustomPlot * phase, QCustomPlot * rs, QCustomPlot * rp,
-                    QCustomPlot * rl, QCustomPlot * tdr, QCustomPlot * smith);
+                    QCustomPlot * rl, QCustomPlot * tdr, QCustomPlot * s21, QCustomPlot * smith);
     void setMeasurements(Measurements *m);
     void create(double fq);
     void setFq(double fq);
@@ -84,6 +88,7 @@ private:
     QCustomPlot *m_rpWidget;
     QCustomPlot *m_rlWidget;
     QCustomPlot *m_tdrWidget;
+    QCustomPlot *m_s21Widget;
     QCustomPlot *m_smithWidget;
 
     QVector <marker*> m_markersList;

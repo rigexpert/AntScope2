@@ -175,7 +175,7 @@ void Calibration::on_newData(RawData _rawData)
     }
     emit progress(m_state, percent);
 
-    //qDebug() << "Cal::on_newData: state=" << m_state << ", count=" << m_dotsCount << ", num=" << m_dotsNumber;
+    qDebug() << "Cal::on_newData: state=" << m_state << ", count=" << m_dotsCount << ", num=" << m_dotsNumber;
     // ??? if(m_dotsCount == m_dotsNumber+1)
     if(m_dotsCount > m_dotsNumber)
     {

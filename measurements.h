@@ -58,7 +58,7 @@ public:
     ~Measurements();
 
     void setWidgets(QCustomPlot * swr, QCustomPlot * phase, QCustomPlot * rs, QCustomPlot * rp,
-                    QCustomPlot * rl, QCustomPlot * tdr, QCustomPlot * smith, QTableWidget *table);
+                    QCustomPlot * rl, QCustomPlot * tdr, QCustomPlot * s21, QCustomPlot * smith, QTableWidget *table);
     void setUserWidget(QCustomPlot * user);
     void setCalibration(Calibration * _calibration);
     bool getCalibrationEnabled(void);
@@ -144,6 +144,7 @@ private:
     QCustomPlot *m_rpWidget;
     QCustomPlot *m_rlWidget;
     QCustomPlot *m_tdrWidget;
+    QCustomPlot *m_s21Widget;
     QCustomPlot *m_smithWidget;
     QTableWidget *m_tableWidget;
     QCustomPlot *m_userWidget;
@@ -161,6 +162,8 @@ private:
     QCPItemStraightLine *m_rpLine;
     QCPItemStraightLine *m_rlLine;
     QCPItemStraightLine *m_rlLine2;
+    QCPItemStraightLine *m_s21Line;
+    QCPItemStraightLine *m_s21Line2;
     QCPItemStraightLine *m_tdrLine;
 
     QSettings * m_settings;
@@ -231,6 +234,7 @@ private:
     void redrawRs(bool _incrementally);
     void redrawRp(bool _incrementally);
     void redrawRl(bool _incrementally);
+    void redrawS21(bool _incrementally);
     void redrawSmith(bool _incrementally);
     void redrawUser(bool _incrementally);
     void exportData(QString _name, int _type, QVector<RawData>& vector, QString _description=QString());
@@ -246,6 +250,7 @@ public slots:
     void on_newAnalyzerData(RawData _rawData);
     void on_newDataRedraw(RawData _rawData);
     void on_newData(RawData _rawData, bool _redraw=false);
+    void on_newS21Data(S21Data _s21Data);
     void on_newUserDataHeader(QStringList);
     void on_newUserData(RawData, UserData);
     void on_newMeasurement(QString name);

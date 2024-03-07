@@ -102,6 +102,7 @@ private:
     QWidget *m_tab_rp=nullptr;
     QWidget *m_tab_rl=nullptr;
     QWidget *m_tab_tdr=nullptr;
+    QWidget *m_tab_s21=nullptr;
     QWidget *m_tab_smith=nullptr;
     QWidget *m_tab_user=nullptr;
 
@@ -111,6 +112,7 @@ private:
     QCustomPlot *m_rpWidget;
     QCustomPlot *m_rlWidget;
     QCustomPlot *m_tdrWidget;
+    QCustomPlot *m_s21Widget;
     QCustomPlot *m_smithWidget;
     QCustomPlot *m_userWidget;
     QMap<QString, QCustomPlot *> m_mapWidgets;
@@ -169,6 +171,7 @@ private:
     int m_rpZoomState;
     int m_rlZoomState;
     int m_tdrZoomState;
+    int m_s21ZoomState;
     int m_smithZoomState;
     int m_userZoomState;
 
@@ -217,6 +220,7 @@ private:
 signals:
     void measure(qint64,qint64,int);
     void measureUser(qint64,qint64,int);
+    void measureS21(qint64,qint64,int);
     void measureContinuous(qint64,qint64,int);
     void measureOneFq(QWidget*,qint64,int);
     void currentTab(QString);
@@ -270,6 +274,7 @@ public slots:
     void on_mouseMove_smith(QMouseEvent *e);
     void on_mouseWheel_user(QWheelEvent * e);
     void on_mouseMove_user(QMouseEvent *);
+    void on_mouseMove_s21(QMouseEvent *);
     void on_singleStart_clicked();
     void on_continuousStartBtn_clicked(bool checked);
     void on_fqSettingsBtn_clicked();

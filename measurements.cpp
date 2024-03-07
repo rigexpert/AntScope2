@@ -55,6 +55,8 @@ Measurements::Measurements(QObject *parent) : QObject(parent),
     m_rpLine(NULL),
     m_rlLine(NULL),
     m_rlLine2(NULL),
+    m_s21Line(NULL),
+    m_s21Line2(NULL),
     m_tdrLine(NULL),
     m_settings(NULL),
     m_calibration(NULL),
@@ -139,7 +141,7 @@ Measurements::~Measurements()
 
 void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
                               QCustomPlot * rs,    QCustomPlot * rp,
-                              QCustomPlot * rl,    QCustomPlot * tdr,
+                              QCustomPlot * rl,    QCustomPlot * tdr,    QCustomPlot * s21,
                               QCustomPlot * smith, QTableWidget * table)
 {
     m_swrWidget = swr;
@@ -151,6 +153,9 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
     m_rpWidget->legend->setVisible(true);
     m_rpWidget->legend->removeAt(0);
     m_rlWidget = rl;
+    m_s21Widget = s21;
+    //m_s21Widget->legend->setVisible(true);
+    //m_s21Widget->legend->removeAt(0);
     m_tdrWidget = tdr;
     m_tdrWidget->legend->setVisible(true);
     m_tdrWidget->legend->removeAt(0);
@@ -230,6 +235,8 @@ void Measurements::deleteRow(int row)
         m_rpWidget->removeGraph(1+row*3);
         m_rpWidget->removeGraph(1+row*3);
         m_rlWidget->removeGraph(row_);
+        m_s21Widget->removeGraph(1+row*2);
+        m_s21Widget->removeGraph(1+row*2);
         m_tdrWidget->removeGraph(1+row*3);
         m_tdrWidget->removeGraph(1+row*3);
         m_tdrWidget->removeGraph(1+row*3);
@@ -253,6 +260,9 @@ void Measurements::deleteRow(int row)
             m_tdrWidget->legend->addItem(new QCPPlottableLegendItem(m_tdrWidget->legend, m_tdrWidget->graph(1)));
             m_tdrWidget->legend->addItem(new QCPPlottableLegendItem(m_tdrWidget->legend, m_tdrWidget->graph(2)));
             m_tdrWidget->legend->addItem(new QCPPlottableLegendItem(m_tdrWidget->legend, m_tdrWidget->graph(3)));
+
+            //m_s21Widget->legend->addItem(new QCPPlottableLegendItem(m_s21Widget->legend, m_s21Widget->graph(1)));
+            //m_s21Widget->legend->addItem(new QCPPlottableLegendItem(m_s21Widget->legend, m_s21Widget->graph(2)));
         }
         int selRow = (row >= m_measurements.length()) ? (row-1) : row;
         QModelIndex myIndex = m_tableWidget->model()->index( selRow, 0,
@@ -319,6 +329,7 @@ void Measurements::on_newMeasurement(QString name)
         m_swrWidget->graph()->setPen(pen);
         m_phaseWidget->graph()->setPen(pen);
         m_rlWidget->graph()->setPen(pen);
+        m_s21Widget->graph()->setPen(pen);
         m_smithWidget->graph()->setPen(pen);
         m_measurements.at(m_measurements.length()-2).smithCurve->setPen(pen);
     }    
@@ -343,6 +354,13 @@ void Measurements::on_newMeasurement(QString name)
     m_rpWidget->addGraph();
     m_rpWidget->graph()->setName("|Zp|");
     m_rlWidget->addGraph();
+
+    //m_s21Widget->setAutoAddPlottableToLegend(m_s21Widget->legend->itemCount() < 3);
+    m_s21Widget->addGraph();
+    m_s21Widget->graph()->setName("S21");
+    m_s21Widget->addGraph();
+    m_s21Widget->graph()->setName("Stage");
+    m_s21Widget->graph()->setValueAxis(m_s21Widget->yAxis2);
 
     m_tdrWidget->setAutoAddPlottableToLegend(m_tdrWidget->legend->itemCount() < 3);
     m_tdrWidget->addGraph();
@@ -374,6 +392,7 @@ void Measurements::on_newMeasurement(QString name)
     m_measurements.last().smithCurve->setPen(pen);
 
     int rsGraphCount = m_rsWidget->graphCount();
+    int s21GraphCount = m_s21Widget->graphCount();
     int tdrGraphCount = m_tdrWidget->graphCount();
 
     QPen rpen;
@@ -393,6 +412,13 @@ void Measurements::on_newMeasurement(QString name)
     m_rpWidget->graph(rsGraphCount-3)->setPen(rpen);
     m_rpWidget->graph(rsGraphCount-2)->setPen(xpen);
     m_rpWidget->graph(rsGraphCount-1)->setPen(zpen);
+
+    QPen s21Pen;
+    s21Pen.setColor(getColor(m_currentIndex));
+    s21Pen.setWidth(ACTIVE_GRAPH_PEN_WIDTH);
+    m_s21Widget->graph(s21GraphCount-2)->setPen(s21Pen);
+    s21Pen.setColor(getColor(m_currentIndex+1));
+    m_s21Widget->graph(s21GraphCount-1)->setPen(s21Pen);
 
     m_tdrWidget->graph(tdrGraphCount-3)->setPen(zpen);
     m_tdrWidget->graph(tdrGraphCount-2)->setPen(xpen);
@@ -562,6 +588,9 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
 
     if(m_calibrationMode)
     {
+        if (m_calibration != nullptr) {
+            m_calibration->on_newData(_rawData);
+        }
         return;
     }
 
@@ -630,6 +659,7 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
     y.append(m_rlWidget->yAxis->getRangeLower());
     y.append(m_rlWidget->yAxis->getRangeUpper());
     m_rlWidget->graph(0)->setData(x,y);
+
 //------------------------------------------------------------------------------
 //------------------RXZ---------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -1056,6 +1086,29 @@ double Measurements::computeZ (double R, double X)
 {
     return sqrt((R*R) + (X*X));
 }
+
+void Measurements::on_newS21Data(S21Data _s21Data)
+{
+    QVector <double> x,y;
+    double fq = _s21Data.fq*1000;
+
+    x.append(fq);
+    x.append(fq);
+    y.append(m_s21Widget->yAxis->getRangeLower());
+    y.append(m_s21Widget->yAxis->getRangeUpper());
+    m_s21Widget->graph(0)->setData(x,y);
+
+    QCPData data;
+    data.key = fq;
+    data.value = _s21Data.s21;
+
+    m_measurements.last().s21Graph.insert(data.key,data);
+
+    data.value = _s21Data.stage;
+    m_measurements.last().s21StageGraph.insert(data.key,data);
+    on_redrawGraphs(true);
+}
+
 
 void Measurements::on_currentTab(QString name)
 {
@@ -1574,6 +1627,112 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                     }
                 }
             }
+        }else if(m_currentTab == "tab_s21") {
+            if(m_graphBriefHint != NULL)
+            {
+                m_graphBriefHint->setPosition(mouseX+1,mouseY+1);
+            }
+            QCPDataMap *s21map = &(m_measurements[index].s21Graph);
+            QCPDataMap *s21mapStage = &(m_measurements[index].s21Graph);
+            double frequency = -1;
+            double s21 = 0;
+            double s21Stage = 0;
+            bool res = false;
+            QList <double> s21keys = s21map->keys();
+            int start = m_previousI-DELTA;
+            if(start < 0)
+            {
+                start = 0;
+            }
+            int stop = m_previousI+DELTA;
+            if (stop > s21keys.length()-1)
+            {
+                stop = s21keys.length()-1;
+            }
+            for(int t = 0; t < 2; ++t)
+            {
+                if(t == 1)
+                {
+                    if(res)
+                    {
+                        break;
+                    }
+                    start = 0;
+                    stop = s21keys.length()-1;
+                }
+                for(int i = start; i < stop; ++i)
+                {
+                    if((s21keys.at(i) <= xPos) && (s21keys.at(i+1) >= xPos))
+                    {
+                        double center = (s21keys.at(i) + s21keys.at(i+1))/2;
+                        if( xPos > center )
+                        {
+                            if(m_previousI == i+1)
+                            {
+                                //return;
+                            }
+                            frequency = s21keys.at(i+1);
+                            m_previousI = i+1;
+                        }else
+                        {
+                            if(m_previousI == i)
+                            {
+                                //return;
+                            }
+                            frequency = s21keys.at(i);
+                            m_previousI = i;
+                        }
+                    }
+                    if (frequency < 0)
+                        continue;
+                    s21 = m_measurements.at(index).s21Graph.value(frequency).value;
+                    s21Stage = m_measurements.at(index).s21StageGraph.value(frequency).value;
+                    res = true;
+                    if(m_graphBriefHint != NULL)
+                    {
+                        QString str;
+                        str = QString::number(frequency, 'f', 2);
+                        int idx = str.indexOf(".");
+                        if(idx < 0)
+                        {
+                            if(str.length() > 6)
+                            {
+                                str.insert(str.length()-6," ");
+                            }
+                            if(str.length() > 3)
+                            {
+                                str.insert(str.length()-3," ");
+                            }
+                        }else
+                        {
+                            int len = str.length() - idx;
+                            if((str.length()-len) > 6)
+                            {
+                                str.insert(str.length()-len-6," ");
+                            }
+                            if((str.length()-len) > 3)
+                            {
+                                str.insert(str.length()-len-3," ");
+                            }
+                        }
+                        str += " kHz\n";
+                        QString text = QString(tr("Frequency = %1 kHz\n"
+                                          "S21 = %2 dB\n"))
+                                    .arg(str)
+                                    .arg(QString::number(s21,'f', 2));
+
+                        str += QString::number(s21,'f',2);
+                        if (g_developerMode) {
+                            text += QString::number((int)s21Stage);
+                            str += "\n" + QString::number((int)s21Stage);
+                        }
+                        m_graphHint->setPopupText(text);
+                        m_graphBriefHint->setPopupText(str);
+                        qInfo() << "updatePopup " << mouseX << mouseY << str;
+                        break;
+                    }
+                }
+            }
         }else
         {
             if(m_graphBriefHint != NULL)
@@ -1899,6 +2058,24 @@ void Measurements::updatePopUp(double xPos, int index, int mouseX, int mouseY)
                 m_rlLine->point2->setCoords(frequency, 2000);
                 m_rlLine2->point1->setCoords(m_rlWidget->yAxis->getRangeLower(), rl);
                 m_rlLine2->point2->setCoords(m_rlWidget->yAxis->getRangeUpper(), rl);
+            }else if(m_currentTab == "tab_s21")
+            {
+                if(!m_s21Line)
+                {
+                    m_s21Line = new QCPItemStraightLine(m_s21Widget);
+                    m_s21Line->setAntialiased(false);
+                    m_s21Widget->addItem(m_s21Line);
+                }
+                if(!m_s21Line2)
+                {
+                    m_s21Line2 = new QCPItemStraightLine(m_s21Widget);
+                    m_s21Line2->setAntialiased(false);
+                    m_s21Widget->addItem(m_s21Line2);
+                }
+                m_s21Line->point1->setCoords(frequency, -2000);
+                m_s21Line->point2->setCoords(frequency, 2000);
+                m_s21Line2->point1->setCoords(m_s21Widget->yAxis->getRangeLower(), rl);
+                m_s21Line2->point2->setCoords(m_s21Widget->yAxis->getRangeUpper(), rl);
             }
 
             QString str = QString::number(frequency, 'f', 2);
@@ -3203,6 +3380,9 @@ void Measurements::on_redrawGraphs(bool _incrementally)
     } else if( m_currentTab == "tab_rl")//Rl
     {
         redrawRl(_incrementally);
+    } else if( m_currentTab == "tab_s21")//S21
+    {
+        redrawS21(_incrementally);
     } else if( m_currentTab == "tab_tdr")//TDR
     {
         redrawTDR();
@@ -3246,6 +3426,9 @@ void Measurements::replot()
     }else if(m_currentTab == "tab_rl")
     {
         m_rlWidget->replot();
+    }else if(m_currentTab == "tab_s21")
+    {
+        m_s21Widget->replot();
     }else if(m_currentTab == "tab_tdr")
     {
         m_tdrWidget->replot();
@@ -4698,6 +4881,9 @@ void Measurements::on_impedanceChanged(double _z0)
         m_rpWidget->removeGraph(1);
         m_rpWidget->removeGraph(1);
 
+        m_s21Widget->removeGraph(1);
+        m_s21Widget->removeGraph(1);
+
         m_rlWidget->removeGraph(1);
 
         m_tdrWidget->removeGraph(1);
@@ -5070,19 +5256,37 @@ void Measurements::redrawRl(bool _incrementally)
         for(; i < m_measurements.length(); ++i)
         {
             m_rlWidget->graph(i+1)->setData(m_farEndMeasurement == 1
-                                               ? &m_farEndMeasurementsSub[i].rlGraph
-                                               : &m_farEndMeasurementsAdd[i].rlGraph,
-                                               true);
+                                                  ? &m_farEndMeasurementsSub[i].rlGraph
+                                                  : &m_farEndMeasurementsAdd[i].rlGraph,
+                                              true);
         }
     }else
     {
         for(; i < m_measurements.length(); ++i)
         {
             m_rlWidget->graph(i+1)->setData(calibr
-                                            ? &m_measurements[i].rlGraphCalib
-                                            : &m_measurements[i].rlGraph, true);
+                                                  ? &m_measurements[i].rlGraphCalib
+                                                  : &m_measurements[i].rlGraph, true);
         }
     }
+    replot();
+}
+
+void Measurements::redrawS21(bool _incrementally)
+{
+    if (m_measurements.isEmpty())
+        return;
+//    bool calibr = m_calibration->getCalibrationEnabled();
+    int i = _incrementally ? (m_measurements.length()-1) : 0;
+
+    for(; i < m_measurements.length(); ++i)
+    {
+        if (m_measurements[i].visible) {
+            m_s21Widget->graph(i*2+1)->setData(&m_measurements[i].s21Graph, true);
+            m_s21Widget->graph(i*2+2)->setData(&m_measurements[i].s21StageGraph, true);
+        }
+    }
+
     replot();
 }
 
@@ -5199,6 +5403,9 @@ void Measurements::on_drawPoint()
     }else if(m_currentTab == "tab_rl")
     {
         plot = qobject_cast<CustomPlot*>(m_rlWidget);
+    }else if(m_currentTab == "tab_s21")
+    {
+        plot = qobject_cast<CustomPlot*>(m_s21Widget);
     }else if(m_currentTab == "tab_tdr")
     {
         plot = qobject_cast<CustomPlot*>(m_tdrWidget);
@@ -5250,6 +5457,10 @@ void Measurements::toggleVisibility(int row, bool _state)
         m_phaseWidget->graph(row+1)->setVisible(_state);
         m_rlWidget->graph(row+1)->setVisible(_state);
         mm.smithCurve->setVisible(_state);
+
+        int row2 = row*2 + 1;
+        m_s21Widget->graph(row2+0)->setVisible(_state);
+        m_s21Widget->graph(row2+1)->setVisible(_state);
 
         int row1 = row*3 + 1;
         m_rpWidget->graph(row1+0)->setVisible(_state);

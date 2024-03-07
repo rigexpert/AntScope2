@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_rpZoomState(10),
     m_rlZoomState(10),
     m_tdrZoomState(10),
+    m_s21ZoomState(10),
     m_smithZoomState(10),
     m_userZoomState(10),
     m_languageNumber(0),
@@ -61,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
     g_mapTabPlotNames["tab_rp"] = "rp_widget";
     g_mapTabPlotNames["tab_rl"] = "rl_widget";
     g_mapTabPlotNames["tab_tdr"] = "tdr_widget";
+    g_mapTabPlotNames["tab_s21"] = "s21_widget";
     g_mapTabPlotNames["tab_smith"] = "smith_widget";
     g_mapTabPlotNames["tab_user"] = "user_widget";
 
@@ -85,7 +87,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QString path = Settings::setIniFile();
     m_settings = new QSettings(path, QSettings::IniFormat);
     m_settings->beginGroup("MainWindow");
-    QString sequence = m_settings->value("tabOrder","tab_swr,tab_phase,tab_rs,tab_rp,tab_rl,tab_tdr,tab_smith,tab_multi,tab_user").toString();
+    QString sequence = m_settings->value("tabOrder","tab_swr,tab_phase,tab_rs,tab_rp,tab_rl,tab_smith,tab_tdr,tab_multi,tab_user").toString();
+    if (!sequence.contains("tab_s21")) {
+        sequence += ",tab_s21";
+    }
 
 #ifndef NO_MULTITAB
     bool hide_multi = true;
@@ -129,6 +134,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_rpZoomState = m_settings->value("rpZoomState", 10).toInt();
     m_rlZoomState = m_settings->value("rlZoomState", 10).toInt();
     m_tdrZoomState = m_settings->value("tdrZoomState", 10).toInt();
+    m_s21ZoomState = m_settings->value("s21ZoomState", 10).toInt();
     m_smithZoomState = m_settings->value("smithZoomState", 10).toInt();
     m_userZoomState = m_settings->value("userZoomState", 10).toInt();
     m_settings->endGroup();
@@ -198,6 +204,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_tdrWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_tdr(QMouseEvent*)));
     connect(m_tdrWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_tdr(QWheelEvent*)));
 
+    connect(m_s21Widget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_s21(QMouseEvent*)));
+    connect(m_s21Widget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_s21(QWheelEvent*)));
+
     connect(m_smithWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_smith(QMouseEvent*)));
     if (g_developerMode) {
         connect(m_userWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_user(QWheelEvent*)));
@@ -208,6 +217,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_analyzer, &AnalyzerPro::analyzerFound,this,&MainWindow::on_analyzerFound);
     connect(m_analyzer,&AnalyzerPro::deviceDisconnected,this, &MainWindow::on_deviceDisconnected);
     connect(this,SIGNAL(measure(qint64,qint64,int)),m_analyzer,SLOT(on_measure(qint64,qint64,int)));
+    connect(this,SIGNAL(measureS21(qint64,qint64,int)),m_analyzer,SLOT(on_measureS21(qint64,qint64,int)));
     connect(this,SIGNAL(measureUser(qint64,qint64,int)),m_analyzer,SLOT(on_measureUser(qint64,qint64,int)));
     connect(this,SIGNAL(measureContinuous(qint64,qint64,int)),m_analyzer,SLOT(on_measureContinuous(qint64,qint64,int)));
     connect(m_analyzer,SIGNAL(measurementComplete()),this,SLOT(on_measurementComplete()));//, Qt::QueuedConnection);
@@ -307,11 +317,13 @@ MainWindow::MainWindow(QWidget *parent) :
                                m_rpWidget,
                                m_rlWidget,
                                m_tdrWidget,
+                               m_s21Widget,
                                m_smithWidget,
                                ui->tableWidget_measurments);
     m_measurements->setUserWidget(m_userWidget);
 
     connect(m_analyzer, &AnalyzerPro::newData, m_measurements, &Measurements::on_newDataRedraw);
+    connect(m_analyzer, &AnalyzerPro::newS21Data, m_measurements, &Measurements::on_newS21Data);
     connect(m_analyzer, &AnalyzerPro::newAnalyzerData, m_measurements, &Measurements::on_newAnalyzerData);
     connect(m_analyzer, &AnalyzerPro::newUserData, m_measurements, &Measurements::on_newUserData);
     connect(m_analyzer, &AnalyzerPro::newUserDataHeader, m_measurements, &Measurements::on_newUserDataHeader);
@@ -343,6 +355,7 @@ MainWindow::MainWindow(QWidget *parent) :
                               m_rpWidget,
                               m_rlWidget,
                               m_tdrWidget,
+                              m_s21Widget,
                               m_smithWidget);
         m_markers->setMeasurements(m_measurements);
         connect(this, SIGNAL(focus(bool)), m_markers,SLOT(on_focus(bool)));
@@ -641,6 +654,7 @@ MainWindow::~MainWindow()
     m_settings->setValue("rpZoomState", m_rpZoomState);
     m_settings->setValue("rlZoomState", m_rlZoomState);
     m_settings->setValue("tdrZoomState", m_tdrZoomState);
+    m_settings->setValue("s21ZoomState", m_s21ZoomState);
     m_settings->setValue("smithZoomState", m_smithZoomState);
     m_settings->setValue("userZoomState", m_userZoomState);
 
@@ -891,6 +905,32 @@ void MainWindow::setWidgetsSettings()
     m_tdrWidget->yAxis2->setLabel(tr("|Z|"));
     m_tdrWidget->replot();
 
+    //-------S21 Widget------------------------------------------------
+    qobject_cast<CustomPlot*>(m_s21Widget)->addGraph();//graph(0)
+    m_s21Widget->graph(0)->setPen(pen);
+    m_s21Widget->xAxis->setLabel(tr("Frequency, kHz"));
+    m_s21Widget->xAxis->setRangeLower(0);
+    m_s21Widget->xAxis->setRangeUpper(1000);
+    m_s21Widget->yAxis->setRangeMin(-200);
+    m_s21Widget->yAxis->setRangeMax(0);
+    m_s21Widget->yAxis->setRange(-200,0);
+    m_s21Widget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+    m_s21Widget->axisRect()->setRangeZoom(Qt::Horizontal);
+    m_s21Widget->axisRect()->setRangeDrag(Qt::Horizontal | Qt::Vertical);
+    m_s21Widget->xAxis->setTickLabelFont(fontTickLabel);
+    m_s21Widget->yAxis->setTickLabelFont(fontTickLabel);
+    m_s21Widget->xAxis->setLabelFont(fontLabel);
+    m_s21Widget->yAxis->setLabelFont(fontLabel);
+    m_s21Widget->yAxis->setLabel(tr("S21, dB"));
+    m_s21Widget->yAxis2->setTickLabelFont(fontTickLabel);
+    m_s21Widget->yAxis2->setLabelFont(fontLabel);
+    m_s21Widget->yAxis2->setRangeMin(0);
+    m_s21Widget->yAxis2->setRangeMax(3);
+    m_s21Widget->yAxis2->setRange(0, 3);
+    m_s21Widget->yAxis2->setLabel(tr("Stage"));
+    m_s21Widget->yAxis2->setVisible(g_developerMode);
+    m_s21Widget->replot();
+
     //-------Smith Widget---------------------------------------------
     m_smithWidget->addGraph();//graph(0)
     m_smithWidget->xAxis->setRangeMin(-10);
@@ -899,7 +939,6 @@ void MainWindow::setWidgetsSettings()
     m_smithWidget->yAxis->setRangeMin(-10);
     m_smithWidget->yAxis->setRangeMax(10);
     m_smithWidget->yAxis->setRange(-7,7);
-    //m_tdrWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
     m_smithWidget->replot();
 
     //---------User defined
@@ -1129,6 +1168,7 @@ void MainWindow::on_pressPlus ()
         m_rsWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_swrWidget->xAxis->range());
         if (g_developerMode) {
             m_userWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         }
@@ -1173,6 +1213,7 @@ void MainWindow::on_pressPlus ()
         m_rsWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_phaseWidget->xAxis->range());
         if (g_developerMode) {
             m_userWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         }
@@ -1217,6 +1258,7 @@ void MainWindow::on_pressPlus ()
         m_phaseWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rsWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_rsWidget->xAxis->range());
         if (g_developerMode) {
             m_userWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         }
@@ -1261,6 +1303,7 @@ void MainWindow::on_pressPlus ()
         m_phaseWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rsWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rpWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_rpWidget->xAxis->range());
         if (g_developerMode) {
             m_userWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         }
@@ -1304,7 +1347,8 @@ void MainWindow::on_pressPlus ()
         m_swrWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_phaseWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
-        m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rlWidget->xAxis->setRange(m_userWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_userWidget->xAxis->range());
         if (g_developerMode) {
             m_userWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         }
@@ -1326,6 +1370,51 @@ void MainWindow::on_pressPlus ()
             m_tdrWidget->xAxis->setRangeUpper(center + band);
         }
         m_tdrWidget->replot();
+    }else if(str == "tab_s21")
+    {
+        double from = m_s21Widget->xAxis->getRangeLower();
+        double to = m_s21Widget->xAxis->getRangeUpper();
+        double band = (to - from)/2;
+        band -= band/10;
+        double center = (from + to)/2;
+
+        if((center - band) > ABSOLUTE_MIN_FQ)
+        {
+            from = center - band;
+        }else
+        {
+            from = ABSOLUTE_MIN_FQ;
+        }
+        m_s21Widget->xAxis->setRangeLower(from);
+
+        if ((center + band) < ABSOLUTE_MAX_FQ)
+        {
+            to = center + band;
+        }else
+        {
+            to = ABSOLUTE_MAX_FQ;
+        }
+        m_s21Widget->xAxis->setRangeUpper(to);
+
+        if(!m_isRange)
+        {
+            setFqFrom(from);
+            setFqTo(to);
+        }else
+        {
+            setFqFrom((to+from)/2);
+            setFqTo((to-from)/2);
+        }
+
+        m_swrWidget->xAxis->setRange(m_s21Widget->xAxis->range());
+        m_phaseWidget->xAxis->setRange(m_s21Widget->xAxis->range());
+        m_rsWidget->xAxis->setRange(m_s21Widget->xAxis->range());
+        m_rpWidget->xAxis->setRange(m_s21Widget->xAxis->range());
+        m_rlWidget->xAxis->setRange(m_s21Widget->xAxis->range());
+        if (g_developerMode) {
+            m_userWidget->xAxis->setRange(m_s21Widget->xAxis->range());
+        }
+        m_s21Widget->replot();
     }else if(str == "tab_user")
     {
         double from = m_userWidget->xAxis->getRangeLower();
@@ -1367,6 +1456,7 @@ void MainWindow::on_pressPlus ()
         m_rsWidget->xAxis->setRange(m_userWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_userWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_userWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_userWidget->xAxis->range());
         m_userWidget->replot();
     }
 }
@@ -1455,6 +1545,23 @@ void MainWindow::on_pressCtrlPlus ()
     }else if(str == "tab_tdr")
     {
         m_tdrWidget->replot();
+    }else if(str == "tab_s21")
+    {
+        int limit = g_developerMode ? 1 : SWR_ZOOM_LIMIT;
+        if(m_s21ZoomState > limit)
+        {
+            --m_s21ZoomState;
+            m_s21Widget->yAxis->setRangeUpper(m_s21ZoomState*5);
+            m_s21Widget->yAxis->setRangeLower(0);
+            if(m_markers)
+            {
+                QTimer::singleShot(5, m_markers, SLOT(redraw()));
+            }
+            if(m_measurements)
+            {
+                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+            }
+        }
     }else if(str == "tab_user")
     {
         if(m_userZoomState > 1)
@@ -1701,6 +1808,48 @@ void MainWindow::on_pressMinus ()
             m_tdrWidget->xAxis->setRangeUpper(center + band);
         }
         m_tdrWidget->replot();
+    }else if(str == "tab_s21")
+    {
+        double from = m_s21Widget->xAxis->getRangeLower();
+        double to = m_s21Widget->xAxis->getRangeUpper();
+        double band = (to - from)/2;
+        band += band/10;
+        double center = (from + to)/2;
+
+        if((center - band) > ABSOLUTE_MIN_FQ)
+        {
+            from = center - band;
+        }else
+        {
+            from = ABSOLUTE_MIN_FQ;
+        }
+        m_s21Widget->xAxis->setRangeLower(from);
+
+        if ((center + band) < ABSOLUTE_MAX_FQ)
+        {
+            to = center + band;
+        }else
+        {
+            to = ABSOLUTE_MAX_FQ;
+        }
+        m_s21Widget->xAxis->setRangeUpper(to);
+
+        if(!m_isRange)
+        {
+            setFqFrom(from);
+            setFqTo(to);
+        }else
+        {
+            setFqFrom((to+from)/2);
+            setFqTo((to-from)/2);
+        }
+
+        m_swrWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_phaseWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rlWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_s21Widget->replot();
     }else if(str == "tab_user")
     {
         double from = m_userWidget->xAxis->getRangeLower();
@@ -1759,22 +1908,6 @@ void MainWindow::on_pressCtrlMinus ()
 
         on_mouseWheel_swr(&event);
         on_mouseWheel_swr(&event);
-
-//        if(m_swrZoomState <= 9)
-//        {
-//            ++m_swrZoomState;
-//            m_swrWidget->yAxis->setRangeUpper(m_swrZoomState+0.02);
-//            m_swrWidget->yAxis->setRangeLower(MIN_SWR);
-//            m_swrWidget->replot();
-//            if(m_markers)
-//            {
-//                QTimer::singleShot(5, m_markers, SLOT(redraw()));
-//            }
-//            if(m_measurements)
-//            {
-//                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
-//            }
-//        }
     }else if(str == "tab_phase")
     {
 //        m_phaseWidget->replot();
@@ -1834,6 +1967,23 @@ void MainWindow::on_pressCtrlMinus ()
     }else if(str == "tab_tdr")
     {
         m_tdrWidget->replot();
+    }else if(str == "tab_s21")
+    {
+        if(m_s21ZoomState <= 9)
+        {
+            ++m_s21ZoomState;
+            m_s21Widget->yAxis->setRangeUpper(m_s21ZoomState*5);
+            m_s21Widget->yAxis->setRangeLower(0);
+            m_s21Widget->replot();
+            if(m_markers)
+            {
+                QTimer::singleShot(5, m_markers, SLOT(redraw()));
+            }
+            if(m_measurements)
+            {
+                QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+            }
+        }
     }else if(str == "tab_user")
     {
         if(m_userZoomState < 19)
@@ -1920,6 +2070,32 @@ void MainWindow::on_pressCtrlZero()
         {
             QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
         }
+    }else if(str == "tab_rl")
+    {
+        m_rlWidget->yAxis->setRangeUpper(m_rlZoomState*5);
+        m_rlWidget->yAxis->setRangeLower(0);
+        m_rlWidget->replot();
+        if(m_markers)
+        {
+            QTimer::singleShot(5, m_markers, SLOT(redraw()));
+        }
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        }
+    }else if(str == "tab_s21")
+    {
+        m_s21Widget->yAxis->setRangeUpper(m_s21ZoomState*5);
+        m_s21Widget->yAxis->setRangeLower(0);
+        m_s21Widget->replot();
+        if(m_markers)
+        {
+            QTimer::singleShot(5, m_markers, SLOT(redraw()));
+        }
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        }
     }else if(str == "tab_tdr")
     {
         m_tdrWidget->replot();
@@ -1975,6 +2151,7 @@ void MainWindow::on_pressLeft()
         m_rsWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_swrWidget->replot();
     }else if(str == "tab_phase")
     {
@@ -2008,6 +2185,7 @@ void MainWindow::on_pressLeft()
         m_rsWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_phaseWidget->replot();
     }else if(str == "tab_rs")
     {
@@ -2041,6 +2219,7 @@ void MainWindow::on_pressLeft()
         m_phaseWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rsWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rsWidget->replot();
     }else if(str == "tab_rp")
     {
@@ -2074,6 +2253,7 @@ void MainWindow::on_pressLeft()
         m_phaseWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rsWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rpWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rpWidget->replot();
     }else if(str == "tab_rl")
     {
@@ -2107,7 +2287,41 @@ void MainWindow::on_pressLeft()
         m_phaseWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rlWidget->replot();
+    }else if(str == "tab_s21")
+    {
+        double from = m_s21Widget->xAxis->getRangeLower();
+        double to = m_s21Widget->xAxis->getRangeUpper();
+        double diff = (to - from)/10;
+
+        if((from - diff) >= ABSOLUTE_MIN_FQ)
+        {
+            from -= diff;
+            to -= diff;
+            m_s21Widget->xAxis->setRangeLower(from);
+            m_s21Widget->xAxis->setRangeUpper(to);
+        }else
+        {
+            from = ABSOLUTE_MIN_FQ;
+            m_s21Widget->xAxis->setRangeLower(from);
+        }
+
+        if(!m_isRange)
+        {
+            setFqFrom(from);
+            setFqTo(to);
+        }else
+        {
+            setFqFrom((to+from)/2);
+            setFqTo((to-from)/2);
+        }
+
+        m_swrWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_phaseWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_s21Widget->replot();
     }else if(str == "tab_tdr")
     {
         double from = m_tdrWidget->xAxis->getRangeLower();
@@ -2156,6 +2370,7 @@ void MainWindow::on_pressLeft()
         m_rpWidget->xAxis->setRange(m_userWidget->xAxis->range());
         m_rsWidget->xAxis->setRange(m_userWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_userWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_userWidget->xAxis->range());
         m_userWidget->replot();
     }
 }
@@ -2195,6 +2410,7 @@ void MainWindow::on_pressRight()
         m_rsWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_swrWidget->replot();
     }else if(str == "tab_phase")
     {
@@ -2228,6 +2444,7 @@ void MainWindow::on_pressRight()
         m_rsWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_phaseWidget->replot();
     }else if(str == "tab_rs")
     {
@@ -2261,6 +2478,7 @@ void MainWindow::on_pressRight()
         m_phaseWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rsWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rsWidget->replot();
     }else if(str == "tab_rp")
     {
@@ -2294,6 +2512,7 @@ void MainWindow::on_pressRight()
         m_phaseWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rsWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rpWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rpWidget->replot();
     }else if(str == "tab_rl")
     {
@@ -2327,7 +2546,43 @@ void MainWindow::on_pressRight()
         m_phaseWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_s21Widget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rlWidget->replot();
+    }else if(str == "tab_s21")
+    {
+        double from = m_s21Widget->xAxis->getRangeLower();
+        double to = m_s21Widget->xAxis->getRangeUpper();
+        double diff = (to - from)/10;
+
+        if((to + diff) <= ABSOLUTE_MAX_FQ)
+        {
+            from += diff;
+            to += diff;
+            m_s21Widget->xAxis->setRangeLower(from);
+            m_s21Widget->xAxis->setRangeUpper(to);
+        }else
+        {
+            to = ABSOLUTE_MAX_FQ;
+            m_s21Widget->xAxis->setRangeUpper(to);
+        }
+
+        if(!m_isRange)
+        {
+            setFqFrom(from);
+            setFqTo(to);
+        }else
+        {
+            setFqFrom((to+from)/2);
+            setFqTo((to-from)/2);
+        }
+
+        m_swrWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_phaseWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rpWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_rlWidget->xAxis->setRange(m_rlWidget->xAxis->range());
+        m_s21Widget->replot();
     }else if(str == "tab_tdr")
     {
         double from = m_tdrWidget->xAxis->getRangeLower();
@@ -2399,6 +2654,9 @@ void MainWindow::on_pressCtrlC ()
     }else if(str == "tab_rl")
     {
         plot = m_rlWidget;
+    }else if(str == "tab_s21")
+    {
+        plot = m_s21Widget;
     }else if(str == "tab_tdr")
     {
         plot = m_tdrWidget;
@@ -3038,7 +3296,9 @@ void MainWindow::on_mouseMove_rl(QMouseEvent *e)
     }
     if((x >= from) && (x <= to))
     {
-        if(y >= m_rlWidget->yAxis->range().lower && y <= m_rlWidget->yAxis->range().upper)
+        double lo = m_rlWidget->yAxis->range().lower;
+        double up = m_rlWidget->yAxis->range().upper;
+        if(y >= lo && y <= up)
         {
             QList <QTableWidgetItem *> list = ui->tableWidget_measurments->selectedItems();
             if(!list.isEmpty())
@@ -3108,6 +3368,21 @@ void MainWindow::on_mouseMove_tdr(QMouseEvent * e)
 {
     double x = m_tdrWidget->xAxis->pixelToCoord(e->pos().x());
     if( (x >= m_tdrWidget->xAxis->range().lower) && (x <= m_tdrWidget->xAxis->range().upper))
+    {
+        QList <QTableWidgetItem *> list = ui->tableWidget_measurments->selectedItems();
+        if(!list.isEmpty())
+        {
+            QTableWidgetItem * item = list.at(0);
+            emit newCursorFq(x, item->row(), e->pos().x(), e->pos().y());
+        }
+    }
+}
+
+void MainWindow::on_mouseMove_s21(QMouseEvent * e)
+{
+    QPointF pos = e->pos();
+    double x = m_s21Widget->xAxis->pixelToCoord(e->pos().x());
+    if( (x >= m_s21Widget->xAxis->range().lower) && (x <= m_s21Widget->xAxis->range().upper))
     {
         QList <QTableWidgetItem *> list = ui->tableWidget_measurments->selectedItems();
         if(!list.isEmpty())
@@ -3353,6 +3628,28 @@ void MainWindow::createTabs (QString sequence)
             ui->tabWidget->addTab(m_tab_rl, QString());
             ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rl), QApplication::translate("MainWindow", "RL", 0));
             m_mapWidgets.insert(QStringLiteral("rl_widget"), m_rlWidget);
+        }
+        if (tab == "tab_s21") {
+            m_tab_s21 = new GLWidget();
+            m_tab_s21->setObjectName(QStringLiteral("tab_s21"));
+
+            QHBoxLayout* layout = new QHBoxLayout(m_tab_s21);
+            layout->setSpacing(6);
+            layout->setContentsMargins(11, 11, 11, 11);
+            layout->setObjectName(QStringLiteral("horizontalLayout_s21"));
+            m_s21Widget = new CustomPlot(2, m_tab_s21);
+            qobject_cast<GLWidget*>(m_tab_s21)->setPlotter(m_s21Widget);
+            m_s21Widget->setObjectName(QStringLiteral("s21_widget"));
+
+            sizePolicy.setHorizontalStretch(0);
+            sizePolicy.setVerticalStretch(2);
+            sizePolicy.setHeightForWidth(m_s21Widget->sizePolicy().hasHeightForWidth());
+            m_s21Widget->setSizePolicy(sizePolicy);
+            layout->addWidget(m_s21Widget);
+
+            ui->tabWidget->addTab(m_tab_s21, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_s21), QApplication::translate("MainWindow", "S21", 0));
+            m_mapWidgets.insert(QStringLiteral("s21_widget"), m_s21Widget);
         }
         if (tab == "tab_tdr") {
             m_tab_tdr = new GLWidget();
@@ -3764,6 +4061,7 @@ void MainWindow::on_singleStart_clicked()
     m_rsWidget->xAxis->setRange(range);
     m_rpWidget->xAxis->setRange(range);
     m_rlWidget->xAxis->setRange(range);
+    m_s21Widget->xAxis->setRange(range);
     if (g_developerMode) {
         m_userWidget->xAxis->setRange(range);
     }
@@ -3812,6 +4110,10 @@ void MainWindow::on_singleStart_clicked()
     else if(ui->tabWidget->currentWidget()->objectName() == "tab_user")
     {
         emit measureUser(start*1000, stop*1000, m_dotsNumber);
+    }
+    else if(ui->tabWidget->currentWidget()->objectName() == "tab_s21")
+    {
+        emit measureS21(start*1000, stop*1000, m_dotsNumber);
     }
     else
     {
@@ -3919,6 +4221,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         m_rsWidget->xAxis->setRange(range);
         m_rpWidget->xAxis->setRange(range);
         m_rlWidget->xAxis->setRange(range);
+        m_s21Widget->xAxis->setRange(range);
         if (g_developerMode)
             m_userWidget->xAxis->setRange(range);
 
@@ -4057,6 +4360,7 @@ void MainWindow::on_measurementComplete()
         m_rsWidget->xAxis->setRange(range);
         m_rpWidget->xAxis->setRange(range);
         m_rlWidget->xAxis->setRange(range);
+        m_s21Widget->xAxis->setRange(range);
         if (g_developerMode)
             m_userWidget->xAxis->setRange(range);
         if (!m_bInterrupted)
@@ -4453,6 +4757,7 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
                 m_swrWidget->graph(i)->setPen(pen);
                 m_phaseWidget->graph(i)->setPen(pen);
                 m_rlWidget->graph(i)->setPen(pen);
+                m_s21Widget->graph(i)->setPen(pen);
                 m_measurements->getMeasurement(count - 2 - (i-1))->smithCurve->setPen(pen);
 
                 for (int ii=0; ii<3; ii++) {
@@ -4469,22 +4774,10 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
                     m_tdrWidget->graph(j+ii)->setPen(pen);
                 }
 
-//                j = (i-1)*2 + 1;
-//                for (int ii=0; ii<2; ii++) {
-//                    pen = m_tdrWidget->graph(j+ii)->pen();
-//                    pen.setWidth(pen_width);
-//                    m_tdrWidget->graph(j+ii)->setPen(pen);
-//                }
                 if (g_developerMode) {
                     measurement* mm = m_measurements->getMeasurement(count - i-1);
                     int index = m_measurements->getBaseUserGraphIndex(i-1);
                     int cnt = mm->userGraphs.size();
-
-//                    for (int iii=0; iii<m_measurements->getMeasurementLength(); iii++) {
-//                        qDebug() << iii << ": " << m_measurements->getMeasurement(iii)->userGraphs.size();
-//                    }
-//                    qDebug() << "-----------------------------------------";
-//                    qDebug() << QString("(i-1)=%1, row=%2, index=%3, cnt=%4, graphs=%5").arg(i-1).arg(row).arg(index).arg(cnt).arg(m_userWidget->graphCount());
                     for (int ii=0; ii<cnt; ii++) {
                         pen = m_userWidget->graph(index + ii)->pen();
                         pen.setWidth(pen_width);
@@ -4529,6 +4822,7 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
     m_rsWidget->xAxis->setRange(range);
     m_rpWidget->xAxis->setRange(range);
     m_rlWidget->xAxis->setRange(range);
+    m_s21Widget->xAxis->setRange(range);
     if (g_developerMode)
         m_userWidget->xAxis->setRange(range);
 
@@ -4547,36 +4841,6 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
     updateGraph();
 }
 
-/*
-void MainWindow::on_screenshot_clicked()
-{
-    QDateTime datetime = QDateTime::currentDateTime();
-    QString path = "Images/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
-    QString str = QFileDialog::getSaveFileName(this, "Export BMP", path, "*.bmp");
-    if(str.isEmpty())
-    {
-        return;
-    }
-    if(str.indexOf(".bmp") == -1)
-    {
-        str += ".bmp";
-    }
-    QCoreApplication::processEvents();
-    Sleep(300);
-    QScreen *screen = QGuiApplication::primaryScreen();
-    if (const QWindow *window = windowHandle())
-        screen = window->screen();
-    if (!screen)
-    {
-        return;
-    }
-    QRect rect = this->frameGeometry();
-    QPixmap originalPixmap = screen->grabWindow(0,this->x(),this->y(),rect.width(),rect.height());
-    QPixmap pix = originalPixmap.scaled(5000,3000,Qt::KeepAspectRatio,Qt::SmoothTransformation);
-    pix.save(str,"BMP",100);
-    QApplication::clipboard()->setImage(pix.toImage(),QClipboard::Clipboard);
-}
-*/
 void MainWindow::on_screenshot_clicked()
 {
     QDateTime datetime = QDateTime::currentDateTime();
@@ -4700,10 +4964,24 @@ void MainWindow::on_printBtn_clicked()
         for(int i = 1; i < m_rlWidget->graphCount(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
-                    index( i-1, COL_NAME, QModelIndex());
+                                  index( i-1, COL_NAME, QModelIndex());
             QPen pen = m_rlWidget->graph(i)->pen();
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_rlWidget->graph(i)->data(), pen, myIndex.data().toString());
+        }
+    }else if(name == "tab_s21")
+    {
+        string += "S21 graph";
+        m_print->drawBands(bands, m_s21Widget->yAxis->range().lower, m_s21Widget->yAxis->range().upper);
+        m_print->setRange(m_s21Widget);
+        m_print->setLabel(m_s21Widget->xAxis->label(), m_s21Widget->yAxis->label());
+        for(int i = 1; i < m_s21Widget->graphCount(); ++i)
+        {
+            QModelIndex myIndex = ui->tableWidget_measurments->model()->
+                                  index( i-1, COL_NAME, QModelIndex());
+            QPen pen = m_s21Widget->graph(i)->pen();
+            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+            m_print->setData(m_s21Widget->graph(i)->data(), pen, myIndex.data().toString());
         }
     }else if(name == "tab_tdr")
     {
@@ -4898,6 +5176,9 @@ void MainWindow::updateGraph ()
         }else if(str == "tab_rl")
         {
             plot = m_rlWidget;
+        }else if(str == "tab_s21")
+        {
+            plot = m_s21Widget;
         }else if(str == "tab_tdr")
         {
             plot = m_tdrWidget;
@@ -5275,6 +5556,7 @@ bool MainWindow::loadLanguage(QString locale)
     m_rlWidget->xAxis->setLabel(tr("Frequency, kHz"));
     m_rlWidget->yAxis->setLabel(tr("RL, dB"));
     m_tdrWidget->xAxis->setLabel(tr("Length, m"));
+    m_s21Widget->xAxis->setLabel(tr("Frequency, kHz"));
 
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_swr), QApplication::translate("MainWindow", "SWR", 0));
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_phase), QApplication::translate("MainWindow", "Phase", 0));
@@ -5282,6 +5564,7 @@ bool MainWindow::loadLanguage(QString locale)
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rp), QApplication::translate("MainWindow", "Z=R||+jX", 0));
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_rl), QApplication::translate("MainWindow", "RL", 0));
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_tdr), QApplication::translate("MainWindow", "TDR", 0));
+    ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_s21), QApplication::translate("MainWindow", "S21", 0));
     ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_smith), QApplication::translate("MainWindow", "Smith", 0));
     if (g_developerMode)
         ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_user), QApplication::translate("MainWindow", "User defined", 0));

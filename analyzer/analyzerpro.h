@@ -61,6 +61,7 @@ signals:
     void measurementComplete();
     void measurementCompleteNano();
     void newData (RawData);
+    void newS21Data (S21Data);
     void newUserData (RawData, UserData);
     void newUserDataHeader (QStringList);
     void newAnalyzerData (RawData);
@@ -83,11 +84,13 @@ public slots:
     void on_connectDevice(BaseAnalyzer* analyzer=nullptr);
     void on_disconnectDevice();
     void on_measure (qint64 fqFrom_hz, qint64 fqTo_hz, qint32 dotsNumber);
+    void on_measureS21 (qint64 fqFrom_hz, qint64 fqTo_hz, qint32 dotsNumber);
     void on_measureUser (qint64 fqFrom_hz, qint64 fqTo_hz, qint32 dotsNumber);
     void on_measureContinuous(qint64 fqFrom_hz, qint64 fqTo_hz, qint32 dotsNumber);
     void on_measureOneFq(QWidget* parent, qint64 fqFrom_hz, qint32 dotsNumber);
     void on_stopMeasure();
     void on_newData(RawData _rawData);
+    void on_newS21Data(S21Data _s21Data);
     void on_newUserData(RawData,UserData);
     void on_newUserDataHeader(QStringList);
     void on_analyzerDataStringArrived(QString str);

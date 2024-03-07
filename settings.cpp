@@ -326,7 +326,8 @@ void Settings::setAnalyzer(AnalyzerPro * analyzer)
         ReDeviceInfo::InterfaceType type = analyzer->connectionType();
         setConnectButtonText(!(type == ReDeviceInfo::Serial || type == ReDeviceInfo::NANO || type == ReDeviceInfo::BT));
         qint32 num =  m_analyzer->getModel();
-        if(num != 0)
+        //if(num != 0)
+        if (true)
         {
             ui->checkUpdatesBtn->setEnabled(true);
             ui->analyzerModelLabel->setText(m_analyzer->getModelString());
@@ -1028,8 +1029,8 @@ QString Settings::programDataPath(QString _fileName)
 {
 // Mac OS X and iOS
 #ifdef Q_OS_DARWIN
-    QDir dir = QCoreApplication::applicationDirPath();
-    return dir.absoluteFilePath("Resources/" + _fileName);
+    QDir dir0 = QCoreApplication::applicationDirPath();
+    return dir0.absoluteFilePath("Resources/" + _fileName);
 #endif
 
 // Linux
@@ -1052,9 +1053,9 @@ QString Settings::programDataPath(QString _fileName)
 //        }
 //    }
     QString configDataDirString = QStandardPaths::standardLocations(QStandardPaths::AppConfigLocation).at(1);
-    QDir dir(configDataDirString); // "C:/ProgramData/<APPNAME>"
-    dir.cdUp(); // cd ..
-    return dir.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
+    QDir dir1(configDataDirString); // "C:/ProgramData/<APPNAME>"
+    dir1.cdUp(); // cd ..
+    return dir1.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
 }
 
 void Settings::on_aa30bootFound()

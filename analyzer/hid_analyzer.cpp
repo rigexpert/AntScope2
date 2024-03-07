@@ -251,6 +251,72 @@ void HidAnalyzer::timeoutChart()
         return;
     }
 
+    if (m_parseState == WAIT_S21_DATA)
+    {
+        timeoutChartS21();
+        return;
+    }
+
+    len = m_stringList.length();
+
+    if(len >=1)
+    {
+        str = m_stringList.takeFirst();
+
+        QString tempString;
+        qDebug() << str;
+        for(qint32 i = 0; i < str.length(); ++i)
+        {
+            if(str.at(i) == ',')
+            {
+                stringList.append(tempString);
+                tempString.clear();
+            }else
+            {
+                tempString.append(str.at(i));
+            }
+            if(i == str.length()-1)
+            {
+                stringList.append(tempString);
+                tempString.clear();
+            }
+        }
+        while(stringList.length() >= 3)
+        {
+            bool ok;
+            RawData data;
+
+            str = stringList.takeFirst();
+            data.fq = str.toDouble(&ok);
+            if (!ok)
+                qDebug() << "***** ERROR: " << str;
+            str = stringList.takeFirst();
+            data.r = str.toDouble(&ok);
+            if (!ok ||  qIsNaN(data.r))
+                qDebug() << "***** ERROR: " << str;
+
+            str = stringList.takeFirst();
+            data.x = str.toDouble(&ok);
+            if (!ok ||  qIsNaN(data.x))
+                qDebug() << "***** ERROR: " << str;
+
+            emit newData(data);
+        }
+    }
+}
+
+void HidAnalyzer::timeoutChartS21()
+{
+    quint32 len;
+    QStringList stringList;
+    QString str;
+
+    if (!isMeasuring())
+    {
+        m_stringList.clear();
+        return;
+    }
+
     len = m_stringList.length();
 
     if(len >=1)
@@ -275,25 +341,25 @@ void HidAnalyzer::timeoutChart()
             }
         }
         while(stringList.length() >= 3)
-        {            
+        {
             bool ok;
-            RawData data;
+            S21Data data;
 
             str = stringList.takeFirst();
             data.fq = str.toDouble(&ok);
             if (!ok)
                 qDebug() << "***** ERROR: " << str;
             str = stringList.takeFirst();
-            data.r = str.toDouble(&ok);
-            if (!ok ||  qIsNaN(data.r))
+            data.s21 = str.toDouble(&ok);
+            if (!ok ||  qIsNaN(data.s21))
                 qDebug() << "***** ERROR: " << str;
 
             str = stringList.takeFirst();
-            data.x = str.toDouble(&ok);
-            if (!ok ||  qIsNaN(data.x))
+            data.stage = str.toInt(&ok);
+            if (!ok ||  qIsNaN(data.stage))
                 qDebug() << "***** ERROR: " << str;
 
-            emit newData(data);
+            emit newS21Data(data);
         }
     }
 }
@@ -437,8 +503,8 @@ qint32 HidAnalyzer::parse (QByteArray arr)
             return 0;
         }
 
-        //qDebug() << "-----------------------";
-        //qDebug() << stringList;
+        qDebug() << "-----------------------";
+        qDebug() << stringList;
 
         for(int i = 0; i < stringList.length(); ++i)
         {
@@ -507,7 +573,7 @@ qint32 HidAnalyzer::parse (QByteArray arr)
                         break;
                     }
                 }
-            }else if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA)
+            }else if(m_parseState == WAIT_DATA || m_parseState == WAIT_USER_DATA || m_parseState == WAIT_S21_DATA)
             {
                 m_stringList.append(str);
                 str.clear();

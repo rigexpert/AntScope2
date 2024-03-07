@@ -39,6 +39,7 @@ enum parse{
     WAIT_ANALYZER_UPDATE,
     WAIT_FULLINFO,
     WAIT_USER_DATA,
+    WAIT_S21_DATA,
     WAIT_CALFIVEKOHM_START,
     WAIT_CALFIVEKOHM
 };
@@ -60,6 +61,25 @@ struct RawData {
         json["x"] = x;
     }
     QString toString() { return QString("%1, %2, %3").arg(fq,0,'f',4,QLatin1Char(' ')).arg(r,0,'f',4,QLatin1Char(' ')).arg(x,0,'f',4,QLatin1Char(' ')); }
+};
+
+struct S21Data {
+    double fq;
+    double s21;
+    double stage;
+    void read (const QJsonObject &json)
+    {
+        fq = json["fq"].toDouble();
+        s21 = json["s21"].toDouble();
+        stage = json["stage"].toDouble();
+    }
+    void write (QJsonObject &json) const
+    {
+        json["fq"] = fq;
+        json["s21"] = s21;
+        json["stage"] = stage;
+    }
+    QString toString() { return QString("%1, %2, %3").arg(fq,0,'f',4,QLatin1Char(' ')).arg(s21,0,'f',4,QLatin1Char(' ')).arg(stage,0,'f',4,QLatin1Char(' ')); }
 };
 
 struct GraphData {
@@ -96,6 +116,7 @@ struct measurement
         qint64From = _qint64From; qint64To = _qint64To; qint64Dots =_qint64Dots;
     }
 
+    QVector <S21Data> dataS21;
     QVector <RawData> dataRX;
     QVector <UserData> dataUser;
     QStringList fieldsUser;
@@ -110,6 +131,8 @@ struct measurement
     QCPDataMap rpxGraph;
     QCPDataMap rpzGraph;
     QCPDataMap rlGraph;
+    QCPDataMap s21Graph;
+    QCPDataMap s21StageGraph;
     QCPDataMap tdrImpGraph;
     QCPDataMap tdrStepGraph;
     QCPDataMap tdrZGraph;

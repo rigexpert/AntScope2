@@ -49,7 +49,12 @@ void BaseAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool
         }
         FQ  = "FQ"  + QString::number(center) + QChar(0x0D);
         SW  = "SW"  + QString::number(band) + QChar(0x0D);
-        FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + QChar(0x0D);
+        if (m_isS21) {
+            FRX = "FDB" + QString::number(dotsNumber) + QChar(0x0D);
+        } else {
+            FRX = (m_isFRX ? "FRX" : "EFRX") + QString::number(dotsNumber) + QChar(0x0D);
+        }
+
         m_ok = false;
 
         sendCommand(FQ);
@@ -71,7 +76,11 @@ void BaseAnalyzer::startMeasure(qint64 fqFrom, qint64 fqTo, int dotsNumber, bool
             setIsMeasuring(true);
             m_ok = false;
             sendCommand(FRX);
-            setParseState(m_isFRX ? WAIT_DATA : WAIT_USER_DATA);
+            if (m_isS21)
+                setParseState(WAIT_S21_DATA);
+            else
+                setParseState(m_isFRX ? WAIT_DATA : WAIT_USER_DATA);
+
             state = 1;
             m_sendTimer->stop();
         }

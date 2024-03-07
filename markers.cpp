@@ -7,6 +7,7 @@ Markers::Markers(QObject *parent) : QObject(parent),
     m_rsWidget(NULL),
     m_rpWidget(NULL),
     m_rlWidget(NULL),
+    m_s21Widget(NULL),
     m_tdrWidget(NULL),
     m_smithWidget(NULL),
     m_markersHint(NULL),
@@ -47,7 +48,7 @@ Markers::~Markers()
 }
 
 void Markers::setWidgets(QCustomPlot * swr, QCustomPlot * phase, QCustomPlot * rs, QCustomPlot * rp,
-                         QCustomPlot * rl, QCustomPlot * tdr, QCustomPlot * smith)
+                         QCustomPlot * rl, QCustomPlot * tdr, QCustomPlot * s21, QCustomPlot * smith)
 {
     m_swrWidget = swr;
     m_phaseWidget = phase;
@@ -55,6 +56,7 @@ void Markers::setWidgets(QCustomPlot * swr, QCustomPlot * phase, QCustomPlot * r
     m_rpWidget = rp;
     m_rlWidget = rl;
     m_tdrWidget = tdr;
+    m_s21Widget = s21;
     m_smithWidget = smith;
 }
 
@@ -94,6 +96,12 @@ void Markers::create(double fq)
 
     m->rlLine = new QCPItemStraightLine(m_rlWidget);
     m->rlLineText = new QCPItemText(m_rlWidget);
+    m->rlLine->setAntialiased(false);
+    m->rlLine->setPen(QPen(QColor(255,0,0,150)));
+    m->rlLineText->setColor(QColor(255, 0, 0, 150));
+
+    m->rlLine = new QCPItemStraightLine(m_s21Widget);
+    m->rlLineText = new QCPItemText(m_s21Widget);
     m->rlLine->setAntialiased(false);
     m->rlLine->setPen(QPen(QColor(255,0,0,150)));
     m->rlLineText->setColor(QColor(255, 0, 0, 150));
@@ -154,6 +162,15 @@ void Markers::setFq(double fq)
     m_markersList.last()->rlLineText->position->setCoords(fq + offsetX, m_rlWidget->yAxis->range().center()-offsetY);
     m_markersList.last()->rlLineText->setText(QString::number(fq));
 
+    //==========================================================================
+    m_markersList.last()->s21Line->point1->setCoords(fq, 0);
+    m_markersList.last()->s21Line->point2->setCoords(fq, 60);
+
+    offsetX = (m_s21Widget->xAxis->range().upper - m_s21Widget->xAxis->range().lower)/40;
+    offsetY = (m_s21Widget->yAxis->range().upper - m_s21Widget->yAxis->range().lower)/10;
+    m_markersList.last()->s21LineText->position->setCoords(fq + offsetX, m_s21Widget->yAxis->range().center()-offsetY);
+    m_markersList.last()->s21LineText->setText(QString::number(fq));
+
     redraw();
 }
 
@@ -190,6 +207,11 @@ void Markers::rescale()
             offsetX = (m_rlWidget->xAxis->range().upper - m_rlWidget->xAxis->range().lower)/40;
             offsetY = (m_rlWidget->yAxis->range().upper - m_rlWidget->yAxis->range().lower)/10;
             m_markersList.at(i)->rlLineText->position->setCoords(fq + offsetX/2, m_rlWidget->yAxis->range().center()-offsetY);
+        }else if(m_currentTab == "tab_s21")
+        {
+            offsetX = (m_s21Widget->xAxis->range().upper - m_s21Widget->xAxis->range().lower)/40;
+            offsetY = (m_s21Widget->yAxis->range().upper - m_s21Widget->yAxis->range().lower)/10;
+            m_markersList.at(i)->s21LineText->position->setCoords(fq + offsetX/2, m_s21Widget->yAxis->range().center()-offsetY);
         }else if(m_currentTab == "tab_tdr")
         {
         }else if(m_currentTab == "tab_smith")
@@ -580,6 +602,9 @@ void Markers::redraw(void)
     }else if(m_currentTab == "tab_rl")
     {
         m_rlWidget->replot();
+    }else if(m_currentTab == "tab_s21")
+    {
+        m_s21Widget->replot();
     }else if(m_currentTab == "tab_tdr")
     {
         m_tdrWidget->replot();
