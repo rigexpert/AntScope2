@@ -187,6 +187,8 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
             if (ok && !text.isEmpty()) {
                 mm.name = prefix + text;
                 m_tableWidget->item(row, COL_NAME)->setText(mm.name);
+                QString str = mm.name + tr("\nDouble-click an item to rescale the chart.\nRight-click an item to change color");
+                m_tableWidget->item(row, COL_NAME)->setToolTip(str);
             }
         }
     });
@@ -304,7 +306,17 @@ void Measurements::on_newMeasurement(QString name, qint64 from, qint64 to, qint3
 
     int row = m_tableWidget->rowCount()-1;
     QTableWidgetItem *item = m_tableWidget->item(row,COL_NAME);
-    item->setToolTip(tips);
+
+    //item->setToolTip(tips);
+    QString str = name + tr("\nDouble-click an item to rescale the chart.\nRight-click an item to change color");
+    item->setToolTip(str);
+    for (int i=0; i<m_tableWidget->rowCount(); i++)
+    {
+        QTableWidgetItem *item = m_tableWidget->item(i,COL_NAME);
+        QString name = item->text();
+        QString str = name + tr("\nDouble-click an item to rescale the chart.\nRight-click an item to change color");
+        item->setToolTip(str);
+    }
     m_measuringInProgress = true;
 }
 
@@ -4841,7 +4853,10 @@ void Measurements::on_isRangeChanged(bool _range)
                     .arg(mm->qint64Dots);
         }
         QTableWidgetItem *item = m_tableWidget->item(i,COL_NAME);
-        item->setToolTip(tips);
+        //item->setToolTip(tips);
+        QString name = item->text();
+        QString str = name + tr("\nDouble-click an item to rescale the chart.\nRight-click an item to change color");
+        item->setToolTip(str);
     }
 }
 

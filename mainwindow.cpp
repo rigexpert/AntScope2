@@ -166,7 +166,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tableWidget_measurments->setColumnCount(MEASUREMENTS_TABLE_COLUMNS);
     ui->tableWidget_measurments->setSelectionBehavior(QAbstractItemView::SelectRows );
-    ui->tableWidget_measurments->setToolTip(tr("Double-click an item to rescale the chart.\nRight-click an item to change color"));
+    //ui->tableWidget_measurments->setToolTip(tr("Double-click an item to rescale the chart.\nRight-click an item to change color"));
+    ui->tableWidget_measurments->setToolTip("");
     ui->tableWidget_measurments->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableWidget_measurments, &QTableWidget::customContextMenuRequested, this, &MainWindow::on_tableWidgetMeasurmentsContextMenu);
     connect(ui->tableWidget_measurments, &QTableWidget::itemChanged, this, [=] (QTableWidgetItem* item) {
