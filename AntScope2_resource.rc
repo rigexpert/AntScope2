@@ -1,6 +1,6 @@
 #include <windows.h>
 
-IDI_ICON1	ICON	"C:\\Projects\\AntScope2-6.2.4\\AntScope2.ico"
+IDI_ICON1	ICON	"C:\\Projects\\AntScope2\\AntScope2.ico"
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION 0,0,0,0

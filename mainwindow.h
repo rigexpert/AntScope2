@@ -84,6 +84,7 @@ public:
     QTabWidget* tabWidget();
 \
     static MainWindow* m_mainWindow;
+    double m_tdrZRange = 0;
 
 private:
 

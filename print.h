@@ -23,10 +23,11 @@ public:
 
     //virtual void setRange(QCPRange x, QCPRange y);
     virtual void setRange(QCustomPlot* plot);
+    void setRange_yAxis2(QCPRange range);
     void setLabel(QString xLabel, QString yLabel);
     void setData(QCPDataMap *m, QPen pen, QString name);
     void setSmithData(QCPCurveDataMap *map, QPen pen, QString name);
-
+    void setName(QString name) { m_graphName = name; }
     void drawBands(QStringList* _bands, double y1, double y2);
     virtual void addBand (double x1, double x2, double y1, double y2);
     void addBand (double x1, double x2, double y1, double y2, QCustomPlot* plot);
@@ -60,7 +61,7 @@ protected:
     QVector <QCPItemText*> m_textList;
 
     bool m_isSmithGraph;
-
+    QString m_graphName;
 };
 
 #endif // PRINT_H

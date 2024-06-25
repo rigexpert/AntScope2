@@ -108,6 +108,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifndef NO_MULTITAB
     if (hide_multi) {
         ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+        ui->printBtn->setEnabled(true);
         ui->tabWidget->setCurrentWidget(m_tab_swr);
     }
 #endif
@@ -128,6 +129,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tabWidget->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(cur_index);
+#ifndef NO_MULTITAB
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [=](int index) {
+        if (ui->tabWidget->widget(index) == m_tab_multi) {
+            ui->printBtn->setEnabled(false);
+            ui->exportBtn->setEnabled(false);
+        } else {
+            ui->printBtn->setEnabled(true);
+            ui->exportBtn->setEnabled(true);
+        }
+    });
+#endif
 
     m_phaseZoomState = m_settings->value("phaseZoomState", 10).toInt();
     m_rsZoomState = m_settings->value("rsZoomState", 10).toInt();
@@ -3648,9 +3660,11 @@ void MainWindow::createTabs (QString sequence)
             m_s21Widget->setSizePolicy(sizePolicy);
             layout->addWidget(m_s21Widget);
 
-            ui->tabWidget->addTab(m_tab_s21, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_s21), QApplication::translate("MainWindow", "S21", 0));
-            m_mapWidgets.insert(QStringLiteral("s21_widget"), m_s21Widget);
+            //{ DEBUG s21
+//            ui->tabWidget->addTab(m_tab_s21, QString());
+//            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_s21), QApplication::translate("MainWindow", "S21", 0));
+//            m_mapWidgets.insert(QStringLiteral("s21_widget"), m_s21Widget);
+            //}
         }
         if (tab == "tab_tdr") {
             m_tab_tdr = new GLWidget();
@@ -3737,6 +3751,7 @@ void MainWindow::createTabs (QString sequence)
             ui->tabWidget->addTab(m_tab_multi, QString());
             ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_multi), QApplication::translate("MainWindow", "Multi", 0));
             ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+            ui->printBtn->setEnabled(true);
             //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
         }
 #endif
@@ -3796,10 +3811,12 @@ void MainWindow::createTabs (QString sequence)
         if (menu.exec(btn->mapToGlobal(point)) != nullptr) {
             if (!m_multiTabData.tabs.isEmpty()) {
                 ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), true);
+                ui->printBtn->setEnabled(false);
                 //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(true);
                 ui->tabWidget->setCurrentWidget(m_tab_multi);
             } else {
                 ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+                ui->printBtn->setEnabled(true);
                 //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
                 ui->tabWidget->setCurrentWidget(m_tab_swr);
             }
@@ -4835,6 +4852,7 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
             range.upper = dist;
             QWidget::setCursor(Qt::WaitCursor);
             m_measurements->redrawTDR(row);
+            m_tdrZRange = m_measurements[row].tdrZRange();
             QWidget::setCursor(Qt::ArrowCursor);
         }
     }
@@ -4894,12 +4912,14 @@ void MainWindow::on_printBtn_clicked()
                 CustomAnalyzer::currentPrototype() : names[m_analyzer->getModel()];
 #endif
     QString string;
-    string += model + ", ";
+    if (!model.isEmpty())
+        string += model + ", ";
     QDateTime datetime = QDateTime::currentDateTime();
     string += datetime.toString("dd.MM.yyyy-hh:mm, ");
 
     if(name == "tab_swr")
     {
+        m_print->setName("SWR");
         string += "SWR graph";
         m_print->drawBands(bands, MIN_SWR, MAX_SWR);
         //m_print->setRange(m_swrWidget->xAxis->range(),m_swrWidget->yAxis->range());
@@ -4986,13 +5006,17 @@ void MainWindow::on_printBtn_clicked()
         }
     }else if(name == "tab_tdr")
     {
+        m_print->setName("TDR");
         string += "TDR graph";
         m_print->drawBands(bands, m_tdrWidget->yAxis->range().lower, m_tdrWidget->yAxis->range().upper);
         //m_print->setRange(m_tdrWidget->xAxis->range(),m_tdrWidget->yAxis->range());
         m_print->setRange(m_tdrWidget);
+        QCPRange rr(0, m_tdrZRange);
+        m_print->setRange_yAxis2(rr);
         m_print->setLabel(m_tdrWidget->xAxis->label(), m_tdrWidget->yAxis->label());
         for(int i = 1; i < m_tdrWidget->graphCount(); ++i)
         {
+            //int i = 3;
             QPen pen = m_tdrWidget->graph(i)->pen();
             pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
             m_print->setData(m_tdrWidget->graph(i)->data(), pen, m_tdrWidget->graph(i)->name());
@@ -6215,6 +6239,7 @@ void MainWindow::toMultiTab(int tab_index)
     buildMultiTabLayout();
     ui->tabWidget->setTabVisible(tab_index, false);
     ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), true);
+    ui->printBtn->setEnabled(false);
 //    ui->tabWidget->widget(tab_index)->setVisible(false);
 //    ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(true);
 }
@@ -6229,10 +6254,12 @@ void MainWindow::fromMultiTab(int tab_index)  // ???? tab_index ????
     QString plot_name = g_mapTabPlotNames[tab_name];
     tab->layout()->addWidget(m_mapWidgets[plot_name]);
     ui->tabWidget->setTabVisible(tab_index, true);
+    ui->printBtn->setEnabled(false);
     //ui->tabWidget->widget(tab_index)->setVisible(true);
 
     if (m_multiTabData.tabs.isEmpty())
         ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+        ui->printBtn->setEnabled(true);
         //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
 }
 
@@ -6276,6 +6303,7 @@ QMenu& MainWindow::menuMultiTab(QMenu &menu)
                 fromMultiTab(pair.first);
             }
             ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+            ui->printBtn->setEnabled(true);
             //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
         });
     }
@@ -6330,10 +6358,12 @@ void MainWindow::showMultiTab()
     if (menu.exec(QCursor::pos()) != nullptr) {
         if (!m_multiTabData.tabs.isEmpty()) {
             ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), true);
+            ui->printBtn->setEnabled(false);
             //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(true);
             ui->tabWidget->setCurrentWidget(m_tab_multi);
         } else {
             ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_multi), false);
+            ui->printBtn->setEnabled(true);
             //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
             ui->tabWidget->setCurrentWidget(m_tab_swr);
         }

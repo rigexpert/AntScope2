@@ -74,32 +74,42 @@ void Print::updateTable()
     adjustSize();
 }
 
-//void Print::setRange(QCPRange x, QCPRange y)
-//{
-//    ui->widgetGraph->xAxis->setRangeMin(x.lower);
-//    ui->widgetGraph->xAxis->setRangeMax(x.upper);
-
-//    ui->widgetGraph->yAxis->setRangeMin(y.lower);
-//    ui->widgetGraph->yAxis->setRangeMax(y.upper);
-
-//    ui->widgetGraph->xAxis->setRange(x);
-//    ui->widgetGraph->yAxis->setRange(y);
-//}
-
 void Print::setRange(QCustomPlot* plot)
 {
     if (plot == nullptr)
         return;
     QCPRange x = plot->xAxis->range();
     QCPRange y = plot->yAxis->range();
+
     ui->widgetGraph->xAxis->setRangeMin(x.lower);
     ui->widgetGraph->xAxis->setRangeMax(x.upper);
 
-    ui->widgetGraph->yAxis->setRangeMin(y.lower);
-    ui->widgetGraph->yAxis->setRangeMax(y.upper);
 
+    if (m_graphName == "SWR") {
+        ui->widgetGraph->yAxis->setRangeMin(1);
+        ui->widgetGraph->yAxis->setRangeMax(10);
+        if (y.lower < 1)
+            y.lower = 1;
+        if (y.upper > 10)
+            y.upper = 10;
+    } else if (m_graphName == "TDR") {
+        ui->widgetGraph->yAxis->setRangeMin(y.lower);
+        ui->widgetGraph->yAxis->setRangeMax(y.upper);
+        ui->widgetGraph->yAxis2->setRangeMin(0);
+        ui->widgetGraph->yAxis2->setRangeMax(5000);
+        ui->widgetGraph->yAxis2->setRange(0, 5000);
+        ui->widgetGraph->yAxis2->setVisible(true);
+    } else  {
+        ui->widgetGraph->yAxis->setRangeMin(y.lower);
+        ui->widgetGraph->yAxis->setRangeMax(y.upper);
+    }
     ui->widgetGraph->xAxis->setRange(x);
     ui->widgetGraph->yAxis->setRange(y);
+}
+
+void Print::setRange_yAxis2(QCPRange range)
+{
+    ui->widgetGraph->yAxis2->setRange(range);
 }
 
 void Print::setLabel(QString xLabel, QString yLabel)
@@ -110,11 +120,17 @@ void Print::setLabel(QString xLabel, QString yLabel)
 
 void Print::setData(QCPDataMap *m, QPen pen, QString name)
 {
+    ui->widgetGraph->mShowHint = false;
     ui->widgetGraph->addGraph();
 
     ui->widgetGraph->graph()->setData(m,true);
     ui->widgetGraph->graph()->setPen(pen);
     ui->widgetGraph->graph()->setName(name);
+    ui->widgetGraph->graph()->setVisible(true);
+    qDebug() << "Print::setData " << m->count() << pen.color().name() << name << ui->widgetGraph->xAxis->range().lower << ui->widgetGraph->xAxis->range().upper << ui->widgetGraph->yAxis->range().lower << ui->widgetGraph->yAxis->range().upper;
+    if (name == "|Z|") {
+        ui->widgetGraph->graph()->setValueAxis(ui->widgetGraph->yAxis2);
+    }
 
     QPen gridPen = ui->widgetGraph->xAxis->grid()->pen();
     gridPen.setStyle(Qt::SolidLine);
@@ -128,6 +144,7 @@ void Print::setData(QCPDataMap *m, QPen pen, QString name)
 
 void Print::setSmithData(QCPCurveDataMap *map, QPen pen, QString name)
 {
+    ui->widgetGraph->mShowHint = false;
     QCPCurve *smithCurve = new QCPCurve(ui->widgetGraph->xAxis, ui->widgetGraph->yAxis);
     smithCurve->setData(map, true);
     smithCurve->setPen(pen);
@@ -232,10 +249,10 @@ void Print::on_printBtn_clicked()
     {
         QPainter painter(&printer);
         QFont font = painter.font() ;
-        font.setPointSize (14);
+        font.setPointSize (10);
         painter.setFont(font);
 
-        painter.drawText(50, 10, 600, 20, Qt::TextExpandTabs , ui->lineEditHead->text());
+        painter.drawText(50, 10, 600, 20, Qt::TextExpandTabs | Qt::AlignLeft | Qt::AlignVCenter , ui->lineEditHead->text());
 
         QRect rmap(10,50,700,400);
         painter.drawImage(rmap, map.toImage());

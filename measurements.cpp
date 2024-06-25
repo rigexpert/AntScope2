@@ -4946,7 +4946,7 @@ void Measurements::on_impedanceChanged(double _z0)
 
 void Measurements::redrawTDR(int _index)
 {
-    double zRange = 0;
+    m_tdrZRange = 0;
     int mode = m_farEndMeasurement;
     int begin = _index < 0 ? 0 : _index;
     int end = _index < 0 ? m_measurements.length() : (_index+1);
@@ -4988,7 +4988,7 @@ void Measurements::redrawTDR(int _index)
             dataFeet.value = m_pdTdrZ[i];
             mm.tdrZGraphFeet.insert(dataFeet.key,dataFeet);
 
-            zRange = m_measureSystemMetric ? qMax(zRange, data.value) : qMax(zRange, dataFeet.value);
+            m_tdrZRange = m_measureSystemMetric ? qMax(m_tdrZRange, data.value) : qMax(m_tdrZRange, dataFeet.value);
         }
         m_tdrWidget->graph(index*3+1)->setData(
                         m_measureSystemMetric ? &mm.tdrImpGraph : &mm.tdrImpGraphFeet, true);
@@ -4997,8 +4997,10 @@ void Measurements::redrawTDR(int _index)
         m_tdrWidget->graph(index*3+3)->setData(
                         m_measureSystemMetric ? &mm.tdrZGraph : &mm.tdrZGraphFeet, true);
     } // for ( index )
-    m_tdrWidget->yAxis2->setRangeUpper(zRange*1.05);
+    m_tdrWidget->yAxis2->setRangeUpper(m_tdrZRange*1.05);
     m_tdrWidget->yAxis2->setRangeLower(0);
+    extern MainWindow* g_mainWindow;
+    g_mainWindow->m_tdrZRange = m_tdrZRange;
 
     replot();
 }
@@ -5523,8 +5525,12 @@ void Measurements::setBriefHintColor()
 
         QColor color;
         color.setNamedColor(strColor);
+#ifndef Q_OS_MACX
         QColor inverse(255-color.red(), 255-color.green(), 255-color.blue());
         m_graphBriefHint->setTextColor(inverse.name());
+#else
+        m_graphBriefHint->setTextColor(color.name());
+#endif
     }
 }
 

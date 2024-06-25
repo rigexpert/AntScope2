@@ -124,6 +124,7 @@ public:
     void redrawTDR(int _index=-1);
     void drawSmithImage(void);
     void setBriefHintColor();
+    double tdrZRange() { return m_tdrZRange; }
 
 private:
 //    QVector <rawData> m_rawDataVector;
@@ -182,6 +183,7 @@ private:
 
     double m_tdrResolution;
     double m_tdrRange;
+    double m_tdrZRange = 0;
 
 #ifdef OLD_TDR
     ProgressDlg* m_tdrProgressDlg = nullptr;

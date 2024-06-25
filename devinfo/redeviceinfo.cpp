@@ -166,6 +166,7 @@ QString ReDeviceInfo::deviceName(const ReDeviceInfo &dev)
     case PREFIX_SERIAL_NUMBER_WILSON_PRO: return "WilsonPro CAA";
     case PREFIX_SERIAL_NUMBER_AA3000: return "AA-3000 ZOOM";
     case PREFIX_SERIAL_NUMBER_AA1500SE: return "AA-1500 ZOOM SE";
+    case PREFIX_SERIAL_NUMBER_MACHII: return "Mach II";
     default:
         break;
     };
