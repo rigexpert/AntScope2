@@ -2713,7 +2713,7 @@ void MainWindow::on_analyzerNameFound(QString name)
     QString name1 = "AntScope2 v." + QString(ANTSCOPE2VER);
     setWindowTitle(name1 + " - " + name);
 
-    bool zeroII = name1.contains("Zero II");
+    bool zeroII = name.contains("Zero II");
     ui->singleStart->setEnabled(true);
     ui->continuousStartBtn->setEnabled(true);
     if (g_bAA55modeNewProtocol) {
@@ -3660,11 +3660,9 @@ void MainWindow::createTabs (QString sequence)
             m_s21Widget->setSizePolicy(sizePolicy);
             layout->addWidget(m_s21Widget);
 
-            //{ DEBUG s21
-//            ui->tabWidget->addTab(m_tab_s21, QString());
-//            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_s21), QApplication::translate("MainWindow", "S21", 0));
-//            m_mapWidgets.insert(QStringLiteral("s21_widget"), m_s21Widget);
-            //}
+            ui->tabWidget->addTab(m_tab_s21, QString());
+            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_s21), QApplication::translate("MainWindow", "S21", 0));
+            m_mapWidgets.insert(QStringLiteral("s21_widget"), m_s21Widget);
         }
         if (tab == "tab_tdr") {
             m_tab_tdr = new GLWidget();

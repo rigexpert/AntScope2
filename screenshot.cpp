@@ -182,20 +182,20 @@ void Screenshot::on_newData(QByteArray data)
     //----------------
     QString str2;
     //----------------
-    for(int i = 0; i < data.length(); ++i)
-    {
-        m_inputData.append((unsigned char)data.at(i));
-    }
-
 #ifdef NEW_ANALYZER
     AnalyzerParameters* param = AnalyzerParameters::current();
     QString name = param == nullptr ? "" : param->name();
     QString model = CustomAnalyzer::customized() ?
-                CustomAnalyzer::currentPrototype() : name;
+                        CustomAnalyzer::currentPrototype() : name;
 #else
     QString model = CustomAnalyzer::customized() ?
-                CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
+                        CustomAnalyzer::currentPrototype() : names[m_analyzerModel];
 #endif
+
+    for(int i = 0; i < data.length(); ++i)
+    {
+        m_inputData.append((unsigned char)data.at(i));
+    }
 
     if(     (model == "AA-30") ||
             (model == "AA-54")||
@@ -244,7 +244,6 @@ void Screenshot::on_newData(QByteArray data)
             }
         }
     }else if (model == "Stick Pro" || model == "Stick XPro") {
-        // TODO not implemented yet
         while(m_inputData.length() > 3)
         {
             int data = (((int)m_inputData.takeFirst())<<8);
@@ -284,7 +283,7 @@ void Screenshot::on_newData(QByteArray data)
             int blue = (data>>11)&0x1F;
 
             //if (model == "AA-230 ZOOM" || model == "AA-2000") {
-            if ((model == "AA-2000 ZOOM") || (model == "AA-3000 ZOOM") || (model == "AA-1500 ZOOM SE")) {
+            if ((model == "AA-2000 ZOOM") || (model == "AA-3000 ZOOM") || (model == "AA-1500 ZOOM SE") || (model == "Match II")) {
                 int tmp = red;
                 red = blue;
                 blue = tmp;
