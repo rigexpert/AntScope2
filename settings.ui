@@ -49,7 +49,7 @@
            <item>
             <widget class="QLabel" name="label_15">
              <property name="text">
-              <string> </string>
+              <string/>
              </property>
             </widget>
            </item>
@@ -58,6 +58,49 @@
              <property name="text">
               <string>Coonect analyzer</string>
              </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBoxLicense">
+             <property name="title">
+              <string>Match II license</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_10">
+              <item>
+               <widget class="QPushButton" name="pushButtonAntscope">
+                <property name="text">
+                 <string>Register application</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonDevice">
+                <property name="text">
+                 <string>Register device</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonUpdate">
+                <property name="text">
+                 <string>Update license</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </widget>
            </item>
            <item>

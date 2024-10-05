@@ -233,7 +233,7 @@ void Downloader::timeout()
 {
     if (m_reply != NULL) {
         m_reply->abort();
-        m_reply->finished();
+        emit m_reply->finished();
         reset();
     }
 }

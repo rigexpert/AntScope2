@@ -68,7 +68,10 @@ message("       ["$${RCC_DIR}"]")
 
 SOURCES += main.cpp\
     analyzer/analyzerpro.cpp \
+    appregistrationdialog.cpp \
+    licenseagent.cpp \
     mainwindow.cpp \
+    modelesspopup.cpp \
     printmulti.cpp \
     qcustomplot.cpp \
     #analyzer/analyzer.cpp \
@@ -119,6 +122,9 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     analyzer/analyzerpro.h \
+    appregistrationdialog.h \
+    licenseagent.h \
+    modelesspopup.h \
     printmulti.h \
     qcustomplot.h \
     #analyzer/analyzer.h \
@@ -182,6 +188,8 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui \
     analyzer/analyzerdata.ui \
+    appregistrationdialog.ui \
+    modelesspopup.ui \
     screenshot.ui \
     settings.ui \
     fqsettings.ui \

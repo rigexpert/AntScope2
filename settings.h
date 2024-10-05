@@ -203,6 +203,7 @@ private slots:
 //    void on_connectNanovna();
 //    void on_connectSerial();
 //    void on_connectBluetooth();
+    void on_registerApplication();
 };
 
 #endif // SETTINGS_H

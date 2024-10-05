@@ -21,6 +21,32 @@ PopUp::PopUp(QWidget *parent) : QWidget(parent),
     m_mainBiasX(0),
     m_mainBiasY(0)
 {
+    init();
+}
+
+PopUp::PopUp(QString buttonName, QWidget *parent) : QWidget(parent),
+    m_bgColor(0,0,0,180),
+    m_penColor(255,155,255,180),
+    m_textColor("white"),
+    m_popupOpacity(0.1f),
+    m_durability(2000),
+    m_hiding(true),
+    m_x(850),
+    m_y(130),
+    m_biasX(0),
+    m_biasY(0),
+    m_mainX(177),
+    m_mainY(131),
+    m_mainBiasX(0),
+    m_mainBiasY(0),
+    m_buttonName(buttonName),
+    m_showButton(true)
+{
+    init();
+}
+
+void PopUp::init()
+{
     setWindowFlags(Qt::FramelessWindowHint |
                    Qt::Tool |
                    Qt::WindowStaysOnTopHint);
@@ -39,8 +65,22 @@ PopUp::PopUp(QWidget *parent) : QWidget(parent),
                         "margin-right: 10px; }");
 
     layout.addWidget(&label);
+    button.setVisible(false);
+    if (m_showButton) {
+        button.setText(m_buttonName);
+        button.setVisible(true);
+        button.setEnabled(true);
+        connect(&button, &QPushButton::clicked, this, [=](){
+            hide();
+            emit canceled();
+        });
+        connect(&button, &QPushButton::released, this, [=](){
+            hide();
+            emit canceled();
+        });
+        layout.addWidget(&button);
+    }
     setLayout(&layout);
-
     timer = new QTimer();
     connect(timer, &QTimer::timeout, this, &PopUp::hideAnimation);
 
@@ -84,6 +124,7 @@ void PopUp::setName(QString name)
 
 PopUp::~PopUp()
 {
+    disconnect();
     m_settings->beginGroup(m_name);
     m_settings->setValue("x",m_x);
     m_settings->setValue("y",m_y);

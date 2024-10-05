@@ -22,7 +22,9 @@ class PopUp : public QWidget
 
 public:
     explicit PopUp(QWidget *parent = 0);
+    explicit PopUp(QString button, QWidget *parent = 0);
     ~PopUp();
+    void init();
     void setName(QString name);
     int getDurability (void) const {return m_durability;}
     void setDurability (int durability) {m_durability = durability;}
@@ -70,6 +72,8 @@ public slots:
 protected slots:
     void hideAnimation();                   // Слот для запуска анимации скрытия
 
+signals:
+    void canceled();
 
 protected:
     QColor m_bgColor;
@@ -78,6 +82,9 @@ protected:
 
 protected:
     QLabel label;           // Label с сообщением
+    QPushButton button;
+    bool m_showButton = false;
+    QString m_buttonName;
 //    QPushButton button;     // Кнопка сворачивания
 //    QGridLayout layout;     // Размещение для лейбла
     QVBoxLayout layout;

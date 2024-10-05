@@ -4636,7 +4636,8 @@ void MainWindow::on_settingsBtn_clicked()
 
     bool was_customized = CustomAnalyzer::customized();
 
-    m_settingsDialog->exec();
+    //m_settingsDialog->exec();
+    m_settingsDialog->show();
 
     m_settings->beginGroup("Settings");
     bool dark = m_settings->value("darkColorTheme", m_darkColorTheme).toBool();

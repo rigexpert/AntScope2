@@ -2,12 +2,9 @@
 #include "ui_settings.h"
 #include "popupindicator.h"
 #include "analyzer/customanalyzer.h"
-#include "fqinputvalidator.h"
-#include "licensesdialog.h"
-#include "analyzer/nanovna_analyzer.h"
 #include "editbandsdialog.h"
-#include "selectdevicedialog.h"
 #include "mainwindow.h"
+#include "appregistrationdialog.h"
 
 
 extern bool g_developerMode;
@@ -178,6 +175,35 @@ Settings::Settings(QWidget *parent) :
 
     connect(ui->closeBtn, SIGNAL(pressed()), this, SLOT(close()));
     ui->closeBtn->setFocus();
+
+    QString email = m_settings->value("eMail", "").toString();
+    connect(ui->pushButtonAntscope, &QPushButton::clicked, this, [email, this]() {
+        bool remind = m_settings->value("remind", true).toBool();
+        if (email.isEmpty() && remind) {
+            if (QMessageBox::question(this, tr("Registration"),
+                                      tr("Do you want to register the application?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                on_registerApplication();
+            } else {
+                if (QMessageBox::question(this, tr("Registration"),
+                                          tr("Remind later?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                    m_settings->setValue("remind", true);
+                } else {
+                    m_settings->setValue("remind", false);
+                }
+            }
+        }
+    });
+
+    if (!email.isEmpty()) {
+         ui->pushButtonAntscope->setEnabled(false);
+    }
+
+    connect(ui->pushButtonDevice, &QPushButton::clicked, this, [=]() {
+        QMessageBox::warning(this, "Under construction", "Register device not implemented yet");
+    });
+    connect(ui->pushButtonUpdate, &QPushButton::clicked, this, [=]() {
+        QMessageBox::warning(this, "Under construction", "Update license not implemented yet");
+    });
 }
 
 Settings::~Settings()
@@ -1409,3 +1435,9 @@ bool Settings::getRestrictFq()
     return m_restrictFq;
 }
 
+void Settings::on_registerApplication()
+{
+    AppRegistrationDialog dlg;
+    if (dlg.exec() == QDialogButtonBox::Cancel)
+        return;
+}
