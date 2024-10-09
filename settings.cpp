@@ -209,7 +209,7 @@ Settings::Settings(QWidget *parent) :
         m_licenseAgent.registerDevice(device_name, serial_number, dlg.license());
     });
     connect(ui->pushButtonUpdate, &QPushButton::clicked, this, [=]() {
-        QMessageBox::warning(this, "Under construction", "Update license not implemented yet");
+        m_licenseAgent.updateLicense();
     });
 }
 

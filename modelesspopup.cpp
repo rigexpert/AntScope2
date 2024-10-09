@@ -7,11 +7,15 @@ ModelessPopup::ModelessPopup(QString text, QString buttonCancel, QString buttonO
 {
     ui->setupUi(this);
     setWindowFlag(Qt::WindowStaysOnTopHint);
-    ui->label->setText(text);
-    ui->pushButton->setText(buttonCancel);
-    connect(ui->pushButton, &QPushButton::clicked, this, [=](){
-        reject();
-    });
+    if (buttonCancel.isEmpty()) {
+        ui->pushButton->hide();
+    } else {
+        ui->label->setText(text);
+        ui->pushButton->setText(buttonCancel);
+        connect(ui->pushButton, &QPushButton::clicked, this, [=](){
+            reject();
+        });
+    }
     if (buttonOk.isEmpty()) {
         ui->pushButton_2->hide();
     } else {

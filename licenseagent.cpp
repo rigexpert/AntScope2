@@ -11,6 +11,9 @@ LicenseAgent::LicenseAgent(QObject *parent) :
     m_reply(NULL)
 {
     connect(&m_mng, &QNetworkAccessManager::finished, this, &LicenseAgent::onReplyFinished);
+    connect(m_reply, &QNetworkReply::errorOccurred, this, [=](QNetworkReply::NetworkError error) {
+        qDebug() << "***       QNetworkReply::errorOccurred" << error;
+    });
     connect(&m_timer, &QTimer::timeout, this, [=](){
         timeout();
     });
@@ -33,7 +36,7 @@ void LicenseAgent::registerApllication(QString user, QString email)
 
     QString url = SERVER_NAME;
     QString strRaw = QString("Name=%1&&&Eml=%2&&&").arg(user, email);
-    QString strData = EncodingHelpers::A02_EnCode_strToBase16_v0(strRaw);
+    QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=1&nRaw=1&raw=%1").arg(strData);
 
     qDebug() << "   registerApllication: " << url;
@@ -94,9 +97,12 @@ void LicenseAgent::registerApllication(QString user, QString email)
 
 void LicenseAgent::requestEmailStatus()
 {
+    // TODO
+    // send special command instead of HELLO
+
     QString url = SERVER_NAME;
     QString strRaw = QString("Name=%1&&&Eml=%2&&&").arg(m_userName, m_email);
-    QString strData = EncodingHelpers::A02_EnCode_strToBase16_v0(strRaw);
+    QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=1&nRaw=1&raw=%1").arg(strData);
 
     qDebug() << "   requestEmailStatus: " << url;
@@ -135,6 +141,45 @@ void LicenseAgent::registerDevice(QString device_name, QString serial, QString l
     m_infoRequest.serialNumber = serial;
     m_infoRequest.licenseName = license;
     requestInfo();
+}
+
+void LicenseAgent::updateLicense()
+{
+    QString key = QInputDialog::getText(MainWindow::m_mainWindow, tr("Renew license"), tr("Enter key"));
+    if (key.isNull())
+        return;
+    requestLicense(key);
+
+}
+
+void LicenseAgent::requestLicense(QString key)
+{
+    // TODO
+    // send special command instead of HELLO
+
+    QString url = SERVER_NAME;
+    QString strRaw = QString("Key=%1&&&").arg(key);
+    QString strData = EncodingHelpers::encodeString(strRaw);
+    url += QString("?nGet=1&nRaw=1&raw=%1").arg(strData);
+
+    qDebug() << "   requestLicense: " << url;
+
+    QNetworkRequest request((QUrl)url);
+    request.setTransferTimeout(TRANSFER_TIMEOUT);
+
+    m_mng.clearAccessCache();
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+
+    m_state = WaitLicense;
+    m_mng.get(request);
+
+}
+
+void LicenseAgent::parseLicense()
+{
+    m_state = WaitLicense;
 }
 
 void LicenseAgent::reset()
@@ -236,6 +281,10 @@ void LicenseAgent::onReplyFinished(QNetworkReply* reply)
         finishWaitInfoWeb();
     } else if(m_state == WaitUnitWeb) {
         finishWaitUnitWeb();
+    } else if(m_state == WaitLicense) {
+        finishWaitLicense();
+    } else if (m_state == WaitInfoB16) {
+        finishWaitInfoB16();
     }
 }
 
@@ -339,4 +388,57 @@ void LicenseAgent::finishWaitUnitWeb()
     }
 }
 
+void LicenseAgent::finishWaitLicense()
+{
+    parseLicense();
+    if ( ! licenseKeyBan()) {
+        m_modelessPopup->close();
+        showModeless(tr("License renewal..."));
+        sendProfile_B16();
+    } else {
+        if (++m_licenseAttempts <= REQUEST_ATTEMPTS) {
+            updateLicense();
+        } else {
+            sendBlocked();
+            showModeless(tr("Contact the support service"), tr("Ok"));
+            emit canceled();
+        }
+    }
+}
+
+void LicenseAgent::finishWaitInfoB16()
+{
+    parseLicense();
+    if ( ! info_B16Failed()) {
+        m_modelessPopup->close();
+        showModeless(tr("The license update is successful"), tr("Ok"));
+        emit canceled();
+    } else {
+        m_modelessPopup->close();
+        showModeless(tr("The license is not updated"), tr("Close"));
+        emit canceled();
+    }
+}
+
+bool LicenseAgent::info_B16Failed()
+{
+    // TODO
+    // parse answer
+    return false;
+}
+
+bool LicenseAgent::licenseKeyBan()
+{
+    return false;
+}
+
+void LicenseAgent::sendBlocked()
+{
+
+}
+
+void LicenseAgent::sendProfile_B16()
+{
+
+}
 

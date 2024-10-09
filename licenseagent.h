@@ -80,12 +80,14 @@ public:
     explicit LicenseAgent(QObject *parent = 0);
     ~LicenseAgent();
 
-    enum State {WaitEmailStatusWeb, WaitInfoWeb, WaitUnitWeb, Finished, Error};
+    enum State {WaitEmailStatusWeb, WaitInfoWeb, WaitUnitWeb, WaitLicense, WaitInfoB16, Finished, Error};
 
     void registerApllication(QString user, QString email);
     void registerDevice(QString device_name, QString serial, QString license);
+    void updateLicense();
     void reset();
     void timeout();
+
     void requestEmailStatus();
     void parseEmailStatus();
 
@@ -97,7 +99,14 @@ public:
     void parseUnitWeb();
     bool isUnitWebValid();
 
-    void showModeless(QString text, QString buttonCancel, QString buttonOk=QString());
+    void requestLicense(QString key);
+    void parseLicense();
+    bool licenseKeyBan();
+
+    void requestInfo_B16();
+    bool info_B16Failed();
+
+    void showModeless(QString text, QString buttonCancel=QString(), QString buttonOk=QString());
 
 signals:
     void registered();
@@ -112,6 +121,11 @@ protected:
     void finishWaitEmailStatusWeb();
     void finishWaitInfoWeb();
     void finishWaitUnitWeb();
+    void finishWaitLicense();
+    void finishWaitInfoB16();
+
+    void sendProfile_B16();
+    void sendBlocked();
 
 protected:
     State m_state;
@@ -134,6 +148,8 @@ protected:
     qint64 m_dtUnit;
     QTimer m_unitTimer;
     int m_UnitAttempts = 0;
+    int m_licenseAttempts = 0;
+
 };
 
 #endif // LICENSEAGENT_H
