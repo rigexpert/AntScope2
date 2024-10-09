@@ -1,4 +1,7 @@
 #include "popupindicator.h"
+#include <QPainter>
+#include <QApplication>
+
 
 PopUpIndicator* PopUpIndicator::m_popUpIndicator = nullptr;
 

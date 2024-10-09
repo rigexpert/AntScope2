@@ -9,6 +9,7 @@
 #include <crc32.h>
 #include <QSettings>
 #include <calibration.h>
+#include "licenseagent.h"
 
 //#include <shlobj.h>
 
@@ -74,7 +75,7 @@ private:
     Ui::Settings *ui;
     AnalyzerPro * m_analyzer;
     Calibration * m_calibration;
-
+    LicenseAgent m_licenseAgent;
     bool m_isComplete;
     QString m_pathToFw;
     QString m_path;

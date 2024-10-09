@@ -69,6 +69,8 @@ message("       ["$${RCC_DIR}"]")
 SOURCES += main.cpp\
     analyzer/analyzerpro.cpp \
     appregistrationdialog.cpp \
+    encodinghelpers.cpp \
+    inforequestdialog.cpp \
     licenseagent.cpp \
     mainwindow.cpp \
     modelesspopup.cpp \
@@ -87,6 +89,7 @@ SOURCES += main.cpp\
     settings.cpp \
     fqsettings.cpp \
     crc32.cpp \
+    unitrequestdialog.cpp \
     updatedialog.cpp \
     devinfo/redeviceinfo.cpp \
     ftdi/ftdiinfo.cpp \
@@ -123,6 +126,8 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     analyzer/analyzerpro.h \
     appregistrationdialog.h \
+    encodinghelpers.h \
+    inforequestdialog.h \
     licenseagent.h \
     modelesspopup.h \
     printmulti.h \
@@ -142,6 +147,7 @@ HEADERS  += mainwindow.h \
     settings.h \
     fqsettings.h \
     crc32.h \
+    unitrequestdialog.h \
     updatedialog.h \
     devinfo/redeviceinfo.h \
     ftdi/ftd2xx.h \
@@ -189,10 +195,12 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     analyzer/analyzerdata.ui \
     appregistrationdialog.ui \
+    inforequestdialog.ui \
     modelesspopup.ui \
     screenshot.ui \
     settings.ui \
     fqsettings.ui \
+    unitrequestdialog.ui \
     updatedialog.ui \
     print.ui \
     export.ui \

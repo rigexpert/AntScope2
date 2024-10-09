@@ -7,6 +7,7 @@
 #include "com_analyzer.h"
 #include "nanovna_analyzer.h"
 #include "ble_analyzer.h"
+#include "settings.h"
 
 // static member
 #ifdef NEW_ANALYZER

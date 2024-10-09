@@ -3,9 +3,11 @@
 #include <QMessageBox>
 #include <QRegularExpression>
 
-AppRegistrationDialog::AppRegistrationDialog(QWidget *parent) :
+AppRegistrationDialog::AppRegistrationDialog(LicenseAgent& agent, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::AppRegistrationDialog)
+    ui(new Ui::AppRegistrationDialog),
+    m_agent(agent)
+
 {
     ui->setupUi(this);
 
@@ -23,11 +25,11 @@ AppRegistrationDialog::AppRegistrationDialog(QWidget *parent) :
             QMessageBox::warning(this, tr(""), tr("All fields are mandatory"));
             return;
         }
-        QRegularExpression mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
-        if (!mailREX.match(email().toUpper()).hasMatch()) {
-            QMessageBox::warning(this, "", tr("Wrong email address"));
-            return;
-        }
+//        QRegularExpression mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
+//        if (!mailREX.match(email().toUpper()).hasMatch()) {
+//            QMessageBox::warning(this, "", tr("Wrong email address"));
+//            return;
+//        }
         accept();
         m_agent.registerApllication(name(), email());
     });
@@ -37,8 +39,8 @@ AppRegistrationDialog::AppRegistrationDialog(QWidget *parent) :
 
     // DEBUG
     // TODO
-    ui->lineEditEmail->setText("email@rigexpert.com");
-    ui->lineEditUserName->setText("RigExpert");
+    ui->lineEditEmail->setText("vancom1@bigmir.net");
+    ui->lineEditUserName->setText("Ivan1");
 }
 
 AppRegistrationDialog::~AppRegistrationDialog()

@@ -5,6 +5,7 @@
 #include "editbandsdialog.h"
 #include "mainwindow.h"
 #include "appregistrationdialog.h"
+#include "inforequestdialog.h"
 
 
 extern bool g_developerMode;
@@ -54,7 +55,8 @@ Settings::Settings(QWidget *parent) :
     m_graphBriefHintEnabled(true),
     m_onlyOneCalib(false),
     m_metricChecked(false),
-    m_farEndMeasurement(0)
+    m_farEndMeasurement(0),
+    m_licenseAgent(this)
 {
     ui->setupUi(this);
 
@@ -199,7 +201,12 @@ Settings::Settings(QWidget *parent) :
     }
 
     connect(ui->pushButtonDevice, &QPushButton::clicked, this, [=]() {
-        QMessageBox::warning(this, "Under construction", "Register device not implemented yet");
+        QString serial_number = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+        QString device_name = MainWindow::m_mainWindow->analyzer()->getModelString();
+        InfoRequestDialog dlg(device_name, serial_number, this);
+        if (dlg.exec() == QDialogButtonBox::Cancel)
+            return;
+        m_licenseAgent.registerDevice(device_name, serial_number, dlg.license());
     });
     connect(ui->pushButtonUpdate, &QPushButton::clicked, this, [=]() {
         QMessageBox::warning(this, "Under construction", "Update license not implemented yet");
@@ -1437,7 +1444,7 @@ bool Settings::getRestrictFq()
 
 void Settings::on_registerApplication()
 {
-    AppRegistrationDialog dlg;
+    AppRegistrationDialog dlg(m_licenseAgent, this);
     if (dlg.exec() == QDialogButtonBox::Cancel)
         return;
 }

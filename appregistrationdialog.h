@@ -13,7 +13,7 @@ class AppRegistrationDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit AppRegistrationDialog(QWidget *parent = nullptr);
+    explicit AppRegistrationDialog(LicenseAgent& agent, QWidget *parent = nullptr);
     ~AppRegistrationDialog();
 
     QString name();
@@ -21,7 +21,7 @@ public:
 
 private:
     Ui::AppRegistrationDialog *ui;
-    LicenseAgent m_agent;
+    LicenseAgent& m_agent;
 };
 
 #endif // APPREGISTRATIONDIALOG_H
