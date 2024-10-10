@@ -33,7 +33,7 @@ void LicenseAgent::registerApllication(QString user, QString email)
 
     m_userName = user;
     m_email = email;
-
+/*
     QString url = SERVER_NAME;
     QString strRaw = QString("Name=%1&&&Eml=%2&&&").arg(user, email);
     QString strData = EncodingHelpers::encodeString(strRaw);
@@ -91,15 +91,13 @@ void LicenseAgent::registerApllication(QString user, QString email)
 
         m_reply->abort();
     }
-
+*/
+    showModeless(tr("Waiting for email confirmation..."), tr("Cancel"));
     requestEmailStatus();
 }
 
 void LicenseAgent::requestEmailStatus()
 {
-    // TODO
-    // send special command instead of HELLO
-
     QString url = SERVER_NAME;
     QString strRaw = QString("Name=%1&&&Eml=%2&&&").arg(m_userName, m_email);
     QString strData = EncodingHelpers::encodeString(strRaw);
@@ -121,17 +119,23 @@ void LicenseAgent::requestEmailStatus()
 
 void LicenseAgent::parseEmailStatus()
 {
-    QString reply(m_arr);
-    QStringList list = reply.split("&");
-    for (int i = 0; i <list.size(); ++i) {
-        QString arg = list.at(i);
-        if (arg.contains("nRez")) {
-            QStringList lst = arg.split("=");
-            m_emailStatusWeb = lst.at(1) == "1";
-            m_state = Finished;
-            return;
+    QString status(m_arr);
+    qDebug() << "   parseEmailStatus:" << status;
+    QString rez = EncodingHelpers::decodeString(status);
+    qDebug() << "   parseEmailStatus decoded:" << rez;
+    QStringList list = rez.split("&&&");
+    for (int var = 0; var < list.size(); ++var) {
+        QString field = list.at(var);
+        QStringList lst = field.split('=');
+        if (lst.size() != 2) {
+            continue;
+        }
+        if (lst.at(0) == "Status") {
+            m_emailStatusWeb = (lst.at(1) == "1");
         }
     }
+    if (m_emailStatusWeb)
+        return;
     requestEmailStatus();
 }
 
@@ -218,22 +222,52 @@ void LicenseAgent::showModeless(QString text, QString buttonCancel, QString butt
 void LicenseAgent::requestInfo()
 {
     QString url = SERVER_NAME;
-    url += INFO;
+    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcName=%3&&&")
+                         .arg(m_infoRequest.deviceName, m_infoRequest.serialNumber, m_infoRequest.licenseName);
+    QString strData = EncodingHelpers::encodeString(strRaw);
+    url += QString("?nGet=2&nRaw=1&raw=%1").arg(strData);
+
+    qDebug() << "   requestInfo: " << url;
+
     QNetworkRequest request((QUrl)url);
+    request.setTransferTimeout(TRANSFER_TIMEOUT);
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
 
-    m_mng.get(request);
-
     m_state = WaitInfoWeb;
+    m_mng.get(request);
 }
 
 void LicenseAgent::parseInfoWeb()
 {
-    // TODO
+    QString infoWeb(m_arr);
+    qDebug() << "   parseInfoWeb:" << infoWeb;
+    QString rez = EncodingHelpers::decodeString(infoWeb);
+    qDebug() << "   parseInfoWeb decoded:" << rez;
+    QStringList list = rez.split("&&&");
+    for (int var = 0; var < list.size(); ++var) {
+        QString field = list.at(var);
+        QStringList lst = field.split('=');
+        if (lst.size() != 2) {
+            continue;
+        }
+        if (lst.at(0) == "dvName") {
+            m_infoWeb.deviceName = lst.at(1);
+        } else  if (lst.at(0) == "dvName") {
+            m_infoWeb.deviceName = lst.at(1);
+        } else  if (lst.at(0) == "dvSN") {
+            m_infoWeb.serialNumber = lst.at(1);
+        } else  if (lst.at(0) == "lcName") {
+            m_infoWeb.licenseName = lst.at(1);
+        }  else  if (lst.at(0) == "dtPur") {
+            m_infoWeb.purchargeDate = lst.at(1);
+        } else  if (lst.at(0) == "dtLog") {
+            m_infoWeb.loginDate = lst.at(1);
+        }
+    }
 }
 
 bool LicenseAgent::infoWebIsEmpty()
@@ -244,32 +278,64 @@ bool LicenseAgent::infoWebIsEmpty()
 void LicenseAgent::requestUnit()
 {
     QString url = SERVER_NAME;
-    url += UNIT;
-    // TODO url += m_unitRequest
+    QString strRaw = QString("dvSN=%1&&&Eml=%2&&&Name=%3&&&dtPur=%4&&&")
+                         .arg(m_unitRequest.serialNumber, m_unitRequest.email, m_unitRequest.userName, m_unitRequest.purchargeDate);
+    QString strData = EncodingHelpers::encodeString(strRaw);
+    url += QString("?nGet=3&nRaw=1&raw=%1").arg(strData);
+
+    qDebug() << "   requestUnit: " << strRaw;
+    qDebug() << "   requestUnit: " << url;
 
     QNetworkRequest request((QUrl)url);
+    request.setTransferTimeout(TRANSFER_TIMEOUT);
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
-    m_dtUnit = QDateTime::currentSecsSinceEpoch();
-
-    m_mng.get(request);
 
     m_state = WaitUnitWeb;
+    m_mng.get(request);
     showModeless(tr("Registration..."), tr("Cancel"));
 }
 
+
 void LicenseAgent::parseUnitWeb()
 {
-    //TODO
+    QString unitWeb(m_arr);
+    qDebug() << "   parseUnitWeb:" << unitWeb;
+    QString rez = EncodingHelpers::decodeString(unitWeb);
+    qDebug() << "   parseUnitWeb decoded:" << rez;
+    QStringList list = rez.split("&&&");
+    for (int var = 0; var < list.size(); ++var) {
+        QString field = list.at(var);
+        QStringList lst = field.split('=');
+        if (lst.size() != 2) {
+            continue;
+        }
+        if (lst.at(0) == "dvName") {
+            m_unitWeb.deviceName = lst.at(1);
+        } else  if (lst.at(0) == "dvName") {
+            m_unitWeb.deviceName = lst.at(1);
+        } else  if (lst.at(0) == "dvSN") {
+            m_unitWeb.serialNumber = lst.at(1);
+        } else  if (lst.at(0) == "Eml") {
+            m_unitWeb.email = lst.at(1);
+        } else  if (lst.at(0) == "EmlST") {
+            m_unitWeb.emailStatus = lst.at(1) == "0";
+        } else  if (lst.at(0) == "Name") {
+            m_unitWeb.userName = lst.at(1);
+        }  else  if (lst.at(0) == "dtPur") {
+            m_unitWeb.purchargeDate = lst.at(1);
+        } else  if (lst.at(0) == "dtLog") {
+            m_unitWeb.loginDate = lst.at(1);
+        }
+    }
 }
 
 bool LicenseAgent::isUnitWebValid()
 {
-    // TODO
-    return true;
+    return m_unitWeb.emailStatus;
 }
 
 void LicenseAgent::onReplyFinished(QNetworkReply* reply)
