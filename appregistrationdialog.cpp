@@ -37,10 +37,10 @@ AppRegistrationDialog::AppRegistrationDialog(LicenseAgent& agent, QWidget *paren
         reject();
     });
 
-    // DEBUG
-    // TODO
+#ifdef _DEBUG
     ui->lineEditEmail->setText("vancom1@bigmir.net");
     ui->lineEditUserName->setText("Ivan1");
+#endif
 }
 
 AppRegistrationDialog::~AppRegistrationDialog()

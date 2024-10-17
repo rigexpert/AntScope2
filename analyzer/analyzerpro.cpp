@@ -668,7 +668,12 @@ void AnalyzerPro::connectSignals()
         }
        emit measurementCompleteNano();
     });
-
+    connect(m_baseAnalyzer, &BaseAnalyzer::receivedMatch_12, this, [=](QByteArray data){
+        emit signalMatch_12Received(data);
+    });
+    connect(m_baseAnalyzer, &BaseAnalyzer::receivedMatch_ProfileB16, this, [=](QByteArray data){
+        emit signalMatch_Profile_B16Received(data);
+    });
 }
 
 void AnalyzerPro::applyAnalyzer()

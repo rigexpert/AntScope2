@@ -130,8 +130,8 @@ void LicenseAgent::parseEmailStatus()
         if (lst.size() != 2) {
             continue;
         }
-        if (lst.at(0) == "Status") {
-            m_emailStatusWeb = (lst.at(1) == "1");
+        if (lst.at(0) == "Status" && lst.at(1) == "1") {
+            m_emailStatusWeb = true;
         }
     }
     if (m_emailStatusWeb)
@@ -160,11 +160,12 @@ void LicenseAgent::requestLicense(QString key)
 {
     // TODO
     // send special command instead of HELLO
-
+    QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
+    QString serial = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
     QString url = SERVER_NAME;
-    QString strRaw = QString("Key=%1&&&").arg(key);
+    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcCode=%3&&&").arg(name, serial, key);
     QString strData = EncodingHelpers::encodeString(strRaw);
-    url += QString("?nGet=1&nRaw=1&raw=%1").arg(strData);
+    url += QString("?nGet=4&nRaw=1&raw=%1").arg(strData);
 
     qDebug() << "   requestLicense: " << url;
 
@@ -183,7 +184,25 @@ void LicenseAgent::requestLicense(QString key)
 
 void LicenseAgent::parseLicense()
 {
-    m_state = WaitLicense;
+    QString licenseWeb(m_arr);
+    qDebug() << "   parseLicense:" << licenseWeb;
+    QString rez = EncodingHelpers::decodeString(licenseWeb);
+    qDebug() << "   parseLicense decoded:" << rez;
+    QStringList list = rez.split("&&&");
+    for (int var = 0; var < list.size(); ++var) {
+        QString field = list.at(var);
+        QStringList lst = field.split('=');
+        if (lst.size() != 2) {
+            continue;
+        }
+        if (lst.at(0) == "dvName") {
+            m_licenseWeb.deviceName = lst.at(1);
+        } else  if (lst.at(0) == "dvSN") {
+            m_licenseWeb.serialNumber = lst.at(1);
+        } else  if (lst.at(0) == "Status") {
+            m_licenseWeb.status = lst.at(1);
+        }
+    }
 }
 
 void LicenseAgent::reset()
@@ -315,8 +334,6 @@ void LicenseAgent::parseUnitWeb()
         }
         if (lst.at(0) == "dvName") {
             m_unitWeb.deviceName = lst.at(1);
-        } else  if (lst.at(0) == "dvName") {
-            m_unitWeb.deviceName = lst.at(1);
         } else  if (lst.at(0) == "dvSN") {
             m_unitWeb.serialNumber = lst.at(1);
         } else  if (lst.at(0) == "Eml") {
@@ -338,6 +355,42 @@ bool LicenseAgent::isUnitWebValid()
     return m_unitWeb.emailStatus;
 }
 
+void LicenseAgent::requestStatus_B16(QByteArray data)
+{
+    QString url = SERVER_NAME;
+    QString strData(data);
+    url += QString("?nGet=21&nRaw=21&raw=%1").arg(strData);
+
+    QNetworkRequest request((QUrl)url);
+    request.setTransferTimeout(TRANSFER_TIMEOUT);
+
+    m_mng.clearAccessCache();
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+
+    m_state = WaitProfileB16;
+    m_mng.get(request);
+}
+
+void LicenseAgent::requestInfo_B16(QByteArray data)
+{
+    QString url = SERVER_NAME;
+    QString strData(data);
+    url += QString("?nGet=22&nRaw=21&raw=%1").arg(strData);
+
+    QNetworkRequest request((QUrl)url);
+    request.setTransferTimeout(TRANSFER_TIMEOUT);
+
+    m_mng.clearAccessCache();
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+
+    m_state = WaitInfoB16;
+    m_mng.get(request);
+}
+
 void LicenseAgent::onReplyFinished(QNetworkReply* reply)
 {
     m_arr = reply->readAll();
@@ -351,6 +404,8 @@ void LicenseAgent::onReplyFinished(QNetworkReply* reply)
         finishWaitLicense();
     } else if (m_state == WaitInfoB16) {
         finishWaitInfoB16();
+    } else if (m_state == WaitProfileB16) {
+        finishWaitProfileB16();
     }
 }
 
@@ -365,7 +420,7 @@ void LicenseAgent::finishWaitEmailStatusWeb()
             delete m_popup;
             m_popup = nullptr;
         }
-        showModeless(tr("Registration is successful"), tr("Ok"));
+        showModeless(tr("Registration was successful"), tr("Ok"));
 
         QSettings set;
         set.setValue("email", m_email);
@@ -399,7 +454,8 @@ void LicenseAgent::finishWaitInfoWeb()
         // manual
         ManualInfoWeb info;
         UnitRequestDialog dlg(info);
-        if (dlg.exec() == QDialogButtonBox::Cancel) {
+        if (dlg.exec() == QDialog::Rejected) {
+            emit canceled();
             return;
         }
         m_unitRequest.email = dlg.infoWeb().email;
@@ -427,7 +483,14 @@ void LicenseAgent::finishWaitUnitWeb()
     parseUnitWeb();
     if (isUnitWebValid()) {
         m_modelessPopup->close();
-        showModeless(tr("Registration was successful"), tr("Ok"));
+        QMessageBox::information(MainWindow::m_mainWindow, tr("Registration"), tr("Registration was successful"));
+        QString info;
+        info += tr("Device name: ") + m_infoWeb.deviceName + "\n";
+        info += tr("Serial number: ") + m_infoWeb.serialNumber + "\n";
+        info += tr("License name: ") + m_infoWeb.licenseName + "\n";
+        info += tr("Purchrge date: ") + m_infoWeb.purchargeDate + "\n";
+        info += tr("Login date: ") + m_infoWeb.loginDate + "\n";
+        showModeless(info, "Ok");
     } else {
         if ((QDateTime::currentSecsSinceEpoch() - m_dtUnit) <= TRANSFER_TIMEOUT) {
             m_unitTimer.setSingleShot(true);
@@ -460,7 +523,7 @@ void LicenseAgent::finishWaitLicense()
     if ( ! licenseKeyBan()) {
         m_modelessPopup->close();
         showModeless(tr("License renewal..."));
-        sendProfile_B16();
+        sendMatch_11();
     } else {
         if (++m_licenseAttempts <= REQUEST_ATTEMPTS) {
             updateLicense();
@@ -472,12 +535,21 @@ void LicenseAgent::finishWaitLicense()
     }
 }
 
+void LicenseAgent::finishWaitProfileB16()
+{
+    QString data = m_arr;
+    int pos = data.indexOf("&raw=");
+    data = data.mid(pos+5);
+    QString decoded = EncodingHelpers::decodeString(data);
+    sendProfile_B16(decoded.toLatin1());
+}
+
 void LicenseAgent::finishWaitInfoB16()
 {
-    parseLicense();
+    parseInfo_B16();
     if ( ! info_B16Failed()) {
         m_modelessPopup->close();
-        showModeless(tr("The license update is successful"), tr("Ok"));
+        showModeless(tr("The license update was successful"), tr("Ok"));
         emit canceled();
     } else {
         m_modelessPopup->close();
@@ -488,23 +560,60 @@ void LicenseAgent::finishWaitInfoB16()
 
 bool LicenseAgent::info_B16Failed()
 {
-    // TODO
-    // parse answer
-    return false;
+    return m_infoB16.status == "1";
+}
+
+void LicenseAgent::parseInfo_B16()
+{
+    QString infoB16(m_arr);
+    qDebug() << "   parseInfo_B16:" << infoB16;
+    QString rez = EncodingHelpers::decodeString(infoB16);
+    qDebug() << "   parseInfo_B16 decoded:" << rez;
+    QStringList list = rez.split("&&&");
+    for (int var = 0; var < list.size(); ++var) {
+        QString field = list.at(var);
+        QStringList lst = field.split('=');
+        if (lst.size() != 2) {
+            continue;
+        }
+        if (lst.at(0) == "dvName") {
+            m_infoB16.deviceName = lst.at(1);
+        } else  if (lst.at(0) == "dvSN") {
+            m_infoB16.serialNumber = lst.at(1);
+        }  else  if (lst.at(0) == "dtPur") {
+            m_infoB16.purchargeDate = lst.at(1);
+        } else  if (lst.at(0) == "dtLog") {
+            m_infoB16.loginDate = lst.at(1);
+        } else if (lst.at(0) == "Status") {
+            m_infoB16.status = lst.at(1);
+        } else if (lst.at(0) == "lcName") {
+            m_infoB16.licenseName = lst.at(1);
+        }
+    }
 }
 
 bool LicenseAgent::licenseKeyBan()
 {
-    return false;
+    return m_licenseWeb.status == "0";
 }
 
 void LicenseAgent::sendBlocked()
 {
+    // TODO
 
 }
 
-void LicenseAgent::sendProfile_B16()
+void LicenseAgent::sendMatch_11()
 {
+    QByteArray arr = EncodingHelpers::sendToMatch(m_licenseWeb.serialNumber);
+    MainWindow::m_mainWindow->analyzer()->setParseState(WAIT_MATCH_12);
+    MainWindow::m_mainWindow->analyzer()->sendData(arr);
+}
 
+void LicenseAgent::sendProfile_B16(QByteArray data)
+{
+    QByteArray arr = EncodingHelpers::sendToMatch(data);
+    MainWindow::m_mainWindow->analyzer()->setParseState(WAIT_MATCH_PROFILE_B16);
+    MainWindow::m_mainWindow->analyzer()->sendData(arr);
 }
 

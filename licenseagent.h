@@ -73,6 +73,21 @@ struct ManualInfoWeb
     QString licenseName;
 };
 
+struct LicenseWeb {
+    QString deviceName;
+    QString serialNumber;
+    QString status;
+};
+
+struct InfoB16 {
+    QString deviceName;
+    QString serialNumber;
+    QString status;
+    QString licenseName;
+    QString purchargeDate;
+    QString loginDate;
+};
+
 class LicenseAgent : public QObject
 {
     Q_OBJECT
@@ -80,7 +95,7 @@ public:
     explicit LicenseAgent(QObject *parent = 0);
     ~LicenseAgent();
 
-    enum State {WaitEmailStatusWeb, WaitInfoWeb, WaitUnitWeb, WaitLicense, WaitInfoB16, Finished, Error};
+    enum State {WaitEmailStatusWeb, WaitInfoWeb, WaitUnitWeb, WaitLicense, WaitProfileB16, WaitInfoB16, Finished, Error};
 
     void registerApllication(QString user, QString email);
     void registerDevice(QString device_name, QString serial, QString license);
@@ -103,7 +118,10 @@ public:
     void parseLicense();
     bool licenseKeyBan();
 
-    void requestInfo_B16();
+    void requestStatus_B16(QByteArray data);
+    void requestInfo_B16(QByteArray data);
+    void parseProfile_B16();
+    void parseInfo_B16();
     bool info_B16Failed();
 
     void showModeless(QString text, QString buttonCancel=QString(), QString buttonOk=QString());
@@ -122,9 +140,12 @@ protected:
     void finishWaitInfoWeb();
     void finishWaitUnitWeb();
     void finishWaitLicense();
+    void finishWaitProfileB16();
     void finishWaitInfoB16();
 
-    void sendProfile_B16();
+    void sendMatch_11();
+    void sendInfo_B16();
+    void sendProfile_B16(QByteArray data);
     void sendBlocked();
 
 protected:
@@ -145,6 +166,8 @@ protected:
     InfoWeb m_infoWeb;
     UnitRequest m_unitRequest;
     UnitWeb m_unitWeb;
+    LicenseWeb m_licenseWeb;
+    InfoB16 m_infoB16;
     qint64 m_dtUnit;
     QTimer m_unitTimer;
     int m_UnitAttempts = 0;

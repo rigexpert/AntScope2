@@ -8,6 +8,7 @@ InfoRequestDialog::InfoRequestDialog(QString name, QString serial, QWidget *pare
     ui->setupUi(this);
     ui->lineEditName->setText(name);
     ui->lineEditSerial->setText(serial);
+    ui->lineEditLicense->setText("unlim_gold");
 }
 
 InfoRequestDialog::~InfoRequestDialog()

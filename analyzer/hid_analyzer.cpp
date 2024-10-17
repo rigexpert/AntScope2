@@ -217,7 +217,7 @@ qint64 HidAnalyzer::sendCommand(const QString& data)
     {
         return 0;
     }
-    qDebug() << "HidAnalyzer::sendData: " << data;
+    //qDebug() << "HidAnalyzer::sendData: " << data;
     unsigned char buf[REPORT_SIZE] = {0};
     int size = data.length();
     if(size != 0)
@@ -264,7 +264,7 @@ void HidAnalyzer::timeoutChart()
         str = m_stringList.takeFirst();
 
         QString tempString;
-        qDebug() << str;
+        //qDebug() << str;
         for(qint32 i = 0; i < str.length(); ++i)
         {
             if(str.at(i) == ',')
@@ -442,7 +442,13 @@ void HidAnalyzer::hidRead (void)
 qint32 HidAnalyzer::parse (QByteArray arr)
 {
     quint32 retVal = 0;
-    if (getParseState() == WAIT_CALFIVEKOHM_START)
+    if (getParseState() == WAIT_MATCH_PROFILE_B16) {
+        emit receivedMatch_ProfileB16(arr);
+        return arr.size();
+    } else if (getParseState() == WAIT_MATCH_12) {
+        emit receivedMatch_12(arr);
+        return arr.size();
+    } else if (getParseState() == WAIT_CALFIVEKOHM_START)
     {
         setParseState(WAIT_CALFIVEKOHM);
         AnalyzerPro* analyzer = qobject_cast<AnalyzerPro*>(parent());
@@ -503,8 +509,8 @@ qint32 HidAnalyzer::parse (QByteArray arr)
             return 0;
         }
 
-        qDebug() << "-----------------------";
-        qDebug() << stringList;
+        //qDebug() << "-----------------------";
+        //qDebug() << stringList;
 
         for(int i = 0; i < stringList.length(); ++i)
         {
@@ -580,7 +586,7 @@ qint32 HidAnalyzer::parse (QByteArray arr)
                 //qDebug() << "hid::parse" << m_stringList;
             }else if(m_parseState == WAIT_ANALYZER_DATA)
             {
-                qDebug() << str;
+                //qDebug() << str;
                 emit analyzerDataStringArrived(str);
                 str.clear();
             }

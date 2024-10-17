@@ -178,39 +178,56 @@ Settings::Settings(QWidget *parent) :
     connect(ui->closeBtn, SIGNAL(pressed()), this, SLOT(close()));
     ui->closeBtn->setFocus();
 
-    QString email = m_settings->value("eMail", "").toString();
-    connect(ui->pushButtonAntscope, &QPushButton::clicked, this, [email, this]() {
-        bool remind = m_settings->value("remind", true).toBool();
-        if (email.isEmpty() && remind) {
-            if (QMessageBox::question(this, tr("Registration"),
-                                      tr("Do you want to register the application?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-                on_registerApplication();
-            } else {
+
+    if (MainWindow::m_mainWindow->analyzer()->getModelString().contains("Match II")) {
+        connect(MainWindow::m_mainWindow->analyzer(), &AnalyzerPro::signalMatch_12Received, this, [=](QByteArray data){
+            m_licenseAgent.requestStatus_B16(data);
+        });
+        connect(MainWindow::m_mainWindow->analyzer(), &AnalyzerPro::signalMatch_Profile_B16Received, this, [=](QByteArray data){
+            m_licenseAgent.requestInfo_B16(data);
+        });
+        ui->groupBoxLicense->show();
+        QString email = m_settings->value("eMail", "").toString();
+        connect(ui->pushButtonAntscope, &QPushButton::clicked, this, [email, this]() {
+            bool remind = m_settings->value("remind", true).toBool();
+            if (email.isEmpty() && remind) {
                 if (QMessageBox::question(this, tr("Registration"),
-                                          tr("Remind later?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-                    m_settings->setValue("remind", true);
+                                          tr("Do you want to register the application?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                    on_registerApplication();
                 } else {
-                    m_settings->setValue("remind", false);
+                    if (QMessageBox::question(this, tr("Registration"),
+                                              tr("Remind later?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                        m_settings->setValue("remind", true);
+                    } else {
+                        m_settings->setValue("remind", false);
+                    }
                 }
             }
+        });
+
+        if (!email.isEmpty()) {
+             ui->pushButtonAntscope->setEnabled(false);
         }
-    });
 
-    if (!email.isEmpty()) {
-         ui->pushButtonAntscope->setEnabled(false);
+        connect(ui->pushButtonDevice, &QPushButton::clicked, this, [=]() {
+            QString serial_number = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+            QString device_name = MainWindow::m_mainWindow->analyzer()->getModelString();
+
+#ifdef _DEBUG
+            //serial_number = "123208137";
+            //device_name = "AA-230 Zoom Analyzer";
+#endif
+            InfoRequestDialog dlg(device_name, serial_number, this);
+            if (dlg.exec() == QDialog::Rejected)
+                return;
+            m_licenseAgent.registerDevice(device_name, serial_number, dlg.license());
+        });
+        connect(ui->pushButtonUpdate, &QPushButton::clicked, this, [=]() {
+            m_licenseAgent.updateLicense();
+        });
+    } else {
+        ui->groupBoxLicense->hide();
     }
-
-    connect(ui->pushButtonDevice, &QPushButton::clicked, this, [=]() {
-        QString serial_number = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
-        QString device_name = MainWindow::m_mainWindow->analyzer()->getModelString();
-        InfoRequestDialog dlg(device_name, serial_number, this);
-        if (dlg.exec() == QDialogButtonBox::Cancel)
-            return;
-        m_licenseAgent.registerDevice(device_name, serial_number, dlg.license());
-    });
-    connect(ui->pushButtonUpdate, &QPushButton::clicked, this, [=]() {
-        m_licenseAgent.updateLicense();
-    });
 }
 
 Settings::~Settings()

@@ -76,6 +76,8 @@ signals:
     void stopAutocalibrate5();
     void analyzerFound (int analyzerIndex);
     void signalAnalyzerError(const QString& msg);
+    void signalMatch_12Received(QByteArray data);
+    void signalMatch_Profile_B16Received(QByteArray data);
 
 public slots:
     bool refreshConnection(); // use SelectionParameters::selected

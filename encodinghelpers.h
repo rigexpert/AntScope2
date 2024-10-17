@@ -11,6 +11,7 @@ public:
 
     static QString encodeString(QString strIn);
     static QString decodeString(QString strIn);
+    static QByteArray sendToMatch(QString serialNumber);
 };
 
 #endif // ENCODINGHELPERS_H

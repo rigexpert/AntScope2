@@ -54,6 +54,8 @@ signals:
     void signalAnalyzerError(const QString& msg);
     void signalOk();
     void completeMeasurement(); // emited by NanoVNA
+    void receivedMatch_12(QByteArray arr);
+    void receivedMatch_ProfileB16(QByteArray arr);
 
 public slots:
     virtual void searchAnalyzer() {}
