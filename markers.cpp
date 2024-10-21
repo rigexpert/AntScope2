@@ -55,8 +55,8 @@ void Markers::setWidgets(QCustomPlot * swr, QCustomPlot * phase, QCustomPlot * r
     m_rsWidget = rs;
     m_rpWidget = rp;
     m_rlWidget = rl;
-    m_tdrWidget = tdr;
     m_s21Widget = s21;
+    m_tdrWidget = tdr;
     m_smithWidget = smith;
 }
 
@@ -100,11 +100,11 @@ void Markers::create(double fq)
     m->rlLine->setPen(QPen(QColor(255,0,0,150)));
     m->rlLineText->setColor(QColor(255, 0, 0, 150));
 
-    m->rlLine = new QCPItemStraightLine(m_s21Widget);
-    m->rlLineText = new QCPItemText(m_s21Widget);
-    m->rlLine->setAntialiased(false);
-    m->rlLine->setPen(QPen(QColor(255,0,0,150)));
-    m->rlLineText->setColor(QColor(255, 0, 0, 150));
+    m->s21Line = new QCPItemStraightLine(m_s21Widget);
+    m->s21LineText = new QCPItemText(m_s21Widget);
+    m->s21Line->setAntialiased(false);
+    m->s21Line->setPen(QPen(QColor(255,0,0,150)));
+    m->s21LineText->setColor(QColor(255, 0, 0, 150));
 
     m_markersList.append(m);
 }
@@ -289,7 +289,7 @@ QList<QList<QVariant>> Markers::updateInfo(QList<int> _columnTypes)
             int pos = name.indexOf('>');
             if (pos != -1)
                 index = name.left(2).toInt();
-            row << QVariant(QVariant::Invalid); // fieldDelete
+            row << QVariant(); // fieldDelete
             row << QVariant(n+1); // fieldMarker
             row << QVariant(index); // fieldSerie
             row << QVariant(fq0); // fieldFQ
@@ -498,7 +498,7 @@ QList<QList<QVariant>> Markers::updateInfo(QList<int> _columnTypes)
                     row << QVariant(dZmod);
                     break;
                 default:
-                    row << QVariant(QVariant::Invalid);
+                    row << QVariant();
                     break;
                 }
             }
