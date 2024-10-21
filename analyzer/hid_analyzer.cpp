@@ -217,7 +217,7 @@ qint64 HidAnalyzer::sendCommand(const QString& data)
     {
         return 0;
     }
-    //qDebug() << "HidAnalyzer::sendData: " << data;
+    //qDebug() << "HidAnalyzer::sendCommand: " << data;
     unsigned char buf[REPORT_SIZE] = {0};
     int size = data.length();
     if(size != 0)
@@ -229,6 +229,29 @@ qint64 HidAnalyzer::sendCommand(const QString& data)
             buf[i+2] = data[i].toLatin1();
         }
         return hid_write(m_hidDevice, buf, REPORT_SIZE);
+    }
+    return 0;
+}
+
+qint64 HidAnalyzer::sendData(const QByteArray& data)
+{
+    if(m_hidDevice == nullptr)
+    {
+        return 0;
+    }
+    //qDebug() << "HidAnalyzer::sendData: " << data;
+    unsigned char buf[REPORT_SIZE+1] = {0};
+    int size = data.length();
+    if(size != 0)
+    {
+        buf[0] = ANTSCOPE_REPORT;
+        buf[1] = (unsigned char)size;
+        for (int i = 0; i < size; i++)
+        {
+            buf[i+2] = data[i];
+        }
+        qint64 written = hid_write(m_hidDevice, buf, REPORT_SIZE);
+        return written;
     }
     return 0;
 }

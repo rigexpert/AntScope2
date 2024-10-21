@@ -108,7 +108,7 @@ QString EncodingHelpers::decodeString(QString inRaw) { // B02_www_Decode_rawMSG
   }
   return Result;
 }
-
+#if 0
 QByteArray EncodingHelpers::sendToMatch(QString serialNumber) {// B01_E1_Send_to_Match2
     quint8 CRC_CALK;
     quint8 SendBuff[64];
@@ -144,4 +144,41 @@ QByteArray EncodingHelpers::sendToMatch(QString serialNumber) {// B01_E1_Send_to
     }
     SendBuff[63] = CRC_CALK;
     return QByteArray((char *)SendBuff, sizeof(SendBuff));
+}
+#endif
+QByteArray EncodingHelpers::sendToMatch(QString serialNumber) {// B01_E1_Send_to_Match2
+  quint8 CRC_CALK;
+  quint8 SendBuff[64];
+  quint8 byteChar, byteTmp;
+  quint8 rdx, rdy;
+
+//  if (serialNumber.length() < 9) {
+//    return QByteArray();
+//  }
+  for (int ifor1 = 4; ifor1 < 64; ifor1++)
+    SendBuff[ifor1] = abs(rand() % 255); // Random(255);
+
+  SendBuff[0] = 0x07;
+  SendBuff[1] = 0x3E;
+  SendBuff[2] = 0xBD;
+  SendBuff[3] = 0xE1;
+  //----------
+  SendBuff[4] = 0x01;
+  rdx = (SendBuff[15] & 0x0F);
+  rdy = 16 + (SendBuff[9] & 0x07);
+
+  for (int ifor1 = 0; ifor1 < 4; ifor1++) {
+    byteChar = serialNumber[5 + ifor1].toLatin1();
+    byteTmp = (SendBuff[10 + ifor1] & 0x3F);
+    byteTmp = byteTmp + (ifor1 + 1) * rdx;
+    byteTmp = byteTmp + byteChar;
+
+    SendBuff[rdy + ifor1] = byteTmp;
+  }
+  CRC_CALK = 1; /// for blok 64 =1 //http=2  //data=0
+  for (int ifor1 = 3; ifor1 < 63; ifor1++) {
+    CRC_CALK = CRC_CALK ^ SendBuff[ifor1];
+  }
+  SendBuff[63] = CRC_CALK;
+  return QByteArray((char *)SendBuff, sizeof(SendBuff));
 }

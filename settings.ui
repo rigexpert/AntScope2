@@ -76,7 +76,7 @@
            <item>
             <widget class="QGroupBox" name="groupBoxLicense">
              <property name="title">
-              <string>Match II license</string>
+              <string>Match license</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_10">
               <item>

@@ -66,6 +66,7 @@ public:
     virtual void disconnectAnalyzer();
     bool closeHid();
     qint64 sendCommand(const QString& data);
+    virtual qint64 sendData(const QByteArray& );
     virtual bool refreshConnection();
 
 signals:

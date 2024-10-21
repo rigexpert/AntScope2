@@ -18,7 +18,7 @@ message ("!!!  set path 6.2.4/MSVC19")
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.3.9\\"'
+DEFINES += ANTSCOPE2VER='\\"1.4.0\\"'
 DEFINES += OLD_TDR
 
 #{ debug

@@ -179,7 +179,7 @@ Settings::Settings(QWidget *parent) :
     ui->closeBtn->setFocus();
 
 
-    if (MainWindow::m_mainWindow->analyzer()->getModelString().contains("Match II")) {
+    if (MainWindow::m_mainWindow->analyzer()->getModelString().contains("Match")) {
         connect(MainWindow::m_mainWindow->analyzer(), &AnalyzerPro::signalMatch_12Received, this, [=](QByteArray data){
             m_licenseAgent.requestStatus_B16(data);
         });
