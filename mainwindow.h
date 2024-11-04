@@ -27,7 +27,7 @@
 #include <QTranslator>
 #include <updater.h>
 #include <antscopeupdatedialog.h>
-#include "ProgressDlg.h"
+//#include "ProgressDlg.h"
 #include <QTabWidget>
 #include <qserialport.h>
 
@@ -85,6 +85,7 @@ public:
 \
     static MainWindow* m_mainWindow;
     double m_tdrZRange = 0;
+    QSettings* settings() { return m_settings; }
 
 private:
 

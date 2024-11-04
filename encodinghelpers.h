@@ -10,8 +10,9 @@ public:
     EncodingHelpers();
 
     static QString encodeString(QString strIn);
-    static QString decodeString(QString strIn);
+    static QByteArray decodeString(QString strIn);
     static QByteArray sendToMatch(QString serialNumber);
+    static QByteArray decodeString_nRaw1(QString inRaw);
 };
 
 #endif // ENCODINGHELPERS_H

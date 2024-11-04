@@ -204,7 +204,7 @@ private slots:
 //    void on_connectNanovna();
 //    void on_connectSerial();
 //    void on_connectBluetooth();
-    void on_registerApplication();
+    void on_registerApplication(QString user=QString(), QString mail=QString());
 };
 
 #endif // SETTINGS_H

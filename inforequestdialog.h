@@ -12,7 +12,7 @@ class InfoRequestDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit InfoRequestDialog(QString name, QString serial, QWidget *parent = nullptr);
+    explicit InfoRequestDialog(QString name, QString serial, QString liense, QWidget *parent = nullptr);
     ~InfoRequestDialog();
 
     QString license();

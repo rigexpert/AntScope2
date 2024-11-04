@@ -1,12 +1,14 @@
 #include "modelesspopup.h"
 #include "ui_modelesspopup.h"
 
-ModelessPopup::ModelessPopup(QString text, QString buttonCancel, QString buttonOk, QWidget *parent) :
+ModelessPopup::ModelessPopup(QString title, QString text, QString buttonCancel, QString buttonOk, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ModelessPopup)
 {
     ui->setupUi(this);
     setWindowFlag(Qt::WindowStaysOnTopHint);
+    setModal(false);
+    setWindowTitle(title);
     if (buttonCancel.isEmpty()) {
         ui->pushButton->hide();
     } else {

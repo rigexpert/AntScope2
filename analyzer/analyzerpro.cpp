@@ -766,3 +766,11 @@ void AnalyzerPro::on_disconnectDevice()
     }
     emit deviceDisconnected();
 }
+
+void AnalyzerPro::slotFullInfo(const QString& _info)
+{
+    int index = _info.indexOf("LIC");
+    if (index != -1) {
+        m_license = _info.mid(index, 4);
+    }
+}

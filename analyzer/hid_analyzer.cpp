@@ -95,7 +95,7 @@ bool HidAnalyzer::searchAnalyzer(bool arrival)
 {
     return false;
 
-    //qDebug() << "HidAnalyzer::searchAnalyzer";
+    qDebug() << "HidAnalyzer::searchAnalyzer";
     bool result = false;
     if(arrival)//add device
     {
@@ -251,6 +251,8 @@ qint64 HidAnalyzer::sendData(const QByteArray& data)
             buf[i+2] = data[i];
         }
         qint64 written = hid_write(m_hidDevice, buf, REPORT_SIZE);
+        QByteArray arr((const char*)buf, REPORT_SIZE+1);
+        qDebug() << "HidAnalyzer::sendData" << arr.toHex();
         return written;
     }
     return 0;
@@ -566,6 +568,9 @@ qint32 HidAnalyzer::parse (QByteArray arr)
                     continue;
                 } else if (str.contains("NAME")) {
                     // skip FULLINFO field `NAME` to keep version obtained in VER
+                    continue;
+                } else if (str.contains("LIC")) {
+                    emit signalFullInfo(str);
                     continue;
                 }
 

@@ -12,10 +12,14 @@ LicenseAgent::LicenseAgent(QObject *parent) :
 {
     connect(&m_mng, &QNetworkAccessManager::finished, this, &LicenseAgent::onReplyFinished);
     connect(m_reply, &QNetworkReply::errorOccurred, this, [=](QNetworkReply::NetworkError error) {
-        qDebug() << "***       QNetworkReply::errorOccurred" << error;
+        qInfo() << "***       QNetworkReply::errorOccurred" << error;
+        QString str = QString("QNetworkReply::errorOccurred: %1").arg(error);
+        showModeless(QString(tr("Error")), str, "Cancel");
     });
     connect(&m_timer, &QTimer::timeout, this, [=](){
+        m_timer.stop();
         timeout();
+        showModeless(QString(tr("Timeout")), tr("Network timeout"), "Cancel");
     });
     m_timer.setSingleShot(true);
 }
@@ -33,7 +37,12 @@ void LicenseAgent::registerApllication(QString user, QString email)
 
     m_userName = user;
     m_email = email;
-    showModeless(tr("Waiting for email confirmation..."), tr("Cancel"));
+    showModeless(tr("Register application"), tr("Waiting for email confirmation..."), tr("Cancel"));
+    connect(m_modelessPopup, &ModelessPopup::rejected, this, [=](){
+        m_timer.stop();
+    });
+    qInfo() << "LicenseAgent::registerApllication";
+    m_dtEmailStatus = QDateTime::currentMSecsSinceEpoch();
     requestEmailStatus();
 }
 
@@ -44,7 +53,7 @@ void LicenseAgent::requestEmailStatus()
     QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=1&nRaw=1&raw=%1").arg(strData);
 
-    qDebug() << "   requestEmailStatus: " << url;
+    qInfo() << "    LicenseAgent::requestEmailStatus" << url;
 
     QNetworkRequest request((QUrl)url);
     request.setTransferTimeout(TRANSFER_TIMEOUT);
@@ -61,9 +70,9 @@ void LicenseAgent::requestEmailStatus()
 void LicenseAgent::parseEmailStatus()
 {
     QString status(m_arr);
-    qDebug() << "   parseEmailStatus:" << status;
-    QString rez = EncodingHelpers::decodeString(status);
-    qDebug() << "   parseEmailStatus decoded:" << rez;
+    qInfo() << "LicenseAgent::parseEmailStatus" << status;
+    QString rez = EncodingHelpers::decodeString_nRaw1(status);
+    qInfo() << "LicenseAgent::parseEmailStatus decoded" << rez;
     QStringList list = rez.split("&&&");
     for (int var = 0; var < list.size(); ++var) {
         QString field = list.at(var);
@@ -77,7 +86,8 @@ void LicenseAgent::parseEmailStatus()
     }
     if (m_emailStatusWeb)
         return;
-    requestEmailStatus();
+    qInfo() << "LicenseAgent::parseEmailStatus";
+    //requestEmailStatus();
 }
 
 void LicenseAgent::registerDevice(QString device_name, QString serial, QString license)
@@ -90,16 +100,14 @@ void LicenseAgent::registerDevice(QString device_name, QString serial, QString l
 
 void LicenseAgent::updateLicense()
 {
-    QString key = QInputDialog::getText(MainWindow::m_mainWindow, tr("Renew license"), tr("Enter key"));
+    QString key = QInputDialog::getText((QWidget*)MainWindow::m_mainWindow, tr("Renew license"), tr("Enter key"));
     if (key.isNull())
         return;
     requestLicense(key);
-
 }
 
 void LicenseAgent::requestLicense(QString key)
 {
-    // TODO
     // send special command instead of HELLO
     QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
     QString serial = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
@@ -108,15 +116,15 @@ void LicenseAgent::requestLicense(QString key)
     QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=4&nRaw=1&raw=%1").arg(strData);
 
-    qDebug() << "   requestLicense: " << url;
+    qInfo() << "   LicenseAgent::requestLicense" << url;
 
     QNetworkRequest request((QUrl)url);
     request.setTransferTimeout(TRANSFER_TIMEOUT);
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
+//    QSslConfiguration conf = request.sslConfiguration();
+//    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+//    request.setSslConfiguration(conf);
 
     m_state = WaitLicense;
     m_mng.get(request);
@@ -126,9 +134,10 @@ void LicenseAgent::requestLicense(QString key)
 void LicenseAgent::parseLicense()
 {
     QString licenseWeb(m_arr);
-    qDebug() << "   parseLicense:" << licenseWeb;
-    QString rez = EncodingHelpers::decodeString(licenseWeb);
-    qDebug() << "   parseLicense decoded:" << rez;
+
+    qInfo() << "    LicenseAgent::parseLicense" << licenseWeb;
+
+    QString rez = EncodingHelpers::decodeString_nRaw1(licenseWeb);
     QStringList list = rez.split("&&&");
     for (int var = 0; var < list.size(); ++var) {
         QString field = list.at(var);
@@ -160,14 +169,37 @@ void LicenseAgent::timeout()
     }
 }
 
-void LicenseAgent::showModeless(QString text, QString buttonCancel, QString buttonOk)
+void LicenseAgent::updateUserData()
+{
+    ManualInfoWeb infoWeb;
+    infoWeb.email = m_unitWeb.email.isEmpty() ? m_email : m_unitWeb.email;
+    infoWeb.purchargeDate = m_unitWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_unitWeb.purchargeDate;
+    infoWeb.serialNumber = m_unitWeb.serialNumber.isEmpty() ? MainWindow::m_mainWindow->analyzer()->getSerialNumber() : m_unitWeb.serialNumber;
+    infoWeb.userName = m_unitWeb.userName.isEmpty() ? m_userName : m_unitWeb.userName;
+    infoWeb.licenseName = MainWindow::m_mainWindow->analyzer()->getLicense();
+
+    UnitRequestDialog dlg(infoWeb);
+    if (dlg.exec() == QDialog::Rejected) {
+        emit canceled();
+        return;
+    }
+    m_unitRequest.email = dlg.infoWeb().email;
+    m_unitRequest.purchargeDate = dlg.infoWeb().purchargeDate;
+    m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
+    m_unitRequest.userName = dlg.infoWeb().userName;
+    requestUnit();
+
+}
+
+void LicenseAgent::showModeless(QString title, QString text, QString buttonCancel, QString buttonOk)
 {
     if (m_modelessPopup != nullptr) {
         m_modelessPopup->disconnect();
         m_modelessPopup->setVisible(false);
+        m_modelessPopup->close();
         m_modelessPopup->deleteLater();
     }
-    m_modelessPopup = new ModelessPopup(text, buttonCancel, buttonOk, MainWindow::m_mainWindow);
+    m_modelessPopup = new ModelessPopup(title, text, buttonCancel, buttonOk, MainWindow::m_mainWindow);
     connect(m_modelessPopup, &ModelessPopup::rejected, this, [=](){
         emit canceled();
     });
@@ -176,7 +208,20 @@ void LicenseAgent::showModeless(QString text, QString buttonCancel, QString butt
     });
     m_modelessPopup->setModal(false);
     m_modelessPopup->show();
+    m_modelessPopup->activateWindow();
     m_modelessPopup->setFocus();
+}
+
+void LicenseAgent::closeModeless()
+{
+    if (m_modelessPopup != nullptr) {
+        m_modelessPopup->disconnect();
+        m_modelessPopup->setVisible(false);
+        m_modelessPopup->close();
+        m_modelessPopup->deleteLater();
+        m_modelessPopup = nullptr;
+    }
+
 }
 
 void LicenseAgent::requestInfo()
@@ -186,8 +231,7 @@ void LicenseAgent::requestInfo()
                          .arg(m_infoRequest.deviceName, m_infoRequest.serialNumber, m_infoRequest.licenseName);
     QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=2&nRaw=1&raw=%1").arg(strData);
-
-    qDebug() << "   requestInfo: " << url;
+    qInfo() << "LicenseAgent::requestInfo()" << url;
 
     QNetworkRequest request((QUrl)url);
     request.setTransferTimeout(TRANSFER_TIMEOUT);
@@ -204,9 +248,13 @@ void LicenseAgent::requestInfo()
 void LicenseAgent::parseInfoWeb()
 {
     QString infoWeb(m_arr);
-    qDebug() << "   parseInfoWeb:" << infoWeb;
-    QString rez = EncodingHelpers::decodeString(infoWeb);
-    qDebug() << "   parseInfoWeb decoded:" << rez;
+    int pos = infoWeb.indexOf("&nRez=");
+    int pos1 = infoWeb.indexOf("&", pos+1);
+    QString nrez = infoWeb.mid(pos+6, pos1-pos+6);
+    m_infoWeb.nRez = nrez.toInt();
+    QString rez = EncodingHelpers::decodeString_nRaw1(infoWeb);
+    qInfo() << "LicenseAgent::parseInfoWeb" << infoWeb;
+    qInfo() << "LicenseAgent::parseInfoWeb decoded" << rez;
     QStringList list = rez.split("&&&");
     for (int var = 0; var < list.size(); ++var) {
         QString field = list.at(var);
@@ -232,7 +280,7 @@ void LicenseAgent::parseInfoWeb()
 
 bool LicenseAgent::infoWebIsEmpty()
 {
-    return m_infoWeb.licenseName.isEmpty();
+    return m_infoWeb.serialNumber.isEmpty();
 }
 
 void LicenseAgent::requestUnit()
@@ -243,9 +291,7 @@ void LicenseAgent::requestUnit()
     QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=3&nRaw=1&raw=%1").arg(strData);
 
-    qDebug() << "   requestUnit: " << strRaw;
-    qDebug() << "   requestUnit: " << url;
-
+    qInfo() << "LicenseAgent::requestUnit" << url;
     QNetworkRequest request((QUrl)url);
     request.setTransferTimeout(TRANSFER_TIMEOUT);
 
@@ -256,16 +302,20 @@ void LicenseAgent::requestUnit()
 
     m_state = WaitUnitWeb;
     m_mng.get(request);
-    showModeless(tr("Registration..."), tr("Cancel"));
+    showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
 }
 
 
 void LicenseAgent::parseUnitWeb()
 {
     QString unitWeb(m_arr);
-    qDebug() << "   parseUnitWeb:" << unitWeb;
-    QString rez = EncodingHelpers::decodeString(unitWeb);
-    qDebug() << "   parseUnitWeb decoded:" << rez;
+    qInfo() << "LicenseAgent::parseUnitWeb" << unitWeb;
+    int pos = unitWeb.indexOf("&nRez=");
+    int pos1 = unitWeb.indexOf("&", pos+1);
+    QString nrez = unitWeb.mid(pos+6, pos1-pos+6);
+    m_unitWeb.nRez = nrez.toInt();
+    QString rez = EncodingHelpers::decodeString_nRaw1(unitWeb);
+    qInfo() << "LicenseAgent::parseUnitWeb decoded" << rez;
     QStringList list = rez.split("&&&");
     for (int var = 0; var < list.size(); ++var) {
         QString field = list.at(var);
@@ -293,25 +343,25 @@ void LicenseAgent::parseUnitWeb()
 
 bool LicenseAgent::isUnitWebValid()
 {
-    return m_unitWeb.emailStatus;
+    return (m_unitWeb.nRez == 2 || m_unitWeb.nRez == 1);
 }
 
 void LicenseAgent::requestStatus_B16(QByteArray data)
 {
 
     QString dataStr(data);
-    qDebug() << "requestStatus_B16:    " << data.toHex();
     if (dataStr.contains("Error")) {
         if (m_modelessPopup != nullptr)
             m_modelessPopup->close();
-        QMessageBox::warning(MainWindow::m_mainWindow, tr("Update license"), tr("Something went wrong"));
+        showModeless(tr("Request status B16"), tr("Something went wrong")), tr("Ok");
         return;
     }
     QString url = SERVER_NAME;
     QString strData(data.toHex());
     url += QString("?nGet=21&nRaw=21&raw=073E%1").arg(strData.toUpper());
     url += "85";
-    qDebug() << "requestStatus_B16" << url;
+
+    qInfo() << "LicenseAgent::requestStatus_B16" << url;
 
     QNetworkRequest request((QUrl)url);
     request.setTransferTimeout(TRANSFER_TIMEOUT);
@@ -332,7 +382,7 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
     url += QString("?nGet=22&nRaw=21&raw=073E%1").arg(strData.toUpper());
     url += "85";
 
-    qDebug() << "requestInfo_B16:   " << url;
+    qInfo() << "LicenseAgent::requestInfo_B16" << url;
 
     QNetworkRequest request((QUrl)url);
     request.setTransferTimeout(TRANSFER_TIMEOUT);
@@ -348,7 +398,10 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
 
 void LicenseAgent::onReplyFinished(QNetworkReply* reply)
 {
+    qInfo() << "LicenseAgent::onReplyFinished: " << reply->errorString();
     m_arr = reply->readAll();
+
+    qInfo() << "    LicenseAgent::onReplyFinished: state=" << m_state << ", " << QString(m_arr);
     if (m_state == WaitEmailStatusWeb) {
         finishWaitEmailStatusWeb();
     } else if (m_state == WaitInfoWeb) {
@@ -366,23 +419,27 @@ void LicenseAgent::onReplyFinished(QNetworkReply* reply)
 
 void LicenseAgent::finishWaitEmailStatusWeb()
 {
-    QString str(m_arr);
     parseEmailStatus();
-    //qDebug() << str;
     if (m_emailStatusWeb) {
         // close notification
         if (m_popup != nullptr) {
             delete m_popup;
             m_popup = nullptr;
         }
-        showModeless(tr("Registration was successful"), tr("Ok"));
+        showModeless(tr("Register application"),tr("Registration was successful"), tr("Ok"));
 
-        QSettings set;
-        set.setValue("email", m_email);
+        QSettings& set = *MainWindow::m_mainWindow->settings();
+        set.beginGroup("Mainwindow");
+        set.setValue("eMail", m_email);
+        set.setValue("remind", false);
+        set.setValue("userName", m_userName);
+        set.endGroup();
         emit registered();
     } else {
-        if (m_dtEmailStatus <= EMAIL_TIMEOUT) {
-            QTimer::singleShot(REQUEST_DELAY, this, [=]() {
+        qint64 diff = QDateTime::currentMSecsSinceEpoch() - m_dtEmailStatus;
+        if (diff <= EMAIL_TIMEOUT) {
+                QTimer::singleShot(REQUEST_DELAY, this, [=]() {
+                qInfo() << "finishWaitEmailStatusWeb m_dtEmailStatus <= EMAIL_TIMEOUT";
                 requestEmailStatus();
             });
         } else {
@@ -392,11 +449,19 @@ void LicenseAgent::finishWaitEmailStatusWeb()
                     delete m_popup;
                     m_popup = nullptr;
                 }
+                QSettings& set = *MainWindow::m_mainWindow->settings();
+                set.beginGroup("Mainwindow");
+                set.setValue("remind", true);
+                set.endGroup();
                 // show network timeout
-                showModeless(tr("Network timeout"), tr("Ok"));
+                showModeless(tr("Register application"),tr("Network timeout"), tr("Ok"));
                 emit networkTimeout();
             } else {
-                requestEmailStatus();
+                qInfo() << "finishWaitEmailStatusWeb REQUEST_ATTEMPTS: " << m_helloAttempts;
+                QTimer::singleShot(REQUEST_DELAY, this, [=]() {
+                    qInfo() << "finishWaitEmailStatusWeb m_dtEmailStatus <= EMAIL_TIMEOUT";
+                    requestEmailStatus();
+                });
             }
         }
     }
@@ -408,6 +473,21 @@ void LicenseAgent::finishWaitInfoWeb()
     if (infoWebIsEmpty()) {
         // manual
         ManualInfoWeb info;
+        QSettings& set = *MainWindow::m_mainWindow->settings();
+        set.beginGroup("MaiWindow");
+        if (m_email.isEmpty()) {
+            m_email = set.value("eMail", "").toString();
+        }
+        if (m_userName.isEmpty()) {
+            m_userName = set.value("userName", "").toString();
+        }
+        set.endGroup();
+        info.email = m_email;
+        info.userName = m_userName;
+        info.licenseName = MainWindow::m_mainWindow->analyzer()->getLicense();
+        info.userName = m_userName;
+        info.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+        info.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
         UnitRequestDialog dlg(info);
         if (dlg.exec() == QDialog::Rejected) {
             emit canceled();
@@ -425,7 +505,7 @@ void LicenseAgent::finishWaitInfoWeb()
         info += tr("License name: ") + m_infoWeb.licenseName + "\n";
         info += tr("Purchrge date: ") + m_infoWeb.purchargeDate + "\n";
         info += tr("Login date: ") + m_infoWeb.loginDate + "\n";
-        showModeless(info, "Ok");
+        showModeless(tr("Register device"), info, "Ok");
         // TODO
         // enable button "Update user data"
         // ...
@@ -437,14 +517,42 @@ void LicenseAgent::finishWaitUnitWeb()
 {
     parseUnitWeb();
     if (isUnitWebValid()) {
-        QMessageBox::information(MainWindow::m_mainWindow, tr("Registration"), tr("Registration was successful"));
         QString info;
+        info += tr("Registration was successful\n");
         info += tr("Device name: ") + m_infoWeb.deviceName + "\n";
         info += tr("Serial number: ") + m_infoWeb.serialNumber + "\n";
         info += tr("License name: ") + m_infoWeb.licenseName + "\n";
         info += tr("Purchrge date: ") + m_infoWeb.purchargeDate + "\n";
         info += tr("Login date: ") + m_infoWeb.loginDate + "\n";
-        showModeless(info, "Ok");
+        showModeless(tr("Register device"), info, "Ok");//, tr("Update User Data"));
+        connect(m_modelessPopup, &ModelessPopup::accepted, this, [=] () {
+            ManualInfoWeb info;
+            QSettings& set = *MainWindow::m_mainWindow->settings();
+            set.beginGroup("MaiWindow");
+            if (m_email.isEmpty()) {
+                m_email = set.value("eMail", "").toString();
+            }
+            if (m_userName.isEmpty()) {
+                m_userName = set.value("userName", "").toString();
+            }
+            set.endGroup();
+            info.email = m_email;
+            info.userName = m_userName;
+            info.licenseName = MainWindow::m_mainWindow->analyzer()->getLicense();
+            info.userName = m_userName;
+            info.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+            info.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
+            UnitRequestDialog dlg(info);
+            if (dlg.exec() == QDialog::Rejected) {
+                emit canceled();
+                return;
+            }
+            m_unitRequest.email = dlg.infoWeb().email;
+            m_unitRequest.purchargeDate = dlg.infoWeb().purchargeDate;
+            m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
+            m_unitRequest.userName = dlg.infoWeb().userName;
+            requestUnit();
+        });
     } else {
         if ((QDateTime::currentSecsSinceEpoch() - m_dtUnit) <= TRANSFER_TIMEOUT) {
             m_unitTimer.setSingleShot(true);
@@ -459,12 +567,12 @@ void LicenseAgent::finishWaitUnitWeb()
             }
         } else {
             if (++m_UnitAttempts <= REQUEST_ATTEMPTS) {
-                showModeless(tr("Registration failed"), tr("Cancel"), tr("Try again"));
+                showModeless(tr("Register device"), tr("Registration failed"), tr("Cancel"), tr("Try again"));
                 connect(this, &LicenseAgent::accepted, this, [=](){
                     requestInfo();
                 });
             } else {
-                showModeless(tr("email is not verified"), tr("Ok"));
+                showModeless(tr("Register device"), tr("email is not verified"), tr("Ok"));
                 emit canceled();
             }
         }
@@ -475,14 +583,14 @@ void LicenseAgent::finishWaitLicense()
 {
     parseLicense();
     if ( ! licenseKeyBan()) {
-        showModeless(tr("License renewal..."), tr("Ok"));
+        showModeless(tr("Renew license"), tr("License renewal..."), tr("Ok"));
         sendMatch_11();
     } else {
         if (++m_licenseAttempts <= REQUEST_ATTEMPTS) {
             updateLicense();
         } else {
             sendBlocked();
-            showModeless(tr("Contact the support service"), tr("Ok"));
+            showModeless(tr("Renew license"), tr("Something went wrong.\nContact the support service"), tr("Ok"));
             emit canceled();
         }
     }
@@ -491,35 +599,34 @@ void LicenseAgent::finishWaitLicense()
 void LicenseAgent::finishWaitProfileB16()
 {
     QString data = m_arr;
-    int pos = data.indexOf("&raw=");
-    //data = data.mid(pos+5);
-    QString decoded = EncodingHelpers::decodeString(data);
-    sendProfile_B16(decoded.toLatin1());
+    QByteArray decoded = EncodingHelpers::decodeString(data);
+    qInfo() << "LicenseAgent::finishWaitProfileB16" << decoded.toHex();
+    sendProfile_B16(decoded);
 }
 
 void LicenseAgent::finishWaitInfoB16()
 {
     parseInfo_B16();
     if ( ! info_B16Failed()) {
-        showModeless(tr("The license update was successful"), tr("Ok"));
+        QString reboot = "REBOOT\r";
+        MainWindow::m_mainWindow->analyzer()->sendCommand(reboot);
+        showModeless(tr("License renewal"), tr("The license update was successful"), tr("Ok"));
         emit canceled();
     } else {
-        showModeless(tr("The license is not updated"), tr("Close"));
+        showModeless(tr("License renewal"), tr("The license is not updated"), tr("Close"));
         emit canceled();
     }
 }
 
 bool LicenseAgent::info_B16Failed()
 {
-    return m_infoB16.status == "1";
+    return m_infoB16.status != "1";
 }
 
 void LicenseAgent::parseInfo_B16()
 {
     QString infoB16(m_arr);
-    qDebug() << "   parseInfo_B16:" << infoB16;
-    QString decoded = EncodingHelpers::decodeString(infoB16);
-    qDebug() << "   parseInfo_B16 decoded:" << decoded;
+    QString decoded = EncodingHelpers::decodeString_nRaw1(infoB16);
     QStringList list = decoded.split("&&&");
     for (int var = 0; var < list.size(); ++var) {
         QString field = list.at(var);
@@ -557,18 +664,24 @@ void LicenseAgent::sendBlocked()
 void LicenseAgent::sendMatch_11()
 {
     m_arr = EncodingHelpers::sendToMatch(m_licenseWeb.serialNumber);
-    qDebug() << "sendMatch_11: " << m_arr.toHex().data();
     QByteArray arr = m_arr.right(m_arr.length() - 2);
     MainWindow::m_mainWindow->analyzer()->setParseState(WAIT_MATCH_12);
     MainWindow::m_mainWindow->analyzer()->sendData(arr);
 }
 
+QByteArray string2bytes(QString& str)
+{
+    QByteArray arr;
+    for (int i=0; i<str.length()-1; i+=2) {
+
+    }
+    return arr;
+}
+
 void LicenseAgent::sendProfile_B16(QByteArray data)
 {
-    m_arr = EncodingHelpers::sendToMatch(data.toHex());
-    qDebug() << "sendProfile_B16:   " << m_arr;
-    QByteArray arr = m_arr.right(m_arr.length() - 2);
-    qDebug() << "" << arr.toHex();
+    m_arr = data;
+    QByteArray arr = m_arr.mid(2);
     MainWindow::m_mainWindow->analyzer()->setParseState(WAIT_MATCH_PROFILE_B16);
     MainWindow::m_mainWindow->analyzer()->sendData(arr);
 }

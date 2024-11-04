@@ -13,12 +13,12 @@ UnitRequestDialog::UnitRequestDialog(ManualInfoWeb& infoWeb, QWidget *parent) :
     ui->lineEditPurcharge->setText(m_infoWeb.purchargeDate);
     ui->lineEditSerial->setText(m_infoWeb.serialNumber);
     ui->lineEditUser->setText(m_infoWeb.userName);
-#ifdef _DEBUG
-    ui->lineEditEmail->setText("vancom@bigmir.net");
-    ui->lineEditPurcharge->setText("19.09.2024");
-    ui->lineEditSerial->setText("123208137");
-    ui->lineEditUser->setText("Ivan2");
-#endif
+//#ifdef _DEBUG
+//    ui->lineEditEmail->setText("vancom@bigmir.net");
+//    ui->lineEditPurcharge->setText("19.09.2024");
+//    ui->lineEditSerial->setText("123208137");
+//    ui->lineEditUser->setText("Ivan2");
+//#endif
 }
 
 UnitRequestDialog::~UnitRequestDialog()

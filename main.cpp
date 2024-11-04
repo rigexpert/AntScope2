@@ -13,7 +13,7 @@ MainWindow* g_mainWindow;
 #include <windows.h>
 #include <dbt.h>
 
-//#define LOG_TO_FILE
+#define LOG_TO_FILE
 
 #ifdef LOG_TO_FILE
 QString logFilePath = "antscope2";
@@ -40,7 +40,7 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext &context, cons
     QFile outFile(logFilePath);
     outFile.open(QIODevice::WriteOnly | QIODevice::Append);
     QTextStream ts(&outFile);
-    ts << txt << endl;
+    ts << txt << "\n";
     ts.flush();
 }
 #endif

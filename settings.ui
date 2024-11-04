@@ -74,18 +74,18 @@
             </spacer>
            </item>
            <item>
+            <widget class="QPushButton" name="pushButtonAntscope">
+             <property name="text">
+              <string>Register application</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QGroupBox" name="groupBoxLicense">
              <property name="title">
               <string>Match license</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_10">
-              <item>
-               <widget class="QPushButton" name="pushButtonAntscope">
-                <property name="text">
-                 <string>Register application</string>
-                </property>
-               </widget>
-              </item>
               <item>
                <widget class="QPushButton" name="pushButtonDevice">
                 <property name="text">
@@ -97,6 +97,13 @@
                <widget class="QPushButton" name="pushButtonUpdate">
                 <property name="text">
                  <string>Update license</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonUserData">
+                <property name="text">
+                 <string>Update user data</string>
                 </property>
                </widget>
               </item>

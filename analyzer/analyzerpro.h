@@ -29,6 +29,7 @@ class AnalyzerPro : public QObject
     QByteArray  *m_pfw;
     qint32 m_INFOSIZE;
     volatile bool m_calibrationMode=false;
+    QString m_license;
 
 public:
     explicit AnalyzerPro(QObject *parent = nullptr);
@@ -40,6 +41,8 @@ public:
     QString getVersionString() const;
     QString getRevision() const;
     QString getSerialNumber(void) const;
+    QString getLicense() const { return m_license; }
+
     void updateFirmware (QIODevice *fw);
     void setContinuos(bool isContinuos);
     bool isMeasuring() { return m_isMeasuring; }
@@ -119,7 +122,7 @@ public slots:
     void on_measureCalib(int dotsNumber);
     void setCalibrationMode(bool enabled);
 
-    void slotFullInfo(const QString& _info) { _info; /* not implemented yet */}
+    void slotFullInfo(const QString& _info);
 
     void applyAnalyzer();
 

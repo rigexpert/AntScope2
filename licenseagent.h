@@ -8,17 +8,12 @@
 #include "popup.h"
 #include "modelesspopup.h"
 
-#define SERVER_NAME "https://regdev.rigexpert.com/index.php"
+#define SERVER_NAME "http://regdev.rigexpert.com/index.php"
 
-#define HELLO "nGet=1"
-#define INFO "info"
-#define UNIT "unit"
-#define EMAIL_STATUS "email_status"
-
-#define EMAIL_TIMEOUT 30*1000
+#define EMAIL_TIMEOUT 180*1000
 #define REQUEST_DELAY 5*1000
 #define REQUEST_ATTEMPTS 5
-#define TRANSFER_TIMEOUT 30*1000
+#define TRANSFER_TIMEOUT 180*1000
 
 
 struct InfoRequest
@@ -32,6 +27,8 @@ struct InfoRequest
 struct InfoWeb
 {
     InfoWeb() {}
+
+    int nRez;
     QString deviceName;
     QString serialNumber;
     QString licenseName;
@@ -53,6 +50,7 @@ struct UnitWeb
 {
     UnitWeb() {}
 
+    int nRez;
     QString deviceName;
     QString serialNumber;
     QString email;
@@ -103,6 +101,8 @@ public:
     void reset();
     void timeout();
 
+    void updateUserData();
+
     void requestEmailStatus();
     void parseEmailStatus();
 
@@ -124,7 +124,11 @@ public:
     void parseInfo_B16();
     bool info_B16Failed();
 
-    void showModeless(QString text, QString buttonCancel=QString(), QString buttonOk=QString());
+    void showModeless(QString title, QString text, QString buttonCancel=QString(), QString buttonOk=QString());
+    void closeModeless();
+
+    void setEmail(QString mail) { m_email = mail; }
+    void setUserName(QString name) { m_userName = name; }
 
 signals:
     void registered();

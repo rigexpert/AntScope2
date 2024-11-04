@@ -9,6 +9,19 @@ AppRegistrationDialog::AppRegistrationDialog(LicenseAgent& agent, QWidget *paren
     m_agent(agent)
 
 {
+    init();
+}
+
+AppRegistrationDialog::AppRegistrationDialog(QString user, QString mail, LicenseAgent& agent, QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::AppRegistrationDialog),
+    m_agent(agent)
+{
+    init(user, mail);
+}
+
+void AppRegistrationDialog::init(QString user, QString mail)
+{
     ui->setupUi(this);
 
     connect(&m_agent, &LicenseAgent::registered, this, [=](){
@@ -21,15 +34,15 @@ AppRegistrationDialog::AppRegistrationDialog(LicenseAgent& agent, QWidget *paren
         reject();
     });
     connect(ui->pushButtonOk, &QPushButton::clicked, this, [=](){
-        if (name().isEmpty() || email().isEmpty()) {
-            QMessageBox::warning(this, tr(""), tr("All fields are mandatory"));
+        if (email().isEmpty()) {
+            QMessageBox::warning(this, tr(""), tr("Email address should be valid"));
             return;
         }
-//        QRegularExpression mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
-//        if (!mailREX.match(email().toUpper()).hasMatch()) {
-//            QMessageBox::warning(this, "", tr("Wrong email address"));
-//            return;
-//        }
+        QRegularExpression mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
+        if (!mailREX.match(email().toUpper()).hasMatch()) {
+            QMessageBox::warning(this, "", tr("Wrong email address"));
+            return;
+        }
         accept();
         m_agent.registerApllication(name(), email());
     });
@@ -37,15 +50,23 @@ AppRegistrationDialog::AppRegistrationDialog(LicenseAgent& agent, QWidget *paren
         reject();
     });
 
-#ifdef _DEBUG
-    ui->lineEditEmail->setText("vancom1@bigmir.net");
-    ui->lineEditUserName->setText("Ivan1");
-#endif
+    if (!mail.isEmpty())
+        ui->lineEditEmail->setText(mail);
+    if (!user.isEmpty())
+        ui->lineEditUserName->setText(user);
 }
 
 AppRegistrationDialog::~AppRegistrationDialog()
 {
     delete ui;
+}
+
+void AppRegistrationDialog::accept()
+{
+    if (email().isEmpty()) {
+        return;
+    }
+    QDialog::accept();
 }
 
 QString AppRegistrationDialog::name() { return ui->lineEditUserName->text(); }

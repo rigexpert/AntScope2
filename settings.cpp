@@ -175,9 +175,57 @@ Settings::Settings(QWidget *parent) :
     QString cablesPath = Settings::programDataPath("cables.txt");
     openCablesFile(cablesPath);
 
-    connect(ui->closeBtn, SIGNAL(pressed()), this, SLOT(close()));
+    connect(ui->closeBtn, &QPushButton::clicked, this, &Settings::close);
     ui->closeBtn->setFocus();
 
+    m_settings->beginGroup("Mainwindow");
+    QString email = m_settings->value("eMail", "").toString();
+    m_licenseAgent.setEmail(email);
+    QString user = m_settings->value("userName", "").toString();
+    m_licenseAgent.setUserName(user);
+    m_settings->endGroup();
+    if (!email.isEmpty()) {
+        ui->pushButtonAntscope->setText(tr("Change application registration"));
+    }
+    connect(ui->pushButtonAntscope, &QPushButton::clicked, this, [email,user, this]() {
+        m_settings->beginGroup("Mainwindow");
+#ifndef _DEBUG
+        QString _mail = "";
+        bool remind = true;
+#else
+        QString _mail = email;
+        bool remind = m_settings->value("remind", true).toBool();
+#endif
+        if (_mail.isEmpty() && remind) {
+            if (QMessageBox::question(this, tr("Register application"),
+                                      tr("Do you want to register the application?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                on_registerApplication();
+            } else {
+                if (QMessageBox::question(this, tr("Registration"),
+                                          tr("Remind later?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                    m_settings->setValue("remind", true);
+                } else {
+                    m_settings->setValue("remind", false);
+                }
+            }
+        }
+        else {
+//            if (QMessageBox::question(this, tr("Register application"),
+//                                      tr("Do you want to change registered data?"),
+//                                      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+//                on_registerApplication(user, _mail);
+//            }
+            on_registerApplication(user, _mail);
+        }
+        m_settings->endGroup();
+    });
+
+    if (!email.isEmpty()) {
+        ui->pushButtonAntscope->setEnabled(false);
+    }
+#ifdef _DEBUG
+    ui->pushButtonAntscope->setEnabled(true);
+#endif
 
     if (MainWindow::m_mainWindow->analyzer()->getModelString().contains("Match")) {
         connect(MainWindow::m_mainWindow->analyzer(), &AnalyzerPro::signalMatch_12Received, this, [=](QByteArray data){
@@ -187,43 +235,25 @@ Settings::Settings(QWidget *parent) :
             m_licenseAgent.requestInfo_B16(data);
         });
         ui->groupBoxLicense->show();
-        QString email = m_settings->value("eMail", "").toString();
-        connect(ui->pushButtonAntscope, &QPushButton::clicked, this, [email, this]() {
-            bool remind = m_settings->value("remind", true).toBool();
-            if (email.isEmpty() && remind) {
-                if (QMessageBox::question(this, tr("Registration"),
-                                          tr("Do you want to register the application?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-                    on_registerApplication();
-                } else {
-                    if (QMessageBox::question(this, tr("Registration"),
-                                              tr("Remind later?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-                        m_settings->setValue("remind", true);
-                    } else {
-                        m_settings->setValue("remind", false);
-                    }
-                }
-            }
-        });
-
-        if (!email.isEmpty()) {
-             ui->pushButtonAntscope->setEnabled(false);
-        }
 
         connect(ui->pushButtonDevice, &QPushButton::clicked, this, [=]() {
             QString serial_number = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
             QString device_name = MainWindow::m_mainWindow->analyzer()->getModelString();
-
+            QString license = MainWindow::m_mainWindow->analyzer()->getLicense();
 #ifdef _DEBUG
             //serial_number = "123208137";
             //device_name = "AA-230 Zoom Analyzer";
 #endif
-            InfoRequestDialog dlg(device_name, serial_number, this);
+            InfoRequestDialog dlg(device_name, serial_number, license, this);
             if (dlg.exec() == QDialog::Rejected)
                 return;
             m_licenseAgent.registerDevice(device_name, serial_number, dlg.license());
         });
         connect(ui->pushButtonUpdate, &QPushButton::clicked, this, [=]() {
             m_licenseAgent.updateLicense();
+        });
+        connect(ui->pushButtonUserData, &QPushButton::clicked, this, [=]() {
+            m_licenseAgent.updateUserData();
         });
     } else {
         ui->groupBoxLicense->hide();
@@ -238,6 +268,7 @@ Settings::~Settings()
         emit Z0Changed(Z0);
     }
 
+    m_licenseAgent.closeModeless();
     CustomAnalyzer::save();
 
     g_maxMeasurements = ui->spinBoxMeasurements->value();
@@ -1459,9 +1490,9 @@ bool Settings::getRestrictFq()
     return m_restrictFq;
 }
 
-void Settings::on_registerApplication()
+void Settings::on_registerApplication(QString user, QString mail)
 {
-    AppRegistrationDialog dlg(m_licenseAgent, this);
+    AppRegistrationDialog dlg(user, mail, m_licenseAgent, this);
     if (dlg.exec() == QDialogButtonBox::Cancel)
         return;
 }

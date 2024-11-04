@@ -14,10 +14,13 @@ class AppRegistrationDialog : public QDialog
 
 public:
     explicit AppRegistrationDialog(LicenseAgent& agent, QWidget *parent = nullptr);
+    explicit AppRegistrationDialog(QString user, QString email, LicenseAgent& agent, QWidget *parent = nullptr);
     ~AppRegistrationDialog();
 
+    void init(QString user="", QString mail="");
     QString name();
     QString email();
+    virtual void accept();
 
 private:
     Ui::AppRegistrationDialog *ui;

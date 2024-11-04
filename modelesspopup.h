@@ -12,7 +12,7 @@ class ModelessPopup : public QDialog
     Q_OBJECT
 
 public:
-    explicit ModelessPopup(QString text, QString buttonCancel=QString(), QString buttonOk=QString(), QWidget *parent = nullptr);
+    explicit ModelessPopup(QString title, QString text, QString buttonCancel=QString(), QString buttonOk=QString(), QWidget *parent = nullptr);
     ~ModelessPopup();
 
 

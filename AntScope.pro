@@ -18,7 +18,7 @@ message ("!!!  set path 6.2.4/MSVC19")
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.4.0\\"'
+DEFINES += ANTSCOPE2VER='\\"1.4.0T3\\"'
 DEFINES += OLD_TDR
 
 #{ debug
@@ -247,6 +247,8 @@ win64{
     LIBS += -lsetupapi
     RC_ICONS += AntScope2.ico
 
+    LIBS += -LC:/Qt/Tools/OpenSSLv3/Win_x64/lib/ -llibcrypto.lib
+    LIBS += -LC:/Qt/Tools/OpenSSLv3/Win_x64/lib/ -llibssl.lib
     INCLUDEPATH += $$PWD/ftdi
     DEPENDPATH += $$PWD/ftdi
     QMAKE_POST_LINK = COPY $$PWD\ftdi\amd64\ftd2xx.dll $$DESTDIR
