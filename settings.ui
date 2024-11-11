@@ -103,7 +103,7 @@
               <item>
                <widget class="QPushButton" name="pushButtonUserData">
                 <property name="text">
-                 <string>Update user data</string>
+                 <string>Device info</string>
                 </property>
                </widget>
               </item>

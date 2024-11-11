@@ -13,7 +13,9 @@ MainWindow* g_mainWindow;
 #include <windows.h>
 #include <dbt.h>
 
+//#ifndef _DEBUG
 #define LOG_TO_FILE
+//#endif
 
 #ifdef LOG_TO_FILE
 QString logFilePath = "antscope2";

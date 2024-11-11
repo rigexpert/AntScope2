@@ -771,6 +771,15 @@ void AnalyzerPro::slotFullInfo(const QString& _info)
 {
     int index = _info.indexOf("LIC");
     if (index != -1) {
-        m_license = _info.mid(index, 4);
+        QString _name = _info.mid(index, 4);
+        qInfo() << "AnalyzerPro::slotFullInfo" << _name;
+        if (_name == "LIC1")
+            m_license = "ADVANCED";
+        else if (_name == "LIC2")
+            m_license = "RFE";
+        else if (_name == "LIC3")
+            m_license = "PRO";
+        else
+            m_license = "BASE";
     }
 }

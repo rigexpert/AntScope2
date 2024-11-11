@@ -56,7 +56,7 @@ void LicenseAgent::requestEmailStatus()
     qInfo() << "    LicenseAgent::requestEmailStatus" << url;
 
     QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(TRANSFER_TIMEOUT);
+    request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
@@ -119,7 +119,7 @@ void LicenseAgent::requestLicense(QString key)
     qInfo() << "   LicenseAgent::requestLicense" << url;
 
     QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(TRANSFER_TIMEOUT);
+    request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
 //    QSslConfiguration conf = request.sslConfiguration();
@@ -168,7 +168,7 @@ void LicenseAgent::timeout()
         reset();
     }
 }
-
+#if 0
 void LicenseAgent::updateUserData()
 {
     ManualInfoWeb infoWeb;
@@ -180,6 +180,7 @@ void LicenseAgent::updateUserData()
 
     UnitRequestDialog dlg(infoWeb);
     if (dlg.exec() == QDialog::Rejected) {
+        qInfo() << "LicenseAgent::updateUserData   Rejected";
         emit canceled();
         return;
     }
@@ -187,8 +188,15 @@ void LicenseAgent::updateUserData()
     m_unitRequest.purchargeDate = dlg.infoWeb().purchargeDate;
     m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
     m_unitRequest.userName = dlg.infoWeb().userName;
+
+    qInfo() << "LicenseAgent::updateUserData: ";
     requestUnit();
 
+}
+#endif
+void LicenseAgent::updateUserData()
+{
+    requestUserInfo();
 }
 
 void LicenseAgent::showModeless(QString title, QString text, QString buttonCancel, QString buttonOk)
@@ -224,17 +232,30 @@ void LicenseAgent::closeModeless()
 
 }
 
+void LicenseAgent::requestUserInfo()
+{
+    requestInfo();
+    m_state = WaitUserInfoWeb;
+}
+
 void LicenseAgent::requestInfo()
 {
     QString url = SERVER_NAME;
+//    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcName=%3&&&")
+//                         .arg(m_infoRequest.deviceName, m_infoRequest.serialNumber,
+//                              m_infoRequest.licenseName);
+    AnalyzerPro& analyzer = *MainWindow::m_mainWindow->analyzer();
     QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcName=%3&&&")
-                         .arg(m_infoRequest.deviceName, m_infoRequest.serialNumber, m_infoRequest.licenseName);
+                         .arg(analyzer.getModelString(), analyzer.getSerialNumber(),
+                              analyzer.getLicense());
+
+    qInfo() << "LicenseAgent::requestInfo() strRaw" << strRaw;
     QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=2&nRaw=1&raw=%1").arg(strData);
-    qInfo() << "LicenseAgent::requestInfo()" << url;
+    qInfo() << "LicenseAgent::requestInfo() url" << url;
 
     QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(TRANSFER_TIMEOUT);
+    request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
@@ -242,6 +263,9 @@ void LicenseAgent::requestInfo()
     request.setSslConfiguration(conf);
 
     m_state = WaitInfoWeb;
+    showModeless(tr("Request info"), tr("Requesting..."), tr("Cancel"));
+    m_dtUnit = QDateTime::currentMSecsSinceEpoch();
+    m_UnitAttempts = 0;
     m_mng.get(request);
 }
 
@@ -250,7 +274,7 @@ void LicenseAgent::parseInfoWeb()
     QString infoWeb(m_arr);
     int pos = infoWeb.indexOf("&nRez=");
     int pos1 = infoWeb.indexOf("&", pos+1);
-    QString nrez = infoWeb.mid(pos+6, pos1-pos+6);
+    QString nrez = infoWeb.mid(pos+6, pos1-(pos+6));
     m_infoWeb.nRez = nrez.toInt();
     QString rez = EncodingHelpers::decodeString_nRaw1(infoWeb);
     qInfo() << "LicenseAgent::parseInfoWeb" << infoWeb;
@@ -280,20 +304,24 @@ void LicenseAgent::parseInfoWeb()
 
 bool LicenseAgent::infoWebIsEmpty()
 {
-    return m_infoWeb.serialNumber.isEmpty();
+    //return m_infoWeb.serialNumber.isEmpty();
+    return m_infoWeb.nRez != 1 ;
 }
 
 void LicenseAgent::requestUnit()
 {
     QString url = SERVER_NAME;
-    QString strRaw = QString("dvSN=%1&&&Eml=%2&&&Name=%3&&&dtPur=%4&&&")
-                         .arg(m_unitRequest.serialNumber, m_unitRequest.email, m_unitRequest.userName, m_unitRequest.purchargeDate);
+    QString strRaw = QString("dvSN=%1&&&Eml=%2&&&Name=%3&&&dtPur=%4&&&dvName=%5&&&")
+                         .arg(m_unitRequest.serialNumber, m_unitRequest.email,
+                              m_unitRequest.userName, m_unitRequest.purchargeDate,
+                              MainWindow::m_mainWindow->analyzer()->getModelString());
+    qInfo() << "LicenseAgent::requestUnit" << strRaw;
     QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=3&nRaw=1&raw=%1").arg(strData);
 
     qInfo() << "LicenseAgent::requestUnit" << url;
     QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(TRANSFER_TIMEOUT);
+    request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
@@ -302,7 +330,6 @@ void LicenseAgent::requestUnit()
 
     m_state = WaitUnitWeb;
     m_mng.get(request);
-    showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
 }
 
 
@@ -312,7 +339,7 @@ void LicenseAgent::parseUnitWeb()
     qInfo() << "LicenseAgent::parseUnitWeb" << unitWeb;
     int pos = unitWeb.indexOf("&nRez=");
     int pos1 = unitWeb.indexOf("&", pos+1);
-    QString nrez = unitWeb.mid(pos+6, pos1-pos+6);
+    QString nrez = unitWeb.mid(pos+6, pos1-(pos+6));
     m_unitWeb.nRez = nrez.toInt();
     QString rez = EncodingHelpers::decodeString_nRaw1(unitWeb);
     qInfo() << "LicenseAgent::parseUnitWeb decoded" << rez;
@@ -330,7 +357,7 @@ void LicenseAgent::parseUnitWeb()
         } else  if (lst.at(0) == "Eml") {
             m_unitWeb.email = lst.at(1);
         } else  if (lst.at(0) == "EmlST") {
-            m_unitWeb.emailStatus = lst.at(1) == "0";
+            m_unitWeb.emailStatus = lst.at(1) == "1";
         } else  if (lst.at(0) == "Name") {
             m_unitWeb.userName = lst.at(1);
         }  else  if (lst.at(0) == "dtPur") {
@@ -341,9 +368,9 @@ void LicenseAgent::parseUnitWeb()
     }
 }
 
-bool LicenseAgent::isUnitWebValid()
+bool LicenseAgent::needWaitForEmail()
 {
-    return (m_unitWeb.nRez == 2 || m_unitWeb.nRez == 1);
+    return (m_unitWeb.nRez == 2);
 }
 
 void LicenseAgent::requestStatus_B16(QByteArray data)
@@ -364,7 +391,7 @@ void LicenseAgent::requestStatus_B16(QByteArray data)
     qInfo() << "LicenseAgent::requestStatus_B16" << url;
 
     QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(TRANSFER_TIMEOUT);
+    request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
@@ -385,7 +412,7 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
     qInfo() << "LicenseAgent::requestInfo_B16" << url;
 
     QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(TRANSFER_TIMEOUT);
+    request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
@@ -398,14 +425,22 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
 
 void LicenseAgent::onReplyFinished(QNetworkReply* reply)
 {
-    qInfo() << "LicenseAgent::onReplyFinished: " << reply->errorString();
+    qInfo() << "LicenseAgent::onReplyFinished: " << reply->error() << reply->errorString();
     m_arr = reply->readAll();
+    closeModeless();
 
+    if (reply->error() != QNetworkReply::NoError) {
+        m_state = Finished;
+        showModeless(tr("Network error."), reply->errorString(), tr("Close"));
+        return;
+    }
     qInfo() << "    LicenseAgent::onReplyFinished: state=" << m_state << ", " << QString(m_arr);
     if (m_state == WaitEmailStatusWeb) {
         finishWaitEmailStatusWeb();
     } else if (m_state == WaitInfoWeb) {
         finishWaitInfoWeb();
+    } else if (m_state == WaitUserInfoWeb) {
+        finishWaitUserInfoWeb();
     } else if(m_state == WaitUnitWeb) {
         finishWaitUnitWeb();
     } else if(m_state == WaitLicense) {
@@ -467,6 +502,93 @@ void LicenseAgent::finishWaitEmailStatusWeb()
     }
 }
 
+void LicenseAgent::finishWaitUserInfoWeb()
+{
+    parseInfoWeb();
+    bool empty = infoWebIsEmpty();
+    if (empty) {
+        // local data
+        QString text;
+        text += tr("Device name ") + MainWindow::m_mainWindow->analyzer()->getModelString();
+        text += tr("\nSerial number ") + MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+        text += tr("\nLicense name ") + MainWindow::m_mainWindow->analyzer()->getLicense();
+        showModeless(tr("Device info"), text, tr("Cancel"), tr("User Data update"));
+        connect(m_modelessPopup, &ModelessPopup::accepted, this, [=](){
+            closeModeless();
+            ManualInfoWeb info;
+            QSettings& set = *MainWindow::m_mainWindow->settings();
+            set.beginGroup("MaiWindow");
+            if (m_email.isEmpty()) {
+                m_email = set.value("eMail", "").toString();
+            }
+            if (m_userName.isEmpty()) {
+                m_userName = set.value("userName", "").toString();
+            }
+            set.endGroup();
+            info.email = m_email;
+            info.userName = m_userName;
+            info.licenseName = MainWindow::m_mainWindow->analyzer()->getLicense();
+            info.userName = m_userName;
+            info.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+            info.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
+            UnitRequestDialog dlg(info);
+            if (dlg.exec() == QDialog::Rejected) {
+                emit canceled();
+                return;
+            }
+            m_unitRequest.email = dlg.infoWeb().email;
+            m_unitRequest.purchargeDate = dlg.infoWeb().purchargeDate;
+            m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
+            m_unitRequest.userName = dlg.infoWeb().userName;
+            m_unitRequest.deviceName = MainWindow::m_mainWindow->analyzer()->getModelString();
+            requestUnit();
+            showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
+        });
+    } else {
+        // remote data
+        QString text;
+        text += tr("Device name ") + MainWindow::m_mainWindow->analyzer()->getModelString();
+        text += tr("\nSerial number ") + MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+        text += tr("\nLicense name ") + MainWindow::m_mainWindow->analyzer()->getLicense();
+        text += tr("\nPurchrge date: ") + m_infoWeb.purchargeDate;
+        text += tr("\nRegistration date: ") + m_infoWeb.loginDate;
+        showModeless(tr("Updata user data"), text, tr("Cancel"), tr("User Data update"));
+        connect(m_modelessPopup, &ModelessPopup::accepted, this, [=](){
+            closeModeless();
+            ManualInfoWeb manualInfo;
+            QSettings& set = *MainWindow::m_mainWindow->settings();
+            set.beginGroup("MaiWindow");
+            if (m_email.isEmpty()) {
+                m_email = set.value("eMail", "").toString();
+            }
+            if (m_userName.isEmpty()) {
+                m_userName = set.value("userName", "").toString();
+            }
+            set.endGroup();
+            manualInfo.email = m_email;
+            manualInfo.userName = m_userName;
+            manualInfo.licenseName = MainWindow::m_mainWindow->analyzer()->getLicense();
+            manualInfo.userName = m_userName;
+            manualInfo.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+            manualInfo.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
+            UnitRequestDialog dlg(manualInfo);
+            if (dlg.exec() == QDialog::Rejected) {
+                emit canceled();
+                return;
+            }
+            m_unitRequest.email = dlg.infoWeb().email;
+            m_unitRequest.purchargeDate = dlg.infoWeb().purchargeDate;
+            m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
+            m_unitRequest.userName = dlg.infoWeb().userName;
+            m_unitRequest.deviceName = MainWindow::m_mainWindow->analyzer()->getModelString();
+            requestUnit();
+            showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
+        });
+        return;
+    }
+}
+
+
 void LicenseAgent::finishWaitInfoWeb()
 {
     parseInfoWeb();
@@ -497,64 +619,41 @@ void LicenseAgent::finishWaitInfoWeb()
         m_unitRequest.purchargeDate = dlg.infoWeb().purchargeDate;
         m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
         m_unitRequest.userName = dlg.infoWeb().userName;
+        m_unitRequest.deviceName = MainWindow::m_mainWindow->analyzer()->getModelString();
         requestUnit();
+        showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
     } else {
         QString info;
         info += tr("Device name: ") + m_infoWeb.deviceName + "\n";
         info += tr("Serial number: ") + m_infoWeb.serialNumber + "\n";
         info += tr("License name: ") + m_infoWeb.licenseName + "\n";
         info += tr("Purchrge date: ") + m_infoWeb.purchargeDate + "\n";
-        info += tr("Login date: ") + m_infoWeb.loginDate + "\n";
+        info += tr("Registration date: ") + m_infoWeb.loginDate + "\n";
         showModeless(tr("Register device"), info, "Ok");
-        // TODO
-        // enable button "Update user data"
-        // ...
         return;
     }
 }
 
 void LicenseAgent::finishWaitUnitWeb()
 {
+    qInfo() << "        ******* m_dtUnit = " << m_dtUnit << ", m_UnitAttempts = " << m_UnitAttempts;
     parseUnitWeb();
-    if (isUnitWebValid()) {
+    if (m_unitWeb.nRez == 2) {
+        qInfo() << "LicenseAgent::finishWaitUnitWeb  VALID";
         QString info;
         info += tr("Registration was successful\n");
-        info += tr("Device name: ") + m_infoWeb.deviceName + "\n";
-        info += tr("Serial number: ") + m_infoWeb.serialNumber + "\n";
-        info += tr("License name: ") + m_infoWeb.licenseName + "\n";
-        info += tr("Purchrge date: ") + m_infoWeb.purchargeDate + "\n";
-        info += tr("Login date: ") + m_infoWeb.loginDate + "\n";
-        showModeless(tr("Register device"), info, "Ok");//, tr("Update User Data"));
-        connect(m_modelessPopup, &ModelessPopup::accepted, this, [=] () {
-            ManualInfoWeb info;
-            QSettings& set = *MainWindow::m_mainWindow->settings();
-            set.beginGroup("MaiWindow");
-            if (m_email.isEmpty()) {
-                m_email = set.value("eMail", "").toString();
-            }
-            if (m_userName.isEmpty()) {
-                m_userName = set.value("userName", "").toString();
-            }
-            set.endGroup();
-            info.email = m_email;
-            info.userName = m_userName;
-            info.licenseName = MainWindow::m_mainWindow->analyzer()->getLicense();
-            info.userName = m_userName;
-            info.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
-            info.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
-            UnitRequestDialog dlg(info);
-            if (dlg.exec() == QDialog::Rejected) {
-                emit canceled();
-                return;
-            }
-            m_unitRequest.email = dlg.infoWeb().email;
-            m_unitRequest.purchargeDate = dlg.infoWeb().purchargeDate;
-            m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
-            m_unitRequest.userName = dlg.infoWeb().userName;
-            requestUnit();
-        });
-    } else {
-        if ((QDateTime::currentSecsSinceEpoch() - m_dtUnit) <= TRANSFER_TIMEOUT) {
+        info += tr("Device name: ") + m_unitWeb.deviceName + "\n";
+        info += tr("Serial number: ") + m_unitWeb.serialNumber + "\n";
+        QString license =(m_infoWeb.licenseName.isEmpty()
+            ? MainWindow::m_mainWindow->analyzer()->getLicense()
+            : m_infoWeb.licenseName);
+        info += tr("License name: ") + license + "\n";
+        info += tr("Purchrge date: ") + m_unitWeb.purchargeDate + "\n";
+        info += tr("Registration date: ") + m_unitWeb.loginDate + "\n";
+        showModeless(tr("Register device"), info, "Ok");
+    } else if (!m_unitWeb.emailStatus) {
+        if ((QDateTime::currentMSecsSinceEpoch() - m_dtUnit) <= TRANSFER_TIMEOUT) {
+            qInfo() << "LicenseAgent::finishWaitUnitWeb  <= TRANSFER_TIMEOUT";
             m_unitTimer.setSingleShot(true);
             QEventLoop loop;
             connect(&m_unitTimer, SIGNAL(timeout()), &loop, SLOT(quit()));
@@ -562,20 +661,29 @@ void LicenseAgent::finishWaitUnitWeb()
             m_unitTimer.start(REQUEST_DELAY);
             loop.exec();
 
-            if(m_unitTimer.isActive()) {
+            //if(m_unitTimer.isActive()) {
                 requestUnit();
-            }
+                showModeless(tr("Register device"), tr("Wait for eMail confirmation..."), tr("Cancel"));
+            //}
         } else {
+            qInfo() << "LicenseAgent::finishWaitUnitWeb  >  TRANSFER_TIMEOUT";
             if (++m_UnitAttempts <= REQUEST_ATTEMPTS) {
+                qInfo() << "LicenseAgent::++m_UnitAttempts <= REQUEST_ATTEMPTS" << m_UnitAttempts;
                 showModeless(tr("Register device"), tr("Registration failed"), tr("Cancel"), tr("Try again"));
                 connect(this, &LicenseAgent::accepted, this, [=](){
                     requestInfo();
                 });
             } else {
-                showModeless(tr("Register device"), tr("email is not verified"), tr("Ok"));
-                emit canceled();
+                qInfo() << "LicenseAgent::++m_UnitAttempts > REQUEST_ATTEMPTS" << m_UnitAttempts;
+                showModeless(tr("Register device"), tr("eMail is not verified"), tr("Ok"));
             }
         }
+    } else {
+        m_state = Error;
+        showModeless(tr("Register device"), tr("Registration failed"), tr("Cancel"));
+        connect(this, &LicenseAgent::canceled, this, [=](){
+            closeModeless();
+        });
     }
 }
 

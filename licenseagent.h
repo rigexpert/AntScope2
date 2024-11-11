@@ -14,6 +14,7 @@
 #define REQUEST_DELAY 5*1000
 #define REQUEST_ATTEMPTS 5
 #define TRANSFER_TIMEOUT 180*1000
+#define REPLY_TIMEOUT 60*1000
 
 
 struct InfoRequest
@@ -44,6 +45,7 @@ struct UnitRequest
     QString email;
     QString userName;
     QString purchargeDate;
+    QString deviceName;
 };
 
 struct UnitWeb
@@ -93,7 +95,8 @@ public:
     explicit LicenseAgent(QObject *parent = 0);
     ~LicenseAgent();
 
-    enum State {WaitEmailStatusWeb, WaitInfoWeb, WaitUnitWeb, WaitLicense, WaitProfileB16, WaitInfoB16, Finished, Error};
+    enum State {WaitEmailStatusWeb, WaitUserInfoWeb, WaitInfoWeb, WaitUnitWeb, WaitLicense,
+                 WaitProfileB16, WaitInfoB16, Finished, Error};
 
     void registerApllication(QString user, QString email);
     void registerDevice(QString device_name, QString serial, QString license);
@@ -106,13 +109,14 @@ public:
     void requestEmailStatus();
     void parseEmailStatus();
 
+    void requestUserInfo();
     void requestInfo();
     void parseInfoWeb();
     bool infoWebIsEmpty();
 
     void requestUnit();
     void parseUnitWeb();
-    bool isUnitWebValid();
+    bool needWaitForEmail();
 
     void requestLicense(QString key);
     void parseLicense();
@@ -142,6 +146,7 @@ protected slots:
 protected:
     void finishWaitEmailStatusWeb();
     void finishWaitInfoWeb();
+    void finishWaitUserInfoWeb();
     void finishWaitUnitWeb();
     void finishWaitLicense();
     void finishWaitProfileB16();
