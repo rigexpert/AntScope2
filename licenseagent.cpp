@@ -84,9 +84,7 @@ void LicenseAgent::parseEmailStatus()
             m_emailStatusWeb = true;
         }
     }
-    if (m_emailStatusWeb)
-        return;
-    qInfo() << "LicenseAgent::parseEmailStatus";
+    qInfo() << "LicenseAgent::parseEmailStatus " << m_emailStatusWeb;
     //requestEmailStatus();
 }
 
@@ -202,6 +200,7 @@ void LicenseAgent::updateUserData()
 void LicenseAgent::showModeless(QString title, QString text, QString buttonCancel, QString buttonOk)
 {
     if (m_modelessPopup != nullptr) {
+        qInfo() << "showModeless OLD" << m_modelessPopup->title() << m_modelessPopup->text();
         m_modelessPopup->disconnect();
         m_modelessPopup->setVisible(false);
         m_modelessPopup->close();
@@ -218,11 +217,13 @@ void LicenseAgent::showModeless(QString title, QString text, QString buttonCance
     m_modelessPopup->show();
     m_modelessPopup->activateWindow();
     m_modelessPopup->setFocus();
+    qInfo() << "showModeless NEW" << m_modelessPopup->title() << m_modelessPopup->text();
 }
 
 void LicenseAgent::closeModeless()
 {
     if (m_modelessPopup != nullptr) {
+        qInfo() << "showModeless CLOSE" << m_modelessPopup->title() << m_modelessPopup->text();
         m_modelessPopup->disconnect();
         m_modelessPopup->setVisible(false);
         m_modelessPopup->close();
@@ -427,7 +428,7 @@ void LicenseAgent::onReplyFinished(QNetworkReply* reply)
 {
     qInfo() << "LicenseAgent::onReplyFinished: " << reply->error() << reply->errorString();
     m_arr = reply->readAll();
-    closeModeless();
+    //closeModeless();
 
     if (reply->error() != QNetworkReply::NoError) {
         m_state = Finished;
@@ -552,7 +553,7 @@ void LicenseAgent::finishWaitUserInfoWeb()
         text += tr("\nLicense name ") + MainWindow::m_mainWindow->analyzer()->getLicense();
         text += tr("\nPurchrge date: ") + m_infoWeb.purchargeDate;
         text += tr("\nRegistration date: ") + m_infoWeb.loginDate;
-        showModeless(tr("Updata user data"), text, tr("Cancel"), tr("User Data update"));
+        showModeless(tr("Update user data"), text, tr("Cancel"), tr("User Data update"));
         connect(m_modelessPopup, &ModelessPopup::accepted, this, [=](){
             closeModeless();
             ManualInfoWeb manualInfo;

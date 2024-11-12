@@ -125,6 +125,7 @@ public:
     void drawSmithImage(void);
     void setBriefHintColor();
     double tdrZRange() { return m_tdrZRange; }
+    QString currentTab() { return m_currentTab; }
 
 private:
 //    QVector <rawData> m_rawDataVector;

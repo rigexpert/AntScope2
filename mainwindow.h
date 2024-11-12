@@ -86,6 +86,7 @@ public:
     static MainWindow* m_mainWindow;
     double m_tdrZRange = 0;
     QSettings* settings() { return m_settings; }
+    void closeSettingsDialog();
 
 private:
 

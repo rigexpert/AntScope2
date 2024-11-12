@@ -100,11 +100,11 @@ void Markers::create(double fq)
     m->rlLine->setPen(QPen(QColor(255,0,0,150)));
     m->rlLineText->setColor(QColor(255, 0, 0, 150));
 
-    m->rlLine = new QCPItemStraightLine(m_s21Widget);
-    m->rlLineText = new QCPItemText(m_s21Widget);
-    m->rlLine->setAntialiased(false);
-    m->rlLine->setPen(QPen(QColor(255,0,0,150)));
-    m->rlLineText->setColor(QColor(255, 0, 0, 150));
+    m->s21Line = new QCPItemStraightLine(m_s21Widget);
+    m->s21LineText = new QCPItemText(m_s21Widget);
+    m->s21Line->setAntialiased(false);
+    m->s21Line->setPen(QPen(QColor(255,0,0,150)));
+    m->s21LineText->setColor(QColor(255, 0, 0, 150));
 
     m_markersList.append(m);
 }

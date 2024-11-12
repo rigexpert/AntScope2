@@ -32,3 +32,8 @@ ModelessPopup::~ModelessPopup()
 {
     delete ui;
 }
+
+QString ModelessPopup::text()
+{
+    return ui->label->text();
+}

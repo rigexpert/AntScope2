@@ -15,6 +15,8 @@ public:
     explicit ModelessPopup(QString title, QString text, QString buttonCancel=QString(), QString buttonOk=QString(), QWidget *parent = nullptr);
     ~ModelessPopup();
 
+    QString title() { return windowTitle(); }
+    QString text();
 
 private:
     Ui::ModelessPopup *ui;

@@ -4495,13 +4495,24 @@ void MainWindow::resizeWnd(void)
 
 void MainWindow::on_settingsBtn_clicked()
 {
+    emit stopMeasure();
     m_analyzer->setIsMeasuring(false);
     ui->singleStart->setChecked(false);
     ui->continuousStartBtn->setChecked(false);
+    ui->singleStart->setEnabled(false);
+    ui->continuousStartBtn->setEnabled(false);
+    ui->settingsBtn->setEnabled(false);
     m_measurements->setContinuous(false);
     m_bInterrupted = true;
-    emit stopMeasure();
-    m_settingsDialog = new Settings(this);
+    if (m_settingsDialog == nullptr) {
+        m_settingsDialog = new Settings(this);
+        connect(&m_settingsDialog->licenseAgent(), &LicenseAgent::registered, this, [=](){
+            ui->singleStart->setEnabled(true);
+            ui->singleStart->setChecked(true);
+            ui->continuousStartBtn->setEnabled(true);
+            ui->settingsBtn->setEnabled(true);
+        });
+    }
     m_settingsDialog->setAttribute(Qt::WA_DeleteOnClose);
     m_settingsDialog->setWindowTitle(tr("Settings"));
     m_settingsDialog->setAnalyzer(m_analyzer);
@@ -4637,7 +4648,8 @@ void MainWindow::on_settingsBtn_clicked()
     bool was_customized = CustomAnalyzer::customized();
 
     //m_settingsDialog->exec();
-    m_settingsDialog->show();
+    if(!m_settingsDialog->isVisible())
+        m_settingsDialog->show();
 
     m_settings->beginGroup("Settings");
     bool dark = m_settings->value("darkColorTheme", m_darkColorTheme).toBool();
@@ -6413,6 +6425,8 @@ void MainWindow::on_selectDeviceDialog()
             emit m_analyzer->analyzerFound(selected->index());
         }
     }
+    closeSettingsDialog();
+    ui->settingsBtn->setEnabled(true);
 }
 
 void MainWindow::on_refreshConnection()
@@ -6431,3 +6445,15 @@ void MainWindow::on_refreshConnection()
 
 }
 
+void MainWindow::closeSettingsDialog()
+{
+    if (m_settingsDialog == nullptr)
+         return;
+    m_settingsDialog->close();
+    m_settingsDialog->deleteLater();
+    m_settingsDialog=nullptr;
+    m_measurements->on_currentTab(m_measurements->currentTab());
+    ui->singleStart->setEnabled(true);
+    ui->continuousStartBtn->setEnabled(true);
+    ui->settingsBtn->setEnabled(true);
+}

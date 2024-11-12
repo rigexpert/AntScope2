@@ -70,6 +70,7 @@ public:
     void setLanguages(QStringList list, int number);
     void on_translate();
     void showColorDialog();
+    LicenseAgent& licenseAgent() { return m_licenseAgent; }
 
 private:
     Ui::Settings *ui;

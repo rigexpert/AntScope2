@@ -60,6 +60,9 @@ Settings::Settings(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    connect(&m_licenseAgent, &LicenseAgent::registered, this, [=](){
+        ui->pushButtonAntscope->setText(tr("Change application registration"));
+    });
     PopUpIndicator::setIndicatorVisible(false);
 
     QString style = "QPushButton:disabled{"
@@ -175,7 +178,9 @@ Settings::Settings(QWidget *parent) :
     QString cablesPath = Settings::programDataPath("cables.txt");
     openCablesFile(cablesPath);
 
-    connect(ui->closeBtn, &QPushButton::clicked, this, &Settings::close);
+    connect(ui->closeBtn, &QPushButton::clicked, this, [=]() {
+        MainWindow::m_mainWindow->closeSettingsDialog();
+    });
     ui->closeBtn->setFocus();
 
     m_settings->beginGroup("Mainwindow");
@@ -189,13 +194,9 @@ Settings::Settings(QWidget *parent) :
     }
     connect(ui->pushButtonAntscope, &QPushButton::clicked, this, [email,user, this]() {
         m_settings->beginGroup("Mainwindow");
-#ifndef _DEBUG
-        QString _mail = "";
-        bool remind = true;
-#else
-        QString _mail = email;
+        QString _mail = m_settings->value("eMail", "").toString();
+        QString _user = m_settings->value("userName", "").toString();
         bool remind = m_settings->value("remind", true).toBool();
-#endif
         if (_mail.isEmpty() && remind) {
             if (QMessageBox::question(this, tr("Register application"),
                                       tr("Do you want to register the application?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
@@ -215,17 +216,14 @@ Settings::Settings(QWidget *parent) :
 //                                      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
 //                on_registerApplication(user, _mail);
 //            }
-            on_registerApplication(user, _mail);
+            on_registerApplication(_user, _mail);
         }
         m_settings->endGroup();
     });
 
-    if (!email.isEmpty()) {
-        ui->pushButtonAntscope->setEnabled(false);
-    }
-#ifdef _DEBUG
-    ui->pushButtonAntscope->setEnabled(true);
-#endif
+//    if (!email.isEmpty()) {
+//        ui->pushButtonAntscope->setEnabled(false);
+//    }
 
     if (MainWindow::m_mainWindow->analyzer()->getModelString().contains("Match")) {
         connect(MainWindow::m_mainWindow->analyzer(), &AnalyzerPro::signalMatch_12Received, this, [=](QByteArray data){
@@ -240,10 +238,7 @@ Settings::Settings(QWidget *parent) :
             QString serial_number = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
             QString device_name = MainWindow::m_mainWindow->analyzer()->getModelString();
             QString license = MainWindow::m_mainWindow->analyzer()->getLicense();
-#ifdef _DEBUG
-            //serial_number = "123208137";
-            //device_name = "AA-230 Zoom Analyzer";
-#endif
+
             InfoRequestDialog dlg(device_name, serial_number, license, this);
             if (dlg.exec() == QDialog::Rejected)
                 return;
