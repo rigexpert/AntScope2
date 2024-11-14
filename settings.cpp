@@ -240,8 +240,8 @@ Settings::Settings(QWidget *parent) :
             QString license = MainWindow::m_mainWindow->analyzer()->getLicense();
 
             InfoRequestDialog dlg(device_name, serial_number, license, this);
-            if (dlg.exec() == QDialog::Rejected)
-                return;
+//            if (dlg.exec() == QDialog::Rejected)
+//                return;
             m_licenseAgent.registerDevice(device_name, serial_number, dlg.license());
         });
         connect(ui->pushButtonUpdate, &QPushButton::clicked, this, [=]() {
@@ -250,7 +250,14 @@ Settings::Settings(QWidget *parent) :
         connect(ui->pushButtonUserData, &QPushButton::clicked, this, [=]() {
             m_licenseAgent.updateUserData();
         });
-    } else {
+    }
+
+    QString model = MainWindow::m_mainWindow->analyzer()->getModelString();
+    int type = MainWindow::m_mainWindow->analyzer()->connectionType();
+    qInfo() << "######### " << model << type;
+    if (!model.contains("Match")) {
+        ui->groupBoxLicense->hide();
+    } else if (type == ReDeviceInfo::BLE) {
         ui->groupBoxLicense->hide();
     }
 }

@@ -14,12 +14,14 @@ LicenseAgent::LicenseAgent(QObject *parent) :
     connect(m_reply, &QNetworkReply::errorOccurred, this, [=](QNetworkReply::NetworkError error) {
         qInfo() << "***       QNetworkReply::errorOccurred" << error;
         QString str = QString("QNetworkReply::errorOccurred: %1").arg(error);
-        showModeless(QString(tr("Error")), str, "Cancel");
+        if (m_state != Finished && m_state != Error)
+            showModeless(QString(tr("Error")), str, "Cancel");
     });
     connect(&m_timer, &QTimer::timeout, this, [=](){
         m_timer.stop();
         timeout();
-        showModeless(QString(tr("Timeout")), tr("Network timeout"), "Cancel");
+        if (m_state != Finished && m_state != Error)
+            showModeless(QString(tr("Timeout")), tr("Network timeout"), "Cancel");
     });
     m_timer.setSingleShot(true);
 }
@@ -120,9 +122,9 @@ void LicenseAgent::requestLicense(QString key)
     request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
-//    QSslConfiguration conf = request.sslConfiguration();
-//    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-//    request.setSslConfiguration(conf);
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
 
     m_state = WaitLicense;
     m_mng.get(request);
@@ -201,6 +203,8 @@ void LicenseAgent::showModeless(QString title, QString text, QString buttonCance
 {
     if (m_modelessPopup != nullptr) {
         qInfo() << "showModeless OLD" << m_modelessPopup->title() << m_modelessPopup->text();
+        if ((m_modelessPopup->title() == title) &&(m_modelessPopup->text() == text))
+            return;
         m_modelessPopup->disconnect();
         m_modelessPopup->setVisible(false);
         m_modelessPopup->close();
@@ -208,6 +212,7 @@ void LicenseAgent::showModeless(QString title, QString text, QString buttonCance
     }
     m_modelessPopup = new ModelessPopup(title, text, buttonCancel, buttonOk, MainWindow::m_mainWindow);
     connect(m_modelessPopup, &ModelessPopup::rejected, this, [=](){
+        m_state = Finished;
         emit canceled();
     });
     connect(m_modelessPopup, &ModelessPopup::accepted, this, [=](){
@@ -505,6 +510,7 @@ void LicenseAgent::finishWaitEmailStatusWeb()
 
 void LicenseAgent::finishWaitUserInfoWeb()
 {
+    qInfo() << "LicenseAgent::finishWaitUserInfoWeb";
     parseInfoWeb();
     bool empty = infoWebIsEmpty();
     if (empty) {
@@ -532,6 +538,7 @@ void LicenseAgent::finishWaitUserInfoWeb()
             info.userName = m_userName;
             info.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
             info.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
+            closeModeless();
             UnitRequestDialog dlg(info);
             if (dlg.exec() == QDialog::Rejected) {
                 emit canceled();
@@ -572,6 +579,7 @@ void LicenseAgent::finishWaitUserInfoWeb()
             manualInfo.userName = m_userName;
             manualInfo.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
             manualInfo.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
+            closeModeless();
             UnitRequestDialog dlg(manualInfo);
             if (dlg.exec() == QDialog::Rejected) {
                 emit canceled();
@@ -582,18 +590,20 @@ void LicenseAgent::finishWaitUserInfoWeb()
             m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
             m_unitRequest.userName = dlg.infoWeb().userName;
             m_unitRequest.deviceName = MainWindow::m_mainWindow->analyzer()->getModelString();
+            m_userName = m_unitRequest.userName;
+            m_email = m_unitRequest.email;
             requestUnit();
             showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
         });
-        return;
     }
 }
 
 
 void LicenseAgent::finishWaitInfoWeb()
 {
+    qInfo() << "LicenseAgent::finishWaitInfoWeb";
     parseInfoWeb();
-    if (infoWebIsEmpty()) {
+    if (m_infoWeb.nRez != 1) {
         // manual
         ManualInfoWeb info;
         QSettings& set = *MainWindow::m_mainWindow->settings();
@@ -611,6 +621,7 @@ void LicenseAgent::finishWaitInfoWeb()
         info.userName = m_userName;
         info.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
         info.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
+        closeModeless();
         UnitRequestDialog dlg(info);
         if (dlg.exec() == QDialog::Rejected) {
             emit canceled();
@@ -621,6 +632,8 @@ void LicenseAgent::finishWaitInfoWeb()
         m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
         m_unitRequest.userName = dlg.infoWeb().userName;
         m_unitRequest.deviceName = MainWindow::m_mainWindow->analyzer()->getModelString();
+        m_userName = m_unitRequest.userName;
+        m_email = m_unitRequest.email;
         requestUnit();
         showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
     } else {
@@ -628,7 +641,7 @@ void LicenseAgent::finishWaitInfoWeb()
         info += tr("Device name: ") + m_infoWeb.deviceName + "\n";
         info += tr("Serial number: ") + m_infoWeb.serialNumber + "\n";
         info += tr("License name: ") + m_infoWeb.licenseName + "\n";
-        info += tr("Purchrge date: ") + m_infoWeb.purchargeDate + "\n";
+        info += tr("Purcharge date: ") + m_infoWeb.purchargeDate + "\n";
         info += tr("Registration date: ") + m_infoWeb.loginDate + "\n";
         showModeless(tr("Register device"), info, "Ok");
         return;
@@ -640,7 +653,7 @@ void LicenseAgent::finishWaitUnitWeb()
     qInfo() << "        ******* m_dtUnit = " << m_dtUnit << ", m_UnitAttempts = " << m_UnitAttempts;
     parseUnitWeb();
     if (m_unitWeb.nRez == 2) {
-        qInfo() << "LicenseAgent::finishWaitUnitWeb  VALID";
+        qInfo() << "LicenseAgent::finishWaitUnitWeb  VALID m_unitWeb.nRez == 2";
         QString info;
         info += tr("Registration was successful\n");
         info += tr("Device name: ") + m_unitWeb.deviceName + "\n";
@@ -649,7 +662,7 @@ void LicenseAgent::finishWaitUnitWeb()
             ? MainWindow::m_mainWindow->analyzer()->getLicense()
             : m_infoWeb.licenseName);
         info += tr("License name: ") + license + "\n";
-        info += tr("Purchrge date: ") + m_unitWeb.purchargeDate + "\n";
+        info += tr("Purcharge date: ") + m_unitWeb.purchargeDate + "\n";
         info += tr("Registration date: ") + m_unitWeb.loginDate + "\n";
         showModeless(tr("Register device"), info, "Ok");
     } else if (!m_unitWeb.emailStatus) {
@@ -669,18 +682,53 @@ void LicenseAgent::finishWaitUnitWeb()
         } else {
             qInfo() << "LicenseAgent::finishWaitUnitWeb  >  TRANSFER_TIMEOUT";
             if (++m_UnitAttempts <= REQUEST_ATTEMPTS) {
-                qInfo() << "LicenseAgent::++m_UnitAttempts <= REQUEST_ATTEMPTS" << m_UnitAttempts;
+                qInfo() << "LicenseAgent::finishWaitUnitWeb ++m_UnitAttempts <= REQUEST_ATTEMPTS" << m_UnitAttempts;
                 showModeless(tr("Register device"), tr("Registration failed"), tr("Cancel"), tr("Try again"));
-                connect(this, &LicenseAgent::accepted, this, [=](){
-                    requestInfo();
+                connect(m_modelessPopup, &ModelessPopup::accepted, this, [=](){
+                    //closeModeless();
+                    ManualInfoWeb manualInfo;
+                    QSettings& set = *MainWindow::m_mainWindow->settings();
+                    set.beginGroup("MaiWindow");
+                    if (m_email.isEmpty()) {
+                        m_email = set.value("eMail", "").toString();
+                    }
+                    if (m_userName.isEmpty()) {
+                        m_userName = set.value("userName", "").toString();
+                    }
+                    set.endGroup();
+                    manualInfo.email = m_email;
+                    manualInfo.userName = m_userName;
+                    manualInfo.licenseName = MainWindow::m_mainWindow->analyzer()->getLicense();
+                    manualInfo.userName = m_userName;
+                    manualInfo.serialNumber = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+                    manualInfo.purchargeDate = m_infoWeb.purchargeDate.isEmpty() ? QDate::currentDate().toString("dd.MM.yyyy") : m_infoWeb.purchargeDate;
+                    closeModeless();
+                    UnitRequestDialog dlg(manualInfo);
+                    if (dlg.exec() == QDialog::Rejected) {
+                        emit canceled();
+                        return;
+                    }
+                    m_unitRequest.email = dlg.infoWeb().email;
+                    m_unitRequest.purchargeDate = dlg.infoWeb().purchargeDate;
+                    m_unitRequest.serialNumber = dlg.infoWeb().serialNumber;
+                    m_unitRequest.userName = dlg.infoWeb().userName;
+                    m_unitRequest.deviceName = MainWindow::m_mainWindow->analyzer()->getModelString();
+                    m_userName = m_unitRequest.userName;
+                    m_email = m_unitRequest.email;
+
+                    m_dtUnit = QDateTime::currentMSecsSinceEpoch();
+                    m_UnitAttempts = 0;
+                    requestUnit();
+                    showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
                 });
             } else {
                 qInfo() << "LicenseAgent::++m_UnitAttempts > REQUEST_ATTEMPTS" << m_UnitAttempts;
-                showModeless(tr("Register device"), tr("eMail is not verified"), tr("Ok"));
+                showModeless(tr("Register device"), tr("eMail is not confirmed"), tr("Ok"));
             }
         }
     } else {
         m_state = Error;
+        qInfo() << "LicenseAgent::finishWaitUnitWeb Registration failed";
         showModeless(tr("Register device"), tr("Registration failed"), tr("Cancel"));
         connect(this, &LicenseAgent::canceled, this, [=](){
             closeModeless();
@@ -719,8 +767,9 @@ void LicenseAgent::finishWaitInfoB16()
     if ( ! info_B16Failed()) {
         QString reboot = "REBOOT\r";
         MainWindow::m_mainWindow->analyzer()->sendCommand(reboot);
-        showModeless(tr("License renewal"), tr("The license update was successful"), tr("Ok"));
-        emit canceled();
+        MainWindow::m_mainWindow->analyzer()->on_disconnectDevice();
+        showModeless(tr("License renewal"), tr("The license update was successful\n\nYou should reconnect analyzer."), tr("Ok"));
+        emit registered();
     } else {
         showModeless(tr("License renewal"), tr("The license is not updated"), tr("Close"));
         emit canceled();

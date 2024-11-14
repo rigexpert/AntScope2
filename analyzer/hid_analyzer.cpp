@@ -570,6 +570,7 @@ qint32 HidAnalyzer::parse (QByteArray arr)
                     // skip FULLINFO field `NAME` to keep version obtained in VER
                     continue;
                 } else if (str.contains("LIC")) {
+                    qInfo() << "===== signalFullInfo" << str;
                     emit signalFullInfo(str);
                     continue;
                 }

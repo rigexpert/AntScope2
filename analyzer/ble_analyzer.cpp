@@ -8,6 +8,8 @@
 BleAnalyzer::BleAnalyzer(QObject *parent)
     : BaseAnalyzer(parent)
 {
+    m_type = ReDeviceInfo::BLE;
+
     m_deviceDiscoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
     m_deviceDiscoveryAgent->setLowEnergyDiscoveryTimeout(5000);
 

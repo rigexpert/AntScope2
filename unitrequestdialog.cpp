@@ -1,5 +1,7 @@
 #include "unitrequestdialog.h"
 #include "ui_unitrequestdialog.h"
+#include <QRegularExpression>
+#include <QMessageBox>
 
 UnitRequestDialog::UnitRequestDialog(ManualInfoWeb& infoWeb, QWidget *parent) :
     QDialog(parent),
@@ -13,6 +15,23 @@ UnitRequestDialog::UnitRequestDialog(ManualInfoWeb& infoWeb, QWidget *parent) :
     ui->lineEditPurcharge->setText(m_infoWeb.purchargeDate);
     ui->lineEditSerial->setText(m_infoWeb.serialNumber);
     ui->lineEditUser->setText(m_infoWeb.userName);
+
+    connect(ui->pushButtonCancel, &QPushButton::clicked, this, [=](){
+        reject();
+    });
+    connect(ui->pushButtonOk, &QPushButton::clicked, this, [=](){
+        if (ui->lineEditEmail->text().isEmpty()) {
+            QMessageBox::warning(this, tr(""), tr("Email address should be valid"));
+            return;
+        }
+        QRegularExpression mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
+        if (!mailREX.match(ui->lineEditEmail->text().toUpper()).hasMatch()) {
+            QMessageBox::warning(this, "", tr("Wrong email address"));
+            return;
+        }
+        accept();
+    });
+
 //#ifdef _DEBUG
 //    ui->lineEditEmail->setText("vancom@bigmir.net");
 //    ui->lineEditPurcharge->setText("19.09.2024");

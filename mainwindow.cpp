@@ -2726,6 +2726,10 @@ void MainWindow::on_analyzerNameFound(QString name)
         ui->analyzerDataBtn->setEnabled(false);
         ui->screenshotAA->setEnabled(false);
     }
+    if (analyzer()->getModelString().contains("Match") && analyzer()->connectionType() == ReDeviceInfo::BLE) {
+        ui->analyzerDataBtn->setEnabled(false);
+        ui->screenshotAA->setEnabled(false);
+    }
 
     if (!g_developerMode) {
         ui->labelMarquee->request();
@@ -4507,6 +4511,12 @@ void MainWindow::on_settingsBtn_clicked()
     if (m_settingsDialog == nullptr) {
         m_settingsDialog = new Settings(this);
         connect(&m_settingsDialog->licenseAgent(), &LicenseAgent::registered, this, [=](){
+            ui->singleStart->setEnabled(true);
+            ui->singleStart->setChecked(true);
+            ui->continuousStartBtn->setEnabled(true);
+            ui->settingsBtn->setEnabled(true);
+        });
+        connect(&m_settingsDialog->licenseAgent(), &LicenseAgent::canceled, this, [=](){
             ui->singleStart->setEnabled(true);
             ui->singleStart->setChecked(true);
             ui->continuousStartBtn->setEnabled(true);
