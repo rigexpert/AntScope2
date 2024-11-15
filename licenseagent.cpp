@@ -14,13 +14,13 @@ LicenseAgent::LicenseAgent(QObject *parent) :
     connect(m_reply, &QNetworkReply::errorOccurred, this, [=](QNetworkReply::NetworkError error) {
         qInfo() << "***       QNetworkReply::errorOccurred" << error;
         QString str = QString("QNetworkReply::errorOccurred: %1").arg(error);
-        if (m_state != Finished && m_state != Error)
+        if (state() != Finished && state() != Error)
             showModeless(QString(tr("Error")), str, "Cancel");
     });
     connect(&m_timer, &QTimer::timeout, this, [=](){
         m_timer.stop();
         timeout();
-        if (m_state != Finished && m_state != Error)
+        if (state() != Finished && state() != Error)
             showModeless(QString(tr("Timeout")), tr("Network timeout"), "Cancel");
     });
     m_timer.setSingleShot(true);
@@ -33,7 +33,7 @@ LicenseAgent::~LicenseAgent()
 
 void LicenseAgent::registerApllication(QString user, QString email)
 {
-    if (m_state == WaitEmailStatusWeb) {
+    if (state() == WaitEmailStatusWeb) {
         return;
     }
 
@@ -65,7 +65,7 @@ void LicenseAgent::requestEmailStatus()
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
 
-    m_state = WaitEmailStatusWeb;
+    setState(WaitEmailStatusWeb);
     m_mng.get(request);
 }
 
@@ -95,6 +95,7 @@ void LicenseAgent::registerDevice(QString device_name, QString serial, QString l
     m_infoRequest.deviceName = device_name;
     m_infoRequest.serialNumber = serial;
     m_infoRequest.licenseName = license;
+    setState(Finished);
     requestInfo();
 }
 
@@ -103,6 +104,7 @@ void LicenseAgent::updateLicense()
     QString key = QInputDialog::getText((QWidget*)MainWindow::m_mainWindow, tr("Renew license"), tr("Enter key"));
     if (key.isNull())
         return;
+    setState(Finished);
     requestLicense(key);
 }
 
@@ -126,7 +128,7 @@ void LicenseAgent::requestLicense(QString key)
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
 
-    m_state = WaitLicense;
+    setState(WaitLicense);
     m_mng.get(request);
 
 }
@@ -196,6 +198,7 @@ void LicenseAgent::updateUserData()
 #endif
 void LicenseAgent::updateUserData()
 {
+    setState(Finished);
     requestUserInfo();
 }
 
@@ -212,7 +215,8 @@ void LicenseAgent::showModeless(QString title, QString text, QString buttonCance
     }
     m_modelessPopup = new ModelessPopup(title, text, buttonCancel, buttonOk, MainWindow::m_mainWindow);
     connect(m_modelessPopup, &ModelessPopup::rejected, this, [=](){
-        m_state = Finished;
+        setState(Finished);
+        m_canceled = true;
         emit canceled();
     });
     connect(m_modelessPopup, &ModelessPopup::accepted, this, [=](){
@@ -222,7 +226,7 @@ void LicenseAgent::showModeless(QString title, QString text, QString buttonCance
     m_modelessPopup->show();
     m_modelessPopup->activateWindow();
     m_modelessPopup->setFocus();
-    qInfo() << "showModeless NEW" << m_modelessPopup->title() << m_modelessPopup->text();
+    qInfo() << "showModeless NEW" << m_modelessPopup->title() << m_modelessPopup->text() << state();
 }
 
 void LicenseAgent::closeModeless()
@@ -234,14 +238,16 @@ void LicenseAgent::closeModeless()
         m_modelessPopup->close();
         m_modelessPopup->deleteLater();
         m_modelessPopup = nullptr;
+        setState(Finished);
     }
 
 }
 
 void LicenseAgent::requestUserInfo()
 {
+    setState(Finished);
     requestInfo();
-    m_state = WaitUserInfoWeb;
+    setState(WaitUserInfoWeb);
 }
 
 void LicenseAgent::requestInfo()
@@ -268,8 +274,8 @@ void LicenseAgent::requestInfo()
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
 
-    m_state = WaitInfoWeb;
-    showModeless(tr("Request info"), tr("Requesting..."), tr("Cancel"));
+    setState(WaitInfoWeb);
+    //showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
     m_dtUnit = QDateTime::currentMSecsSinceEpoch();
     m_UnitAttempts = 0;
     m_mng.get(request);
@@ -334,7 +340,7 @@ void LicenseAgent::requestUnit()
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
 
-    m_state = WaitUnitWeb;
+    setState(WaitUnitWeb);
     m_mng.get(request);
 }
 
@@ -404,7 +410,7 @@ void LicenseAgent::requestStatus_B16(QByteArray data)
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
 
-    m_state = WaitProfileB16;
+    setState(WaitProfileB16);
     m_mng.get(request);
 }
 
@@ -425,7 +431,7 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
 
-    m_state = WaitInfoB16;
+    setState(WaitInfoB16);
     m_mng.get(request);
 }
 
@@ -436,24 +442,28 @@ void LicenseAgent::onReplyFinished(QNetworkReply* reply)
     //closeModeless();
 
     if (reply->error() != QNetworkReply::NoError) {
-        m_state = Finished;
+        setState(Error);
         showModeless(tr("Network error."), reply->errorString(), tr("Close"));
         return;
     }
+    if (m_canceled) {
+        m_canceled = false;
+        setState(Finished);
+    }
     qInfo() << "    LicenseAgent::onReplyFinished: state=" << m_state << ", " << QString(m_arr);
-    if (m_state == WaitEmailStatusWeb) {
+    if (state() == WaitEmailStatusWeb) {
         finishWaitEmailStatusWeb();
-    } else if (m_state == WaitInfoWeb) {
+    } else if (state() == WaitInfoWeb) {
         finishWaitInfoWeb();
-    } else if (m_state == WaitUserInfoWeb) {
+    } else if (state() == WaitUserInfoWeb) {
         finishWaitUserInfoWeb();
-    } else if(m_state == WaitUnitWeb) {
+    } else if(state() == WaitUnitWeb) {
         finishWaitUnitWeb();
-    } else if(m_state == WaitLicense) {
+    } else if(state() == WaitLicense) {
         finishWaitLicense();
-    } else if (m_state == WaitInfoB16) {
+    } else if (state() == WaitInfoB16) {
         finishWaitInfoB16();
-    } else if (m_state == WaitProfileB16) {
+    } else if (state() == WaitProfileB16) {
         finishWaitProfileB16();
     }
 }
@@ -727,7 +737,7 @@ void LicenseAgent::finishWaitUnitWeb()
             }
         }
     } else {
-        m_state = Error;
+        setState(Error);
         qInfo() << "LicenseAgent::finishWaitUnitWeb Registration failed";
         showModeless(tr("Register device"), tr("Registration failed"), tr("Cancel"));
         connect(this, &LicenseAgent::canceled, this, [=](){

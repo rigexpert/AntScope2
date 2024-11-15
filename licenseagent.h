@@ -133,6 +133,11 @@ public:
 
     void setEmail(QString mail) { m_email = mail; }
     void setUserName(QString name) { m_userName = name; }
+    void setState(State _state) {
+        qInfo() << "setSate" << _state;
+        m_state = _state;
+    }
+    State state() { return m_state; }
 
 signals:
     void registered();
@@ -181,6 +186,7 @@ protected:
     QTimer m_unitTimer;
     int m_UnitAttempts = 0;
     int m_licenseAttempts = 0;
+    bool m_canceled = false;
 
 };
 

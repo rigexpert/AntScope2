@@ -14,7 +14,7 @@ MainWindow* g_mainWindow;
 #include <dbt.h>
 
 //#ifndef _DEBUG
-#define LOG_TO_FILE
+//#define LOG_TO_FILE
 //#endif
 
 #ifdef LOG_TO_FILE
