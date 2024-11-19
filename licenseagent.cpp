@@ -110,11 +110,11 @@ void LicenseAgent::updateLicense()
 
 void LicenseAgent::requestLicense(QString key)
 {
-    // send special command instead of HELLO
     QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
     QString serial = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+    QString license = MainWindow::m_mainWindow->analyzer()->getLicense();
     QString url = SERVER_NAME;
-    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcCode=%3&&&").arg(name, serial, key);
+    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcCode=%3&&&lcName=%4&&&").arg(name, serial, key, license);
     QString strData = EncodingHelpers::encodeString(strRaw);
     url += QString("?nGet=4&nRaw=1&raw=%1").arg(strData);
 
