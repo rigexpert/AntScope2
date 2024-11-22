@@ -12,6 +12,7 @@ extern bool g_developerMode;
 extern int g_maxMeasurements; // see measurements.cpp
 extern QString appendSpaces(const QString& number);
 int Settings::m_serialIndex = 0;
+bool Settings::m_licenseUpdateBlocked = false;
 
 void showPortInfo(const QSerialPortInfo& info)
 {
@@ -234,6 +235,10 @@ Settings::Settings(QWidget *parent) :
         });
         ui->groupBoxLicense->show();
 
+        connect(&m_licenseAgent, &LicenseAgent::updateBlocked, this, [=](){
+            m_licenseUpdateBlocked = true;
+            ui->pushButtonUpdate->setEnabled(false);
+        });
         connect(ui->pushButtonDevice, &QPushButton::clicked, this, [=]() {
             QString serial_number = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
             QString device_name = MainWindow::m_mainWindow->analyzer()->getModelString();
@@ -250,6 +255,7 @@ Settings::Settings(QWidget *parent) :
         connect(ui->pushButtonUserData, &QPushButton::clicked, this, [=]() {
             m_licenseAgent.updateUserData();
         });
+        ui->pushButtonUpdate->setEnabled(!m_licenseUpdateBlocked);
     }
 
     QString model = MainWindow::m_mainWindow->analyzer()->getModelString();

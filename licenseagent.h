@@ -144,6 +144,7 @@ signals:
     void networkTimeout();
     void canceled();
     void accepted();
+    void updateBlocked();
 
 protected slots:
     void onReplyFinished(QNetworkReply* reply);

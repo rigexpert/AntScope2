@@ -756,9 +756,7 @@ void LicenseAgent::finishWaitLicense()
         if (++m_licenseAttempts <= REQUEST_ATTEMPTS) {
             updateLicense();
         } else {
-            sendBlocked();
-            showModeless(tr("Renew license"), tr("Something went wrong.\nContact the support service"), tr("Ok"));
-            emit canceled();
+            showModeless(tr("Renew license"), tr("The update will not work until support is contacted"), tr("Ok"));
         }
     }
 }
@@ -820,13 +818,16 @@ void LicenseAgent::parseInfo_B16()
 
 bool LicenseAgent::licenseKeyBan()
 {
-    return m_licenseWeb.status == "0";
+    if (m_licenseWeb.status == "2") {
+        m_licenseAttempts += 10;
+        emit updateBlocked();
+    }
+    return m_licenseWeb.status != "1";
 }
 
 void LicenseAgent::sendBlocked()
 {
-    // TODO
-
+    // obsolete
 }
 
 void LicenseAgent::sendMatch_11()

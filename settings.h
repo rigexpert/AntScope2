@@ -71,6 +71,7 @@ public:
     void on_translate();
     void showColorDialog();
     LicenseAgent& licenseAgent() { return m_licenseAgent; }
+    static bool m_licenseUpdateBlocked;
 
 private:
     Ui::Settings *ui;
