@@ -263,6 +263,7 @@ public slots:
     void on_analyzerNameFound(QString name);
     void on_deviceDisconnected();
     void on_mouseWheel_swr(QWheelEvent *e);
+    void on_replotY_swr();
     void on_mouseMove_swr(QMouseEvent *);
     void on_mouseWheel_phase(QWheelEvent *e);
     void on_mouseMove_phase(QMouseEvent *);

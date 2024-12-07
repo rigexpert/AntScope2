@@ -5,6 +5,7 @@
 #include "analyzer/customanalyzer.h"
 
 bool g_developerMode = false;
+bool g_usbOnly = false;
 bool g_raspbian = false;
 bool g_bAA55modeNewProtocol = false;
 MainWindow* g_mainWindow;
@@ -136,6 +137,9 @@ int main(int argc, char *argv[])
     if (args.contains("-developer")) {
         g_developerMode = true;
         MAX_DOTS = 1000000;
+    }
+    if (args.contains("-usb-only")) {
+        g_usbOnly = true;
     }
 
     g_raspbian = QSysInfo::productType().contains("raspbian", Qt::CaseInsensitive);

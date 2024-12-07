@@ -82,7 +82,7 @@ void BleAnalyzer::setInfo(const QString& info)
     if (m_info != info) {
         m_info = info;
         emit infoChanged();
-        //qDebug() << "SetInfo: " << m_info;
+        qInfo() << "BleAnalyzer::SetInfo: " << m_info;
     }
 }
 
@@ -104,7 +104,7 @@ void BleAnalyzer::clearMessages()
 
 void BleAnalyzer::searchAnalyzer()
 {
-    //qDebug() << "BleAnalyzer::searchAnalyzer()";
+    qInfo() << "BleAnalyzer::searchAnalyzer()";
     m_serviceFound = false;
     clearMessages();
     setDevice(nullptr);
@@ -138,11 +138,7 @@ void BleAnalyzer::addDevice(const QBluetoothDeviceInfo &device)
     if (device.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
         auto deviceInfo = new BleDeviceInfo(device);
         QString name = deviceInfo->getName();
-        QString str = name.contains("Stick") ? "  FOUND!" : "  SKIP";
-        if (name.contains("Stick")) {
-            str = "FOUND";
-        }
-        qDebug() << "BleAnalyzer::addDevice.name: " << name << str;
+        qInfo() << "BleAnalyzer::addDevice.name: " << name;
         if (!AnalyzerParameters::supported(name))
             return;
         m_devices.append(deviceInfo);
@@ -246,7 +242,7 @@ void BleAnalyzer::setDevice(BleDeviceInfo *device)
         connect(m_control, &QLowEnergyController::serviceDiscovered,
                 this, &BleAnalyzer::serviceDiscovered);
         connect(m_control, &QLowEnergyController::discoveryFinished,
-                this, &BleAnalyzer::serviceScanDone);
+                this, &BleAnalyzer::serviceScanDone, Qt::QueuedConnection);
 
         connect(m_control, &QLowEnergyController::errorOccurred, this,
                 [this](QLowEnergyController::Error error) {
@@ -351,6 +347,7 @@ void BleAnalyzer::confirmedDescriptorWrite(const QLowEnergyDescriptor &d, const 
 void BleAnalyzer::startPing()
 {
     m_pingTimer->start(1000);
+    sendFullInfo();
 }
 
 void BleAnalyzer::stopPing()
@@ -391,7 +388,7 @@ void BleAnalyzer::handlePing()
 
 void BleAnalyzer::write(QByteArray& arr)
 {
-    //qDebug() << trace("write: ", arr);
+    //qInfo() << trace("write: ", arr);
 
     if (m_service == nullptr) {
         setError("REU BLE service not found");
@@ -400,7 +397,7 @@ void BleAnalyzer::write(QByteArray& arr)
     const QLowEnergyCharacteristic hrChar = m_service->characteristic(QBluetoothUuid(uuidWrite));
     if (!hrChar.isValid()) {
         setError("Write chracteristic doesn't exist!");
-        //qDebug() << "BleAnalyzer::write " << error();
+        //qInfo() << "BleAnalyzer::write " << error();
         return;
     }
     m_insideWrite = true;
@@ -412,10 +409,10 @@ void BleAnalyzer::dataReceived(const QLowEnergyCharacteristic &c, const QByteArr
 {
     if (c.uuid() != QBluetoothUuid(uuidRead))
         return;
-    //qDebug() << trace("dataReceived: ", const_cast<QByteArray&>(value));
+    qInfo() << trace("dataReceived: ", const_cast<QByteArray&>(value));
     m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
     if (!checkCRC(value)) {
-        qDebug() << "errorCRC";
+        qInfo() << "errorCRC";
         QString err = tr("Analyzer error: wrong CRC");
         setError(err);
         return;
@@ -444,7 +441,7 @@ bool BleAnalyzer::checkCRC(const QByteArray &data)
 {
     quint8 crc = CRC32::crc8(data);
     quint8 crc0 = (quint8)data[BLE_PACKET_SIZE-1];
-    //qDebug() << "checkCRC" << crc0 << crc;
+    //qInfo() << "checkCRC" << crc0 << crc;
     return crc == crc0;
 }
 
@@ -540,7 +537,7 @@ void BleAnalyzer::parseFRX(QDataStream& stream)
 
         float fq_MHz = fq_Hz / 1000000.0f;
         QString str = QString("parseFRX: %1, %2, %3, %4").arg(fq_MHz).arg(r1).arg(x1).arg(count);
-        //qDebug() << str;
+        qInfo() << str;
 //        setResponse(str);
 
         data.fq = fq_MHz;
@@ -557,6 +554,7 @@ void BleAnalyzer::parseFRX(QDataStream& stream)
         for (int i=0; i<4; i++) {
             qint16 sr, sx;
             stream >> sr >> sx;
+            if(!((sr==0x0000)&&(sx==0x0000))){
             float dr = shortToDouble(sr);
             float dx = shortToDouble(sx);
             fq_kHz = (start + (id+i)*step);
@@ -564,6 +562,9 @@ void BleAnalyzer::parseFRX(QDataStream& stream)
             data.r = dr;
             data.x = dx;
             emit newData(data);
+            }else{
+                data.r =1;
+            }
         }
     }
 }
@@ -579,12 +580,16 @@ void BleAnalyzer::parseFullInfo(QDataStream& stream)
     QString str;
     quint8 field;
     stream >> field;
+    // TODO license support
+    // ...
+
     switch (field) {
     case (quint8)BLE_FULLINFO_NAME:
     {
         str = bytesToString(stream);
+        m_name = str;
         setResponse(str);
-        //qDebug() << str;
+        //qInfo() << str;
     }
         break;
     case (quint8)BLE_FULLINFO_FLAGS:
@@ -601,6 +606,11 @@ void BleAnalyzer::parseFullInfo(QDataStream& stream)
         qint8 extra_mult;
         quint16 maxPoints;
         stream >> minFq >> maxFq >> extra_mult >> maxPoints;
+        if (m_name == "Match") {
+            AnalyzerParameters* par = AnalyzerParameters::byName(m_name);
+            if (par != nullptr)
+                par->setMaxFq(QString::number(maxFq));
+        }
         double mult = qPow(10, 3-extra_mult);
         QString str = QString("FQ min = %1 kHz, FQ max = %2 kHz, max Points = %3")
                 .arg(long(minFq * mult)).arg(long(maxFq*mult)).arg(maxPoints);
@@ -659,7 +669,7 @@ QString BleAnalyzer::trace(QString _title, QByteArray& _data) {
      for (int idx = 0; idx < _data.size(); idx++) {
          msg += QString("%1 ").arg((quint8)_data[idx], 2, 16, QChar('0'));
      }
-     //qDebug() << _title << msg;
+     //qInfo() << _title << msg;
      return QString("%1: %2").arg(_title, msg);
 }
 
@@ -721,7 +731,7 @@ void BleAnalyzer::startMeasure(qint64 from_hz, qint64 to_hz, int dotsNumber, boo
     data[19] = CRC32::crc8(data);
 
     QString msg = QString("FQ: %1, SW: %2, FRX: %3").arg(fq).arg(sw).arg(frx);
-    //qDebug() << "BleAnalyzer::startMeasure" << msg;
+    qInfo() << "BleAnalyzer::startMeasure" << msg;
     setRequest(msg);
     QString sss = trace("FRX", data);
     setRequest(sss);
@@ -732,6 +742,15 @@ void BleAnalyzer::startMeasure(qint64 from_hz, qint64 to_hz, int dotsNumber, boo
 void BleAnalyzer::startMeasureOneFq(qint64 fqFrom_hz, int dotsNumber, bool frx)
 {
     startMeasure(fqFrom_hz, fqFrom_hz, dotsNumber, frx);
+}
+
+void BleAnalyzer::sendFullInfo()
+{
+    QByteArray data;
+    data.fill(0, BLE_PACKET_SIZE);
+    data[0] = (quint8)BLE_FULLINFO_CMD;
+    data[BLE_PACKET_SIZE - 1] = CRC32::crc8(data);
+    write(data);
 }
 
 void BleAnalyzer::getAnalyzerData()
@@ -774,8 +793,8 @@ void BleAnalyzer::getAnalyzerData(QString number)
         data.append(zero);
     }
     data[19] = CRC32::crc8(data);
-    //qDebug() << "getAnalyzerData: " << number << center << range << points << m_requestRecord.m_recordName;
-    //qDebug() << trace(number, data);
+    //qInfo() << "getAnalyzerData: " << number << center << range << points << m_requestRecord.m_recordName;
+    //qInfo() << trace(number, data);
     write(data);
 }
 

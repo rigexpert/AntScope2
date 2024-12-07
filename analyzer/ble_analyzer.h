@@ -131,6 +131,7 @@ public:
     double shortToDouble(qint16 src);
     void write(QByteArray& arr);
     virtual bool refreshConnection();
+    void sendFullInfo();
 
     // analyzer
     virtual bool connectAnalyzer();
@@ -199,6 +200,7 @@ private:
     bool m_innerScan = false; // scan for restoreConnection purpoces
     BleRequestRecord m_requestRecord;
     QMap<QString, BleRequestRecord> m_analyzerRecords;
+    QString m_name;
 
     // DeviceFinder
     QBluetoothDeviceDiscoveryAgent *m_deviceDiscoveryAgent;

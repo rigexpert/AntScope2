@@ -98,8 +98,8 @@ private:
     QMutex m_mutexRead;
     struct hid_device_info* m_devices;
     QThread* m_refreshThread;
-    bool connect(quint32 vid, quint32 pid);
-    bool disconnect(void);
+    bool connectHid(quint32 vid, quint32 pid);
+    bool disconnectHid(void);
     qint32 parse (QByteArray arr);
     bool waitAnswer();
     QFuture<struct hid_device_info*> *m_futureRefresh;

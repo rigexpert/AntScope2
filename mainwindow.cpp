@@ -10,6 +10,7 @@
 
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
+extern bool g_usbOnly;
 extern int g_maxMeasurements; // see measurements.cpp
 extern void setAbsoluteFqMaximum();
 extern bool g_bAA55modeNewProtocol;
@@ -201,6 +202,9 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     connect(m_swrWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_swr(QWheelEvent*)));
     connect(m_swrWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_swr(QMouseEvent*)));
+    connect(m_swrWidget,SIGNAL(mouseRelease(QMouseEvent*)),this, SLOT(on_replotY_swr()));
+    connect(m_swrWidget,SIGNAL(mousePress(QMouseEvent*)),this, SLOT(on_replotY_swr()));
+
 
     connect(m_phaseWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_phase(QWheelEvent*)));
     connect(m_phaseWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_phase(QMouseEvent*)));
@@ -601,9 +605,9 @@ MainWindow::MainWindow(QWidget *parent) :
             on_refreshConnection();
         });
     } else {
-        QTimer::singleShot(500, this, [&](){
-            on_selectDeviceDialog();
-        });
+            QTimer::singleShot(500, this, [&](){
+                on_selectDeviceDialog();
+            });
     }
 }
 
@@ -1186,6 +1190,7 @@ void MainWindow::on_pressPlus ()
             m_userWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         }
         m_swrWidget->replot();
+         on_replotY_swr();
     }else if(str == "tab_phase")
     {
         double from = m_phaseWidget->xAxis->getRangeLower();
@@ -1640,6 +1645,7 @@ void MainWindow::on_pressMinus ()
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_swrWidget->replot();
+         on_replotY_swr();
     }else if(str == "tab_phase")
     {
         double from = m_phaseWidget->xAxis->getRangeLower();
@@ -2030,6 +2036,7 @@ void MainWindow::on_pressCtrlZero()
             m_swrWidget->yAxis->setRangeUpper(10.02);
             m_swrWidget->yAxis->setRangeLower(MIN_SWR);
             m_swrWidget->replot();
+             on_replotY_swr();
             if(m_markers)
             {
                 QTimer::singleShot(5, m_markers, SLOT(redraw()));
@@ -2166,6 +2173,7 @@ void MainWindow::on_pressLeft()
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_s21Widget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_swrWidget->replot();
+         on_replotY_swr();
     }else if(str == "tab_phase")
     {
         double from = m_phaseWidget->xAxis->getRangeLower();
@@ -2425,6 +2433,7 @@ void MainWindow::on_pressRight()
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_s21Widget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_swrWidget->replot();
+         on_replotY_swr();
     }else if(str == "tab_phase")
     {
         double from = m_phaseWidget->xAxis->getRangeLower();
@@ -2845,6 +2854,109 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
     emit rescale();
 }
 */
+
+void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
+{   //v4_(04/12)
+    double from  = m_swrWidget->xAxis->getRangeLower();
+    double to = m_swrWidget->xAxis->getRangeUpper();
+    //return;
+    if(!m_isRange)
+    {
+        setFqFrom(from);
+        setFqTo(to);
+    }else
+    {
+        setFqFrom((to+from)/2);
+        setFqTo((to-from)/2);
+    }
+
+    m_phaseWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+    m_rsWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+    m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+    m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+
+
+    if (e->modifiers() == Qt::ControlModifier)
+    {
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        }
+        bool noerror=true;
+        bool zoomin =false;
+        if( e->angleDelta().y() > 0)
+            zoomin =true;
+
+        QCPRange range = m_swrWidget->yAxis->range();
+
+        double length = range.size();
+        if ((length >= 10 && (!zoomin)) || (length <= 0.1 && zoomin))
+            noerror=false;//  return;
+
+        if (!g_developerMode && (length <= (0.4)) && (zoomin))
+            noerror=false;//  return;
+        if(noerror){
+            double lower = range.lower - 0.02;
+            double upper = range.upper;
+            double delta = 0.1;
+            if(length >= 5)
+            {
+                delta = 1;
+            } else if (length >= 2.5) {
+                delta = 0.5;
+            } else if (length >= 1) {
+                delta = 0.1;
+            }
+
+            bool change_upper =false;
+            double y = m_swrWidget->yAxis->pixelToCoord( e->position().y()); //focus zoom on point
+            if((lower+(length/2))>y)
+              change_upper =true;
+            //--------------
+            if(zoomin)
+            {
+                delta = -delta;
+                if(change_upper)
+                {
+                    upper += delta ;
+                }else{
+                    lower -= delta ;
+                }
+            }else{
+                upper += delta ;
+                lower -= delta ;
+            }
+            if (upper >= MAX_SWR)
+                upper = MAX_SWR+0.01;
+
+             if (lower <= 0.92)
+                 lower = 0.92;
+             m_swrWidget->yAxis->setRangeUpper(upper);
+             m_swrWidget->yAxis->setRangeLower(lower);
+            //-----customize---
+            QPen pen=m_swrWidget->yAxis->grid()->pen();
+            if(length<=5){
+                pen.setWidth(2);
+                m_swrWidget->yAxis->grid()->setPen(pen);
+                m_swrWidget->yAxis->grid()->setSubGridVisible(true);
+
+             }else{
+               pen.setWidth(1);
+               m_swrWidget->yAxis->grid()->setPen(pen);
+               m_swrWidget->yAxis->grid()->setSubGridVisible(false);
+
+            }
+
+                     //------------
+            QTimer::singleShot(5, m_markers, SLOT(redraw()));
+        }
+    }
+
+    emit rescale();
+    on_replotY_swr();
+}
+
+/*
 void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
 {
     double from  = m_swrWidget->xAxis->getRangeLower();
@@ -2882,7 +2994,9 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
             return;
 
         double lower = range.lower - 0.02;
-        m_swrWidget->yAxis->setRangeLower(qMin(lower, MIN_SWR));
+        if (lower < 0.98)
+            lower = 1;
+        m_swrWidget->yAxis->setRangeLower(lower);
         double upper = range.upper;
         double delta = 0.1;
         if(length >= 5)
@@ -2902,10 +3016,136 @@ void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
         if (upper > 10.02)
             upper = 10.02;
         m_swrWidget->yAxis->setRangeUpper(upper);
+        QTimer::singleShot(5, (const QObject*)m_markers, SLOT(redraw()));
+        //qDebug() << "MainWindow::on_mouseWheel_swr" << m_swrWidget->yAxis->getRangeLower() << m_swrWidget->yAxis->getRangeUpper();
+    }
+
+    emit rescale();
+    on_replotY_swr();
+}
+*/
+#if 0
+void MainWindow::on_mouseWheel_swr(QWheelEvent * e)
+{   //change value ->:SWR_ZOOM_LIMIT = 1;
+    double from  = m_swrWidget->xAxis->getRangeLower();
+    double to = m_swrWidget->xAxis->getRangeUpper();
+
+    if(!m_isRange)
+    {
+        setFqFrom(from);
+        setFqTo(to);
+    }else
+    {
+        setFqFrom((to+from)/2);
+        setFqTo((to-from)/2);
+    }
+
+    m_phaseWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+    m_rsWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+    m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+    m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
+
+
+    if (e->modifiers() == Qt::ControlModifier)
+    {
+        if(m_measurements)
+        {
+            QTimer::singleShot(1, m_measurements, SLOT(on_redrawGraphs()));
+        }
+
+        bool zoomin =false;
+        if( e->angleDelta().y() > 0)
+            zoomin =true;
+
+        QCPRange range = m_swrWidget->yAxis->range();
+
+        double length = range.size();
+        if ((length >= 10 && (!zoomin)) || (length <= 0.1 && zoomin))
+            return;
+
+        if (!g_developerMode && (length <= (SWR_ZOOM_LIMIT+0.2)) && (zoomin))
+            return;
+
+        double lower = range.lower - 0.02;
+        double upper = range.upper;
+        double delta = 0.1;
+        if(length >= 5)
+        {
+            delta = 1;
+        } else if (length >= 2.5) {
+            delta = 0.5;
+        } else if (length >= 1) {
+            delta = 0.1;
+        }
+
+        bool change_upper =false;
+        double y = m_swrWidget->yAxis->pixelToCoord( e->position().y()); //focus zoom on point
+        if((lower+(length/2))>y)
+            change_upper =true;
+        //--------------
+        if(zoomin)
+        {
+            delta = -delta;
+            if(change_upper)
+            {
+                upper += delta ;
+            }else{
+                lower -= delta ;
+            }
+        }else{
+            upper += delta ;
+            lower -= delta ;
+        }
+        if (upper >= MAX_SWR)
+            upper = MAX_SWR+0.01;
+        //       if (lower <= MIN_SWR)
+        //           lower = MIN_SWR-0.01;
+        if (lower <= 0.5)
+            lower = 0.5;
+        m_swrWidget->yAxis->setRangeUpper(upper);
+        m_swrWidget->yAxis->setRangeLower(lower);
+        //-----customize---
+        m_swrWidget->yAxis->setAutoTicks(false);//+
+        QPen pen=m_swrWidget->yAxis->grid()->pen();
+        if(length<=5){
+            pen.setWidth(2);
+            m_swrWidget->yAxis->grid()->setPen(pen);
+            m_swrWidget->yAxis->grid()->setSubGridVisible(true);
+            m_swrWidget->yAxis->setSubTickCount(9);
+            //  m_swrWidget->yAxis->setTickStep(0.5);
+        }else{
+            pen.setWidth(1);
+            m_swrWidget->yAxis->grid()->setPen(pen);
+            m_swrWidget->yAxis->grid()->setSubGridVisible(false);
+            m_swrWidget->yAxis->setSubTickCount(4);
+            // m_swrWidget->yAxis->setTickStep(1);
+        }
         QTimer::singleShot(5, m_markers, SLOT(redraw()));
     }
 
     emit rescale();
+}
+#endif
+
+void MainWindow::on_replotY_swr()
+{ bool replotneed =false;
+    //------------overwrite lables Y
+     QVector<double> yScale       =m_swrWidget->yAxis->tickVector();
+     QVector<QString> yScaleLabels=m_swrWidget->yAxis->tickVectorLabels();
+     for (int i=0; i < yScale.count(); ++ i){
+        if(yScale[i]<1){
+            yScaleLabels[i]=" ";
+            replotneed=true;
+        }
+     }
+     if(replotneed){
+     m_swrWidget->yAxis->setAutoTickLabels(false);
+     m_swrWidget->yAxis->setTickVectorLabels(yScaleLabels);
+     m_swrWidget->replot();//Y_labl
+     m_swrWidget->yAxis->setAutoTickLabels(true);
+     }
+    //--------------------
+
 }
 
 
@@ -2955,6 +3195,7 @@ void MainWindow::on_mouseMove_swr(QMouseEvent *e)
         m_rpWidget->xAxis->setRange(m_swrWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_swrWidget->xAxis->range());
     }
+     on_replotY_swr();
 }
 
 void MainWindow::on_mouseWheel_phase(QWheelEvent * e)
@@ -6427,6 +6668,12 @@ void MainWindow::restoreMultitab(const QString& tabs)
 
 void MainWindow::on_selectDeviceDialog()
 {
+    if (g_usbOnly) {
+        SelectionParameters::selected.type = ReDeviceInfo::HID;
+        //m_analyzer->createDevice(SelectionParameters::selected, new HidAnalyzer(this));
+        return;
+    }
+
     SelectDeviceDialog dlg(false, this);
     if (dlg.exec() == QDialog::Accepted) {
         AnalyzerParameters* selected = AnalyzerParameters::current();
@@ -6449,10 +6696,11 @@ void MainWindow::on_refreshConnection()
             return;
          }
     }
-    QTimer::singleShot(100, this, [=](){
-       on_selectDeviceDialog();
-    });
-
+    if (! g_usbOnly) {
+        QTimer::singleShot(100, this, [=](){
+           on_selectDeviceDialog();
+        });
+    }
 }
 
 void MainWindow::closeSettingsDialog()

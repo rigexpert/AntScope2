@@ -215,6 +215,7 @@ public:
     int index() { return m_index; }
     QString serilal() { return m_serial; }
     void setSerial(QString _serial) { m_serial = _serial; }
+    void setMaxFq(QString _fq) { m_maxFq = _fq; }
 
     static AnalyzerParameters* byPrefix(int _prefix) {
         foreach (AnalyzerParameters* par, m_analyzers) {
@@ -225,9 +226,16 @@ public:
     }
     static AnalyzerParameters* byName(QString _name) {
         //{ HUCK
-        if (_name.contains("AA-3000")) {
+        if (_name.contains("AA-3000 ZOOM")) {
             foreach (AnalyzerParameters* par, m_analyzers) {
-                if (par->name().contains("AA-3000")) {
+                if (par->name() == "AA-3000 ZOOM") {
+                    return par;
+                }
+            }
+        }
+        if (_name.contains("AA-2000 ZOOM")) {
+            foreach (AnalyzerParameters* par, m_analyzers) {
+                if (par->name() == "AA-2000 ZOOM") {
                     return par;
                 }
             }
@@ -331,6 +339,7 @@ public:
         m_analyzers << new AnalyzerParameters(idx++, "AA-55 ZOOM", "60", "55000", 240, 320, PREFIX_SERIAL_NUMBER_AA55_ZOOM);
         m_analyzers << new AnalyzerParameters(idx++, "AA-170", "100", "170000", 64, 133);
         m_analyzers << new AnalyzerParameters(idx++, "AA-200", "100", "200000", 0, 0);
+        m_analyzers << new AnalyzerParameters(idx++, "AA-2000 ZOOM", "100", "2000000", 480, 746, PREFIX_SERIAL_NUMBER_AA2000);
         m_analyzers << new AnalyzerParameters(idx++, "AA-230PRO", "100", "230000", 0, 0);
         m_analyzers << new AnalyzerParameters(idx++, "AA-230 ZOOM", "100", "230000", 220, 290, PREFIX_SERIAL_NUMBER_AA230_ZOOM);
         m_analyzers << new AnalyzerParameters(idx++, "AA-230", "100", "230000", 0, 0);
@@ -344,7 +353,6 @@ public:
         m_analyzers << new AnalyzerParameters(idx++, "AA-1000", "100", "1000000", 240, 320);
         m_analyzers << new AnalyzerParameters(idx++, "AA-1400", "100", "1400000", 240, 320);
         m_analyzers << new AnalyzerParameters(idx++, "AA-1500 ZOOM", "100", "1500000", 240, 320, PREFIX_SERIAL_NUMBER_AA1500_ZOOM);
-        m_analyzers << new AnalyzerParameters(idx++, "AA-2000 ZOOM", "100", "2000000", 480, 746, PREFIX_SERIAL_NUMBER_AA2000);
         m_analyzers << new AnalyzerParameters(idx++, "NanoVNA", "100", "1000000", 0, 0);
 
         // 08.06.2022 - not supported except of Android Antscope
@@ -358,10 +366,29 @@ public:
         m_analyzers << new AnalyzerParameters(idx++, "Stick 500", "100", "500000", 200, 200, PREFIX_SERIAL_NUMBER_STICK_500);
         m_analyzers << new AnalyzerParameters(idx++, "WilsonPro CAA", "100", "1500000", 240, 320, PREFIX_SERIAL_NUMBER_WILSON_PRO);
         m_analyzers << new AnalyzerParameters(idx++, "AA-1500 ZOOM SE", "100", "1500000", 480, 746, PREFIX_SERIAL_NUMBER_AA1500SE, "AA-1500SE");
-        m_analyzers << new AnalyzerParameters(idx++, "Match", "100", "1000000", 480, 480, PREFIX_SERIAL_NUMBER_MACHII);
+        m_analyzers << new AnalyzerParameters(idx++, "Match", "100", "690000", 480, 480, PREFIX_SERIAL_NUMBER_MACHII);
+#ifdef _DEBUG
+        test();
+#endif
     }
 
     static QList<AnalyzerParameters*>& analyzers() { return m_analyzers; }
+    static bool test()
+    {
+        qDebug() << "AnalyzerParameters::test() START";
+        bool res = true;
+        foreach (AnalyzerParameters* par, m_analyzers) {
+           AnalyzerParameters* found = byName(par->name());
+           if (found != nullptr && found->name() == par->name()){
+               continue;
+           } else {
+               res = false;
+               qDebug() << "AnalyzerParameters::test() FAILED: name=" << par->name() << "found=" << found->name();
+           }
+        }
+        qDebug() << "AnalyzerParameters::test() FINISH " << (res?"SUCCESS":"FAILED");
+        return res;
+    }
 };
 
 struct SelectionParameters

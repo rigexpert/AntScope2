@@ -3426,6 +3426,23 @@ void Measurements::replot()
     if(m_currentTab == "tab_swr")
     {
         m_swrWidget->replot();
+        //------------overwrite lables Y
+        bool replotneed =false;
+        QVector<double> yScale       =m_swrWidget->yAxis->tickVector();
+        QVector<QString> yScaleLabels=m_swrWidget->yAxis->tickVectorLabels();
+        for (int i=0; i < yScale.count(); ++ i){
+            if(yScale[i]<1){
+                yScaleLabels[i]=" ";
+                replotneed=true;
+            }
+        }
+        if(replotneed){
+            m_swrWidget->yAxis->setAutoTickLabels(false);
+            m_swrWidget->yAxis->setTickVectorLabels(yScaleLabels);
+            m_swrWidget->replot();//Y_labl
+            m_swrWidget->yAxis->setAutoTickLabels(true);
+        }
+        //--------------------
     }else if(m_currentTab == "tab_phase")
     {
         m_phaseWidget->replot();

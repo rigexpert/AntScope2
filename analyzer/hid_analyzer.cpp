@@ -4,6 +4,7 @@
 #include <QThread>
 #include "analyzerpro.h"
 
+extern bool g_usbOnly;
 
 HidAnalyzer::HidAnalyzer(QObject *parent) : BaseAnalyzer(parent),
       m_chartTimer(nullptr),
@@ -16,7 +17,8 @@ HidAnalyzer::HidAnalyzer(QObject *parent) : BaseAnalyzer(parent),
     m_type = ReDeviceInfo::HID;
     m_hidDevice = nullptr;
     m_checkTimer = new QTimer(this);
-    QObject::connect(m_checkTimer, SIGNAL(timeout()), this, SLOT(checkTimerTick()));
+    //QObject::connect(m_checkTimer, SIGNAL(timeout()), this, SLOT(checkTimerTick()));
+    connect(m_checkTimer, &QTimer::timeout, this, &HidAnalyzer::checkTimerTick);
     m_checkTimer->start(1000);
 
     m_chartTimer = new QTimer(this);
@@ -82,7 +84,7 @@ HidAnalyzer::~HidAnalyzer()
         delete m_hidReadTimer;
         m_hidReadTimer = nullptr;
     }
-    disconnect();
+    disconnectHid();
 }
 
 void HidAnalyzer::nonblocking (int nonblock)
@@ -93,7 +95,8 @@ void HidAnalyzer::nonblocking (int nonblock)
 
 bool HidAnalyzer::searchAnalyzer(bool arrival)
 {
-    return false;
+    if (! g_usbOnly)
+        return false;
 
     qDebug() << "HidAnalyzer::searchAnalyzer";
     bool result = false;
@@ -122,7 +125,7 @@ bool HidAnalyzer::searchAnalyzer(bool arrival)
                 int prefix = number.toInt();
                 if (analyzer->prefix() == prefix) {
                     m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
-                    result = connect(RE_VID, RE_PID);
+                    result = connectHid(RE_VID, RE_PID);
                     if (result) {
                         emit analyzerFound(analyzer->index());
                         return true;
@@ -159,12 +162,12 @@ bool HidAnalyzer::searchAnalyzer(bool arrival)
         m_bootMode = false;
         m_analyzerModel = 0;
         emit analyzerDisconnected();
-        disconnect();
+        disconnectHid();
     }
     return false;
 }
 
-bool HidAnalyzer::connect(quint32 vid, quint32 pid)
+bool HidAnalyzer::connectHid(quint32 vid, quint32 pid)
 {
     if(m_hidDevice != nullptr)
     {
@@ -190,7 +193,7 @@ bool HidAnalyzer::connect(quint32 vid, quint32 pid)
     }
 }
 
-bool HidAnalyzer::disconnect(void)
+bool HidAnalyzer::disconnectHid(void)
 {
     if(m_hidDevice != nullptr)
     {
@@ -207,7 +210,8 @@ bool HidAnalyzer::disconnect(void)
 void HidAnalyzer::checkTimerTick ()
 {
     // TODO
-    //searchAnalyzer(m_analyzerModel != 0);
+    if (g_usbOnly)
+        searchAnalyzer(m_analyzerModel != 0);
     // TODO
 }
 
@@ -847,7 +851,7 @@ bool HidAnalyzer::connectAnalyzer()
             int prefix = number.toInt();
             if (analyzer->prefix() == prefix) {
                 m_serialNumber = QString::fromWCharArray(cur_dev->serial_number);
-                bool result = connect(RE_VID, RE_PID);
+                bool result = connectHid(RE_VID, RE_PID);
                 if (result) {
                     emit analyzerFound(analyzer->index());
                     return true;

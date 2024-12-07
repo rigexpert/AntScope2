@@ -729,7 +729,13 @@ bool AnalyzerPro::createDevice(const SelectionParameters& param, BaseAnalyzer* a
         return true;
     }
 
-    switch(param.type) {
+    ReDeviceInfo::InterfaceType interfaceType = param.type;
+    extern bool g_usbOnly;
+    if (g_usbOnly) {
+        interfaceType = ReDeviceInfo::HID;
+    }
+
+    switch(interfaceType) {
     case ReDeviceInfo::HID:
     {
         m_baseAnalyzer = new HidAnalyzer(this);
@@ -771,15 +777,21 @@ void AnalyzerPro::slotFullInfo(const QString& _info)
 {
     int index = _info.indexOf("LIC");
     if (index != -1) {
+        AnalyzerParameters* par = AnalyzerParameters::byName(getModelString());
         QString _name = _info.mid(index, 4);
         qInfo() << "AnalyzerPro::slotFullInfo" << _name;
-        if (_name == "LIC1")
+        if (_name == "LIC1") {
             m_license = "ADVANCED";
-        else if (_name == "LIC2")
+            par->setMaxFq("230000");
+        } else if (_name == "LIC2") {
             m_license = "RFE";
-        else if (_name == "LIC3")
+            par->setMaxFq("500000");
+        } else if (_name == "LIC3") {
             m_license = "PRO";
-        else
+            par->setMaxFq("690000");
+        } else {
             m_license = "BASE";
+            par->setMaxFq("70000");
+        }
     }
 }
