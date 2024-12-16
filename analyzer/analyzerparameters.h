@@ -216,6 +216,7 @@ public:
     QString serilal() { return m_serial; }
     void setSerial(QString _serial) { m_serial = _serial; }
     void setMaxFq(QString _fq) { m_maxFq = _fq; }
+    void setMinFq(QString _fq) { m_minFq = _fq; }
 
     static AnalyzerParameters* byPrefix(int _prefix) {
         foreach (AnalyzerParameters* par, m_analyzers) {

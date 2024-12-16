@@ -4005,6 +4005,7 @@ void MainWindow::createTabs (QString sequence)
         ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_user), false);
 //        ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_user))->setVisible(false);
     }
+    ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_s21), false);
 #endif
 
     m_settings->beginGroup("Settings");
@@ -6533,6 +6534,8 @@ QMenu& MainWindow::menuMultiTab(QMenu &menu)
         if (tab_name != "tab_multi") {
             if (!g_developerMode && tab_name == "tab_user")
                 continue;
+            if (tab_name == "tab_s21")
+                continue;
             tab_title[tab_name] = QPair<int, QString>(i, ui->tabWidget->tabText(i));
         }
     }
@@ -6654,6 +6657,8 @@ void MainWindow::restoreMultitab(const QString& tabs)
         QStringList list = tabs.split(',', Qt::SkipEmptyParts);
         foreach (auto tab_name, list) {
             if (tab_name == "tab_user" && !g_developerMode)
+                continue;
+            if (tab_name == "tab_s21")
                 continue;
             for (int idx = 0; idx<ui->tabWidget->count(); idx++) {
                 if (ui->tabWidget->widget(idx)->objectName() == tab_name) {

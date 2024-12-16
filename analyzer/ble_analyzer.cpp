@@ -550,6 +550,8 @@ void BleAnalyzer::parseFRX(QDataStream& stream)
         float step = (stop - start) / (float)m_requestRecord.m_requestPoints;
         qint16 id;
         stream >> id;
+        if (m_name == "Match")
+            id -= 1;
         float fq_kHz;
         for (int i=0; i<4; i++) {
             qint16 sr, sx;
@@ -608,8 +610,10 @@ void BleAnalyzer::parseFullInfo(QDataStream& stream)
         stream >> minFq >> maxFq >> extra_mult >> maxPoints;
         if (m_name == "Match") {
             AnalyzerParameters* par = AnalyzerParameters::byName(m_name);
-            if (par != nullptr)
+            if (par != nullptr) {
+                par->setMinFq(QString::number(minFq));
                 par->setMaxFq(QString::number(maxFq));
+            }
         }
         double mult = qPow(10, 3-extra_mult);
         QString str = QString("FQ min = %1 kHz, FQ max = %2 kHz, max Points = %3")
