@@ -387,7 +387,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_calibration = new Calibration();
     m_calibration->setAnalyzer(m_analyzer);
-    m_calibration->start();
+    m_calibration->start(true);
     connect(m_calibration,SIGNAL(setCalibrationMode(bool)),
             m_analyzer,SLOT(setCalibrationMode(bool)));
     connect(m_calibration,SIGNAL(setCalibrationMode(bool)),
@@ -395,8 +395,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_measurements->setCalibration(m_calibration);
 
     ui->checkBoxCalibration->blockSignals(true);
-    ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
-    ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
+    ui->checkBoxCalibration->setEnabled(true);//m_calibration->isCalibrationPerformed());
+    ui->checkBoxCalibration->setChecked(false);//m_calibration->getCalibrationEnabled());
     connect(ui->checkBoxCalibration, &QCheckBox::toggled, this, &MainWindow::calibrationToggled);
 
 //    QWidget* w = ui->checkBoxCalibration;
@@ -2739,6 +2739,10 @@ void MainWindow::on_analyzerNameFound(QString name)
         ui->analyzerDataBtn->setEnabled(false);
         ui->screenshotAA->setEnabled(false);
     }
+    if (analyzer()->getModelString().contains("MATCH U") && analyzer()->connectionType() == ReDeviceInfo::BLE) {
+        ui->analyzerDataBtn->setEnabled(false);
+        ui->screenshotAA->setEnabled(false);
+    }
 
     if (!g_developerMode) {
         ui->labelMarquee->request();
@@ -4921,8 +4925,8 @@ void MainWindow::on_settingsBtn_clicked()
 
     bool force = true;
     m_calibration->start(force);
-    ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
-    ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
+    //ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
+    //ui->checkBoxCalibration->setChecked(false);//m_calibration->getCalibrationEnabled());
 
     ui->measurmentsDeleteBtn->setEnabled(!m_analyzer->isMeasuring());
     ui->measurmentsClearBtn->setEnabled(!m_analyzer->isMeasuring());
@@ -6029,7 +6033,9 @@ void MainWindow::calibrationToggled(bool checked)
     {
         QMessageBox::information(NULL, tr("!!!!Calibration not performed"),
                               tr("Calibration not performed."));
-
+        ui->checkBoxCalibration->blockSignals(true);
+        ui->checkBoxCalibration->setCheckState(Qt::Unchecked);
+        ui->checkBoxCalibration->blockSignals(false);
     }
     else
     {
@@ -6719,4 +6725,10 @@ void MainWindow::closeSettingsDialog()
     ui->singleStart->setEnabled(true);
     ui->continuousStartBtn->setEnabled(true);
     ui->settingsBtn->setEnabled(true);
+    //---vnn_02_copy--for check_box calibrations unlock-faster--
+    bool force = true;
+    m_calibration->start(force);
+    //ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
+    //ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
+    //------
 }

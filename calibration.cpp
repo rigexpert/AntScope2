@@ -31,10 +31,12 @@ Calibration::Calibration(QObject *parent) : QObject(parent),
 
     m_Z0 = m_settings->value("Z0", m_Z0).toDouble();
     m_OSLCalibrationPerformed = m_settings->value("Performed", false).toBool();
-    m_OSLCalibrationEnabled = m_settings->value("Enabled", false).toBool();
-    m_openCalibFilePath = m_settings->value("OpenPath", "Not chosen").toString();
-    m_shortCalibFilePath = m_settings->value("ShortPath", "Not chosen").toString();
-    m_loadCalibFilePath = m_settings->value("LoadPath", "Not chosen").toString();
+    m_OSLCalibrationEnabled = m_OSLCalibrationPerformed;//m_settings->value("Enabled", false).toBool();
+    QDir dir = m_calibrationPath;
+    m_openCalibFilePath = dir.absoluteFilePath("cal_open.s1p");
+    m_shortCalibFilePath = dir.absoluteFilePath("cal_short.s1p");
+    m_loadCalibFilePath = dir.absoluteFilePath("cal_load.s1p");
+
     setDotsNumber(m_settings->value("DotsNumber", 500).toInt());
     m_settings->endGroup();
 }
@@ -52,12 +54,14 @@ Calibration::~Calibration()
     m_settings->setValue("DotsNumber", dotsNumber());
 
     m_settings->endGroup();
+    m_settings->sync();
+    QString file = m_settings->fileName();
 }
 
 void Calibration::start(bool force)
 {
     QString notChoosed = tr("Not chosen");
-    if(force || m_OSLCalibrationPerformed)
+    if(force) // || m_OSLCalibrationPerformed)
     {
         if(m_openCalibFilePath != "")
         {
@@ -88,7 +92,6 @@ void Calibration::start(bool force)
             m_OSLCalibrationPerformed = true;
         }else
         {
-            //qDebug() << "Error while opening calibration files. Files deleted or corrupted.";
             m_OSLCalibrationPerformed = false;
         }
     }
@@ -175,16 +178,12 @@ void Calibration::on_newData(RawData _rawData)
     }
     emit progress(m_state, percent);
 
-    qDebug() << "Cal::on_newData: state=" << m_state << ", count=" << m_dotsCount << ", num=" << m_dotsNumber;
-    // ??? if(m_dotsCount == m_dotsNumber+1)
     if(m_dotsCount > m_dotsNumber)
     {
         m_dotsCount = 0;
         PopUpIndicator::hideIndicator();
 
-//        m_measurements->setCalibrationMode(false);//TODO
         emit setCalibrationMode(false);
-//        m_analyzer->setCalibrationMode(false);
         QDir dir = m_calibrationPath;
         switch (m_state)
         {
@@ -197,9 +196,9 @@ void Calibration::on_newData(RawData _rawData)
                 if (QMessageBox::information(NULL, tr("Short"),
                                      tr("Please connect SHORT standard and press OK.")) == QMessageBox::Ok) {
                     PopUpIndicator::showIndicator();
+                    m_state = CALIB_SHORT;
                     on_startCalibration();
                 }
-                //qDebug() << "SHORT";
             }else
             {
                 PopUpIndicator::hideIndicator();
@@ -218,9 +217,9 @@ void Calibration::on_newData(RawData _rawData)
                 if (QMessageBox::information(NULL, tr("Load"),
                                      tr("Please connect LOAD standard and press OK.")) == QMessageBox::Ok) {
                     PopUpIndicator::showIndicator();
+                    m_state = CALIB_LOAD;
                     on_startCalibration();
                 }
-                //qDebug() << "LOAD";
             }else
             {
                 PopUpIndicator::hideIndicator();
@@ -258,7 +257,7 @@ void Calibration::clearCalibration(void)
     m_shortData.clear();
     m_loadData.clear();
 }
-
+/*
 void Calibration::on_startCalibration()
 {
     m_dotsCount = 0;
@@ -269,6 +268,23 @@ void Calibration::on_startCalibration()
                 this, SLOT(on_newData(rawData)));
     }
     m_state++;
+
+    if(m_analyzer != NULL)
+    {
+        emit setCalibrationMode(true);
+        m_analyzer->on_measureCalib(dotsNumber());
+    }
+}*/
+void Calibration::on_startCalibration()
+{
+    m_dotsCount = 0;
+    if((m_state <= CALIB_OPEN)||(m_state >=CALIB_NUM))
+    {
+        clearCalibration();
+        connect(m_analyzer,SIGNAL(newData(rawData)),
+                this, SLOT(on_newData(rawData)));
+        m_state = CALIB_OPEN;
+    }
 
     if(m_analyzer != NULL)
     {

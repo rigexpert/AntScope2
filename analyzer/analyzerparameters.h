@@ -183,7 +183,8 @@ struct measurement
 #define PREFIX_SERIAL_NUMBER_STICK_500 4500
 #define PREFIX_SERIAL_NUMBER_WILSON_PRO 1016
 #define PREFIX_SERIAL_NUMBER_AA1500SE 4115
-#define PREFIX_SERIAL_NUMBER_MACHII 1800
+#define PREFIX_SERIAL_NUMBER_MATCH 1800
+#define PREFIX_SERIAL_NUMBER_MATCHU 1801
 
 
 class AnalyzerParameters {
@@ -367,7 +368,8 @@ public:
         m_analyzers << new AnalyzerParameters(idx++, "Stick 500", "100", "500000", 200, 200, PREFIX_SERIAL_NUMBER_STICK_500);
         m_analyzers << new AnalyzerParameters(idx++, "WilsonPro CAA", "100", "1500000", 240, 320, PREFIX_SERIAL_NUMBER_WILSON_PRO);
         m_analyzers << new AnalyzerParameters(idx++, "AA-1500 ZOOM SE", "100", "1500000", 480, 746, PREFIX_SERIAL_NUMBER_AA1500SE, "AA-1500SE");
-        m_analyzers << new AnalyzerParameters(idx++, "Match", "100", "690000", 480, 480, PREFIX_SERIAL_NUMBER_MACHII);
+        m_analyzers << new AnalyzerParameters(idx++, "Match", "100", "690000", 480, 480, PREFIX_SERIAL_NUMBER_MATCH);
+        m_analyzers << new AnalyzerParameters(idx++, "MATCH U", "100", "500000", 480, 480, PREFIX_SERIAL_NUMBER_MATCHU);
 #ifdef _DEBUG
         test();
 #endif

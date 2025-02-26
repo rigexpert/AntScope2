@@ -606,6 +606,9 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
         return;
     }
 
+    if (m_measurements.isEmpty()) {
+        return;
+    }
     // fix popup hint bug
     if (m_isContinuing) {
         if (m_currentPoint < m_measurements.last().dataRX.size()) {
@@ -621,7 +624,7 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
 
     double VSWR;
     double RL;
-    if(!computeSWR(_rawData.fq, m_Z0,_rawData.r,_rawData.x,&VSWR,&RL))
+    if(computeSWR(_rawData.fq, m_Z0,_rawData.r,_rawData.x,&VSWR,&RL) != 1)
     {
         if(m_measurements.last().swrGraph.size() > 0)
         {
@@ -629,7 +632,9 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
             RL = m_measurements.last().rlGraph.last().value;
         }else
         {
-            return;
+            //return;
+            VSWR = MAX_SWR;
+            RL = 0;
         }
     }
     double maxSwr = m_swrWidget->yAxis->range().upper;
@@ -646,7 +651,7 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
 
     QCPData data;
     data.key = fq;
-    data.value = VSWR;
+    data.value = regulate(VSWR, MAX_SWR);
 
     m_measurements.last().swrGraph.insert(data.key,data);
 
@@ -806,6 +811,20 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
                                             COR,COI,CSR,CSI,CLR,CLI, // Measured parameters of cal standards
                                             SOR,SOI,SSR,SSI,SLR,SLI, // Actual (Ideal) parameters of cal standards
                                             GreOut,GimOut); // Actual
+            //-----------vnn_04 _1
+            double chek_GreGim=sqrt((GreOut*GreOut)+(GimOut*GimOut));
+            //1)   ((GreOut==1)&&(GimOut==0))
+            //2)   (chek_GreGim>1)
+            if( ((GreOut==1)&&(GimOut==0))||(chek_GreGim>1)){
+                if((GreOut==1)&&(GimOut==0)){
+                    GreOut= 0.999999992;
+                }else{ 
+                    double ncosA= GreOut/chek_GreGim;
+                    double nsinA= GimOut/chek_GreGim;
+                    GreOut=0.999999992*ncosA;
+                    GimOut=0.999999992*nsinA;
+                }
+            }
 
             double calR = (1-GreOut*GreOut-GimOut*GimOut)/((1-GreOut)*(1-GreOut)+GimOut*GimOut);
             calR *= m_Z0;
@@ -831,11 +850,11 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
             computeSWR(_rawData.fq, m_Z0, calR, calX,&VSWR,&RL);
 
             data.value = VSWR;
-            m_measurements.last().swrGraphCalib.insert(data.key,data);
-            if( VSWR > maxSwr )
+            if( VSWR > MAX_SWR )
             {
-                data.value = maxSwr;
+                data.value = MAX_SWR;
             }
+            m_measurements.last().swrGraphCalib.insert(data.key,data);
             m_viewMeasurements.last().swrGraphCalib.insert(data.key,data);
 
             data.value = regulate(calR, VALUE_LIMIT);
@@ -899,7 +918,6 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
                     .arg(calR, 0, 'f', 4, QLatin1Char(' '))
                     .arg(calX, 0, 'f', 4, QLatin1Char(' '))
                     .arg(RhoPhase, 0, 'f', 4, QLatin1Char(' '));
-            //qDebug() << "RhoPhase: " << msg;
 
             data.value = RhoPhase;
             m_measurements.last().phaseGraphCalib.insert(data.key,data);
@@ -915,8 +933,6 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
             m_measurements.last().smithGraphCalib.insert(len, QCPCurveData(len, ptX, ptY));
             len = m_measurements.last().dataRX.length()*2 - 1;
             m_measurements.last().smithGraphViewCalib.insert(len, QCPCurveData(len, ptX, ptY));
-
-            //qDebug() << "calc smith" << _rawData.fq << ptX << ptY;
              //----------------------calc smith end---------------------------
         }
     }
@@ -928,7 +944,6 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
     if (!_redraw)
         return;
     on_redrawGraphs(m_measuringInProgress && !m_isContinuing);
-    //qDebug() << "on_newData: calc " << (t1-t0) << " msec, draw " << (QDateTime::currentMSecsSinceEpoch()-t1) << " msec";
 }
 
 void Measurements::prepareGraphs(RawData _rawData, GraphData& _data, GraphData& _calibData)
@@ -1001,6 +1016,20 @@ void Measurements::prepareGraphs(RawData _rawData, GraphData& _data, GraphData& 
                                             COR,COI,CSR,CSI,CLR,CLI, // Measured parameters of cal standards
                                             SOR,SOI,SSR,SSI,SLR,SLI, // Actual (Ideal) parameters of cal standards
                                             GreOut,GimOut); // Actual
+            //-----------vnn_04 _2
+            double chek_GreGim=sqrt((GreOut*GreOut)+(GimOut*GimOut));
+            //1)   ((GreOut==1)&&(GimOut==0))
+            //2)   (chek_GreGim>1)
+            if( ((GreOut==1)&&(GimOut==0))||(chek_GreGim>1)){
+                if((GreOut==1)&&(GimOut==0)){
+                    GreOut= 0.999999992;
+                }else{
+                    double ncosA= GreOut/chek_GreGim;
+                    double nsinA= GimOut/chek_GreGim;
+                    GreOut=0.999999992*ncosA;
+                    GimOut=0.999999992*nsinA;
+                }
+            }
 
             double calR = (1-GreOut*GreOut-GimOut*GimOut)/((1-GreOut)*(1-GreOut)+GimOut*GimOut);
             calR *= m_Z0;
@@ -1043,8 +1072,6 @@ void Measurements::prepareGraphs(RawData _rawData, GraphData& _data, GraphData& 
     NormRXtoSmithPoint(Rnorm, Xnorm, ptX, ptY);
     _data.ptX = ptX;
     _data.ptY = ptY;
-    //qDebug() << "*calc smith" << _rawData.fq << ptX << ptY;
-
 }
 
 
@@ -1279,6 +1306,11 @@ void Measurements::on_newCursorSmithPos (double x, double y, int index)
         {
             rho = m_measurements.at(index).rhoGraph.value(frequency).value;
             phase = m_measurements.at(index).phaseGraphCalib.value(frequency).value;
+//            // HUCK
+//            if (findedNum >= m_measurements.at(index).dataRXCalib.count()) {
+//                findedNum = m_measurements.at(index).dataRXCalib.count()-1;
+//            }
+//            //
             r = m_measurements.at(index).dataRXCalib.at(findedNum).r;
             x1 = m_measurements.at(index).dataRXCalib.at(findedNum).x;
         }
@@ -1308,6 +1340,11 @@ void Measurements::on_newCursorSmithPos (double x, double y, int index)
         {
             rho = m_measurements.at(index).rhoGraph.value(frequency).value;
             phase = m_measurements.at(index).phaseGraph.value(frequency).value;
+//            // HUCK
+//            if (findedNum >= m_measurements.at(index).dataRX.count()) {
+//                findedNum = m_measurements.at(index).dataRX.count()-1;
+//            }
+//            //
             r = m_measurements.at(index).dataRX.at(findedNum).r;
             x1 = m_measurements.at(index).dataRX.at(findedNum).x;
         }
@@ -3154,8 +3191,6 @@ int Measurements::CalcTdr(QVector <RawData> *data)
     float *TdrReal = new float[TDR_MAXARRAY];
     float *TdrImag = new float[TDR_MAXARRAY];
 
-    //qDebug() << asize << " " << minfq << " " <<  maxfq << " " <<  m_iTdrFftSize << " " <<  m_tdrResolution << " " <<  m_tdrRange;
-
 #define Rdevice 50.0
 
     for (i=0; i<=m_iTdrFftSize/2; i++)
@@ -3335,7 +3370,6 @@ void Measurements::on_dotsNumberChanged(int number)
 void Measurements::on_changeMeasureSystemMetric (bool state)
 {
     m_measureSystemMetric = state;
-    //qDebug() << "Measurements::on_changeMeasureSystemMetric" << m_tdrWidget->graphCount();
     if(m_tdrWidget->graphCount()>2)
     {
         if(m_measureSystemMetric)
@@ -3481,10 +3515,10 @@ void Measurements::replot()
     }
 #endif
 
-//    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
-//    QTabWidget* tabWidget = mainWindow->tabWidget();
-//    QWidget* tab = tabWidget->currentWidget();
-//    tab->repaint();
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+    QTabWidget* tabWidget = mainWindow->tabWidget();
+    QWidget* tab = tabWidget->currentWidget();
+    tab->repaint();
 }
 
 void Measurements::NormRXtoSmithPoint(double Rnorm, double Xnorm, double &x, double &y)
@@ -4785,10 +4819,6 @@ QPair<double, double> Measurements::autoCalibrate()
                     dBestMaxSwrValue = dMaxSwrValue;
                     dBestMaxSwrFq = dMaxSwrFq;
 
-//                    qDebug() << "m_cableResistance: " <<   m_cableResistance
-//                             << ", m_cableLength: " << m_cableLength
-//                             << ", dBestMaxSwrValue: " << dBestMaxSwrValue
-//                             << ", dBestMaxSwrFq: " << dBestMaxSwrFq;
                     QString msg = QString("Connector compensation: SWR=%1 at Fq=%2 MHz: Rcable=%3, Lcable=%4")
                             .arg(dBestMaxSwrValue)
                             .arg(dBestMaxSwrFq)
@@ -4822,9 +4852,6 @@ QPair<double, double> Measurements::autoCalibrate()
 
         m_cableLength = dBestLength;
         m_cableResistance = dBestResistance;
-
-        qDebug() << QString("Connector compensation: SWR=%1 at Fq=%2 MHz: Rcable=%3, Lcable=%4")
-                    .arg(dBestMaxSwrValue).arg(dBestMaxSwrFq).arg(m_cableResistance).arg(m_cableLength);
 
         stopAutocalibrateProgress();
         on_redrawGraphs();
@@ -5271,11 +5298,7 @@ void Measurements::redrawRp(bool _incrementally)
             m_rpWidget->graph(i*3+1)->addData(m_viewMeasurements[i].rprGraph.last());
         }
     }
-    //qint64 t1 = QDateTime::currentMSecsSinceEpoch();
     replot();
-    //qint64 t2 = QDateTime::currentMSecsSinceEpoch();
-
-    //qDebug() << "Measurements::redrawRp() redraw " << (t1-t0) << ", replot " << (t2-t1) << ", total " << (t2-t1);
 }
 
 void Measurements::redrawRl(bool _incrementally)

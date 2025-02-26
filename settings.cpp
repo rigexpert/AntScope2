@@ -178,8 +178,9 @@ Settings::Settings(QWidget *parent) :
 
     QString cablesPath = Settings::programDataPath("cables.txt");
     openCablesFile(cablesPath);
-
+    vnn_FormOn = true;//vnn_01
     connect(ui->closeBtn, &QPushButton::clicked, this, [=]() {
+        vnn_FormOn = false;//vnn_01
         MainWindow::m_mainWindow->closeSettingsDialog();
     });
     ui->closeBtn->setFocus();
@@ -1160,6 +1161,17 @@ void Settings::on_aa30updateComplete()
 {
     this->close();
 }
+ //vnn_01 do what you need here
+void  Settings::closeEvent(QCloseEvent *event)
+{
+    //if close by [X] btn
+    if(vnn_FormOn ){
+         MainWindow::m_mainWindow->closeSettingsDialog();
+    }
+    // then call parent's procedure
+   // QWidget::closeEvent(event);
+}
+
 
 void Settings::on_autoUpdatesCheckBox(bool checked)
 {

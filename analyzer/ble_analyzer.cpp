@@ -552,19 +552,22 @@ void BleAnalyzer::parseFRX(QDataStream& stream)
         stream >> id;
         if (m_name == "Match")
             id -= 1;
+        if (m_name == "MATCH U")
+            id -= 1;
         float fq_kHz;
         for (int i=0; i<4; i++) {
-            qint16 sr, sx;
+            qint16 sr, sx,n_curPnt;
             stream >> sr >> sx;
-            if(!((sr==0x0000)&&(sx==0x0000))){
-            float dr = shortToDouble(sr);
-            float dx = shortToDouble(sx);
-            fq_kHz = (start + (id+i)*step);
-            data.fq = fq_kHz / 1000.0;
-            data.r = dr;
-            data.x = dx;
-            emit newData(data);
-            }else{
+            n_curPnt=id+i;
+            if( (!((sr==0x0000)&&(sx==0x0000))) && (n_curPnt<=m_requestRecord.m_requestPoints) ){
+                float dr = shortToDouble(sr);
+                float dx = shortToDouble(sx);
+                fq_kHz = (start + (id+i)*step);
+                data.fq = fq_kHz / 1000.0;
+                data.r = dr;
+                data.x = dx;
+                emit newData(data);
+            } else {
                 data.r =1;
             }
         }
