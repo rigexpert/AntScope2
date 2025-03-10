@@ -202,6 +202,9 @@ private:
     QMap<QString, BleRequestRecord> m_analyzerRecords;
     QString m_name;
 
+    long m_frxTime;//vnn_05
+    bool m_frxGo = false;
+    qint16 m_frxCur;
     // DeviceFinder
     QBluetoothDeviceDiscoveryAgent *m_deviceDiscoveryAgent;
     QList<BleDeviceInfo*> m_devices;

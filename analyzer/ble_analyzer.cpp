@@ -364,8 +364,8 @@ void BleAnalyzer::sendPing()
     ping[BLE_PACKET_SIZE - 1] = CRC32::crc8(ping);
     write(ping);
 }
-
-void BleAnalyzer::handlePing()
+/*
+void BleAnalyzer::handlePing() //1sec timer
 {
     long cur = QDateTime::currentMSecsSinceEpoch();
     if ((cur - m_lastReadTimeMS) >= PING_TIMEOUT_MS) {
@@ -385,6 +385,40 @@ void BleAnalyzer::handlePing()
         m_bWaitingPing = false;
     }
 }
+*/
+void BleAnalyzer::handlePing() //vnn_05 1sec timer
+{
+    long cur = QDateTime::currentMSecsSinceEpoch();
+    long t_noRx =cur - m_lastReadTimeMS;
+    long t_noFRX =cur - m_frxTime;
+
+    //-----------for FRX point miss----
+    if ((t_noFRX >= 900)&&(isMeasuring())&&(m_frxGo==1)) {
+      m_frxGo=0;
+      QString str = QString("LostFRX ! %1 / %2").arg(m_frxCur).arg(m_requestRecord.m_requestPoints);
+      qInfo() << str;
+      emit completeMeasurement();
+     }
+
+    //-----------for ping--------------
+    if (t_noRx >= PING_TIMEOUT_MS) {
+        if ((m_bWaitingPing)&&(t_noRx>(2*PING_TIMEOUT_MS))) {
+            // error
+            // TODO...
+            AnalyzerParameters::setCurrent(nullptr);
+            m_pingTimer->stop();
+            QString err = tr("Analyzer disconnected");
+            setError(err);
+            emit analyzerDisconnected();
+        } else {
+            sendPing();// m_bWaitingPing = true;
+        }
+    } else {
+        m_bWaitingPing = false;
+    }
+}
+
+
 
 void BleAnalyzer::write(QByteArray& arr)
 {
@@ -528,6 +562,7 @@ void BleAnalyzer::parseRecData(QDataStream& stream)
 void BleAnalyzer::parseFRX(QDataStream& stream)
 {
     RawData data;
+    m_frxTime= QDateTime::currentMSecsSinceEpoch();
     if (!m_reuChip) {
         quint64 fq_Hz =0;
         float r1, x1;
@@ -543,6 +578,7 @@ void BleAnalyzer::parseFRX(QDataStream& stream)
         data.fq = fq_MHz;
         data.r = r1;
         data.x = x1;
+        m_frxCur++;
         emit newData(data);
     } else {
         float start = m_requestRecord.m_requestCenter - m_requestRecord.m_requestRange / 2;
@@ -566,6 +602,7 @@ void BleAnalyzer::parseFRX(QDataStream& stream)
                 data.fq = fq_kHz / 1000.0;
                 data.r = dr;
                 data.x = dx;
+                m_frxCur++;
                 emit newData(data);
             } else {
                 data.r =1;
@@ -744,6 +781,9 @@ void BleAnalyzer::startMeasure(qint64 from_hz, qint64 to_hz, int dotsNumber, boo
     setRequest(sss);
 
     write(data);
+    m_frxCur=0;
+    m_frxTime= QDateTime::currentMSecsSinceEpoch();
+    m_frxGo=true;
 }
 
 void BleAnalyzer::startMeasureOneFq(qint64 fqFrom_hz, int dotsNumber, bool frx)
