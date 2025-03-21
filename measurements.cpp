@@ -684,6 +684,8 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
     double X = _rawData.x;
     double Z = computeZ(R, X);
 
+    qDebug() << "Measurements::on_newData" << fq << R << X;
+
     data.value = regulate(R, VALUE_LIMIT);
     m_measurements.last().rsrGraph.insert(data.key,data);
     data.value = regulate(R, maxRs);

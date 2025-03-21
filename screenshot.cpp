@@ -127,6 +127,8 @@ void Screenshot::savePDF(QString path, QString comment)
 #ifdef NEW_ANALYZER
     AnalyzerParameters* param = AnalyzerParameters::current();
     QString name = param == nullptr ? "" : param->name();
+    if (name == "AA-1500 SE")
+        name = "AA-1500 ZOOM SE";
     QString model = CustomAnalyzer::customized() ?
                 CustomAnalyzer::currentPrototype() : name;
 #else
@@ -185,6 +187,8 @@ void Screenshot::on_newData(QByteArray data)
 #ifdef NEW_ANALYZER
     AnalyzerParameters* param = AnalyzerParameters::current();
     QString name = param == nullptr ? "" : param->name();
+    if (name == "AA-1500 SE")
+        name = "AA-1500 ZOOM SE";
     QString model = CustomAnalyzer::customized() ?
                         CustomAnalyzer::currentPrototype() : name;
 #else

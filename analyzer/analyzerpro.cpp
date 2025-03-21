@@ -510,6 +510,8 @@ void AnalyzerPro::on_checkUpdatesBtn_clicked()
 
     QString url = "https://www.rigexpert.com/getfirmware?app=antscope2&model=";
     QString name = AnalyzerParameters::getName();
+    if (name == "AA-1500 SE")
+        name = "AA-1500 ZOOM SE"; // HUCK short names supprt
     url += name.toLower().remove(" ").remove("-");
     url += "&sn=" + getSerialNumber();
     url += "&revision=" + getRevision();
@@ -693,6 +695,8 @@ void AnalyzerPro::applyAnalyzer()
 
     QString url = "https://www.rigexpert.com/getfirmware?part=antscope2&model=";
     QString name = AnalyzerParameters::getName();
+    if (name == "AA-1500 SE")
+        name = "AA-1500 ZOOM SE"; // HUCK short names supprt
     url += name.toLower().remove(" ").remove("-");
     url += "&sn=" + getSerialNumber();
     url += "&revision=" + getRevision();
