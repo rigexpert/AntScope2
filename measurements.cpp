@@ -2354,8 +2354,18 @@ void Measurements::saveData(quint32 number, QString path)
             data = m_measurements.at(number).dataRX;
         }
 
-        //Dots
         QJsonObject mainObj;
+
+        QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
+        QString minFq = MainWindow::m_mainWindow->analyzer()->getMinFq();
+        QString maxFq = MainWindow::m_mainWindow->analyzer()->getMaxFq();
+        qint64 min_fq = minFq.toLong();
+        qint64 max_fq = maxFq.toLong();
+        mainObj["Analyzer"] = name;
+        mainObj["MinFq"] = QJsonValue(min_fq);
+        mainObj["MaxFq"] = QJsonValue(max_fq);
+
+        //Dots
         mainObj["DotsNumber"] = data.length();
 
         //Measurements

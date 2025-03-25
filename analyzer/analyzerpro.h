@@ -42,6 +42,8 @@ public:
     QString getRevision() const;
     QString getSerialNumber(void) const;
     QString getLicense() const { return m_license; }
+    QString getMinFq(void);
+    QString getMaxFq(void);
 
     void updateFirmware (QIODevice *fw);
     void setContinuos(bool isContinuos);

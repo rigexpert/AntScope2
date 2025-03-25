@@ -226,6 +226,16 @@ QString AnalyzerPro::getSerialNumber(void) const
     return QString();
 }
 
+QString AnalyzerPro::getMinFq()
+{
+    return CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getMinFq();
+}
+
+QString AnalyzerPro::getMaxFq()
+{
+    return CustomAnalyzer::customized() ? CustomAnalyzer::currentPrototype() : AnalyzerParameters::getMaxFq();
+}
+
 void AnalyzerPro::on_measure (qint64 fqFrom, qint64 fqTo, qint32 dotsNumber)
 {
     //qDebug() << "AnalyzerPro::on_measure()";
