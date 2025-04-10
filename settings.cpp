@@ -71,10 +71,15 @@ Settings::Settings(QWidget *parent) :
                         "color: rgb(119, 119, 119);}";
 
     ui->openOpenFileBtn->setStyleSheet(style);
-    ui->openCalibBtn->setStyleSheet(style);
     ui->shortOpenFileBtn->setStyleSheet(style);
-    ui->shortCalibBtn->setStyleSheet(style);
     ui->loadOpenFileBtn->setStyleSheet(style);
+
+    ui->openOpenFileBtn->setVisible(false);
+    ui->shortOpenFileBtn->setVisible(false);
+    ui->loadOpenFileBtn->setVisible(false);
+
+    ui->openCalibBtn->setStyleSheet(style);
+    ui->shortCalibBtn->setStyleSheet(style);
     ui->loadCalibBtn->setStyleSheet(style);
     ui->calibWizard->setStyleSheet(style);
 
@@ -439,9 +444,16 @@ void Settings::setAnalyzer(AnalyzerPro * analyzer)
 
 void Settings::setCalibration(Calibration * calibration)
 {
+    if (!calibration || !calibration->isAnalyzerConnected()) {
+        ui->tabWidget->setTabVisible(1, false);
+        return;
+    }
     if(calibration)
     {
+        calibration->init(calibration->getSerial());
+        ui->tabWidget->setTabVisible(1, true);
         m_calibration = calibration;
+        ui->labelCalibrationPath->setText(m_calibration->getCalibrationPath());
         ui->labelOpenState->setText(m_calibration->getOpenFileName());
         ui->labelShortState->setText(m_calibration->getShortFileName());
         ui->labelLoadState->setText(m_calibration->getLoadFileName());

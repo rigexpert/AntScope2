@@ -1,7 +1,7 @@
 #include "calibration.h"
 #include "settings.h"
 #include "popupindicator.h"
-
+#include "mainwindow.h"
 
 Calibration::Calibration(QObject *parent) : QObject(parent),
     m_state(CALIB_NONE),
@@ -14,31 +14,46 @@ Calibration::Calibration(QObject *parent) : QObject(parent),
     m_analyzer(NULL),
     m_settings(NULL)
 {
+    init();
+}
 
-    //WCHAR path[MAX_PATH];
-    //SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
-    //QDir dir(QString::fromWCharArray(path));
-    //QString iniFilePath = dir.absoluteFilePath("RigExpert/AntScope2/") + "AntScope2.ini";
+void Calibration::init(const QString& _serial)
+{
+    QString serial = _serial;
+    if (serial.isEmpty()) {
+        serial = SelectionParameters::selected.serial;
+    }
+    setSerial(serial);
+    if (serial.isEmpty()) {
+        m_OSLCalibrationPerformed = false;
+        return;
+    }
 
     QString iniFilePath = Settings::localDataPath("AntScope2.ini");
 
-    //m_calibrationPath = dir.absoluteFilePath("RigExpert/AntScope2/Calibration/");
     m_calibrationPath = Settings::localDataPath("Calibration");
-    QDir().mkdir(m_calibrationPath);
+    if (!serial.isEmpty()) {
+        m_calibrationPath += "/" + serial;
+    }
 
+    QDir().mkdir(m_calibrationPath);
     m_settings = new QSettings(iniFilePath, QSettings::IniFormat);
     m_settings->beginGroup("Calibration");
-
     m_Z0 = m_settings->value("Z0", m_Z0).toDouble();
-    m_OSLCalibrationPerformed = m_settings->value("Performed", false).toBool();
-    m_OSLCalibrationEnabled = m_OSLCalibrationPerformed;//m_settings->value("Enabled", false).toBool();
+    setDotsNumber(m_settings->value("DotsNumber", 500).toInt());
+    m_settings->endGroup();
+
     QDir dir = m_calibrationPath;
     m_openCalibFilePath = dir.absoluteFilePath("cal_open.s1p");
     m_shortCalibFilePath = dir.absoluteFilePath("cal_short.s1p");
     m_loadCalibFilePath = dir.absoluteFilePath("cal_load.s1p");
+//    bool performed = QFile::exists(m_openCalibFilePath)
+//        && QFile::exists(m_shortCalibFilePath)
+//        && QFile::exists(m_loadCalibFilePath);
 
-    setDotsNumber(m_settings->value("DotsNumber", 500).toInt());
-    m_settings->endGroup();
+//    m_OSLCalibrationPerformed = performed;
+    start(true);
+    m_OSLCalibrationEnabled = false;
 }
 
 Calibration::~Calibration()
@@ -60,40 +75,25 @@ Calibration::~Calibration()
 
 void Calibration::start(bool force)
 {
-    QString notChoosed = tr("Not chosen");
+    if (!isAnalyzerConnected()) // m_OSLCalibrationPerformed ?
+        return;
+    //QString notChoosed = tr("Not chosen");
+    m_OSLCalibrationPerformed = false;
     if(force) // || m_OSLCalibrationPerformed)
     {
-        if(m_openCalibFilePath != "")
+        if(!QFile::exists(m_openCalibFilePath) || !m_openData.loadData(m_openCalibFilePath,&m_Z0))
         {
-            if(!m_openData.loadData(m_openCalibFilePath,&m_Z0))
-            {
-                m_openCalibFilePath = notChoosed;
-            }
+            return;
         }
-        if(m_shortCalibFilePath != "")
+        if(!QFile::exists(m_shortCalibFilePath) || !m_shortData.loadData(m_shortCalibFilePath,&m_Z0))
         {
-            if(!m_shortData.loadData(m_shortCalibFilePath,&m_Z0))
-            {
-                m_shortCalibFilePath = notChoosed;
-            }
+            return;
         }
-        if(m_loadCalibFilePath != "")
+        if(!QFile::exists(m_loadCalibFilePath) || !m_loadData.loadData(m_loadCalibFilePath,&m_Z0))
         {
-            if(!m_loadData.loadData(m_loadCalibFilePath,&m_Z0))
-            {
-                m_loadCalibFilePath = notChoosed;
-            }
+            return;
         }
-
-        if( (m_openCalibFilePath != notChoosed) &&
-            (m_shortCalibFilePath != notChoosed) &&
-            (m_loadCalibFilePath != notChoosed))
-        {
-            m_OSLCalibrationPerformed = true;
-        }else
-        {
-            m_OSLCalibrationPerformed = false;
-        }
+        m_OSLCalibrationPerformed = true;
     }
 }
 
@@ -110,6 +110,11 @@ bool Calibration::getCalibrationEnabled(void)
 void Calibration::setAnalyzer(AnalyzerPro *analyzer)
 {
     m_analyzer = analyzer;
+}
+
+QString Calibration::getCalibrationPath()
+{
+    return m_calibrationPath;
 }
 
 QString Calibration::getOpenFileName()
@@ -504,3 +509,20 @@ void Calibration::on_enableOSLCalibration(bool enabled)
     }
 
 }
+
+void Calibration::on_crcError()
+{
+    if (m_state == CALIB_NONE)
+        return;
+    PopUpIndicator::hideIndicator();
+    m_state = CALIB_NONE;
+    m_onlyOneCalib = false;
+    emit setCalibrationMode(false);
+    if (m_analyzer != nullptr) {
+        disconnect(m_analyzer,SIGNAL(newData(rawData)),
+                   this, SLOT(on_newData(rawData)));
+        m_analyzer->setIsMeasuring(false);
+    }
+    QMessageBox::critical(NULL, tr("CRC Error"), tr("Analyzer error: wrong CRC"), QMessageBox::Ok);
+}
+

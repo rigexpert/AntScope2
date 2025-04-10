@@ -686,6 +686,7 @@ void AnalyzerPro::connectSignals()
     connect(m_baseAnalyzer, &BaseAnalyzer::receivedMatch_ProfileB16, this, [=](QByteArray data){
         emit signalMatch_Profile_B16Received(data);
     });
+    connect(m_baseAnalyzer, &BaseAnalyzer::crcError, this, &AnalyzerPro::crcError);
 }
 
 void AnalyzerPro::applyAnalyzer()

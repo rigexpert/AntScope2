@@ -449,6 +449,7 @@ void BleAnalyzer::dataReceived(const QLowEnergyCharacteristic &c, const QByteArr
         qInfo() << "errorCRC";
         QString err = tr("Analyzer error: wrong CRC");
         setError(err);
+        emit crcError();
         return;
     }
     if (value[0] == (quint8)BLE_PING_CMD) {
@@ -667,6 +668,7 @@ void BleAnalyzer::parseFullInfo(QDataStream& stream)
     case (quint8)BLE_FULLINFO_SERIAL_VER:
     {
         QString serial = bytesToString(stream);
+        m_serialNumber = serial;
         quint16 major, minor, build;
         stream >> major >> minor >> build;
         str = "S/N: " + serial;

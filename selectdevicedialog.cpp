@@ -131,14 +131,16 @@ void SelectDeviceDialog::changeEvent(QEvent *e)
 void SelectDeviceDialog::onApply(ReDeviceInfo::InterfaceType type,
                                  QString name, QString port_or_serial)
 {
+    name.replace("\r", "");
     int _type = (int)type;
+    QString serial;
     qDebug() << "SelectDeviceDialog::onApply" << (int)type << name << port_or_serial;
     AnalyzerParameters* param=nullptr;
     if (type == (int)ReDeviceInfo::HID) {
         int prefix = AnalyzerParameters::prefixFromSerial(port_or_serial);
         param = AnalyzerParameters::byPrefix(prefix);
         if (prefix == 0 || param == nullptr) {
-            QMessageBox::warning(this, tr("Select deice"), tr("Serial number does not match the type of device"));
+            QMessageBox::warning(this, tr("Select device"), tr("Serial number does not match the type of device"));
             return;
         }
     } else if (type == (int)ReDeviceInfo::NANO) {
@@ -148,6 +150,13 @@ void SelectDeviceDialog::onApply(ReDeviceInfo::InterfaceType type,
         param = AnalyzerParameters::byName(name);
     } else if (type == (int)ReDeviceInfo::BLE) {
         param = AnalyzerParameters::byName(name);
+        QStringList args = name.split(' ');
+        if (args.size() > 1) {
+            serial = args.at(args.size()-1);
+        }
+        if (serial.length() < 9 && param != nullptr) {
+            serial = QString("%1%2").arg(param->prefix(), 4, 10, QChar('0')).arg(serial);
+        }
     }
     if (param == nullptr)
         return;
@@ -155,6 +164,7 @@ void SelectDeviceDialog::onApply(ReDeviceInfo::InterfaceType type,
     SelectionParameters::selected.type = type;
     SelectionParameters::selected.id = port_or_serial;
     SelectionParameters::selected.modelIndex = param->index();
+    SelectionParameters::selected.serial = serial;
 
     AnalyzerParameters::setCurrent(param);
 

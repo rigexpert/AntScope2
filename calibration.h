@@ -326,6 +326,9 @@ public:
     explicit Calibration(QObject *parent = 0);
     ~Calibration();
 
+    bool isAnalyzerConnected() { return !m_serial.isEmpty(); }
+    void setSerial(const QString& _serial=QString()) { m_serial = _serial; }
+    QString getSerial() { return m_serial; }
     void start(bool force=false);
     bool getCalibrationPerformed(void);
     bool getCalibrationEnabled(void);
@@ -337,6 +340,7 @@ public:
                           double SOR, double SOI, double SSR, double SSI, double SLR, double SLI, // Actual parameters of cal standards
                           double& MAR, double& MAI);
 
+    QString getCalibrationPath();
     QString getOpenFileName();
     QString getShortFileName();
     QString getLoadFileName();
@@ -345,6 +349,7 @@ public:
     void setZ0 (double _Z0) {m_Z0 = _Z0;}
     int dotsNumber() { return ((m_dotsNumber < 0) ? 500 : m_dotsNumber); }
     void setDotsNumber(int _dots) { m_dotsNumber = (_dots > 2000) ? 2000 : _dots; }
+    void init(const QString& _serial=QString());
 
 private:
     CalibData m_openData;
@@ -371,7 +376,7 @@ private:
     void clearCalibration(void);
     QString m_calibrationPath;
     int m_dotsNumber;
-
+    QString m_serial;
 
 signals:
     void progress(int, int);
@@ -388,6 +393,7 @@ public slots:
     void on_shortOpenFile(QString path);
     void on_loadOpenFile(QString path);
     void on_enableOSLCalibration(bool enabled);
+    void on_crcError();
 
 };
 

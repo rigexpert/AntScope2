@@ -497,12 +497,13 @@ void Measurements::on_newMeasurement(QString name)
 
 void Measurements::on_continueMeasurement(qint64 from, qint64 to, qint32 dots)
 {
-    Q_UNUSED (from);
-    Q_UNUSED (to);
-    Q_UNUSED (dots);
+   // Q_UNUSED (from);
+  //  Q_UNUSED (to);
+  //  Q_UNUSED (dots);
 
     m_isContinuing = true;
     m_currentPoint = 0;
+    m_measurements.last().set(from, to, dots); //vnn_0327
 
     delete m_measurements.last().smithCurve;
     delete m_viewMeasurements.last().smithCurve;
@@ -652,7 +653,84 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
     QCPData data;
     data.key = fq;
     data.value = regulate(VSWR, MAX_SWR);
+    //----------------------------------------------
+    //----2025_0326 vnn_0327
+    double fqDx =( ((m_measurements.last().qint64To - m_measurements.last().qint64From)/m_measurements.last().qint64Dots))/1000;//
+    double fqDx_up =fq+ (fqDx*0.9);//
+    double fqDx_dn =fq- (fqDx*0.8);//
+    //double fqMinLimit = m_measurements.last().qint64From/1000;
+    double fqMaxLimit = m_measurements.last().qint64To/1000;
+    //x intervals clear ...new.data...|N-1|fqDx_dn|N|fqDx_up|O|...old.data..
+    QCPDataMap *swrmapX;
+    swrmapX = &( m_measurements.last().swrGraph);
+    QList <double> swrkeysX = swrmapX->keys();
+    int keyId_cur = swrkeysX.length()-1;
+    if(keyId_cur>4){
+        double keyFq_cur =swrkeysX.at(keyId_cur);
+        while((keyId_cur>=0)&&(keyFq_cur>fqDx_dn)){
+            if(((keyFq_cur>fqDx_dn)&&(keyFq_cur<fqDx_up))||(keyFq_cur>fqMaxLimit)){
+             //---del_rec----
+             m_measurements.last().swrGraph.remove(keyFq_cur);
 
+             m_measurements.last().rsrGraph.remove(keyFq_cur);
+             m_viewMeasurements.last().rsrGraph.remove(keyFq_cur);
+             m_measurements.last().rsxGraph.remove(keyFq_cur);
+             m_viewMeasurements.last().rsxGraph.remove(keyFq_cur);
+             m_measurements.last().rszGraph.remove(keyFq_cur);
+             m_viewMeasurements.last().rszGraph.remove(keyFq_cur);
+
+             m_measurements.last().rprGraph.remove(keyFq_cur);
+             m_viewMeasurements.last().rprGraph.remove(keyFq_cur);
+             m_measurements.last().rpxGraph.remove(keyFq_cur);
+             m_viewMeasurements.last().rpxGraph.remove(keyFq_cur);
+             m_measurements.last().rpzGraph.remove(keyFq_cur);
+             m_viewMeasurements.last().rpzGraph.remove(keyFq_cur);
+
+             m_measurements.last().rlGraph.remove(keyFq_cur);
+
+             m_measurements.last().phaseGraph.remove(keyFq_cur);
+             m_measurements.last().rhoGraph.remove(keyFq_cur);
+              //---calibr
+             if(m_calibration != NULL)
+             {
+                 if(m_calibration->getCalibrationPerformed())
+                 {
+                     m_measurements.last().swrGraphCalib.remove(keyFq_cur);
+                     m_viewMeasurements.last().swrGraphCalib.remove(keyFq_cur);
+
+                     m_measurements.last().rsrGraphCalib.remove(keyFq_cur);
+                     m_viewMeasurements.last().rsrGraphCalib.remove(keyFq_cur);
+
+                     m_measurements.last().rsxGraphCalib.remove(keyFq_cur);
+                     m_viewMeasurements.last().rsxGraphCalib.remove(keyFq_cur);
+
+                     m_measurements.last().rszGraphCalib.remove(keyFq_cur);
+                     m_viewMeasurements.last().rszGraphCalib.remove(keyFq_cur);
+
+                     m_measurements.last().rprGraphCalib.remove(keyFq_cur);
+                     m_viewMeasurements.last().rprGraphCalib.remove(keyFq_cur);
+
+                     m_measurements.last().rpxGraphCalib.remove(keyFq_cur);
+                     m_viewMeasurements.last().rpxGraphCalib.remove(keyFq_cur);
+
+                     m_measurements.last().rpzGraphCalib.remove(keyFq_cur);
+                     m_viewMeasurements.last().rpzGraphCalib.remove(keyFq_cur);
+
+                     m_measurements.last().rlGraphCalib.remove(keyFq_cur);
+
+                     m_measurements.last().phaseGraphCalib.remove(keyFq_cur);
+                     m_measurements.last().rhoGraphCalib.remove(keyFq_cur);
+                 }
+              }
+            }
+            keyId_cur--;
+            if(keyId_cur>=0){
+             keyFq_cur =swrkeysX.at(keyId_cur);
+            }
+        }
+    }
+
+   //-------------------------------------------//vnn_0326
     m_measurements.last().swrGraph.insert(data.key,data);
 
     m_swrWidget->graph(0)->setData(x,y);
@@ -2354,18 +2432,8 @@ void Measurements::saveData(quint32 number, QString path)
             data = m_measurements.at(number).dataRX;
         }
 
-        QJsonObject mainObj;
-
-        QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
-        QString minFq = MainWindow::m_mainWindow->analyzer()->getMinFq();
-        QString maxFq = MainWindow::m_mainWindow->analyzer()->getMaxFq();
-        qint64 min_fq = minFq.toLong();
-        qint64 max_fq = maxFq.toLong();
-        mainObj["Analyzer"] = name;
-        mainObj["MinFq"] = QJsonValue(min_fq);
-        mainObj["MaxFq"] = QJsonValue(max_fq);
-
         //Dots
+        QJsonObject mainObj;
         mainObj["DotsNumber"] = data.length();
 
         //Measurements

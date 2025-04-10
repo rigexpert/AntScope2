@@ -392,6 +392,7 @@ MainWindow::MainWindow(QWidget *parent) :
             m_analyzer,SLOT(setCalibrationMode(bool)));
     connect(m_calibration,SIGNAL(setCalibrationMode(bool)),
             m_measurements,SLOT(setCalibrationMode(bool)));
+    connect(m_analyzer, &AnalyzerPro::crcError, m_calibration, &Calibration::on_crcError);
     m_measurements->setCalibration(m_calibration);
 
     ui->checkBoxCalibration->blockSignals(true);
@@ -2722,6 +2723,7 @@ void MainWindow::on_analyzerNameFound(QString name)
     QString name1 = "AntScope2 v." + QString(ANTSCOPE2VER);
     setWindowTitle(name1 + " - " + name);
 
+    ui->checkBoxCalibration->setCheckState(Qt::Unchecked);
     bool zeroII = name.contains("Zero II");
     ui->singleStart->setEnabled(true);
     ui->continuousStartBtn->setEnabled(true);
@@ -2778,6 +2780,7 @@ void MainWindow::on_analyzerNameFound(QString name)
     } else {
         ui->spinBoxPoints->setEnabled(true);
     }
+    m_calibration->init(m_analyzer->getSerialNumber());
 }
 
 void MainWindow::on_deviceDisconnected()
@@ -2798,6 +2801,8 @@ void MainWindow::on_deviceDisconnected()
     ui->continuousStartBtn->setChecked(false);
     m_measurements->setContinuous(false);
     m_bInterrupted = true;
+    if (m_calibration != nullptr)
+        m_calibration->setSerial(QString());
 
     if (m_analyzer != nullptr)
         m_analyzer->searchAnalyzer();
@@ -4772,6 +4777,11 @@ void MainWindow::on_settingsBtn_clicked()
     m_settingsDialog->setAttribute(Qt::WA_DeleteOnClose);
     m_settingsDialog->setWindowTitle(tr("Settings"));
     m_settingsDialog->setAnalyzer(m_analyzer);
+    if(m_analyzer->getSerialNumber().isEmpty()) {
+        m_calibration->setSerial(SelectionParameters::selected.serial);
+    } else {
+        m_calibration->setSerial(m_analyzer->getSerialNumber());
+    }
     m_settingsDialog->setCalibration(m_calibration);
     m_settingsDialog->setMeasureSystemMetric(m_measureSystemMetric);
     m_settingsDialog->setZ0(m_Z0);
@@ -4846,12 +4856,12 @@ void MainWindow::on_settingsBtn_clicked()
     connect(m_settingsDialog,SIGNAL(startCalibrationLoad()),
             m_calibration,SLOT(on_startCalibrationLoad()));
 
-    connect(m_settingsDialog,SIGNAL(openOpenFile(QString)),
-            m_calibration,SLOT(on_openOpenFile(QString)));
-    connect(m_settingsDialog,SIGNAL(shortOpenFile(QString)),
-            m_calibration,SLOT(on_shortOpenFile(QString)));
-    connect(m_settingsDialog,SIGNAL(loadOpenFile(QString)),
-            m_calibration,SLOT(on_loadOpenFile(QString)));
+//    connect(m_settingsDialog,SIGNAL(openOpenFile(QString)),
+//            m_calibration,SLOT(on_openOpenFile(QString)));
+//    connect(m_settingsDialog,SIGNAL(shortOpenFile(QString)),
+//            m_calibration,SLOT(on_shortOpenFile(QString)));
+//    connect(m_settingsDialog,SIGNAL(loadOpenFile(QString)),
+//            m_calibration,SLOT(on_loadOpenFile(QString)));
 
     connect(m_settingsDialog,SIGNAL(calibrationEnabled(bool)),
             m_calibration,SLOT(on_enableOSLCalibration(bool)));
@@ -6029,9 +6039,15 @@ void MainWindow::onSpinChanged(int value)
 
 void MainWindow::calibrationToggled(bool checked)
 {
+    if (m_settingsDialog != nullptr) {
+        ui->checkBoxCalibration->blockSignals(true);
+        ui->checkBoxCalibration->setCheckState(Qt::Unchecked);
+        ui->checkBoxCalibration->blockSignals(false);
+        return;
+    }
     if(!m_calibration->getCalibrationPerformed())
     {
-        QMessageBox::information(NULL, tr("!!!!Calibration not performed"),
+        QMessageBox::warning(NULL, tr("!!!!Calibration not performed"),
                               tr("Calibration not performed."));
         ui->checkBoxCalibration->blockSignals(true);
         ui->checkBoxCalibration->setCheckState(Qt::Unchecked);
@@ -6687,6 +6703,7 @@ void MainWindow::on_selectDeviceDialog()
 
     SelectDeviceDialog dlg(false, this);
     if (dlg.exec() == QDialog::Accepted) {
+        SelectionParameters sel_par = SelectionParameters::selected;
         AnalyzerParameters* selected = AnalyzerParameters::current();
         if (selected != nullptr) {
             m_analyzer->on_connectDevice(dlg.analyzer());

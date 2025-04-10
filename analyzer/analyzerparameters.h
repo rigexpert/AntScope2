@@ -401,7 +401,7 @@ struct SelectionParameters
     int modelIndex=-1;
     ReDeviceInfo::InterfaceType type=ReDeviceInfo::WRONG;
     QString id; // COM: port, HID: serial, BLE: address
-
+    QString serial; // BLE: serial from name (Match 12345, Stick 230 12345)
     static SelectionParameters selected;
 
     bool valid() { return (type != ReDeviceInfo::WRONG); }

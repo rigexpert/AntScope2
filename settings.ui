@@ -35,7 +35,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="General">
       <attribute name="title">
@@ -527,7 +527,7 @@
            </layout>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item row="2" column="0">
           <widget class="QGroupBox" name="groupBox_3">
            <property name="title">
             <string>Open</string>
@@ -585,7 +585,7 @@
            </layout>
           </widget>
          </item>
-         <item row="2" column="0">
+         <item row="3" column="0">
           <widget class="QGroupBox" name="groupBox_4">
            <property name="title">
             <string>Short</string>
@@ -640,7 +640,7 @@
            </layout>
           </widget>
          </item>
-         <item row="3" column="0">
+         <item row="4" column="0">
           <widget class="QGroupBox" name="groupBox_5">
            <property name="title">
             <string>Load</string>
@@ -693,6 +693,13 @@
              </widget>
             </item>
            </layout>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="labelCalibrationPath">
+           <property name="text">
+            <string>TextLabel</string>
+           </property>
           </widget>
          </item>
         </layout>
