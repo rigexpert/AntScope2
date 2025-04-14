@@ -2,6 +2,7 @@
 #define MARKERS_H
 
 #include <QObject>
+#include <QMetaType>
 #include <qcustomplot.h>
 #include <popup.h>
 #include <markerspopup.h>
