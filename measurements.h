@@ -14,7 +14,11 @@
 #include <complex>
 #include <settings.h>
 #include <float.h>
+
+#ifdef OLD_TDR
 #include "ProgressDlg.h"
+#endif
+
 #include "onefqwidget.h"
 #include "CustomPlot.h"
 #include "tdrprogressdialog.h"

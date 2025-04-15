@@ -350,6 +350,7 @@ public:
     int dotsNumber() { return ((m_dotsNumber < 0) ? 500 : m_dotsNumber); }
     void setDotsNumber(int _dots) { m_dotsNumber = (_dots > 2000) ? 2000 : _dots; }
     void init(const QString& _serial=QString());
+    void cancel();
 
 private:
     CalibData m_openData;
@@ -389,9 +390,6 @@ public slots:
     void on_startCalibrationShort();
     void on_startCalibrationLoad();
 
-    void on_openOpenFile(QString path);
-    void on_shortOpenFile(QString path);
-    void on_loadOpenFile(QString path);
     void on_enableOSLCalibration(bool enabled);
     void on_crcError();
 

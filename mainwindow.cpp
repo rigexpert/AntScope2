@@ -6744,6 +6744,7 @@ void MainWindow::closeSettingsDialog()
     ui->settingsBtn->setEnabled(true);
     //---vnn_02_copy--for check_box calibrations unlock-faster--
     bool force = true;
+    m_calibration->cancel();
     m_calibration->start(force);
     //ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
     //ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());

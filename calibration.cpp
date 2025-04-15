@@ -206,12 +206,7 @@ void Calibration::on_newData(RawData _rawData)
                 }
             }else
             {
-                PopUpIndicator::hideIndicator();
-                m_state = CALIB_NONE;
-                m_onlyOneCalib = false;
-                disconnect(m_analyzer,SIGNAL(newData(rawData)),
-                        this, SLOT(on_newData(rawData)));
-            }
+                cancel();            }
             break;
         case CALIB_SHORT:
             m_shortData.saveData(dir.absoluteFilePath("cal_short.s1p"),m_Z0);
@@ -227,33 +222,34 @@ void Calibration::on_newData(RawData _rawData)
                 }
             }else
             {
-                PopUpIndicator::hideIndicator();
-                m_state = CALIB_NONE;
-                m_onlyOneCalib = false;
-                disconnect(m_analyzer,SIGNAL(newData(rawData)),
-                        this, SLOT(on_newData(rawData)));
+                cancel();
             }
             break;
         case CALIB_LOAD:
             m_loadData.saveData(dir.absoluteFilePath("cal_load.s1p"),m_Z0);
             m_loadCalibFilePath = dir.absoluteFilePath("cal_load.s1p");
-            m_state = CALIB_NONE;
             if(!m_onlyOneCalib)
             {
                 m_OSLCalibrationPerformed = true;
                 QMessageBox::information(NULL, tr("Finish"),
                              tr("Calibration finished!"));
-                PopUpIndicator::hideIndicator();
             }
-            m_onlyOneCalib = false;
-            disconnect(m_analyzer,SIGNAL(newData(rawData)),
-                    this, SLOT(on_newData(rawData)));
+            cancel();
             break;
         default:
             break;
         }
 
     }
+}
+
+void Calibration::cancel()
+{
+    PopUpIndicator::hideIndicator();
+    m_state = CALIB_NONE;
+    m_onlyOneCalib = false;
+    disconnect(m_analyzer,SIGNAL(newData(rawData)),
+               this, SLOT(on_newData(rawData)));
 }
 
 void Calibration::clearCalibration(void)
@@ -286,8 +282,7 @@ void Calibration::on_startCalibration()
     if((m_state <= CALIB_OPEN)||(m_state >=CALIB_NUM))
     {
         clearCalibration();
-        connect(m_analyzer,SIGNAL(newData(rawData)),
-                this, SLOT(on_newData(rawData)));
+        connect(m_analyzer, &AnalyzerPro::newData, this, &Calibration::on_newData);
         m_state = CALIB_OPEN;
     }
 
@@ -307,8 +302,7 @@ void Calibration::on_startCalibrationOpen()
     PopUpIndicator::showIndicator();
     if(m_analyzer != NULL)
     {
-        connect(m_analyzer,SIGNAL(newData(rawData)),
-                this, SLOT(on_newData(rawData)));
+        connect(m_analyzer, &AnalyzerPro::newData, this, &Calibration::on_newData);
         emit setCalibrationMode(true);
         m_analyzer->on_measureCalib(dotsNumber());
     }
@@ -322,8 +316,7 @@ void Calibration::on_startCalibrationShort()
     m_shortData.clear();
     if(m_analyzer != NULL)
     {
-        connect(m_analyzer,SIGNAL(newData(rawData)),
-                this, SLOT(on_newData(rawData)));
+        connect(m_analyzer, &AnalyzerPro::newData, this, &Calibration::on_newData);
         emit setCalibrationMode(true);
         m_analyzer->on_measureCalib(dotsNumber());
     }
@@ -337,58 +330,9 @@ void Calibration::on_startCalibrationLoad()
     m_loadData.clear();
     if(m_analyzer != NULL)
     {
-        connect(m_analyzer,SIGNAL(newData(rawData)),
-                this, SLOT(on_newData(rawData)));
+        connect(m_analyzer, &AnalyzerPro::newData, this, &Calibration::on_newData);
         emit setCalibrationMode(true);
         m_analyzer->on_measureCalib(dotsNumber());
-    }
-}
-
-void Calibration::on_openOpenFile(QString path)
-{
-    QString notChoosed = tr("Not chosen");
-
-    if(m_openData.loadData(path,&m_Z0))
-    {
-        m_openCalibFilePath = path;
-    }
-    if( (m_openCalibFilePath != notChoosed) &&
-         (m_shortCalibFilePath != notChoosed) &&
-         (m_loadCalibFilePath != notChoosed))
-    {
-        m_OSLCalibrationPerformed = true;
-    }
-}
-
-void Calibration::on_shortOpenFile(QString path)
-{
-    QString notChoosed = tr("Not chosen");
-
-    if(m_shortData.loadData(path,&m_Z0))
-    {
-        m_shortCalibFilePath = path;
-    }
-    if( (m_openCalibFilePath != notChoosed) &&
-         (m_shortCalibFilePath != notChoosed) &&
-         (m_loadCalibFilePath != notChoosed))
-    {
-        m_OSLCalibrationPerformed = true;
-    }
-}
-
-void Calibration::on_loadOpenFile(QString path)
-{
-    QString notChoosed = tr("Not chosen");
-
-    if(m_loadData.loadData(path,&m_Z0))
-    {
-        m_loadCalibFilePath = path;
-    }
-    if( (m_openCalibFilePath != notChoosed) &&
-         (m_shortCalibFilePath != notChoosed) &&
-         (m_loadCalibFilePath != notChoosed))
-    {
-        m_OSLCalibrationPerformed = true;
     }
 }
 
@@ -523,6 +467,8 @@ void Calibration::on_crcError()
                    this, SLOT(on_newData(rawData)));
         m_analyzer->setIsMeasuring(false);
     }
-    QMessageBox::critical(NULL, tr("CRC Error"), tr("Analyzer error: wrong CRC"), QMessageBox::Ok);
+    QMessageBox::critical(NULL, tr("CRC Error"),
+                          tr("Analyzer error. \nIt is recommended to perform calibration with connection via USB"),
+                          QMessageBox::Ok);
 }
 

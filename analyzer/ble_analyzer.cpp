@@ -443,7 +443,7 @@ void BleAnalyzer::dataReceived(const QLowEnergyCharacteristic &c, const QByteArr
 {
     if (c.uuid() != QBluetoothUuid(uuidRead))
         return;
-    qInfo() << trace("dataReceived: ", const_cast<QByteArray&>(value));
+    //qInfo() << trace("dataReceived: ", const_cast<QByteArray&>(value));
     m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
     if (!checkCRC(value)) {
         qInfo() << "errorCRC";
