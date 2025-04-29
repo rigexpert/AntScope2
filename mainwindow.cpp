@@ -5305,7 +5305,11 @@ void MainWindow::on_printBtn_clicked()
         //m_print->setRange(m_smithWidget->xAxis->range(),m_smithWidget->yAxis->range());
         m_print->setRange(m_smithWidget);
         m_print->setLabel(m_smithWidget->xAxis->label(), m_smithWidget->yAxis->label());
-
+        QTimer::singleShot(1, this, [this]() { // fix elipse smith bug
+            QSize sz = m_print->size();
+            sz.rwidth()+=1;
+            m_print->resize(sz);
+        });
         for(int i = 0; i < m_measurements->getMeasurementLength(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->

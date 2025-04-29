@@ -58,19 +58,21 @@ void Calibration::init(const QString& _serial)
 
 Calibration::~Calibration()
 {
-    m_settings->beginGroup("Calibration");
+    if (m_settings != nullptr) {
+        m_settings->beginGroup("Calibration");
 
-    m_settings->setValue("Z0", m_Z0);
-    m_settings->setValue("Performed", m_OSLCalibrationPerformed);
-    m_settings->setValue("Enabled", m_OSLCalibrationEnabled);
-    m_settings->setValue("OpenPath", m_openCalibFilePath);
-    m_settings->setValue("ShortPath", m_shortCalibFilePath);
-    m_settings->setValue("LoadPath", m_loadCalibFilePath);
-    m_settings->setValue("DotsNumber", dotsNumber());
+        m_settings->setValue("Z0", m_Z0);
+        m_settings->setValue("Performed", m_OSLCalibrationPerformed);
+        m_settings->setValue("Enabled", m_OSLCalibrationEnabled);
+        m_settings->setValue("OpenPath", m_openCalibFilePath);
+        m_settings->setValue("ShortPath", m_shortCalibFilePath);
+        m_settings->setValue("LoadPath", m_loadCalibFilePath);
+        m_settings->setValue("DotsNumber", dotsNumber());
 
-    m_settings->endGroup();
-    m_settings->sync();
-    QString file = m_settings->fileName();
+        m_settings->endGroup();
+        m_settings->sync();
+        //QString file = m_settings->fileName();
+    }
 }
 
 void Calibration::start(bool force)
