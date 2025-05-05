@@ -4,6 +4,8 @@
 #
 #-------------------------------------------------
 
+QMAKE_PROJECT_DEPTH = 0
+
 QT       += core gui
 QT       += printsupport
 QT       += serialport
