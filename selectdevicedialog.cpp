@@ -66,9 +66,12 @@ SelectDeviceDialog::SelectDeviceDialog(bool silent, QWidget *parent) :
         QTableWidgetItem* name = ui->tableWidget->item(_item->row(), 0);
         QTableWidgetItem* column = ui->tableWidget->item(_item->row(), 1);
         ReDeviceInfo::InterfaceType _type = (ReDeviceInfo::InterfaceType)(name->data(Qt::UserRole+1).toInt());
+        QString serial = _type == ReDeviceInfo::InterfaceType::HID
+              ? column->data(Qt::UserRole+2).toString()
+                             : column->data(Qt::DisplayRole).toString();
         onApply(_type,
                 name->data(Qt::DisplayRole).toString(),
-                column->data(Qt::DisplayRole).toString());
+                serial);
     });
     connect(ui->pushButtonConnect, &QPushButton::clicked, this, [=]{
         QTableWidgetItem* item = ui->tableWidget->currentItem();
@@ -77,9 +80,12 @@ SelectDeviceDialog::SelectDeviceDialog(bool silent, QWidget *parent) :
         QTableWidgetItem* name = ui->tableWidget->item(item->row(), 0);
         QTableWidgetItem* id = ui->tableWidget->item(item->row(), 1);
         ReDeviceInfo::InterfaceType _type = (ReDeviceInfo::InterfaceType)(name->data(Qt::UserRole+1).toInt());
+        QString serial = _type == ReDeviceInfo::InterfaceType::HID
+                             ? id->data(Qt::UserRole+2).toString()
+                             : id->data(Qt::DisplayRole).toString();
         onApply(_type,
                 name->data(Qt::DisplayRole).toString(),
-                id->data(Qt::DisplayRole).toString());
+                serial);
     });
     connect(ui->checkBox, &QCheckBox::toggled, this, [=](bool checked){
         QString path = Settings::setIniFile();
@@ -284,13 +290,20 @@ void SelectDeviceDialog::onScan(ReDeviceInfo::InterfaceType type)
         int row = 0;
         foreach (const ReDeviceInfo &info, list)
         {
+            QString prefix = info.serial().mid(0, 4);
+            if (prefix == "5001") // skip REAMP
+                continue;
             QString name = info.systemName().replace("Analyzer", "", Qt::CaseInsensitive).trimmed();
 
             QTableWidgetItem* item = new QTableWidgetItem(name);
             item->setData(Qt::UserRole+1, (int)ReDeviceInfo::HID);
             ui->tableWidget->setItem(row, 0, item);
 
-            item = new QTableWidgetItem(info.serial().trimmed());
+            QString serial = info.serial().trimmed();
+            if (!name.contains("Match", Qt::CaseInsensitive))
+                serial = serial.mid(4);
+            item = new QTableWidgetItem(serial);
+            item->setData(Qt::UserRole+2, info.serial().trimmed());
             ui->tableWidget->setItem(row, 1, item);
             row++;
         }

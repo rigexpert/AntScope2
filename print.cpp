@@ -127,10 +127,21 @@ void Print::setData(QCPDataMap *m, QPen pen, QString name)
     ui->widgetGraph->graph()->setPen(pen);
     ui->widgetGraph->graph()->setName(name);
     ui->widgetGraph->graph()->setVisible(true);
-    qDebug() << "Print::setData " << m->count() << pen.color().name() << name << ui->widgetGraph->xAxis->range().lower << ui->widgetGraph->xAxis->range().upper << ui->widgetGraph->yAxis->range().lower << ui->widgetGraph->yAxis->range().upper;
-    if (name == "|Z|") {
-        ui->widgetGraph->graph()->setValueAxis(ui->widgetGraph->yAxis2);
-    }
+
+// !!! implement |Z| axis on the main charts at first
+//    if (name == "|Z|" || name == "|Zp|") {
+//        auto values = m->values();
+//        std::sort(values.begin(), values.end(), [=](QCPData _v1, QCPData _v2) {
+//            return _v1.value < _v2.value;
+//        });
+//        auto lo = values.first();
+//        auto up = values.last();
+//        QCPRange rr(lo.value, up.value);
+//        setRange_yAxis2(rr);
+//        ui->widgetGraph->graph()->setValueAxis(ui->widgetGraph->yAxis2);
+//        ui->widgetGraph->yAxis2->setVisible(true);
+//        ui->widgetGraph->yAxis2->setLabel(name + tr(", Ohm"));
+//    }
 
     QPen gridPen = ui->widgetGraph->xAxis->grid()->pen();
     gridPen.setStyle(Qt::SolidLine);

@@ -4014,8 +4014,9 @@ void MainWindow::createTabs (QString sequence)
         ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_user), false);
 //        ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_user))->setVisible(false);
     }
-    ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_s21), false);
 #endif
+    // S21 not implemented yet
+    ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_s21), false);
 
     m_settings->beginGroup("Settings");
     QString strColor = m_settings->value("chart-background", "#ffffff").toString();
@@ -4175,7 +4176,7 @@ void MainWindow::on_analyzerDataBtn_clicked()
     m_analyzerData->setAttribute(Qt::WA_DeleteOnClose);
     m_analyzer->getAnalyzerData();
     connect(m_analyzer,SIGNAL(analyzerDataStringArrived(QString)),m_analyzerData,SLOT(on_analyzerDataStringArrived(QString)));
-    connect(m_analyzerData,SIGNAL(itemDoubleClick(QString,QString,QString)),m_analyzer,SLOT(on_itemDoubleClick(QString,QString,QString)));
+    connect(m_analyzerData,&AnalyzerData::itemDoubleClick,m_analyzer,&AnalyzerPro::on_itemDoubleClick);
     connect(m_analyzerData,&AnalyzerData::signalSaveFile,this,&MainWindow::on_SaveFile);
     connect(m_analyzerData, &AnalyzerData::dataChanged, this, &MainWindow::on_dataChanged);
     //connect(m_analyzerData,SIGNAL(dialogClosed()),m_analyzer,SLOT(on_dialogClosed()));
@@ -4215,6 +4216,7 @@ void MainWindow::on_screenshotAA_clicked()
         QMessageBox::warning(nullptr, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
         return;
     }
+
     m_screenshot = new Screenshot(this, m_analyzer->getModel(), ht, wd);
     m_screenshot->setAttribute(Qt::WA_DeleteOnClose);
     m_screenshot->setWindowTitle("Screenshot");
@@ -5207,9 +5209,11 @@ void MainWindow::on_printBtn_clicked()
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
                     index( i-1, COL_NAME, QModelIndex());
-            QPen pen = m_swrWidget->graph(i)->pen();
-            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
-            m_print->setData(m_swrWidget->graph(i)->data(), pen, myIndex.data().toString());
+            if (m_swrWidget->graph(i)->visible()) {
+                QPen pen = m_swrWidget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_print->setData(m_swrWidget->graph(i)->data(), pen, myIndex.data().toString());
+            }
         }
     }else if(name == "tab_phase")
     {
@@ -5222,9 +5226,11 @@ void MainWindow::on_printBtn_clicked()
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
                     index( i-1, COL_NAME, QModelIndex());
-            QPen pen = m_phaseWidget->graph(i)->pen();
-            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
-            m_print->setData(m_phaseWidget->graph(i)->data(), pen, myIndex.data().toString());
+            if (m_phaseWidget->graph(i)->visible()) {
+                QPen pen = m_phaseWidget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_print->setData(m_phaseWidget->graph(i)->data(), pen, myIndex.data().toString());
+            }
         }
     }else if(name == "tab_rs")
     {
@@ -5232,12 +5238,16 @@ void MainWindow::on_printBtn_clicked()
         m_print->drawBands(bands, m_rsWidget->yAxis->range().lower, m_rsWidget->yAxis->range().upper);
         //m_print->setRange(m_rsWidget->xAxis->range(),m_rsWidget->yAxis->range());
         m_print->setRange(m_rsWidget);
+        QCPRange rr(0, 230000);
+        m_print->setRange_yAxis2(rr);
         m_print->setLabel(m_rsWidget->xAxis->label(), m_rsWidget->yAxis->label());
         for(int i = 1; i < m_rsWidget->graphCount(); ++i)
         {
-            QPen pen = m_rsWidget->graph(i)->pen();
-            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
-            m_print->setData(m_rsWidget->graph(i)->data(), pen, m_rsWidget->graph(i)->name());
+            if (m_rsWidget->graph(i)->visible()) {
+                QPen pen = m_rsWidget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_print->setData(m_rsWidget->graph(i)->data(), pen, m_rsWidget->graph(i)->name());
+            }
         }
     }else if(name == "tab_rp")
     {
@@ -5245,12 +5255,16 @@ void MainWindow::on_printBtn_clicked()
         m_print->drawBands(bands, m_rpWidget->yAxis->range().lower, m_rpWidget->yAxis->range().upper);
         //m_print->setRange(m_rpWidget->xAxis->range(),m_rpWidget->yAxis->range());
         m_print->setRange(m_rpWidget);
+        QCPRange rr(0, 230000);
+        m_print->setRange_yAxis2(rr);
         m_print->setLabel(m_rpWidget->xAxis->label(), m_rpWidget->yAxis->label());
         for(int i = 1; i < m_rpWidget->graphCount(); ++i)
         {
-            QPen pen = m_rpWidget->graph(i)->pen();
-            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
-            m_print->setData(m_rpWidget->graph(i)->data(), pen, m_rpWidget->graph(i)->name());
+            if (m_rpWidget->graph(i)->visible()) {
+                QPen pen = m_rpWidget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_print->setData(m_rpWidget->graph(i)->data(), pen, m_rpWidget->graph(i)->name());
+            }
         }
     }else if(name == "tab_rl")
     {
@@ -5263,9 +5277,11 @@ void MainWindow::on_printBtn_clicked()
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
                                   index( i-1, COL_NAME, QModelIndex());
-            QPen pen = m_rlWidget->graph(i)->pen();
-            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
-            m_print->setData(m_rlWidget->graph(i)->data(), pen, myIndex.data().toString());
+            if (m_rlWidget->graph(i)->visible()) {
+                QPen pen = m_rlWidget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_print->setData(m_rlWidget->graph(i)->data(), pen, myIndex.data().toString());
+            }
         }
     }else if(name == "tab_s21")
     {
@@ -5277,9 +5293,11 @@ void MainWindow::on_printBtn_clicked()
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
                                   index( i-1, COL_NAME, QModelIndex());
-            QPen pen = m_s21Widget->graph(i)->pen();
-            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
-            m_print->setData(m_s21Widget->graph(i)->data(), pen, myIndex.data().toString());
+            if (m_s21Widget->graph(i)->visible()) {
+                QPen pen = m_s21Widget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_print->setData(m_s21Widget->graph(i)->data(), pen, myIndex.data().toString());
+            }
         }
     }else if(name == "tab_tdr")
     {
@@ -5294,29 +5312,35 @@ void MainWindow::on_printBtn_clicked()
         for(int i = 1; i < m_tdrWidget->graphCount(); ++i)
         {
             //int i = 3;
-            QPen pen = m_tdrWidget->graph(i)->pen();
-            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
-            m_print->setData(m_tdrWidget->graph(i)->data(), pen, m_tdrWidget->graph(i)->name());
+            if (m_tdrWidget->graph(i)->visible()) {
+                QPen pen = m_tdrWidget->graph(i)->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_print->setData(m_tdrWidget->graph(i)->data(), pen, m_tdrWidget->graph(i)->name());
+            }
         }
     }else if(name == "tab_smith")
     {
         string += "Smith graph";
         m_print->drawSmithImage();
-        //m_print->setRange(m_smithWidget->xAxis->range(),m_smithWidget->yAxis->range());
         m_print->setRange(m_smithWidget);
         m_print->setLabel(m_smithWidget->xAxis->label(), m_smithWidget->yAxis->label());
         QTimer::singleShot(1, this, [this]() { // fix elipse smith bug
             QSize sz = m_print->size();
-            sz.rwidth()+=1;
+            sz.rwidth() += 1;
+            m_print->resize(sz);
+            sz.rwidth() -= 1;
             m_print->resize(sz);
         });
         for(int i = 0; i < m_measurements->getMeasurementLength(); ++i)
         {
             QModelIndex myIndex = ui->tableWidget_measurments->model()->
                                 index( m_smithWidget->graphCount()-i-1, COL_NAME, QModelIndex());
-            QPen pen = m_measurements->getMeasurement(i)->smithCurve->pen();
-            pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
-            m_print->setSmithData(&m_measurements->getMeasurement(i)->smithGraph, pen, myIndex.data().toString());
+            measurement& mm = *m_measurements->getMeasurement(i);
+            if (mm.smithCurve->visible()) {
+                QPen pen = m_measurements->getMeasurement(i)->smithCurve->pen();
+                pen.setWidth(INACTIVE_GRAPH_PEN_WIDTH);
+                m_print->setSmithData(&m_measurements->getMeasurement(i)->smithGraph, pen, myIndex.data().toString());
+            }
         }
     }else if(name == "tab_user")
     {

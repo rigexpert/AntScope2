@@ -655,14 +655,15 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
     data.value = regulate(VSWR, MAX_SWR);
     //----------------------------------------------
     //----2025_0326 vnn_0327
-    double fqDx =( ((m_measurements.last().qint64To - m_measurements.last().qint64From)/m_measurements.last().qint64Dots))/1000;//
+    measurement& mm = m_measurements.last();
+    double fqDx =( ((mm.qint64To - mm.qint64From)/mm.qint64Dots))/1000;//
     double fqDx_up =fq+ (fqDx*0.9);//
     double fqDx_dn =fq- (fqDx*0.8);//
     //double fqMinLimit = m_measurements.last().qint64From/1000;
-    double fqMaxLimit = m_measurements.last().qint64To/1000;
+    double fqMaxLimit = mm.qint64To/1000;
     //x intervals clear ...new.data...|N-1|fqDx_dn|N|fqDx_up|O|...old.data..
     QCPDataMap *swrmapX;
-    swrmapX = &( m_measurements.last().swrGraph);
+    swrmapX = &( mm.swrGraph);
     QList <double> swrkeysX = swrmapX->keys();
     int keyId_cur = swrkeysX.length()-1;
     if(keyId_cur>4){

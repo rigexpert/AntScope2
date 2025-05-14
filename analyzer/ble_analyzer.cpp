@@ -123,6 +123,7 @@ bool BleAnalyzer::connectAnalyzer()
     AnalyzerParameters* analyzer = AnalyzerParameters::byName(SelectionParameters::selected.name);
     if (analyzer == nullptr)
         return false;
+    SelectionParameters& selected = SelectionParameters::selected;
     QString address = SelectionParameters::selected.id;
     connectToService(address);
     return true;

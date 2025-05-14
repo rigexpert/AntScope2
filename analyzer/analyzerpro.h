@@ -105,7 +105,8 @@ public slots:
     void getAnalyzerData();
     void closeAnalyzerData();
 
-    void on_itemDoubleClick(QString number, QString dotsNumber, QString name);
+    //void on_itemDoubleClick(QString number, QString dotsNumber, QString name);
+    void on_itemDoubleClick(QString info); // idx,from,to,dots:name
 
     void on_analyzerScreenshotDataArrived(QByteArray arr);
     void on_screenshotComplete(void);

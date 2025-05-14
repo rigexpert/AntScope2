@@ -51,7 +51,8 @@ void AnalyzerData::on_listWidget_itemDoubleClicked(QListWidgetItem *item)
     // center, range, dots
     emit dataChanged(list[1].toULongLong()/div, list[2].toULongLong()/div, list2[0].toInt());
     // index, dots, name
-    emit itemDoubleClick(list.at(0), list2.at(0), list2.at(1));
+    //emit itemDoubleClick(list.at(0), list2.at(0), list2.at(1));
+    emit itemDoubleClick(str);
     this->close();
 }
 
@@ -93,7 +94,9 @@ void AnalyzerData::on_btnReadAll_clicked()
     QStringList list2 = list.at(3).split(":");
     strItemName = QString("%1-%2").arg(progressSteps, 2, 10, QLatin1Char('0')).arg(list2.at(1));
 
-    emit itemDoubleClick(list.at(0), list2.at(0), strItemName);
+    //emit itemDoubleClick(list.at(0), list2.at(0), strItemName);
+    QString info = QString("%1,%2,%3,%4:%5").arg(list.at(0), list.at(1), list.at(2), list2.at(0), strItemName);
+    emit itemDoubleClick(info);
     QCoreApplication::processEvents();
 }
 
@@ -127,7 +130,9 @@ void AnalyzerData::nextStep()
         QStringList list2 = list.at(3).split(":");
         strItemName = QString("%1-%2").arg(progressSteps, 2, 10, QLatin1Char('0')).arg(list2.at(1));
 
-        emit itemDoubleClick(list.at(0), list2.at(0), strItemName);
+        //emit itemDoubleClick(list.at(0), list2.at(0), strItemName);
+        QString info = QString("%1,%2,%3,%4:%5").arg(list.at(0), list.at(1), list.at(2), list2.at(0), strItemName);
+        emit itemDoubleClick(info);
         QCoreApplication::processEvents();
     }
     else

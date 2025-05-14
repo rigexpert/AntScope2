@@ -181,10 +181,8 @@ void Screenshot::on_lineEdit_returnPressed()
 
 void Screenshot::on_newData(QByteArray data)
 {
-    //----------------
-    QString str2;
-    //----------------
 #ifdef NEW_ANALYZER
+    bool binaryProtocol = SelectionParameters::selected.type == ReDeviceInfo::BLE;
     AnalyzerParameters* param = AnalyzerParameters::current();
     QString name = param == nullptr ? "" : param->name();
     if (name == "AA-1500 SE")
@@ -271,8 +269,31 @@ void Screenshot::on_newData(QByteArray data)
                 m_imageVector.append(rgb);
             }
         }
-    }else
-    {
+    }else if (model == "AA-650 ZOOM" && binaryProtocol) {
+            while (!m_inputData.isEmpty()) {
+                auto data = m_inputData.takeFirst();
+                int quantity = ((data & 0xc0) >> 6) + 1;
+                if (quantity > 3) {
+                    auto count = m_inputData.takeFirst();
+                    if ((count & 0x80) != 0)
+                        quantity = (count & 0x7f) + 128 + quantity;
+                    else
+                        quantity = count + quantity;
+                }
+
+                int red = (data & 0x3) << 6;
+                int green = ((data >> 2) & 0x3) << 6;
+                int blue = ((data >> 4) & 0x3) << 6;
+
+                QRgb rgb = qRgb(red,green,blue);
+                for (int i=0; i<quantity; i++) {
+                    m_imageVector.append(rgb);
+                }
+                qDebug() << QString("{%1} pix=%2[%3]: %4, %5, %6 N:%7")
+                                .arg(data, 2, 16, QChar('0')).arg(quantity).arg(quantity, 2, 16, QChar('0'))
+                                .arg(red).arg(green).arg(blue).arg(m_imageVector.size());
+            }
+        }else {
         while(m_inputData.length() > 3)
         {
             int data = (((int)m_inputData.takeFirst())<<8);

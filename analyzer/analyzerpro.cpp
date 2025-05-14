@@ -460,19 +460,39 @@ void AnalyzerPro::closeAnalyzerData()
     }
 }
 
-void AnalyzerPro::on_itemDoubleClick(QString number, QString dotsNumber, QString name)
-{
+void AnalyzerPro::on_itemDoubleClick(QString info)
+{   // idx,from,to,dots:name
     setIsMeasuring(true);
+
+    QStringList list = info.split(",");
+    QStringList list2 = list.at(3).split(":");
+
+    int div = 1;
+
+#ifdef NEW_ANALYZER
+    AnalyzerParameters* param = AnalyzerParameters::current();
+    QString model = param == nullptr ? "" : param->name();
+#else
+    QString model = names[m_model];
+#endif
+
+
+    if (model == "AA-230 ZOOM" || model == "AA-55 ZOOM" || model == "AA-650 ZOOM")
+        div = 1000;
+
+    QString name = list2.at(1);
+    QString idx = list.at(0);
     if (name.trimmed().isEmpty()) {
-        name = number;
+        name = idx;
     }
     m_getAnalyzerData = true;
     if(m_baseAnalyzer != nullptr)
     {
         m_chartCounter = 0;
-        m_dotsNumber = dotsNumber.toInt();
-        emit newMeasurement(name);
-        m_baseAnalyzer->getAnalyzerData(number);
+        m_dotsNumber = list2.at(0).toInt();
+        //emit newMeasurement(name);
+        emit newMeasurement(name, list.at(1).toLongLong()/div, list.at(2).toLongLong()/div, list2.at(0).toInt());
+        m_baseAnalyzer->getAnalyzerData(idx);
     }
 }
 
