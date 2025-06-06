@@ -69,6 +69,7 @@ public:
     void deleteRow(int row);
     void setFarEndMeasurement (qint32 mode) { m_farEndMeasurement=mode; }
     qint32 getFarEndMeasurement (void) {return m_farEndMeasurement;}
+    measurement* last() {return (isEmpty() ? nullptr : getMeasurement(getMeasurementLength()-1)); }
     measurement* getMeasurement(int number) {return &m_measurements[m_measurements.length()-1 - number];}
     measurement* getMeasurementSub(int number) {return &m_farEndMeasurementsSub[m_farEndMeasurementsSub.length()-1 - number];}
     measurement* getMeasurementAdd(int number) {return &m_farEndMeasurementsAdd[m_farEndMeasurementsAdd.length()-1 - number];}

@@ -763,7 +763,7 @@ void Measurements::on_newData(RawData _rawData, bool _redraw)
     double X = _rawData.x;
     double Z = computeZ(R, X);
 
-    qDebug() << "Measurements::on_newData" << fq << R << X;
+    //qDebug() << "Measurements::on_newData" << fq << R << X;
 
     data.value = regulate(R, VALUE_LIMIT);
     m_measurements.last().rsrGraph.insert(data.key,data);
@@ -2482,17 +2482,28 @@ void Measurements::loadData(QString path)
 
         QJsonArray measureArray = mainObj["Measurements"].toArray();
 
-        double fqMin = DBL_MAX;
-        double fqMax = 0;
         int size = measureArray.size();
         if (size < 2) {
             QMessageBox::information(NULL, tr("Error"), tr("The saved file is too short."));
             qWarning("Couldn't open saved file.");
             return;
         }
+
+        QJsonObject dataObject0 = measureArray.first().toObject();
+        RawData data0;
+        data0.read(dataObject0);
+        double fqMin = data0.fq;
+        qint64 fqMinHz = static_cast<qint64>(fqMin * 1000000);
+        dataObject0 = measureArray.last().toObject();
+        data0.read(dataObject0);
+        double fqMax = data0.fq;
+        qint64 fqMaxHz = static_cast<qint64>(fqMax * 1000000);
+        qint32 dots = size;
+
         int next = nextPrefix();
         QString nextName = QString("%1> %2").arg(next, 2, 10, QChar('0')).arg(list.last());
-        on_newMeasurement(nextName);
+        //on_newMeasurement(nextName);
+        on_newMeasurement(nextName, fqMinHz, fqMaxHz, dots);
 
         ProgressDlg* progressDlg = new ProgressDlg();
         progressDlg->setValue(0);
@@ -2509,8 +2520,6 @@ void Measurements::loadData(QString path)
             RawData data;
             data.read(dataObject);
             on_newData(data);
-            fqMin = qMin(fqMin, data.fq);
-            fqMax = qMax(fqMax, data.fq);
             if ((i%10) == 0) {
                 progressDlg->setValue(i);
                 progressDlg->updateStatusInfo(QString(tr("loaded %1 dots, from %2")).arg(i).arg(size));
@@ -2786,7 +2795,6 @@ void Measurements::importData(QString _name)
             list.clear();
             list = _name.split("\\");
         }
-        on_newMeasurement(list.last());
 
         QString sPathName = _name;
 
@@ -2819,6 +2827,7 @@ void Measurements::importData(QString _name)
 
         double fqMin = DBL_MAX;
         double fqMax = 0;
+        QList<RawData> rawArray;
         do//while (ifs.isOpen() && (!ifs.eof()))
         {
             line = in.readLine();
@@ -2982,11 +2991,17 @@ void Measurements::importData(QString _name)
             data.fq = f*fqmul;
             data.r =r*(Z0);
             data.x =x*(Z0);
-            on_newData(data);
+            //on_newData(data);
+            rawArray.append(data);
             iPoints++;
             fqMin = qMin(fqMin, data.fq);
             fqMax = qMax(fqMax, data.fq);
         }while (!line.isNull());
+
+        on_newMeasurement(list.last(), static_cast<qint64>(fqMin*1000000), static_cast<qint64>(fqMax*1000000), iPoints);
+        foreach (auto data, rawArray) {
+            on_newData(data);
+        }
         emit import_finished(fqMin*1000, fqMax*1000);
 
         if (bGood && (iPoints>1) )
@@ -3014,8 +3029,8 @@ void Measurements::importData(QString _name)
             list.clear();
             list = _name.split("\\");
         }
-        on_newMeasurement(list.last());
-
+//        on_newMeasurement(list.last());
+        QList<RawData> rawArray;
         QFile file(_name);
         bool result = file.open(QFile::ReadOnly);
         if(result)
@@ -3043,7 +3058,8 @@ void Measurements::importData(QString _name)
                     data.fq = dList.at(0).toDouble()*mul;
                     data.r = dList.at(1).toDouble();
                     data.x = dList.at(2).toDouble();
-                    on_newData(data);
+                    //on_newData(data);
+                    rawArray.append(data);
                     fqMin = qMin(fqMin, data.fq);
                     fqMax = qMax(fqMax, data.fq);
                 }
@@ -3058,10 +3074,15 @@ void Measurements::importData(QString _name)
                     data.fq = dList.at(0).toDouble()*mul;
                     data.r = dList.at(1).toDouble();
                     data.x = dList.at(2).toDouble();
-                    on_newData(data);
+                    //on_newData(data);
+                    rawArray.append(data);
                     fqMin = qMin(fqMin, data.fq);
                     fqMax = qMax(fqMax, data.fq);
                 }
+            }
+            on_newMeasurement(list.last(), static_cast<qint64>(fqMin*1000000), static_cast<qint64>(fqMax*1000000), rawArray.length());
+            foreach (auto data, rawArray) {
+                on_newData(data);
             }
             emit import_finished(fqMin*1000, fqMax*1000);
         }
@@ -3074,8 +3095,9 @@ void Measurements::importData(QString _name)
             list.clear();
             list = _name.split("\\");
         }
-        on_newMeasurement(list.last());
+//        on_newMeasurement(list.last());
 
+        QList<RawData> rawArray;
         QFile file(_name);
         bool result = file.open(QFile::ReadOnly);
         if(result)
@@ -3106,64 +3128,20 @@ void Measurements::importData(QString _name)
                     data.fq = dList.at(0).toDouble()*mul;
                     data.r = dList.at(1).toDouble();
                     data.x = dList.at(2).toDouble();
-                    on_newData(data);
-                    fqMin = qMin(fqMin, data.fq);
+                    //on_newData(data);
+                    rawArray.append(data);                    fqMin = qMin(fqMin, data.fq);
                     fqMax = qMax(fqMax, data.fq);
                 }
+            }
+            on_newMeasurement(list.last(), static_cast<qint64>(fqMin*1000000), static_cast<qint64>(fqMax*1000000), rawArray.length());
+            foreach (auto data, rawArray) {
+                on_newData(data);
             }
             emit import_finished(fqMin*1000, fqMax*1000);
         }
     } else {
         QMessageBox::information(nullptr, tr("Load data"), tr("Oops, this format is not supported!"), QMessageBox::Close);
     }
-    /*
-    if (_name.indexOf(".antdata") >= 0) {
-        QStringList list;
-        list = _name.split("/");
-        if(list.length() == 1)
-        {
-            list.clear();
-            list = _name.split("\\");
-        }
-        on_newMeasurement(list.last());
-
-        QFile file(_name);
-        bool result = file.open(QFile::ReadOnly);
-        QString strInstrument;
-        if(result)
-        {
-            QByteArray ar = file.readAll();
-            if (ar.size() < 4)
-                return; // empty file
-            const char* pData = ar.constData();
-            int comment = ar.indexOf(':');
-            if (comment > 0)
-            {
-                const char* pInstrument = pData+comment+1;
-                strInstrument = QString(pInstrument);
-                strInstrument.remove(";");
-            }
-            double minFq = DBL_MAX;
-            double maxFq = 0;
-            qint16 points = *(qint16*)pData;
-            points--;
-            qint32* p = (qint32*)(pData+6);
-            for (int idx=0; idx<points; idx++) {
-                rawData data_;
-                data_.fq = p[0] / 1000000.0;
-                minFq = qMin(minFq, data_.fq);
-                maxFq = qMax(maxFq, data_.fq);
-                double* pd = (double*)(p+1);
-                data_.r  = pd[0];
-                data_.x  = pd[1];
-                on_newData(data_);
-
-                p += 14;
-            }
-            emit import_finished(minFq*1000, maxFq*1000);
-        }
-    }
-    */
 }
 
 int Measurements::calcTdrDist(QVector<RawData> *data)

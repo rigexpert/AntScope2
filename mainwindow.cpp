@@ -174,6 +174,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->measurmentsDeleteBtn->setEnabled(false);
     ui->measurmentsClearBtn->setEnabled(false);
     ui->exportBtn->setEnabled(false);
+    ui->fullBtn->setEnabled(false);
 
     m_lightPalette = qApp->palette();
 
@@ -2727,6 +2728,7 @@ void MainWindow::on_analyzerNameFound(QString name)
     bool zeroII = name.contains("Zero II");
     ui->singleStart->setEnabled(true);
     ui->continuousStartBtn->setEnabled(true);
+    ui->fullBtn->setEnabled(true);
     if (g_bAA55modeNewProtocol) {
         ui->analyzerDataBtn->setEnabled(true);
         ui->screenshotAA->setEnabled(false);
@@ -2794,6 +2796,8 @@ void MainWindow::on_deviceDisconnected()
     ui->analyzerDataBtn->setEnabled(false);
     ui->screenshotAA->setEnabled(false);
     ui->spinBoxPoints->setEnabled(true);
+    ui->fullBtn->setEnabled(false);
+    ui->fullBtn->setChecked(false);
 
     PopUpIndicator::hideIndicator(this);
     m_analyzer->setIsMeasuring(false);
@@ -4240,6 +4244,8 @@ void MainWindow::on_singleStart_clicked()
         m_bInterrupted = true;
         emit stopMeasure();
         ui->singleStart->setChecked(true);
+        ui->fullBtn->setEnabled(true);
+        ui->fullBtn->setChecked(true);
         ui->continuousStartBtn->setChecked(false);
         if (g_developerMode) {
             m_measurements->hideOneFqWidget();
@@ -4249,6 +4255,8 @@ void MainWindow::on_singleStart_clicked()
 
     ui->singleStart->setChecked(true);
     ui->continuousStartBtn->setChecked(false);
+    ui->fullBtn->setEnabled(false);
+    ui->fullBtn->setChecked(false);
 
     //if (g_developerMode)
     {
@@ -4408,6 +4416,8 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         emit stopMeasure();
         ui->singleStart->setChecked(false);
         ui->continuousStartBtn->setChecked(false);
+        ui->fullBtn->setEnabled(true);
+        ui->fullBtn->setChecked(true);
         m_isContinuos = false;
         m_measurements->setContinuous(false);
 
@@ -4652,6 +4662,8 @@ void MainWindow::on_measurementComplete()
     } else {
         ui->singleStart->setChecked(false);
         ui->continuousStartBtn->setChecked(false);
+        ui->fullBtn->setEnabled(true);
+        ui->fullBtn->setChecked(true);
         m_measurements->on_measurementComplete();
         m_bInterrupted = true;
         ui->measurmentsDeleteBtn->setEnabled(true);
@@ -6101,8 +6113,10 @@ void MainWindow::on_dataChanged(qint64 _center_khz, qint64 _range_khz, qint32 _d
         ui->lineEdit_fqFrom->setText(QString::number(_center_khz));
         ui->lineEdit_fqTo->setText(QString::number(_range_khz));
     } else {
-        ui->lineEdit_fqFrom->setText(QString::number(_center_khz - _range_khz));
-        ui->lineEdit_fqTo->setText(QString::number(_center_khz + _range_khz));
+        QString strFrom = QString::number(_center_khz - _range_khz);
+        ui->lineEdit_fqFrom->setText(strFrom);
+        QString strTo = QString::number(_center_khz + _range_khz);
+        ui->lineEdit_fqTo->setText(strTo);
     }
     changeFqTo();
     changeFqFrom();
@@ -6117,10 +6131,10 @@ void MainWindow::on_importFinished(double _fqMin_khz, double _fqMax_khz)
     double _center = (_fqMin_khz + _range / 2);
 
     measurement* mm = m_measurements->getMeasurement(m_measurements->getMeasurementLength() - 1);
-    if (mm != nullptr)
-        mm->set(_center*1000, _range*1000, mm->dataRX.size()-1);
+//    if (mm != nullptr)
+//        mm->set(_center*1000, _range*1000, mm->dataRX.size()-1);
 
-    on_dataChanged((qint64)_center, (qint64)_range, ui->spinBoxPoints->value());
+    on_dataChanged((qint64)_center, (qint64)_range/2, ui->spinBoxPoints->value());
 
     ui->measurmentsSaveBtn->setEnabled(true);
     ui->exportBtn->setEnabled(true);
@@ -6146,8 +6160,17 @@ void MainWindow::onFullRange(bool)
 
 #ifdef NEW_ANALYZER
     AnalyzerParameters* param = AnalyzerParameters::current();
-    qint64 from = param == nullptr ? 100 : param->minFq().toULongLong();
-    qint64 to = param == nullptr ? ABSOLUTE_MAX_FQ : param->maxFq().toULongLong();
+//    qint64 from = param == nullptr ? 100 : param->minFq().toULongLong();
+//    qint64 to = param == nullptr ? ABSOLUTE_MAX_FQ : param->maxFq().toULongLong();
+    qint64 from = 100;
+    qint64 to = ABSOLUTE_MAX_FQ;
+    if (param != nullptr) {
+        from = param->minFq().toULongLong();
+        to = param->maxFq().toULongLong();
+    } else if (!m_measurements->isEmpty()) {
+        from = m_measurements->last()->qint64From/1000;
+        to = m_measurements->last()->qint64To/1000;
+    }
 #else
     qint64 from = minFq[model].toULongLong();
     qint64 to = maxFq[model].toULongLong();
@@ -6427,6 +6450,7 @@ void MainWindow::changeColorTheme(bool _dark)
                 "background-color: rgb(1, 178, 255);}";
         ui->singleStart->setStyleSheet(style);
         ui->continuousStartBtn->setStyleSheet(style);
+        ui->fullBtn->setStyleSheet(style);
 
         style = "QGroupBox {border: 2px solid rgb(1, 178, 255); margin-top: 1ex;}"
                 "QGroupBox::title {"
@@ -6456,6 +6480,7 @@ void MainWindow::changeColorTheme(bool _dark)
         ui->measurmentsClearBtn->setStyleSheet(style);
         ui->singleStart->setStyleSheet(style);
         ui->continuousStartBtn->setStyleSheet(style);
+        ui->fullBtn->setStyleSheet(style);
         ui->groupBox_Run->setStyleSheet(style);
         ui->checkBoxCalibration->setStyleSheet(style);
     }
@@ -6767,9 +6792,16 @@ void MainWindow::closeSettingsDialog()
     m_settingsDialog->deleteLater();
     m_settingsDialog=nullptr;
     m_measurements->on_currentTab(m_measurements->currentTab());
-    ui->singleStart->setEnabled(true);
-    ui->continuousStartBtn->setEnabled(true);
     ui->settingsBtn->setEnabled(true);
+
+    auto param = AnalyzerParameters::current();
+    bool state = param != nullptr;
+    ui->singleStart->setEnabled(state);
+    ui->continuousStartBtn->setEnabled(state);
+    ui->fullBtn->setEnabled(state);
+    ui->fullBtn->setEnabled(state);
+    ui->fullBtn->setChecked(false);
+
     //---vnn_02_copy--for check_box calibrations unlock-faster--
     bool force = true;
     m_calibration->cancel();
