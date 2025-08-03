@@ -2837,6 +2837,7 @@ void Measurements::importData(QString _name)
             if ( (line.length() > 2) && (line[0] == '#')) // Option line
             {
                 line.remove(0,1);
+                line = line.toUpper();
                 int ns = sscanf(line.toLocal8Bit(), "%s %s %s %s %s", strn[0], strn[1], strn[2], strn[3], strn[4]);
                 for (int i=0; i<ns; i++)
                 {
