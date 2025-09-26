@@ -82,7 +82,7 @@ void BleAnalyzer::setInfo(const QString& info)
     if (m_info != info) {
         m_info = info;
         emit infoChanged();
-        qInfo() << "BleAnalyzer::SetInfo: " << m_info;
+        //qInfo() << "BleAnalyzer::SetInfo: " << m_info;
     }
 }
 
@@ -781,7 +781,7 @@ void BleAnalyzer::startMeasure(qint64 from_hz, qint64 to_hz, int dotsNumber, boo
     data[19] = CRC32::crc8(data);
 
     QString msg = QString("FQ: %1, SW: %2, FRX: %3").arg(fq).arg(sw).arg(frx);
-    qInfo() << "BleAnalyzer::startMeasure" << msg;
+    //qInfo() << "BleAnalyzer::startMeasure" << msg;
     setRequest(msg);
     QString sss = trace("FRX", data);
     setRequest(sss);

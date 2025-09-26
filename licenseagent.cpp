@@ -101,7 +101,7 @@ void LicenseAgent::registerDevice(QString device_name, QString serial, QString l
 
 void LicenseAgent::updateLicense()
 {
-    QString key = QInputDialog::getText((QWidget*)MainWindow::m_mainWindow, tr("Renew license"), tr("Enter key"));
+    QString key = QInputDialog::getText((QWidget*)MainWindow::m_mainWindow, tr("Update license"), tr("Enter key"));
     if (key.isNull())
         return;
     setState(Finished);
@@ -750,13 +750,13 @@ void LicenseAgent::finishWaitLicense()
 {
     parseLicense();
     if ( ! licenseKeyBan()) {
-        showModeless(tr("Renew license"), tr("License renewal..."), tr("Ok"));
+        showModeless(tr("Update license"), tr("License updating..."), tr("Ok"));
         sendMatch_11();
     } else {
         if (++m_licenseAttempts <= REQUEST_LICENSE_ATTEMPTS) {
             updateLicense();
         } else {
-            showModeless(tr("Renew license"), tr("The update will not work until support is contacted"), tr("Ok"));
+            showModeless(tr("Update license"), tr("The update will not work until support is contacted"), tr("Ok"));
         }
     }
 }

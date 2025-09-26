@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
     w.show();
 
     return a.exec();

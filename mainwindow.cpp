@@ -338,7 +338,8 @@ MainWindow::MainWindow(QWidget *parent) :
                                m_s21Widget,
                                m_smithWidget,
                                ui->tableWidget_measurments);
-    m_measurements->setUserWidget(m_userWidget);
+    if (g_developerMode)
+        m_measurements->setUserWidget(m_userWidget);
 
     connect(m_analyzer, &AnalyzerPro::newData, m_measurements, &Measurements::on_newDataRedraw);
     connect(m_analyzer, &AnalyzerPro::newS21Data, m_measurements, &Measurements::on_newS21Data);
@@ -6789,7 +6790,7 @@ void MainWindow::closeSettingsDialog()
     if (m_settingsDialog == nullptr)
          return;
     m_settingsDialog->close();
-    m_settingsDialog->deleteLater();
+    //m_settingsDialog->deleteLater();
     m_settingsDialog=nullptr;
     m_measurements->on_currentTab(m_measurements->currentTab());
     ui->settingsBtn->setEnabled(true);
