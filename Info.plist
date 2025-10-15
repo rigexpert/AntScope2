@@ -11,7 +11,7 @@
 	<key>CFBundleExecutable</key>
 	<string>AntScope2</string>
 	<key>CFBundleIconFile</key>
-        <string>AntScope2.icns</string>
+        <string>AntScope2</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.rigexpert.AntScope2</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -21,7 +21,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.10</string>
+        <string>1.4.11</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>LSApplicationCategoryType</key>

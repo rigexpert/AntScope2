@@ -18,12 +18,14 @@ message ("!!!  set path 6.2.4/MSVC19")
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"1.4.10\\"'
+DEFINES += ANTSCOPE2VER='\\"1.4.11\\"'
 DEFINES += OLD_TDR
 
 #{ debug
 #DEFINES += NO_MULTITAB
 #} debug
+
+QT_QPA_PLATFORM_PLUGIN_PATH=/Users/reu-admin/Qt/6.8.3/macos/plugins/platforms
 
 #-------------------------------------------------
 # under construction
@@ -108,7 +110,7 @@ SOURCES += main.cpp\
     analyzer/updater/firmwareupdater.cpp \
     analyzer/updater/hidfirmwareupdater.cpp \
     ProgressDlg.cpp \
-    iprof.cpp \
+    #iprof.cpp \
     onefqwidget.cpp \
     Notification.cpp \
     #licensesdialog.cpp \
@@ -168,7 +170,7 @@ HEADERS  += mainwindow.h \
     analyzer/updater/firmwareupdater.h \
     analyzer/updater/hidfirmwareupdater.h \
     ProgressDlg.h \
-    iprof.h \
+    #iprof.h \
     htime.h \
     onefqwidget.h \
     Notification.h \
@@ -276,9 +278,10 @@ macx {
         $$PWD/QtLanguage_ja.qm \
         $$PWD/QtLanguage_uk.qm
 
-    ICON_FILES.path = Contents
-    ICON_FILES.files = \
-        $$PWD/AntScope2.icns
+    ICON = $$PWD/AntScope2.icns
+ #   ICON_FILES.path = Contents/Resources
+ #   ICON_FILES.files = \
+ #       $$PWD/AntScope2.icns
 
     QMAKE_BUNDLE_DATA += RUNTIME_FILES TRANSLATION_FILES ICON_FILES
     QMAKE_INFO_PLIST= $${PWD}/Info.plist
