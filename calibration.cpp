@@ -31,12 +31,20 @@ void Calibration::init(const QString& _serial)
 
     QString iniFilePath = Settings::localDataPath("AntScope2.ini");
 
-    m_calibrationPath = Settings::localDataPath("Calibration");
+    //m_calibrationPath = Settings::localDataPath("Calibration");
+    m_calibrationPath = Settings::localDataPath("");
+    QDir app_dir(m_calibrationPath);
+    app_dir.mkdir("Calibration");
     if (!serial.isEmpty()) {
-        m_calibrationPath += "/" + serial;
+        //m_calibrationPath += "/" + serial;
+        QDir calibr_dir(app_dir.absoluteFilePath("Calibration"));
+        calibr_dir.mkdir(serial);
+        m_calibrationPath = calibr_dir.absoluteFilePath(serial);
+    } else {
+        m_calibrationPath = app_dir.absolutePath();
     }
 
-    QDir().mkdir(m_calibrationPath);
+    //QDir().mkdir(m_calibrationPath);
     m_settings = new QSettings(iniFilePath, QSettings::IniFormat);
     m_settings->beginGroup("Calibration");
     m_Z0 = m_settings->value("Z0", m_Z0).toDouble();
@@ -195,8 +203,7 @@ void Calibration::on_newData(RawData _rawData)
         switch (m_state)
         {
         case CALIB_OPEN:
-            m_openData.saveData(dir.absoluteFilePath("cal_open.s1p"),m_Z0);
-            m_openCalibFilePath = dir.absoluteFilePath("cal_open.s1p");
+            m_openData.saveData(m_openCalibFilePath,m_Z0);
             if(!m_onlyOneCalib)
             {
                 PopUpIndicator::hideIndicator();
@@ -211,8 +218,7 @@ void Calibration::on_newData(RawData _rawData)
                 cancel();            }
             break;
         case CALIB_SHORT:
-            m_shortData.saveData(dir.absoluteFilePath("cal_short.s1p"),m_Z0);
-            m_shortCalibFilePath = dir.absoluteFilePath("cal_short.s1p");
+            m_shortData.saveData(m_shortCalibFilePath,m_Z0);
             if(!m_onlyOneCalib)
             {
                 PopUpIndicator::hideIndicator();
@@ -228,8 +234,7 @@ void Calibration::on_newData(RawData _rawData)
             }
             break;
         case CALIB_LOAD:
-            m_loadData.saveData(dir.absoluteFilePath("cal_load.s1p"),m_Z0);
-            m_loadCalibFilePath = dir.absoluteFilePath("cal_load.s1p");
+            m_loadData.saveData(m_loadCalibFilePath,m_Z0);
             if(!m_onlyOneCalib)
             {
                 m_OSLCalibrationPerformed = true;

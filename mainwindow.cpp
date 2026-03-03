@@ -6810,4 +6810,7 @@ void MainWindow::closeSettingsDialog()
     //ui->checkBoxCalibration->setEnabled(m_calibration->isCalibrationPerformed());
     //ui->checkBoxCalibration->setChecked(m_calibration->getCalibrationEnabled());
     //------
+    int idx = ui->tabWidget->currentIndex();
+    ui->tabWidget->setCurrentIndex(idx == 0 ? 1 : 0);
+    QTimer::singleShot(1, this, [this, idx]() { ui->tabWidget->setCurrentIndex(idx); });
 }
