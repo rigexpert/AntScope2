@@ -1,11 +1,21 @@
 #include "antscopeupdatedialog.h"
 #include "ui_antscopeupdatedialog.h"
+#include "style.h"
 
 AntScopeUpdateDialog::AntScopeUpdateDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AntScopeUpdateDialog)
 {
     ui->setupUi(this);
+
+    QString style;
+    style = Style::dialog();
+    style += Style::label();
+    setStyleSheet(style);
+
+    style = Style::pushButton() + Style::progressBar();
+    ui->afterClosing->setStyleSheet(style);
+    ui->dowloadNow->setStyleSheet(style);
 }
 
 AntScopeUpdateDialog::~AntScopeUpdateDialog()

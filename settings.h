@@ -73,6 +73,9 @@ public:
     LicenseAgent& licenseAgent() { return m_licenseAgent; }
     static bool m_licenseUpdateBlocked;
 
+protected:
+    void paintEvent(QPaintEvent *event) override;
+
 private:
     Ui::Settings *ui;
     AnalyzerPro * m_analyzer;

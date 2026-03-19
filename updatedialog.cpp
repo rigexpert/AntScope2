@@ -1,11 +1,19 @@
 #include "updatedialog.h"
 #include "ui_updatedialog.h"
+#include "style.h"
 
 UpdateDialog::UpdateDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::UpdateDialog)
 {
     ui->setupUi(this);
+
+    QString style = Style::dialog();
+    style += Style::label();
+    style += Style::progressBar();
+    style += Style::pushButton();
+    setStyleSheet(style);
+
     ui->progressBar->hide();
     ui->statusLabel->hide();
 }

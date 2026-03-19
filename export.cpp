@@ -1,11 +1,20 @@
 #include "export.h"
 #include "ui_export.h"
+#include "style.h"
 
 Export::Export(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Export)
 {
     ui->setupUi(this);
+
+    QString style;
+    style = "QDialog{background-color: #2F2F2F}";
+    style += Style::pushButton();
+    setStyleSheet(style);
+
+    style = Style::groupBox();
+    ui->groupBox->setStyleSheet(style);
 
     QString path = Settings::setIniFile();
     m_settings = new QSettings(path, QSettings::IniFormat);

@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Screenshot</string>
   </property>
   <property name="windowIcon">
    <iconset resource="res.qrc">
@@ -35,7 +35,7 @@
      <x>10</x>
      <y>240</y>
      <width>294</width>
-     <height>135</height>
+     <height>144</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -116,7 +116,7 @@
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>

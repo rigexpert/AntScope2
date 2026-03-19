@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1324</width>
-    <height>841</height>
+    <width>905</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,7 +31,7 @@
   <property name="windowTitle">
    <string notr="true">AntScope2</string>
   </property>
-  <widget class="QWidget" name="centralWidget">
+  <widget class="CentralWidget" name="centralWidget">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
      <horstretch>0</horstretch>
@@ -65,16 +65,16 @@
          <bool>true</bool>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
+         <enum>Qt::LayoutDirection::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
         </property>
         <property name="tabPosition">
-         <enum>QTabWidget::North</enum>
+         <enum>QTabWidget::TabPosition::North</enum>
         </property>
         <property name="tabShape">
-         <enum>QTabWidget::Triangular</enum>
+         <enum>QTabWidget::TabShape::Triangular</enum>
         </property>
         <property name="currentIndex">
          <number>-1</number>
@@ -287,59 +287,76 @@
         </property>
         <layout class="QFormLayout" name="formLayout">
          <item row="0" column="0">
-          <widget class="QPushButton" name="limitsBtn">
-           <property name="minimumSize">
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
             <size>
-             <width>0</width>
-             <height>20</height>
+             <width>20</width>
+             <height>40</height>
             </size>
            </property>
-           <property name="toolTip">
-            <string>Entering the initial and final measurement frequency</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">limitsBtn:pressed
+          </spacer>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QPushButton" name="limitsBtn">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Entering the initial and final measurement frequency</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">limitsBtn:pressed
 {
 	background-color: rgb(1,178,255);
 }</string>
-           </property>
-           <property name="text">
-            <string>Limits</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
+             </property>
+             <property name="text">
+              <string>Limits</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="rangeBtn">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Setting the central measurement frequency and range</string>
+             </property>
+             <property name="statusTip">
+              <string/>
+             </property>
+             <property name="whatsThis">
+              <string/>
+             </property>
+             <property name="text">
+              <string>Center, range</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="rangeBtn">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>20</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>Setting the central measurement frequency and range</string>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string/>
-           </property>
-           <property name="text">
-            <string>Center, range</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
+         <item row="2" column="0">
           <widget class="QLabel" name="startLabel">
            <property name="minimumSize">
             <size>
@@ -352,7 +369,7 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item row="2" column="1">
           <widget class="QLineEdit" name="lineEdit_fqFrom">
            <property name="font">
             <font>
@@ -363,11 +380,11 @@
             <string notr="true"/>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
+         <item row="3" column="0">
           <widget class="QLabel" name="stopLabel">
            <property name="minimumSize">
             <size>
@@ -380,7 +397,7 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
+         <item row="3" column="1">
           <widget class="QLineEdit" name="lineEdit_fqTo">
            <property name="font">
             <font>
@@ -394,14 +411,14 @@
             <bool>true</bool>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
            <property name="clearButtonEnabled">
             <bool>false</bool>
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
+         <item row="4" column="0">
           <widget class="QLabel" name="label">
            <property name="minimumSize">
             <size>
@@ -414,7 +431,7 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
+         <item row="4" column="1">
           <widget class="QSpinBox" name="spinBoxPoints">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
@@ -434,7 +451,7 @@
             </font>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
            <property name="accelerated">
             <bool>true</bool>
@@ -453,7 +470,7 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
+         <item row="5" column="0">
           <widget class="QCheckBox" name="checkBoxCalibration">
            <property name="toolTip">
             <string>Enable calibration OSL. Attention!
@@ -465,7 +482,7 @@ process in the settings menu!</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="1">
+         <item row="5" column="1">
           <widget class="QPushButton" name="fullBtn">
            <property name="minimumSize">
             <size>
@@ -507,7 +524,6 @@ process in the settings menu!</string>
         <property name="font">
          <font>
           <pointsize>10</pointsize>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -540,7 +556,6 @@ process in the settings menu!</string>
              <property name="font">
               <font>
                <pointsize>10</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -578,7 +593,6 @@ process in the settings menu!</string>
              <property name="font">
               <font>
                <pointsize>10</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -639,13 +653,13 @@ process in the settings menu!</string>
               </size>
              </property>
              <property name="verticalScrollBarPolicy">
-              <enum>Qt::ScrollBarAlwaysOn</enum>
+              <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
              </property>
              <property name="sizeAdjustPolicy">
-              <enum>QAbstractScrollArea::AdjustToContents</enum>
+              <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
              </property>
              <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
+              <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
              </property>
              <property name="dragEnabled">
               <bool>true</bool>
@@ -654,16 +668,16 @@ process in the settings menu!</string>
               <bool>true</bool>
              </property>
              <property name="dragDropMode">
-              <enum>QAbstractItemView::DropOnly</enum>
+              <enum>QAbstractItemView::DragDropMode::DropOnly</enum>
              </property>
              <property name="defaultDropAction">
-              <enum>Qt::MoveAction</enum>
+              <enum>Qt::DropAction::MoveAction</enum>
              </property>
              <property name="selectionMode">
-              <enum>QAbstractItemView::SingleSelection</enum>
+              <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
              </property>
              <property name="selectionBehavior">
-              <enum>QAbstractItemView::SelectRows</enum>
+              <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
              </property>
              <property name="rowCount">
               <number>0</number>
@@ -677,14 +691,14 @@ process in the settings menu!</string>
              <attribute name="horizontalHeaderCascadingSectionResizes">
               <bool>false</bool>
              </attribute>
+             <attribute name="horizontalHeaderMinimumSectionSize">
+              <number>80</number>
+             </attribute>
              <attribute name="horizontalHeaderDefaultSectionSize">
               <number>120</number>
              </attribute>
              <attribute name="horizontalHeaderHighlightSections">
               <bool>false</bool>
-             </attribute>
-             <attribute name="horizontalHeaderMinimumSectionSize">
-              <number>80</number>
              </attribute>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>true</bool>
@@ -775,6 +789,9 @@ process in the settings menu!</string>
          <string>Measurements</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="topMargin">
+          <number>20</number>
+         </property>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
@@ -792,16 +809,16 @@ process in the settings menu!</string>
               </size>
              </property>
              <property name="verticalScrollBarPolicy">
-              <enum>Qt::ScrollBarAsNeeded</enum>
+              <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
              </property>
              <property name="horizontalScrollBarPolicy">
-              <enum>Qt::ScrollBarAlwaysOff</enum>
+              <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
              </property>
              <property name="sizeAdjustPolicy">
-              <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
+              <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
              </property>
              <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
+              <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
              </property>
              <property name="dragEnabled">
               <bool>false</bool>
@@ -810,25 +827,25 @@ process in the settings menu!</string>
               <bool>true</bool>
              </property>
              <property name="dragDropMode">
-              <enum>QAbstractItemView::NoDragDrop</enum>
+              <enum>QAbstractItemView::DragDropMode::NoDragDrop</enum>
              </property>
              <property name="defaultDropAction">
-              <enum>Qt::MoveAction</enum>
+              <enum>Qt::DropAction::MoveAction</enum>
              </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
              <property name="selectionMode">
-              <enum>QAbstractItemView::SingleSelection</enum>
+              <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
              </property>
              <property name="verticalScrollMode">
-              <enum>QAbstractItemView::ScrollPerItem</enum>
+              <enum>QAbstractItemView::ScrollMode::ScrollPerItem</enum>
              </property>
              <property name="showGrid">
               <bool>true</bool>
              </property>
              <property name="gridStyle">
-              <enum>Qt::DotLine</enum>
+              <enum>Qt::PenStyle::DotLine</enum>
              </property>
              <property name="sortingEnabled">
               <bool>false</bool>
@@ -848,17 +865,17 @@ process in the settings menu!</string>
              <attribute name="horizontalHeaderCascadingSectionResizes">
               <bool>true</bool>
              </attribute>
+             <attribute name="horizontalHeaderMinimumSectionSize">
+              <number>40</number>
+             </attribute>
              <attribute name="horizontalHeaderDefaultSectionSize">
               <number>40</number>
              </attribute>
              <attribute name="horizontalHeaderHighlightSections">
               <bool>true</bool>
              </attribute>
-             <attribute name="horizontalHeaderMinimumSectionSize">
-              <number>40</number>
-             </attribute>
              <attribute name="horizontalHeaderStretchLastSection">
-              <bool>false</bool>
+              <bool>true</bool>
              </attribute>
              <attribute name="verticalHeaderVisible">
               <bool>false</bool>
@@ -955,7 +972,6 @@ process in the settings menu!</string>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -963,7 +979,7 @@ process in the settings menu!</string>
             <string/>
            </property>
            <property name="textFormat">
-            <enum>Qt::RichText</enum>
+            <enum>Qt::TextFormat::RichText</enum>
            </property>
            <property name="margin">
             <number>-1</number>
@@ -987,6 +1003,12 @@ process in the settings menu!</string>
    <class>MarqueeLabel</class>
    <extends>QLabel</extends>
    <header location="global">marqueelabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>CentralWidget</class>
+   <extends>QWidget</extends>
+   <header>centralwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>

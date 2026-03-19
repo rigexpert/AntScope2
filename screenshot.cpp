@@ -1,7 +1,7 @@
 #include "screenshot.h"
 #include "ui_screenshot.h"
 #include "analyzer/customanalyzer.h"
-
+#include"style.h"
 
 Screenshot::Screenshot(QWidget *parent, int _model, int height, int width) :
     QDialog(parent),
@@ -10,6 +10,19 @@ Screenshot::Screenshot(QWidget *parent, int _model, int height, int width) :
     m_error(0)
 {
     ui->setupUi(this);
+
+    QString style;
+    style = Style::dialog();
+    style += Style::label();
+    style += Style::pushButton();
+    setStyleSheet(style);
+
+    style = Style::lineEdit();
+    ui->lineEdit->setStyleSheet(style);
+
+    style = Style::progressBar();
+    ui->progressBar->setStyleSheet(style);
+
     m_analyzerModel = _model;
     m_lcdHeight = height;
     m_lcdWidth = width;

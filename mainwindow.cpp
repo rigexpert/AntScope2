@@ -7,6 +7,7 @@
 #include "CustomPlot.h"
 #include "selectdevicedialog.h"
 #include "printmulti.h"
+#include "style.h"
 
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
@@ -49,6 +50,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_mainWindow = this;
 
     ui->setupUi(this);
+
+    setStyles();
 
     qInfo() << "* 1 sslLibraryBuildVersion: " << QSslSocket::sslLibraryBuildVersionString();
     qInfo() << "* 2 supportsSsl: " << QSslSocket::supportsSsl();
@@ -4055,7 +4058,9 @@ void MainWindow::createTabs (QString sequence)
         menu.exec(tabBar->mapToGlobal(point));
     });
 
-    QToolButton *btn = new QToolButton();
+    QToolButton *btn = new QToolButton();    
+    QString style = Style::toolButton();
+    btn->setStyleSheet(style);
     btn->setText("+");
     btn->setToolTip("Add multi-charts");
     connect(btn, &QAbstractButton::clicked, this, [=]() {
@@ -6224,9 +6229,9 @@ void MainWindow::on_presssCtrlAltShiftM()
     m_measurements->setFarEndMeasurement(0);
     onFullRange(true);
     m_dotsNumber = 200;
-    QString style = "QPushButton:checked{"
-            "background-color: rgb(255, 1, 52);}";
-    ui->singleStart->setStyleSheet(style);
+    // QString style = "QPushButton:checked{"
+    //         "background-color: rgb(255, 1, 52);}";
+    ui->singleStart->setStyleSheet(Style::pushButton(true));
 
     on_singleStart_clicked();
     QApplication::processEvents();
@@ -6242,9 +6247,9 @@ void MainWindow::autoCalibrate()
             .arg((double)calibr.second, 0, 'f', 8, QLatin1Char(' '));
     m_analyzer->sendCommand(cmd);
 
-    QString style = "QPushButton:checked{"
-            "background-color: rgb(1, 178, 255);}";
-    ui->singleStart->setStyleSheet(style);
+    // QString style = "QPushButton:checked{"
+    //         "background-color: rgb(1, 178, 255);}";
+    ui->singleStart->setStyleSheet(Style::pushButton(true));
     QApplication::restoreOverrideCursor();
 
     QString notify = QString("Autocalibration: CableResistance=%1, CableLength=%2")
@@ -6407,7 +6412,7 @@ void MainWindow::on_presssCtrlAltShiftN()
 void MainWindow::changeColorTheme(bool _dark)
 {
     m_darkColorTheme = _dark;
-
+return;
     QString style;
     if (m_darkColorTheme) {
         qApp->setStyle(QStyleFactory::create("fusion"));
@@ -6813,4 +6818,67 @@ void MainWindow::closeSettingsDialog()
     int idx = ui->tabWidget->currentIndex();
     ui->tabWidget->setCurrentIndex(idx == 0 ? 1 : 0);
     QTimer::singleShot(1, this, [this, idx]() { ui->tabWidget->setCurrentIndex(idx); });
+}
+
+void MainWindow::setStyles()
+{
+    QString style;
+    style = Style::tabWidget();
+    ui->tabWidget->setStyleSheet(style);
+
+    style = Style::checkBox();
+    ui->checkBoxCalibration->setStyleSheet(style);
+
+    style = Style::pushButton(true);
+    ui->limitsBtn->setStyleSheet(style);
+    ui->rangeBtn->setStyleSheet(style);
+    ui->continuousStartBtn->setStyleSheet(style);
+    ui->singleStart->setStyleSheet(style);
+
+
+    style = Style::lineEdit();
+    ui->lineEdit_fqTo->setStyleSheet(style);
+    ui->lineEdit_fqFrom->setStyleSheet(style);
+
+    style = Style::groupBox();
+    ui->groupBox_Fq->setStyleSheet(style);
+    ui->groupBox_Run->setStyleSheet(style);
+    ui->groupBox_Presets->setStyleSheet(style);
+    ui->groupBox_Run->setStyleSheet(style);
+    ui->groupBox_Measure->setStyleSheet(style);
+
+    style = Style::label();
+    ui->centralWidget->setStyleSheet(style);
+
+    style = Style::spinBox();
+    ui->spinBoxPoints->setStyleSheet(style);
+
+    style = Style::pushButton();
+    ui->fullBtn->setStyleSheet(style);
+
+    ui->pressetsUpBtn->setStyleSheet(style);
+    ui->presetsDeleteBtn->setStyleSheet(style);
+    ui->presetsAddBtn->setStyleSheet(style);
+
+    ui->measurementsOpenBtn->setStyleSheet(style);
+    ui->measurmentsSaveBtn->setStyleSheet(style);
+    ui->measurmentsDeleteBtn->setStyleSheet(style);
+    ui->measurmentsClearBtn->setStyleSheet(style);
+
+    ui->settingsBtn->setStyleSheet(style);
+    ui->exportBtn->setStyleSheet(style);
+    ui->importBtn->setStyleSheet(style);
+    ui->printBtn->setStyleSheet(style);
+    ui->screenshot->setStyleSheet(style);
+    ui->screenshotAA->setStyleSheet(style);
+    ui->analyzerDataBtn->setStyleSheet(style);
+
+    style = Style::headerView();
+    ui->tableWidget_presets->horizontalHeader()->setStyleSheet(style);
+    ui->tableWidget_measurments->horizontalHeader()->setStyleSheet(style);
+
+    style = Style::tableWidget();
+    ui->tableWidget_presets->setStyleSheet(style);
+    ui->tableWidget_measurments->setStyleSheet(style);
+
 }

@@ -1,5 +1,6 @@
 #include "print.h"
 #include "ui_print.h"
+#include "style.h"
 
 Print::Print(QWidget *parent) :
     QDialog(parent),
@@ -8,7 +9,10 @@ Print::Print(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QString style = "QLabel {color: black;}";
+    QString style = Style::dialog();
+    style += Style::groupBox();
+    style += Style::label();
+    style += Style::pushButton();
     setStyleSheet(style);
 
     QString path = Settings::setIniFile();

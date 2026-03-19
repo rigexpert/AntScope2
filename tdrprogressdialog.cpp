@@ -1,12 +1,23 @@
 #include "tdrprogressdialog.h"
 #include "ui_tdrprogressdialog.h"
 #include "settings.h"
+#include "style.h"
 
 TDRProgressDialog::TDRProgressDialog(AnalyzerPro* _analyzer, QWidget *parent)
     : QDialog(parent), m_analyzer(_analyzer),
     ui(new Ui::TDRProgressDialog)
 {
     ui->setupUi(this);
+
+    QString style = Style::dialog();
+    style += Style::progressBar();
+    style += Style::label();
+    style += Style::pushButton();
+    style += Style::spinBox();
+    setStyleSheet(style);
+
+    style = Style::spinBox();
+    ui->spinBoxCable->setStyleSheet(style);
 
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
     setStatusInfo(tr(""));

@@ -351,6 +351,7 @@ protected:
     QMenu& menuMultiTab(QMenu& menu);
     void buildMultiTabLayout();
     void restoreMultitab(const QString& tabs);
+    void setStyles();
 
 public:
     void replot_multiTab();

@@ -2,6 +2,7 @@
 #include "ui_appregistrationdialog.h"
 #include <QMessageBox>
 #include <QRegularExpression>
+#include "style.h"
 
 AppRegistrationDialog::AppRegistrationDialog(LicenseAgent& agent, QWidget *parent) :
     QDialog(parent),
@@ -23,6 +24,16 @@ AppRegistrationDialog::AppRegistrationDialog(QString user, QString mail, License
 void AppRegistrationDialog::init(QString user, QString mail)
 {
     ui->setupUi(this);
+
+    QString style;
+    style = Style::dialog();
+    style += Style::label();
+    style += Style::lineEdit();
+    setStyleSheet(style);
+
+    style = Style::pushButton();
+    ui->pushButtonCancel->setStyleSheet(style);
+    ui->pushButtonOk->setStyleSheet(style);
 
     connect(&m_agent, &LicenseAgent::registered, this, [=](){
         accept();

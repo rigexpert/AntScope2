@@ -3,12 +3,19 @@
 #include <QAbstractButton>
 #include <QFile>
 #include "settings.h"
+#include "style.h"
 
 EditBandsDialog::EditBandsDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::EditBandsDialog)
 {
     ui->setupUi(this);
+
+    QString style;
+    style = Style::dialog();
+    style += "QDialogButtonBox QPushButton {background-color: rgb(26, 45, 98);color: white;}";
+    setStyleSheet(style);
+
     QFont font = ui->textEdit->font();
     font.setPointSize(12);
     ui->textEdit->setFont(font);

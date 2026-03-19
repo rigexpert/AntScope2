@@ -3,7 +3,7 @@
 #include "settings.h"
 #include "nanovna_analyzer.h"
 #include "ble_analyzer.h"
-
+#include "style.h"
 
 
 // static
@@ -16,6 +16,7 @@ SelectDeviceDialog::SelectDeviceDialog(bool silent, QWidget *parent) :
 {
     ui->setupUi(this);
 
+/* obsolete
     QString style = "QPushButton:disabled{"
             "background-color: rgb(59, 59, 59);"
             "color: rgb(119, 119, 119);}"
@@ -23,6 +24,18 @@ SelectDeviceDialog::SelectDeviceDialog(bool silent, QWidget *parent) :
             "background-color: rgb(1, 178, 255);}";
     ui->pushButtonConnect->setStyleSheet(style);
     ui->pushButtonScan->setStyleSheet(style);
+*/
+    QString style = Style::pushButton();
+    setStyleSheet(style);
+
+    style = Style::radioButton();
+    ui->radioButtonBLE->setStyleSheet(style);
+    ui->radioButtonCOM->setStyleSheet(style);
+    ui->radioButtonUSB->setStyleSheet(style);
+
+    ui->tableWidget->horizontalHeader()->setStyleSheet(Style::headerView());
+    ui->tableWidget->setStyleSheet(Style::tableWidget());
+    ui->checkBox->setStyleSheet(Style::checkBox());
 
     QString path = Settings::setIniFile();
     QSettings set(path, QSettings::IniFormat);
@@ -438,6 +451,22 @@ void SelectDeviceDialog::reset()
       m_analyzer = nullptr;
       tmp->deleteLater();
     }
+}
+
+void SelectDeviceDialog::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event);
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    qreal ht = height();
+    QRadialGradient gradient(width()/2, ht-ht/4, width()/2);
+
+    gradient.setColorAt(0.7, QColor("#020202"));
+    gradient.setColorAt(0.3, QColor("#138fc3"));
+
+    painter.fillRect(rect(), gradient);
 }
 
 

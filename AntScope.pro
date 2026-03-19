@@ -71,6 +71,7 @@ message("       ["$${RCC_DIR}"]")
 SOURCES += main.cpp\
     analyzer/analyzerpro.cpp \
     appregistrationdialog.cpp \
+    centralwidget.cpp \
     encodinghelpers.cpp \
     inforequestdialog.cpp \
     licenseagent.cpp \
@@ -91,6 +92,7 @@ SOURCES += main.cpp\
     settings.cpp \
     fqsettings.cpp \
     crc32.cpp \
+    style.cpp \
     unitrequestdialog.cpp \
     updatedialog.cpp \
     devinfo/redeviceinfo.cpp \
@@ -128,6 +130,7 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     analyzer/analyzerpro.h \
     appregistrationdialog.h \
+    centralwidget.h \
     encodinghelpers.h \
     inforequestdialog.h \
     licenseagent.h \
@@ -149,6 +152,7 @@ HEADERS  += mainwindow.h \
     settings.h \
     fqsettings.h \
     crc32.h \
+    style.h \
     unitrequestdialog.h \
     updatedialog.h \
     devinfo/redeviceinfo.h \

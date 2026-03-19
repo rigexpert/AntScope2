@@ -32,6 +32,9 @@ protected:
     void changeEvent(QEvent *e);
     void reset();
     QString scanSilent(QString& device_name);
+protected:
+    void paintEvent(QPaintEvent *event) override;
+
 
 public slots:
     void onApply(ReDeviceInfo::InterfaceType type, QString name, QString port_or_serial);

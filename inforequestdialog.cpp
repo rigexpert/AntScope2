@@ -1,5 +1,6 @@
 #include "inforequestdialog.h"
 #include "ui_inforequestdialog.h"
+#include "style.h"
 
 InfoRequestDialog::InfoRequestDialog(QString name, QString serial,
                                      QString license, QWidget *parent) :
@@ -7,6 +8,16 @@ InfoRequestDialog::InfoRequestDialog(QString name, QString serial,
     ui(new Ui::InfoRequestDialog)
 {
     ui->setupUi(this);
+
+    QString style;
+    style = Style::dialog();
+    style += Style::label();
+    style += Style::lineEdit();
+    setStyleSheet(style);
+
+    style = "QDialogButtonBox " + Style::pushButton();
+    ui->buttonBox->setStyleSheet(style);
+
     setWindowTitle(tr("Register device"));
     ui->lineEditName->setText(name);
     ui->lineEditSerial->setText(serial);

@@ -2,6 +2,7 @@
 #include "ui_unitrequestdialog.h"
 #include <QRegularExpression>
 #include <QMessageBox>
+#include "style.h"
 
 UnitRequestDialog::UnitRequestDialog(ManualInfoWeb& infoWeb, QWidget *parent) :
     QDialog(parent),
@@ -9,6 +10,16 @@ UnitRequestDialog::UnitRequestDialog(ManualInfoWeb& infoWeb, QWidget *parent) :
     ui(new Ui::UnitRequestDialog)
 {
     ui->setupUi(this);
+
+    QString style = Style::dialog();
+    style += Style::label();
+    style += Style::lineEdit();
+    style += Style::pushButton();
+    setStyleSheet(style);
+
+    style = Style::pushButton();
+    ui->pushButtonCancel->setStyleSheet(style);
+    ui->pushButtonOk->setStyleSheet(style);
 
     ui->lineEditEmail->setText(m_infoWeb.email);
     ui->lineEditLicense->setText(m_infoWeb.licenseName);

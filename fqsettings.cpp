@@ -1,5 +1,6 @@
 #include "fqsettings.h"
 #include "ui_fqsettings.h"
+#include "style.h"
 
 FqSettings::FqSettings(QWidget *parent) :
     QDialog(parent),
@@ -7,6 +8,16 @@ FqSettings::FqSettings(QWidget *parent) :
 {
     ui->setupUi(this);
     QTimer::singleShot(10,this, SLOT(setTitle()));
+
+    QString style;
+    style = "QDialog{background-color: #2F2F2F}";
+    style += Style::label();
+    style += Style::groupBox();
+    style += Style::lineEdit();
+    setStyleSheet(style);
+
+    style = Style::pushButton();
+    ui->OKBtn->setStyleSheet(style);
 }
 
 FqSettings::~FqSettings()

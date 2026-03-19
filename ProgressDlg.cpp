@@ -1,4 +1,5 @@
 ﻿#include "ProgressDlg.h"
+#include "style.h"
 
 ProgressDlg::ProgressDlg(QWidget * parent) : QDialog(parent),
 	m_iMinValue(0), 
@@ -6,10 +7,20 @@ ProgressDlg::ProgressDlg(QWidget * parent) : QDialog(parent),
 	m_iStepValue(1)
 {
 	setupUi(this);
-	setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
-	setStatusInfo(tr(""));
-	setActionInfo(tr(""));
-	setWindowOpacity(0.95);
+
+    QString style;
+    style = Style::dialog();
+    style += Style::label();
+    style += Style::pushButton();
+    setStyleSheet(style);
+
+    style = Style::progressBar();
+    progressBar->setStyleSheet(style);
+
+    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+    setStatusInfo(tr(""));
+    setActionInfo(tr(""));
+    setWindowOpacity(0.95);
     stopButton->hide();
 }
 
