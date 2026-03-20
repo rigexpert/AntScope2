@@ -4029,7 +4029,7 @@ void MainWindow::createTabs (QString sequence)
     m_settings->beginGroup("Settings");
     QString strColor = m_settings->value("chart-background", "#ffffff").toString();
     QColor color;
-    color.setNamedColor(strColor);
+    color.fromString(strColor);
     setChartBackground(color);
     m_settings->endGroup();
 

@@ -16,6 +16,9 @@ TDRProgressDialog::TDRProgressDialog(AnalyzerPro* _analyzer, QWidget *parent)
     style += Style::spinBox();
     setStyleSheet(style);
 
+    style = Style::slider();
+    ui->sliderCable->setStyleSheet(style);
+
     style = Style::spinBox();
     ui->spinBoxCable->setStyleSheet(style);
 

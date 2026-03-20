@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include <QAbstractNativeEventFilter>
 #include "analyzer/customanalyzer.h"
+#include "style.h"
 
 bool g_developerMode = false;
 bool g_usbOnly = false;
@@ -117,6 +118,7 @@ int main(int argc, char *argv[])
 #else
     QApplication a(argc, argv);
 #endif
+    a.setStyleSheet(Style::messageBox());
 
     QStringList args = a.arguments();
 
@@ -146,6 +148,7 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     g_mainWindow = w.m_mainWindow;
+
 
     foreach (QString path, args) {
         if (path.contains(".asd")) {

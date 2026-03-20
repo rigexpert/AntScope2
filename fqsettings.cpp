@@ -18,6 +18,9 @@ FqSettings::FqSettings(QWidget *parent) :
 
     style = Style::pushButton();
     ui->OKBtn->setStyleSheet(style);
+
+    style = Style::slider();
+    ui->dotsSlider->setStyleSheet(style);
 }
 
 FqSettings::~FqSettings()

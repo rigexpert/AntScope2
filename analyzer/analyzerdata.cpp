@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 #include <iostream>
 #include "Notification.h"
+#include "style.h"
 
 AnalyzerData::AnalyzerData(int _model, QWidget *_parent) :
     QDialog(_parent),
@@ -80,7 +81,13 @@ void AnalyzerData::on_btnReadAll_clicked()
 
     connect(mainWindow->analyzer(), &AnalyzerPro::measurementComplete, this, &AnalyzerData::on_complete);
 
+    QString style = Style::dialog();
+    style += Style::progressBar();
+    style += Style::label();
+    style += Style::pushButton();
+
     progressDialog = new QProgressDialog("Reading data...", "Abort", 0, ui->listWidget->count(), this);
+    progressDialog->setStyleSheet(style);
     connect(progressDialog, &QProgressDialog::canceled, this, &AnalyzerData::on_finish);
 
     progressSteps = 0;

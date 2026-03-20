@@ -15,6 +15,9 @@ Print::Print(QWidget *parent) :
     style += Style::pushButton();
     setStyleSheet(style);
 
+    style = Style::slider();
+    ui->lineSlider->setStyleSheet(style);
+
     QString path = Settings::setIniFile();
     m_settings = new QSettings(path, QSettings::IniFormat);
     m_settings->beginGroup("Print");

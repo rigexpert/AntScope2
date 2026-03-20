@@ -20,6 +20,8 @@ public:
     static QString comboBox();
     static QString progressBar();
     static QString dialog();
+    static QString slider();
+    static QString messageBox();
 };
 
 #endif // STYLE_H

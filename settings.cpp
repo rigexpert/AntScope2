@@ -61,14 +61,17 @@ Settings::Settings(QWidget *parent) :
     m_licenseAgent(this)
 {
     ui->setupUi(this);
+    QString style;
+
+    // DEBUG
+    // DEBUG
+
 
     connect(&m_licenseAgent, &LicenseAgent::registered, this, [=](){
         ui->pushButtonAntscope->setText(tr("Change application registration"));
     });
 
     PopUpIndicator::setIndicatorVisible(false);
-
-    QString style;
 
     style = Style::comboBox();
     ui->cableLossComboBox->setStyleSheet(style);
@@ -316,7 +319,8 @@ Settings::Settings(QWidget *parent) :
     } else if (type == ReDeviceInfo::BLE) {
         ui->groupBoxLicense->hide();
     }
-    // chart background not supported
+
+    // changing the chart background temporarily is not supported
     ui->bkgButton->hide();
     ui->label_24->hide();
 }
@@ -1551,13 +1555,45 @@ void Settings::showColorDialog()
     m_settings->beginGroup("Settings");
     QString strColor = m_settings->value("chart-background", "#ffffff").toString();
     QColor color;
-    color.setNamedColor(strColor);
-    color = QColorDialog::getColor(color, this );
-    if (color.isValid()) {
-        strColor = color.name();
-        m_settings->setValue("chart-background", strColor);
-        ui->bkgButton->setStyleSheet("QToolButton{background-color: " + strColor + ";}");
-        emit chartBackgroundChanged(color);
+    color.fromString(strColor);
+    QColorDialog dlg;
+    dlg.setOption(QColorDialog::DontUseNativeDialog, true);
+    QString style = R"(
+        QColorDialog {
+            background-color: #2b2b2b;
+        }
+
+        QColorDialog QLabel {
+            color: white;
+        }
+
+        QColorDialog QLineEdit,
+        QColorDialog QSpinBox {
+            background-color: #3c3c3c;
+            color: white;
+            border: 1px solid #555;
+        }
+
+        QColorDialog QPushButton {
+            background-color: #444;
+            color: white;
+            border: 1px solid #666;
+            padding: 5px;
+        }
+
+        QColorDialog QPushButton:hover {
+            background-color: #555;
+        }
+        )";
+    dlg.setStyleSheet(style);
+    if (dlg.exec() == QDialog::Accepted) {
+        color = dlg.currentColor();
+        if (color.isValid()) {
+            strColor = color.name();
+            m_settings->setValue("chart-background", strColor);
+            ui->bkgButton->setStyleSheet("QToolButton{background-color: " + strColor + ";}");
+            emit chartBackgroundChanged(color);
+        }
     }
     m_settings->endGroup();
 }

@@ -5,6 +5,7 @@
 #include "CustomPlot.h"
 #include "customgraph.h"
 #include "glwidget.h"
+#include "style.h"
 
 extern bool g_developerMode;
 extern QMap<QString, QString> g_mapTabPlotNames;
@@ -173,7 +174,7 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
     connect(m_tableWidget, &QTableWidget::cellClicked, [=](int row, int col) {
         if (col == COL_MENU) {
             measurement& mm = m_measurements[row];
-            bool ok;
+            bool ok=true;
             QString prefix;
             QString name = mm.name;
             int pos = name.indexOf("> ");
@@ -181,9 +182,19 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
                 prefix = name.left(pos+2);
                 name = name.mid(pos+2);
             }
-            QString text = QInputDialog::getText(nullptr, tr("Change name"),
-                                                     tr("Measurement name:"), QLineEdit::Normal,
-                                                     name, &ok);
+            QString style = Style::dialog();
+            style += Style::label();
+            style += Style::lineEdit();
+            style += Style::pushButton();
+            QInputDialog dlg;
+            dlg.setStyleSheet(style);
+            QString text;
+            dlg.setLabelText(tr("Measurement name:"));
+            dlg.setTextValue(name);
+            if (dlg.exec() == QDialog::Accepted) {
+                text = dlg.textValue();
+            }
+
             if (ok && !text.isEmpty()) {
                 mm.name = prefix + text;
                 m_tableWidget->item(row, COL_NAME)->setText(mm.name);
@@ -5623,7 +5634,7 @@ void Measurements::setBriefHintColor()
         m_settings->endGroup();
 
         QColor color;
-        color.setNamedColor(strColor);
+        color.fromString(strColor);
 #ifndef Q_OS_MACX
         QColor inverse(255-color.red(), 255-color.green(), 255-color.blue());
         m_graphBriefHint->setTextColor(inverse.name());
