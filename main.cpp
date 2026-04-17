@@ -99,6 +99,21 @@ void setAbsoluteFqMaximum()
     ABSOLUTE_MAX_FQ = fqMax;
 }
 
+int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                      QString title, QString text,
+                      QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                      QMessageBox::StandardButton defaultButton = QMessageBox::NoButton)
+{
+    QMessageBox msgBox;
+    msgBox.setIcon(icon);
+    msgBox.setWindowTitle(title);
+    msgBox.setText(text);
+    msgBox.setStandardButtons(buttons);
+    msgBox.setDefaultButton(defaultButton);
+    msgBox.setStyleSheet(Style::messageBox());
+    return msgBox.exec();
+}
+
 int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -146,7 +161,10 @@ int main(int argc, char *argv[])
     g_raspbian = QSysInfo::productType().contains("raspbian", Qt::CaseInsensitive);
 
     QString style;
-    style += Style::dialog();
+    style = Style::messageBox();
+    a.setStyleSheet(style);
+
+    style = Style::dialog();
     style += Style::pushButton();
     style += Style::label();
     style += Style::lineEdit();
@@ -161,7 +179,6 @@ int main(int argc, char *argv[])
             break;
         }
     }
-
     w.show();
 
     return a.exec();

@@ -6,6 +6,10 @@
 #include "style.h"
 
 
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 // static
 SelectionParameters SelectionParameters::selected;
 
@@ -159,7 +163,7 @@ void SelectDeviceDialog::onApply(ReDeviceInfo::InterfaceType type,
         int prefix = AnalyzerParameters::prefixFromSerial(port_or_serial);
         param = AnalyzerParameters::byPrefix(prefix);
         if (prefix == 0 || param == nullptr) {
-            QMessageBox::warning(this, tr("Select device"), tr("Serial number does not match the type of device"));
+            g_showMessageBox(this, QMessageBox::Warning, tr("Select device"), tr("Serial number does not match the type of device"));
             return;
         }
     } else if (type == (int)ReDeviceInfo::NANO) {

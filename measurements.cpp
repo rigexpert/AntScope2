@@ -10,6 +10,10 @@
 extern bool g_developerMode;
 extern QMap<QString, QString> g_mapTabPlotNames;
 int g_maxMeasurements = MAX_MEASUREMENTS;
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
 QVector<QColor> generateColors(int number) {
     const int MAX_COLOR = 360;
@@ -2481,7 +2485,7 @@ void Measurements::loadData(QString path)
         QFile loadFile(path);
 
         if (!loadFile.open(QIODevice::ReadOnly)) {
-            QMessageBox::information(NULL, tr("Error"), tr("Couldn't open saved file."));
+            g_showMessageBox(NULL, QMessageBox::Information, tr("Error"), tr("Couldn't open saved file."));
             qWarning("Couldn't open saved file.");
             return;
         }
@@ -2495,7 +2499,7 @@ void Measurements::loadData(QString path)
 
         int size = measureArray.size();
         if (size < 2) {
-            QMessageBox::information(NULL, tr("Error"), tr("The saved file is too short."));
+            g_showMessageBox(NULL, QMessageBox::Information, tr("Error"), tr("The saved file is too short."));
             qWarning("Couldn't open saved file.");
             return;
         }
@@ -3151,7 +3155,7 @@ void Measurements::importData(QString _name)
             emit import_finished(fqMin*1000, fqMax*1000);
         }
     } else {
-        QMessageBox::information(nullptr, tr("Load data"), tr("Oops, this format is not supported!"), QMessageBox::Close);
+        g_showMessageBox(nullptr, QMessageBox::Information, tr("Load data"), tr("Oops, this format is not supported!"), QMessageBox::Close);
     }
 }
 

@@ -43,29 +43,6 @@ QString Style::tabWidget()
     style += "QTabBar::tab:disabled {background: rgb(26, 45, 98); color: white; }";
     style += "QTabBar::tab:selected {background: rgb(26, 45, 198); color: white; } ";
     style += "QTabBar::tab:!selected {background: rgb(26, 45, 98); color: white; } ";
-
-    /*
- style= R"(
-QTabBar::tab {
-    background: rgb(26, 45, 98);
-    color: white;
-    padding: 6px 12px;
-border: 1px solid rgb(26, 45, 98);
-}
-
-QTabBar::tab:selected {
-    background: rgb(26, 45, 98);
-    color: white;
-}
-
-QTabBar::tab:!selected {
-    background: rgb(26, 45, 98);
-    color: white;
-}
-
-)";
-    style += "QTabWidget::pane {background-color: #2F2F2F; border: 1px solid #C2C7CB; }";
-*/
     return style;
 }
 
@@ -100,15 +77,11 @@ QString Style::tableWidget()
 {
     QString style;
 
-    style = "QTableWidget {"
-            "background-color: #2F2F2F;"
-            "border: 1px solid #4181C0;"
-            "color: white;"
-            //"selection-background-color: #4181C0; /* Color when an item is selected */"
-            //"selection-color: white;"
-            "} "
+    style = "QTableWidget {background-color: #2F2F2F; border: 1px solid #4181C0;color: white;} "
             "QTableWidget::item:selected {background-color: rgb(26, 45, 198); color: white;} "
-            "QTableWidget::item:hover {background-color: rgb(26, 45, 198); color: white;} ";
+            "QTableWidget::indicator:checked {image: url(:/new/prefix1/checked.png);} "
+            "QTableWidget::indicator:unchecked {image: url(:/new/prefix1/unchecked.png);} "
+        ;
     style += "QScrollBar:horizontal { height: 5px; background: rgb(26, 45, 98); border: 1px solid green;} ";
     style += "QScrollBar::handle:horizontal {background: rgb(26, 45, 198); min-width: 20px;} ";
     style += "QScrollBar:vertical { width: 5px; background: rgb(26, 45, 98); } ";

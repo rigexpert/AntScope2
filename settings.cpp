@@ -8,6 +8,10 @@
 #include "inforequestdialog.h"
 #include "style.h"
 
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 extern bool g_developerMode;
 extern int g_maxMeasurements; // see measurements.cpp
 extern QString appendSpaces(const QString& number);
@@ -173,7 +177,6 @@ Settings::Settings(QWidget *parent) :
         m_settings->beginGroup("Settings");
         m_settings->setValue("darkColorTheme", checked);
         m_settings->endGroup();
-        //QMessageBox::warning(this, tr("Color Theme"), tr("You must reload the program to change the color theme."), QMessageBox::Ok);
     });
 
     QString strColor = m_settings->value("chart-background", "#ffffff").toString();
@@ -258,11 +261,11 @@ Settings::Settings(QWidget *parent) :
         QString _user = m_settings->value("userName", "").toString();
         bool remind = m_settings->value("remind", true).toBool();
         if (_mail.isEmpty() && remind) {
-            if (QMessageBox::question(this, tr("Register application"),
+            if (g_showMessageBox(this, QMessageBox::Question, tr("Register application"),
                                       tr("Do you want to register the application?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
                 on_registerApplication();
             } else {
-                if (QMessageBox::question(this, tr("Registration"),
+                if (g_showMessageBox(this, QMessageBox::Question, tr("Registration"),
                                           tr("Remind later?"), QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
                     m_settings->setValue("remind", true);
                 } else {
@@ -271,19 +274,10 @@ Settings::Settings(QWidget *parent) :
             }
         }
         else {
-//            if (QMessageBox::question(this, tr("Register application"),
-//                                      tr("Do you want to change registered data?"),
-//                                      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-//                on_registerApplication(user, _mail);
-//            }
             on_registerApplication(_user, _mail);
         }
         m_settings->endGroup();
     });
-
-//    if (!email.isEmpty()) {
-//        ui->pushButtonAntscope->setEnabled(false);
-//    }
 
     if (MainWindow::m_mainWindow->analyzer()->getModelString().contains("Match")) {
         connect(MainWindow::m_mainWindow->analyzer(), &AnalyzerPro::signalMatch_12Received, this, [=](QByteArray data){
@@ -648,7 +642,7 @@ void Settings::on_fqRestrictCheckBox_clicked(bool checked)
 void Settings::on_calibWizard_clicked()
 {
     enableButtons(false);
-    QMessageBox::information(NULL, tr("Open"),
+    g_showMessageBox(this, QMessageBox::Information, tr("Open"),
                          tr("Please connect OPEN standard and press OK."));
     emit startCalibration();
 }
@@ -718,7 +712,7 @@ void Settings::on_openCalibBtn_clicked()
     enableButtons(false);
     m_onlyOneCalib = true;
     PopUpIndicator::hideIndicator();
-    if (QMessageBox::information(NULL, tr("Open"),
+    if (g_showMessageBox(NULL, QMessageBox::Information, tr("Open"),
                          tr("Please connect OPEN standard and press OK.")) == QMessageBox::Ok)
         emit startCalibrationOpen();
 }
@@ -728,7 +722,7 @@ void Settings::on_shortCalibBtn_clicked()
     enableButtons(false);
     m_onlyOneCalib = true;
     PopUpIndicator::hideIndicator();
-    QMessageBox::information(NULL, tr("Short"),
+    g_showMessageBox(NULL, QMessageBox::Information, tr("Short"),
                          tr("Please connect SHORT standard and press OK."));
     emit startCalibrationShort();
 }
@@ -738,7 +732,7 @@ void Settings::on_loadCalibBtn_clicked()
     enableButtons(false);
     m_onlyOneCalib = true;
     PopUpIndicator::hideIndicator();
-    QMessageBox::information(NULL, tr("Load"),
+    g_showMessageBox(NULL, QMessageBox::Information, tr("Load"),
                          tr("Please connect LOAD standard and press OK."));
     emit startCalibrationLoad();
 }
@@ -1051,7 +1045,7 @@ void Settings::openCablesFile(QString path)
     bool res = file.open(QFile::ReadOnly);
     if(!res)
     {
-        QMessageBox::information(this, tr("Can't open file"), path, QMessageBox::Close);
+        g_showMessageBox(this, QMessageBox::Information, tr("Can't open file"), path, QMessageBox::Close);
         return;
     }
 
@@ -1197,20 +1191,6 @@ QString Settings::programDataPath(QString _fileName)
     return localDataPath(_fileName);
 #endif
 
-// win32 and win64
-//    QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
-//
-//    qDebug() << list;
-//    for (int idx=0; idx<list.size(); idx++)
-//    {
-//        QDir dir = list[idx];
-//        QString path = dir.absoluteFilePath("RigExpert/AntScope2/" + _fileName);
-//        QString msg = QString("fname:%1\ndir: %2\npath:%3\n%4").arg(_fileName, dir.absolutePath(), path).arg(QFile::exists(path)?"EXIST":"NO");
-//        QMessageBox::information(nullptr, "programDataPath", msg);
-//        if (QFile::exists(path)) {
-//            return path;
-//        }
-//    }
     QString configDataDirString = QStandardPaths::standardLocations(QStandardPaths::AppConfigLocation).at(1);
     QDir dir1(configDataDirString); // "C:/ProgramData/<APPNAME>"
     dir1.cdUp(); // cd ..

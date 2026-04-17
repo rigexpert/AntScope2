@@ -5,6 +5,10 @@
 #include "AA55BTPacket.h"
 
 extern bool g_bAA55modeNewProtocol;
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
 static const unsigned char crc8_table[256] = {
     0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F,
@@ -234,7 +238,7 @@ qint32 comAnalyzer::parse (QByteArray arr)
                             return arr.length();
                         }
                         warn += tr("Error: ") + error;
-                        QMessageBox::warning(NULL, tr("Warning"), warn);
+                        g_showMessageBox(NULL, QMessageBox::Warning, tr("Warning"), warn);
                     }else
                     {
                         return arr.length();
@@ -420,7 +424,7 @@ void comAnalyzer::searchAnalyzer()
 
     if(analyzerDetected && (--messageWasShown == 0))
     {
-        QMessageBox::information(NULL,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
+        g_showMessageBox(NULL, QMessageBox::Information,tr("Analyzer detected"),tr("The program has detected an analyzer connected to your PC, but it is either turned off or is not in the PC mode. The program will now work in the offline mode (i.e. without the analyzer).\n\nIf you still want the program to talk to the analyzer, turn it on and enter the PC mode."));
         QTimer::singleShot(4000, this, SLOT(searchAnalyzer()));
         return;
     }
@@ -701,7 +705,7 @@ void comAnalyzer::makeScreenshot()
         sendData(str);
     } else {
         emit signalMeasurementError();
-        QMessageBox::warning(nullptr, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
+        g_showMessageBox(nullptr, QMessageBox::Warning, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
     }
 }
 
@@ -818,7 +822,7 @@ bool comAnalyzer::update (QIODevice *fw)
                 break;
             }
         }
-        QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
+        g_showMessageBox(NULL, QMessageBox::Information,tr("Finish"),tr("Successfully updated!"));
         m_comPort->close();
         openComPort(name,115200);
         setIsMeasuring(false);
@@ -852,7 +856,7 @@ bool comAnalyzer::update (QIODevice *fw)
             {
                 if(!waitAnswer())
                 {
-                    QMessageBox::warning(NULL,tr("Error"),tr("Error while update, please try again."));
+                    g_showMessageBox(NULL, QMessageBox::Warning,tr("Error"),tr("Error while update, please try again."));
                     emit updatePercentChanged(100);
                     emit updatePercentChanged(0);
                     setIsMeasuring(false);
@@ -895,7 +899,7 @@ bool comAnalyzer::update (QIODevice *fw)
 
         emit updatePercentChanged(100);
 
-        QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
+        g_showMessageBox(NULL, QMessageBox::Information,tr("Finish"),tr("Successfully updated!"));
         m_comPort->close();
         openComPort(name,38400);
         setIsMeasuring(false);

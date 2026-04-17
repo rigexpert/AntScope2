@@ -316,10 +316,6 @@ void MarqueeLabel::on_downloadInfoComplete()
 
 void MarqueeLabel::on_downloadFileComplete()
 {
-//    if (!m_downloader->error().isEmpty()) {
-//        QString msg = tr("Network error: ")+m_downloader->error();
-//        QMessageBox::information(nullptr, "QpenSSL", msg);
-//    }
     QByteArray arr = m_downloader->file();
     if (load(arr)) {
         show();

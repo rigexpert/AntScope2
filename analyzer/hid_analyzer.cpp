@@ -5,6 +5,10 @@
 #include "analyzerpro.h"
 
 extern bool g_usbOnly;
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
 HidAnalyzer::HidAnalyzer(QObject *parent) : BaseAnalyzer(parent),
       m_chartTimer(nullptr),
@@ -704,7 +708,7 @@ bool HidAnalyzer::update (QIODevice *fw)
         }
         if(!m_bootMode)
         {
-            QMessageBox::warning(nullptr,tr("Warning"),tr("Can't enter to boot mode!"));
+            g_showMessageBox(nullptr, QMessageBox::Warning,tr("Warning"),tr("Can't enter to boot mode!"));
             return false;
         }
     }
@@ -782,10 +786,10 @@ bool HidAnalyzer::update (QIODevice *fw)
             memset(buff, 0, sizeof(buff));
             buff[1] = BL_CMD_START;
             hid_write(m_hidDevice, buff, sizeof(buff));
-            QMessageBox::information(nullptr,tr("Finish"),tr("Successfully updated!"));
+            g_showMessageBox(nullptr, QMessageBox::Information,tr("Finish"),tr("Successfully updated!"));
         }else
         {
-            QMessageBox::warning(nullptr,tr("Warning"),tr("Update failed!"));
+            g_showMessageBox(nullptr, QMessageBox::Warning,tr("Warning"),tr("Update failed!"));
         }
     }
     preUpdate();

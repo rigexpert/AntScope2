@@ -3,6 +3,11 @@
 #include "analyzer/customanalyzer.h"
 #include"style.h"
 
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+
 Screenshot::Screenshot(QWidget *parent, int _model, int height, int width) :
     QDialog(parent),
     ui(new Ui::Screenshot),
@@ -543,7 +548,7 @@ void Screenshot::on_errorTimerTick()
 {
     if ((m_lcdHeight == 0) || (m_lcdWidth == 0)) {
         m_errorTimer.stop();
-        QMessageBox::warning(NULL, tr("Error"), tr("Screenshot not supported on this device."));
+        g_showMessageBox(NULL, QMessageBox::Warning, tr("Error"), tr("Screenshot not supported on this device."));
         ui->progressBar->setValue(100);
         m_inputData.clear();
         m_imageVector.clear();
@@ -553,7 +558,7 @@ void Screenshot::on_errorTimerTick()
     }
     if((m_error == m_imageVector.length()/(m_lcdHeight*m_lcdWidth/100)) && m_error != 0 && m_error != 100)
     {
-        QMessageBox::warning(NULL, tr("Error"), tr("Error while make screenshot. Please try again."));
+        g_showMessageBox(NULL, QMessageBox::Warning, tr("Error"), tr("Error while make screenshot. Please try again."));
         ui->progressBar->setValue(100);
         m_inputData.clear();
         m_imageVector.clear();

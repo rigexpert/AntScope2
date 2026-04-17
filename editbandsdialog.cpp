@@ -5,6 +5,11 @@
 #include "settings.h"
 #include "style.h"
 
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+
 EditBandsDialog::EditBandsDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::EditBandsDialog)
@@ -59,12 +64,11 @@ bool EditBandsDialog::loadDefaults()
     bool res = file.open(QFile::ReadOnly);
     if(!res) {
         qDebug() << "load defaults" << file.errorString() << ituPath;
-        QMessageBox::information(this, "loadDefaults", file.errorString() + ituPath);
+        g_showMessageBox(this, QMessageBox::Information, "loadDefaults", file.errorString() + ituPath);
         return false;
     }
 
     m_filePath = ituPath;
-    //QMessageBox::information(this, "loadDefaults", m_filePath);
 
     ui->textEdit->clear();
     QTextStream stream(&file);
@@ -84,12 +88,11 @@ bool EditBandsDialog::load()
     bool res = file.open(QFile::ReadOnly);
     if(!res) {
         qDebug() << "load" << file.errorString() << ituPath;
-        QMessageBox::information(this, "load", file.errorString() + ituPath);
+        g_showMessageBox(this, QMessageBox::Information, "load", file.errorString() + ituPath);
         return false;
     }
 
     m_filePath = ituPath;
-    //QMessageBox::information(this, "loadDefaults", m_filePath);
 
     ui->textEdit->clear();
     QTextStream stream(&file);
@@ -101,14 +104,12 @@ bool EditBandsDialog::load()
 
 bool EditBandsDialog::save()
 {
-    //QMessageBox::information(this, "save start", m_filePath);
-
     QString ituPath = Settings::programDataPath("itu-regions.txt");
     QFile file(ituPath);
     bool res = file.open(QFile::Truncate|QFile::WriteOnly|QFile::Text);
     if(!res) {
         qDebug() << "save" << file.errorString() << ituPath;
-        QMessageBox::information(this, "EditBandsDialog::save", file.errorString() + ituPath);
+        g_showMessageBox(this, QMessageBox::Information, "EditBandsDialog::save", file.errorString() + ituPath);
         return false;
     }
     QTextStream stream(&file);

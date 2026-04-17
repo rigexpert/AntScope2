@@ -3,6 +3,10 @@
 #include <QMessageBox>
 #include <QRegularExpression>
 #include "style.h"
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
 AppRegistrationDialog::AppRegistrationDialog(LicenseAgent& agent, QWidget *parent) :
     QDialog(parent),
@@ -46,12 +50,12 @@ void AppRegistrationDialog::init(QString user, QString mail)
     });
     connect(ui->pushButtonOk, &QPushButton::clicked, this, [=](){
         if (email().isEmpty()) {
-            QMessageBox::warning(this, tr(""), tr("Email address should be valid"));
+            g_showMessageBox(this, QMessageBox::Warning, tr(""), tr("Email address should be valid"));
             return;
         }
         QRegularExpression mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
         if (!mailREX.match(email().toUpper()).hasMatch()) {
-            QMessageBox::warning(this, "", tr("Wrong email address"));
+            g_showMessageBox(this, QMessageBox::Warning, "", tr("Wrong email address"));
             return;
         }
         accept();

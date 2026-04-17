@@ -3,6 +3,11 @@
 #include "popupindicator.h"
 #include "mainwindow.h"
 
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+
 Calibration::Calibration(QObject *parent) : QObject(parent),
     m_state(CALIB_NONE),
     m_dotsCount(0),
@@ -207,7 +212,7 @@ void Calibration::on_newData(RawData _rawData)
             if(!m_onlyOneCalib)
             {
                 PopUpIndicator::hideIndicator();
-                if (QMessageBox::information(NULL, tr("Short"),
+                if (g_showMessageBox(NULL, QMessageBox::Information, tr("Short"),
                                      tr("Please connect SHORT standard and press OK.")) == QMessageBox::Ok) {
                     PopUpIndicator::showIndicator();
                     m_state = CALIB_SHORT;
@@ -222,7 +227,7 @@ void Calibration::on_newData(RawData _rawData)
             if(!m_onlyOneCalib)
             {
                 PopUpIndicator::hideIndicator();
-                if (QMessageBox::information(NULL, tr("Load"),
+                if (g_showMessageBox(NULL, QMessageBox::Information, tr("Load"),
                                      tr("Please connect LOAD standard and press OK.")) == QMessageBox::Ok) {
                     PopUpIndicator::showIndicator();
                     m_state = CALIB_LOAD;
@@ -238,7 +243,7 @@ void Calibration::on_newData(RawData _rawData)
             if(!m_onlyOneCalib)
             {
                 m_OSLCalibrationPerformed = true;
-                QMessageBox::information(NULL, tr("Finish"),
+                g_showMessageBox(NULL, QMessageBox::Information, tr("Finish"),
                              tr("Calibration finished!"));
             }
             cancel();
@@ -474,7 +479,7 @@ void Calibration::on_crcError()
                    this, SLOT(on_newData(rawData)));
         m_analyzer->setIsMeasuring(false);
     }
-    QMessageBox::critical(NULL, tr("CRC Error"),
+    g_showMessageBox(NULL, QMessageBox::Critical, tr("CRC Error"),
                           tr("Analyzer error. \nIt is recommended to perform calibration with connection via USB"),
                           QMessageBox::Ok);
 }

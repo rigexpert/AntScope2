@@ -14,6 +14,10 @@
 QList<AnalyzerParameters*> AnalyzerParameters::m_analyzers;
 AnalyzerParameters* AnalyzerParameters::m_current=nullptr;
 #endif
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
 AnalyzerPro::AnalyzerPro(QObject *parent) : QObject(parent),
     m_baseAnalyzer(nullptr),
@@ -92,7 +96,7 @@ void AnalyzerPro::on_downloadInfoComplete()
     {
         if(ver.isEmpty())
         {
-            QMessageBox::information(nullptr, tr("Latest version"),
+            g_showMessageBox(nullptr, QMessageBox::Information, tr("Latest version"),
                                  tr("Can not get the latest version.\nPlease try later."));
         }else
         {
@@ -183,7 +187,7 @@ void AnalyzerPro::readFile(QString pathToFw)
 
     if(!file.open(QIODevice::ReadOnly))
     {
-        QMessageBox::warning(nullptr, tr("Warning"), tr("Can not open firmware file."));
+        g_showMessageBox(nullptr, QMessageBox::Warning, tr("Warning"), tr("Can not open firmware file."));
         return;
     }
 
@@ -191,7 +195,7 @@ void AnalyzerPro::readFile(QString pathToFw)
 
     if (m_pfw->isEmpty())
     {
-        QMessageBox::warning(nullptr, tr("Warning"), tr("Can not read firmware file."));
+        g_showMessageBox(nullptr, QMessageBox::Warning, tr("Warning"), tr("Can not read firmware file."));
         state = false;
     }
 

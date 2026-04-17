@@ -5,6 +5,10 @@
 #include "AA55BTPacket.h"
 
 extern bool g_bAA55modeNewProtocol;
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
 static const unsigned char crc8_table[256] = {
     0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F,
@@ -176,7 +180,7 @@ qint32 ComAnalyzer::parse (QByteArray arr)
                             return arr.length();
                         }
                         warn += tr("Error: ") + error;
-                        QMessageBox::warning(NULL, tr("Warning"), warn);
+                        g_showMessageBox(NULL, QMessageBox::Warning, tr("Warning"), warn);
                     }else
                     {
                         return arr.length();
@@ -902,7 +906,7 @@ bool ComAnalyzer::update (QIODevice *fw)
                 break;
             }
         }
-        QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
+        g_showMessageBox(NULL, QMessageBox::Information,tr("Finish"),tr("Successfully updated!"));
         m_comPort->close();
         openComPort(name,115200);
         setIsMeasuring(false);
@@ -936,7 +940,7 @@ bool ComAnalyzer::update (QIODevice *fw)
             {
                 if(!waitAnswer())
                 {
-                    QMessageBox::warning(NULL,tr("Error"),tr("Error while update, please try again."));
+                    g_showMessageBox(NULL, QMessageBox::Warning,tr("Error"),tr("Error while update, please try again."));
                     emit updatePercentChanged(100);
                     emit updatePercentChanged(0);
                     setIsMeasuring(false);
@@ -979,7 +983,7 @@ bool ComAnalyzer::update (QIODevice *fw)
 
         emit updatePercentChanged(100);
 
-        QMessageBox::information(NULL,tr("Finish"),tr("Successfully updated!"));
+        g_showMessageBox(NULL, QMessageBox::Information,tr("Finish"),tr("Successfully updated!"));
         m_comPort->close();
         openComPort(name,38400);
         setIsMeasuring(false);

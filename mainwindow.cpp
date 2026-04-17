@@ -16,6 +16,11 @@ extern bool g_usbOnly;
 extern int g_maxMeasurements; // see measurements.cpp
 extern void setAbsoluteFqMaximum();
 extern bool g_bAA55modeNewProtocol;
+extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
+                            QString title, QString text,
+                            QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                            QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+
 MainWindow* MainWindow::m_mainWindow = nullptr;
 QMap<QString, QString> g_mapTabPlotNames;
 
@@ -4061,6 +4066,7 @@ void MainWindow::createTabs (QString sequence)
     });
 
     QToolButton *btn = new QToolButton();
+    btn->setStyleSheet(Style::toolButton());
     btn->setText("+");
     btn->setToolTip("Add multi-charts");
     connect(btn, &QAbstractButton::clicked, this, [=]() {
@@ -4223,7 +4229,7 @@ void MainWindow::on_screenshotAA_clicked()
     }
 
     if (analyzer()->connectionType() == ReDeviceInfo::Serial && param->name() != "AA-230 ZOOM") {
-        QMessageBox::warning(nullptr, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
+        g_showMessageBox(nullptr, QMessageBox::Warning, tr("Screen shot"), tr("To get screenshots on this analyzer, you need to use the LCD2Clip utility from the https://rigexpert.com"));
         return;
     }
 
@@ -6108,7 +6114,7 @@ void MainWindow::calibrationToggled(bool checked)
     }
     if(!m_calibration->getCalibrationPerformed())
     {
-        QMessageBox::warning(NULL, tr("!!!!Calibration not performed"),
+        g_showMessageBox(NULL, QMessageBox::Warning, tr("!!!!Calibration not performed"),
                               tr("Calibration not performed."));
         ui->checkBoxCalibration->blockSignals(true);
         ui->checkBoxCalibration->setCheckState(Qt::Unchecked);
@@ -6841,6 +6847,7 @@ void MainWindow::closeSettingsDialog()
 void MainWindow::setStyles()
 {
     QString style;
+
     style = Style::groupBox();
     ui->groupBox_Fq->setStyleSheet(style);
     ui->groupBox_Run->setStyleSheet(style);
