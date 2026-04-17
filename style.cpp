@@ -13,10 +13,10 @@ QString Style::pushButton(bool checkable)
 {
     QString style;
     if (checkable)    {
-        style += "QPushButton {background-color: rgb(26, 45, 98); color: white; border: none;} ";
+        style += "QPushButton {background-color: rgb(66, 85, 138); color: white; border: none;} ";
         style += "QPushButton:checked {background-color: rgb(26, 45, 198); color: white;} ";
     } else {
-        style = "QPushButton {background-color: rgb(26, 45, 98); color: white;} ";
+        style = "QPushButton {background-color: rgb(66, 85, 138); color: white;} ";
         style += "QPushButton:disabled {background-color: rgb(2, 9, 12); color: gray;} ";
         style += "QPushButton:checked {background-color: rgb(6, 13, 37); color: white;} ";
     }
@@ -27,9 +27,9 @@ QString Style::lineEdit()
 {
     QString style;
 
-    style = "QLineEdit {background: rgb(26, 45, 98); color: white;} ";
-    style += "QLineEdit[readOnly=""true""] {background-color: rgb(0, 0, 98); color: red;} ";
-    style += "QLineEdit:disabled {background-color: green; color: red;} ";
+    style = "QLineEdit {background: rgb(26, 45, 198); color: white;} ";
+    style += "QLineEdit[readOnly=""true""] {background-color: rgb(0, 0, 98); color: white;} ";
+    style += "QLineEdit:disabled {rgb(26, 45, 98); color: white;} ";
     return style;
 }
 
@@ -37,11 +37,35 @@ QString Style::tabWidget()
 {
     QString style;
 
-    style = "QTabBar::tab:selected {background: rgb(26, 45, 198); color: white;} ";
-    style += "QTabBar::tab:hover {background: rgb(126, 145, 198); color: gray;} ";
-    style += "QTabBar::tab:disabled {background-color: rgb(26, 45, 98); color: white; }";
-    style += "QTabBar::tab {background-color: rgb(26, 45, 98); color: white; }";
     style += "QTabWidget::pane {background-color: #2F2F2F; border: 1px solid #C2C7CB; }";
+    style += "QTabBar::tab {background: rgb(26, 45, 98); color: white; } ";
+    style += "QTabBar::tab:hover {background: rgb(126, 145, 198); color: gray; } ";
+    style += "QTabBar::tab:disabled {background: rgb(26, 45, 98); color: white; }";
+    style += "QTabBar::tab:selected {background: rgb(26, 45, 198); color: white; } ";
+    style += "QTabBar::tab:!selected {background: rgb(26, 45, 98); color: white; } ";
+
+    /*
+ style= R"(
+QTabBar::tab {
+    background: rgb(26, 45, 98);
+    color: white;
+    padding: 6px 12px;
+border: 1px solid rgb(26, 45, 98);
+}
+
+QTabBar::tab:selected {
+    background: rgb(26, 45, 98);
+    color: white;
+}
+
+QTabBar::tab:!selected {
+    background: rgb(26, 45, 98);
+    color: white;
+}
+
+)";
+    style += "QTabWidget::pane {background-color: #2F2F2F; border: 1px solid #C2C7CB; }";
+*/
     return style;
 }
 
@@ -49,9 +73,9 @@ QString Style::checkBox()
 {
     QString style;
 
-    style = "QCheckBox {color: white; }";
-    // style += "QCheckBox::indicator:checked {background-color: rgb(26, 45, 198); border: 1px solid rgb(26, 45, 198);} ";
-    // style += "QCheckBox::indicator:unchecked {background-color: white; border: 1px solid white;} ";
+    style = "QCheckBox {color: white; } ";
+    style += "QCheckBox::indicator:checked {image: url(:/new/prefix1/checked.png);} ";
+    style += "QCheckBox::indicator:unchecked {image: url(:/new/prefix1/unchecked.png);} ";
     return style;
 }
 
@@ -68,7 +92,7 @@ QString Style::spinBox()
 {
     QString style;
 
-    style = "QSpinBox {background-color: rgb(26, 45, 98); color: white;} ";
+    style = "QSpinBox {background-color: rgb(26, 45, 198); color: white;} ";
     return style;
 }
 
@@ -80,9 +104,31 @@ QString Style::tableWidget()
             "background-color: #2F2F2F;"
             "border: 1px solid #4181C0;"
             "color: white;"
-            "selection-background-color: #4181C0; /* Color when an item is selected */"
-            "selection-color: green;"
-            "} ";
+            //"selection-background-color: #4181C0; /* Color when an item is selected */"
+            //"selection-color: white;"
+            "} "
+            "QTableWidget::item:selected {background-color: rgb(26, 45, 198); color: white;} "
+            "QTableWidget::item:hover {background-color: rgb(26, 45, 198); color: white;} ";
+    style += "QScrollBar:horizontal { height: 5px; background: rgb(26, 45, 98); border: 1px solid green;} ";
+    style += "QScrollBar::handle:horizontal {background: rgb(26, 45, 198); min-width: 20px;} ";
+    style += "QScrollBar:vertical { width: 5px; background: rgb(26, 45, 98); } ";
+    style += "QScrollBar::handle:vertical {background: rgb(26, 45, 198); min-width: 20px;} ";
+    return style;
+}
+
+QString Style::listWidget()
+{
+    QString style;
+
+    style = "QListWidget {"
+            "background-color: #2F2F2F;"
+            "border: 1px solid #4181C0;"
+            "color: white;"
+            "selection-background-color: #5191D0; /* Color when an item is selected */"
+            "selection-color: white;"
+            "} "
+            "QListWidget::item:selected { background-color: #0078d7; color: white;} ";
+
     style += "QScrollBar:horizontal { height: 5px; background: rgb(26, 45, 98); border: 1px solid green;} ";
     style += "QScrollBar::handle:horizontal {background: rgb(26, 45, 198); min-width: 20px;} ";
     style += "QScrollBar:vertical { width: 5px; background: rgb(26, 45, 98); } ";
@@ -224,3 +270,33 @@ QString Style::messageBox()
     )";
     return style;
 }
+
+QString Style::fileDialog()
+{
+    QString style = (R"(
+    QFileDialog {
+        background-color: #2b2b2b;
+        color: #ffffff;
+    }
+    QPushButton {
+        background-color: #444;
+        color: white;
+        border: 1px solid #666;
+        padding: 5px;
+    }
+    QPushButton:hover {
+        background-color: #555;
+    }
+    QLineEdit {
+        background-color: #3c3c3c;
+        color: white;
+        border: 1px solid #666;
+    }
+    QListView, QTreeView {
+        background-color: #2b2b2b;
+        alternate-background-color: #3c3c3c;
+    }
+    )");
+    return style;
+}
+

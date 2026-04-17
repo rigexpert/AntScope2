@@ -4,6 +4,7 @@
 #include "mainwindow.h"
 #include "unitrequestdialog.h"
 #include "encodinghelpers.h"
+#include "style.h"
 
 LicenseAgent::LicenseAgent(QObject *parent) :
     QObject(parent),
@@ -99,6 +100,7 @@ void LicenseAgent::registerDevice(QString device_name, QString serial, QString l
     requestInfo();
 }
 
+#if 0
 void LicenseAgent::updateLicense()
 {
     QString key = QInputDialog::getText((QWidget*)MainWindow::m_mainWindow, tr("Update license"), tr("Enter key"));
@@ -107,6 +109,29 @@ void LicenseAgent::updateLicense()
     setState(Finished);
     requestLicense(key);
 }
+#endif
+void LicenseAgent::updateLicense()
+{
+//    QString key = QInputDialog::getText((QWidget*)MainWindow::m_mainWindow, tr("Update license"), tr("Enter key"));
+    QString key;
+    QString style = Style::dialog();
+    style += Style::label();
+    style += Style::lineEdit();
+    style += Style::pushButton();
+    QInputDialog dlg;
+    dlg.setStyleSheet(style);
+    dlg.setLabelText(tr("Enter key"));
+    dlg.setWindowTitle(tr("Update license"));
+    if (dlg.exec() == QDialog::Accepted) {
+        key = dlg.textValue();
+    }
+
+    if (key.isNull() || key.isEmpty())
+        return;
+    setState(Finished);
+    requestLicense(key);
+}
+
 
 void LicenseAgent::requestLicense(QString key)
 {

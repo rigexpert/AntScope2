@@ -74,7 +74,7 @@ public:
     static bool m_licenseUpdateBlocked;
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
+    void paintEvent(QPaintEvent *event);
 
 private:
     Ui::Settings *ui;

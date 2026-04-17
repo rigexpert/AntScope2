@@ -6,7 +6,6 @@
 #include "mainwindow.h"
 #include "appregistrationdialog.h"
 #include "inforequestdialog.h"
-#include "unitrequestdialog.h"
 #include "style.h"
 
 extern bool g_developerMode;
@@ -61,50 +60,21 @@ Settings::Settings(QWidget *parent) :
     m_licenseAgent(this)
 {
     ui->setupUi(this);
-    QString style;
-
-    // DEBUG
-    // DEBUG
-
 
     connect(&m_licenseAgent, &LicenseAgent::registered, this, [=](){
         ui->pushButtonAntscope->setText(tr("Change application registration"));
     });
-
     PopUpIndicator::setIndicatorVisible(false);
 
-    style = Style::comboBox();
-    ui->cableLossComboBox->setStyleSheet(style);
-    ui->cableComboBox->setStyleSheet(style);
-
-    style = Style::label();
-    style += Style::pushButton(true);
-    style += Style::groupBox();
-    style += Style::checkBox();
-    style += Style::lineEdit();
-    setStyleSheet(style);
-
-    style = Style::comboBox();
-    ui->languageComboBox->setStyleSheet(style);
-    ui->bandsCombobox->setStyleSheet(style);
-
-    style = Style::tabWidget();
-    ui->tabWidget->setStyleSheet(style);
-
-    style = Style::radioButton();
-    ui->atFq->setStyleSheet(style);
-    ui->anyFq->setStyleSheet(style);
-
-    style = Style::spinBox();
-    ui->spinBoxMeasurements->setStyleSheet(style);
-
-    style = Style::toolButton();
-    ui->editBandsBtn->setStyleSheet(style);
+//    QString style = "QPushButton:disabled{"
+//                        "background-color: rgb(59, 59, 59);"
+//                        "color: rgb(119, 119, 119);}";
+    QString style;
 
     style = Style::checkBox();
-    ui->comboBoxName->setStyleSheet(style);
+    ui->graphHintCheckBox->setStyleSheet(style);
 
-    style = Style::pushButton();
+    style= Style::pushButton();
     ui->openOpenFileBtn->setStyleSheet(style);
     ui->shortOpenFileBtn->setStyleSheet(style);
     ui->loadOpenFileBtn->setStyleSheet(style);
@@ -116,19 +86,62 @@ Settings::Settings(QWidget *parent) :
     ui->openCalibBtn->setStyleSheet(style);
     ui->shortCalibBtn->setStyleSheet(style);
     ui->loadCalibBtn->setStyleSheet(style);
-    ui->calibWizard->setStyleSheet(style);    
-    ui->lineEditPoints->setStyleSheet(Style::lineEdit());
+    ui->calibWizard->setStyleSheet(style);
+    ui->exportBtn->setStyleSheet(style);
 
     connect(ui->connectSerialBtn, &QPushButton::clicked, this, [=]() {
         MainWindow::m_mainWindow->on_selectDeviceDialog();
         accept();
     });
 
-    // style = "QGroupBox {border: 2px solid rgb(100,100,100); margin-top: 1ex;}";
-    // style += "QGroupBox::title {color: rgb(1, 178, 255);}";
+//    style = "QGroupBox {border: 2px solid rgb(100,100,100); margin-top: 1ex;}";
+//    style += "QGroupBox::title {color: rgb(1, 178, 255);}";
     style = Style::groupBox();
+    ui->groupBox_1->setStyleSheet(style);
     ui->groupBox_10->setStyleSheet(style);
     ui->groupBox_11->setStyleSheet(style);
+    ui->groupBox_3->setStyleSheet(style);
+    ui->groupBox_4->setStyleSheet(style);
+    ui->groupBox_5->setStyleSheet(style);
+    ui->groupBox_6->setStyleSheet(style);
+    ui->groupBox_8->setStyleSheet(style);
+    ui->groupBox_9->setStyleSheet(style);
+    ui->groupBox_7->setStyleSheet(style);
+
+    style = Style::label();
+    style += Style::lineEdit();
+    setStyleSheet(style);
+    ui->lineEdit_systemImpedance->setStyleSheet(style);
+    ui->velocityFactor->setStyleSheet(style);
+    ui->cableLen->setStyleSheet(style);
+    ui->cableR0->setStyleSheet(style);
+    ui->conductiveLoss->setStyleSheet(style);
+    ui->dielectricLoss->setStyleSheet(style);
+    ui->atMHz->setStyleSheet(style);
+
+    style = Style::checkBox();
+    ui->checkBoxBandName->setStyleSheet(style);
+    ui->graphBriefHintCheckBox->setStyleSheet(style);
+    ui->graphHintCheckBox->setStyleSheet(style);
+    ui->markersHintCheckBox->setStyleSheet(style);
+    ui->measureSystemAmerican->setStyleSheet(style);
+    ui->measureSystemMetric->setStyleSheet(style);
+
+    style = Style::spinBox();
+    ui->spinBoxMeasurements->setStyleSheet(style);
+
+    style = Style::comboBox();
+    ui->cableComboBox->setStyleSheet(style);
+    ui->languageComboBox->setStyleSheet(style);
+    ui->bandsCombobox->setStyleSheet(style);
+    ui->cableLossComboBox->setStyleSheet(style);
+
+    style = Style::radioButton();
+    ui->atFq->setStyleSheet(style);
+    ui->anyFq->setStyleSheet(style);
+
+    style = Style::toolButton();
+    ui->editBandsBtn->setStyleSheet(style);
 
     ui->browseLine->setText(tr("Choose file"));
     ui->updateProgressBar->hide();
@@ -147,27 +160,22 @@ Settings::Settings(QWidget *parent) :
     m_graphBriefHintEnabled = m_settings->value("graphBriefHintEnabled", true).toBool();
     m_restrictFq = m_settings->value("restrictFq", true).toBool();
 
-    style = Style::lineEdit();
-    ui->velocityFactor->setStyleSheet(style);
-    ui->cableLen->setStyleSheet(style);
-    ui->cableR0->setStyleSheet(style);
-    ui->conductiveLoss->setStyleSheet(style);
-    ui->dielectricLoss->setStyleSheet(style);
-    ui->atMHz->setStyleSheet(style);
-
-    /* obsolete
     bool dark = m_settings->value("darkColorTheme", true).toBool();
     if (dark)
         ui->radioButtonDark->setChecked(true);
     else
         ui->radioButtonLight->setChecked(true);
+
+    ui->radioButtonDark->hide();
+    ui->radioButtonLight->hide();
+
     connect(ui->radioButtonDark, &QRadioButton::toggled, this, [this](bool checked) {
         m_settings->beginGroup("Settings");
         m_settings->setValue("darkColorTheme", checked);
         m_settings->endGroup();
         //QMessageBox::warning(this, tr("Color Theme"), tr("You must reload the program to change the color theme."), QMessageBox::Ok);
     });
-*/
+
     QString strColor = m_settings->value("chart-background", "#ffffff").toString();
     ui->bkgButton->setStyleSheet("QToolButton{background-color: " + strColor + ";}");
     connect(ui->bkgButton, &QToolButton::clicked, [=]() {
@@ -189,11 +197,9 @@ Settings::Settings(QWidget *parent) :
     ui->checkBoxBandName->setChecked(m_settings->value("show-band-name", false).toBool());
     m_settings->endGroup();
 
-    ui->lineEdit_systemImpedance->setStyleSheet(Style::lineEdit());
     connect(ui->lineEdit_systemImpedance, &QLineEdit::editingFinished, this, &Settings::on_systemImpedance);
 
     ui->cableComboBox->addItem(tr("Change parameters or choose from list..."));
-    //ui->cableComboBox->setStyleSheet("QComboBox { combobox-popup: 0; }");
     ui->cableComboBox->setMaxVisibleItems(20);
 
     connect(ui->lineEditMin, &QLineEdit::editingFinished, this, &Settings::on_fqMinFinished);
@@ -319,10 +325,6 @@ Settings::Settings(QWidget *parent) :
     } else if (type == ReDeviceInfo::BLE) {
         ui->groupBoxLicense->hide();
     }
-
-    // changing the chart background temporarily is not supported
-    ui->bkgButton->hide();
-    ui->label_24->hide();
 }
 
 Settings::~Settings()
@@ -344,7 +346,7 @@ Settings::~Settings()
     m_settings->setValue("graphBriefHintEnabled", m_graphBriefHintEnabled);
     m_settings->setValue("restrictFq", m_restrictFq);
     m_settings->setValue("maxMeasurements", g_maxMeasurements);
-    //m_settings->setValue("darkColorTheme", ui->radioButtonDark->isChecked());
+    m_settings->setValue("darkColorTheme", ui->radioButtonDark->isChecked());
 
     m_settings->setValue("currentIndex",ui->tabWidget->currentIndex());
     m_settings->setValue("show-band-name", ui->checkBoxBandName->isChecked());
@@ -1550,12 +1552,30 @@ void Settings::setConnectButtonText(bool _connect)
     ui->connectSerialBtn->update();
 }
 
+#if 0
 void Settings::showColorDialog()
 {
     m_settings->beginGroup("Settings");
     QString strColor = m_settings->value("chart-background", "#ffffff").toString();
     QColor color;
-    color.fromString(strColor);
+    color.setNamedColor(strColor);
+    color = QColorDialog::getColor(color, this );
+    if (color.isValid()) {
+        strColor = color.name();
+        m_settings->setValue("chart-background", strColor);
+        ui->bkgButton->setStyleSheet("QToolButton{background-color: " + strColor + ";}");
+        emit chartBackgroundChanged(color);
+    }
+    m_settings->endGroup();
+}
+#endif
+void Settings::showColorDialog()
+{
+    m_settings->beginGroup("Settings");
+    QString strColor = m_settings->value("chart-background", "#ffffff").toString();
+    QColor color;
+//    color.fromString(strColor);
+    color.setNamedColor(strColor);
     QColorDialog dlg;
     dlg.setOption(QColorDialog::DontUseNativeDialog, true);
     QString style = R"(
@@ -1598,6 +1618,7 @@ void Settings::showColorDialog()
     m_settings->endGroup();
 }
 
+
 void Settings::setRestrictFq(bool value)
 {
     m_restrictFq = value;
@@ -1631,4 +1652,3 @@ void Settings::paintEvent(QPaintEvent *event)
 
     painter.fillRect(rect(), gradient);
 }
-

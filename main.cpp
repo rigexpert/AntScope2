@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+                                                                                                                                    #include "mainwindow.h"
 #include <QApplication>
 #include <QMessageBox>
 #include <QAbstractNativeEventFilter>
@@ -118,7 +118,6 @@ int main(int argc, char *argv[])
 #else
     QApplication a(argc, argv);
 #endif
-    a.setStyleSheet(Style::messageBox());
 
     QStringList args = a.arguments();
 
@@ -146,9 +145,15 @@ int main(int argc, char *argv[])
 
     g_raspbian = QSysInfo::productType().contains("raspbian", Qt::CaseInsensitive);
 
+    QString style;
+    style += Style::dialog();
+    style += Style::pushButton();
+    style += Style::label();
+    style += Style::lineEdit();
+    a.setStyleSheet(style);
+
     MainWindow w;
     g_mainWindow = w.m_mainWindow;
-
 
     foreach (QString path, args) {
         if (path.contains(".asd")) {

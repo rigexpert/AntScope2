@@ -9,6 +9,7 @@
 #include "printmulti.h"
 #include "style.h"
 
+
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
 extern bool g_usbOnly;
@@ -50,7 +51,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_mainWindow = this;
 
     ui->setupUi(this);
-
     setStyles();
 
     qInfo() << "* 1 sslLibraryBuildVersion: " << QSslSocket::sslLibraryBuildVersionString();
@@ -158,7 +158,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_settings->beginGroup("Settings");
     m_fqRestrict = g_developerMode ? m_settings->value("restrictFq", true).toBool() : true;
     g_maxMeasurements = m_settings->value("maxMeasurements", MAX_MEASUREMENTS).toInt();
-    m_darkColorTheme = m_settings->value("darkColorTheme", true).toBool();
+    m_darkColorTheme = true; //m_settings->value("darkColorTheme", true).toBool();
     m_settings->endGroup();
 
     if (g_developerMode)
@@ -4026,12 +4026,14 @@ void MainWindow::createTabs (QString sequence)
     // S21 not implemented yet
     ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(m_tab_s21), false);
 
-    m_settings->beginGroup("Settings");
-    QString strColor = m_settings->value("chart-background", "#ffffff").toString();
+    QString path = Settings::setIniFile();
+    QSettings set(path, QSettings::IniFormat);
+    set.beginGroup("Settings");
+    QString strColor = set.value("chart-background", "#ffffff").toString();
     QColor color;
-    color.fromString(strColor);
+    color.setNamedColor(strColor);
     setChartBackground(color);
-    m_settings->endGroup();
+    set.endGroup();
 
     ui->tabWidget->setCurrentIndex(0);
 
@@ -4058,9 +4060,7 @@ void MainWindow::createTabs (QString sequence)
         menu.exec(tabBar->mapToGlobal(point));
     });
 
-    QToolButton *btn = new QToolButton();    
-    QString style = Style::toolButton();
-    btn->setStyleSheet(style);
+    QToolButton *btn = new QToolButton();
     btn->setText("+");
     btn->setToolTip("Add multi-charts");
     connect(btn, &QAbstractButton::clicked, this, [=]() {
@@ -4927,6 +4927,7 @@ void MainWindow::on_settingsBtn_clicked()
     });
     connect(m_settingsDialog, &Settings::chartBackgroundChanged, [=](QColor color) {
         setChartBackground(color);
+        getCurrentPlot()->replot();
         if (m_measurements != nullptr)
             m_measurements->setBriefHintColor();
     });
@@ -4938,7 +4939,7 @@ void MainWindow::on_settingsBtn_clicked()
         m_settingsDialog->show();
 
     m_settings->beginGroup("Settings");
-    bool dark = m_settings->value("darkColorTheme", m_darkColorTheme).toBool();
+    bool dark = true; //m_settings->value("darkColorTheme", m_darkColorTheme).toBool();
     m_settings->endGroup();
 
     if (m_darkColorTheme != dark)
@@ -5161,7 +5162,21 @@ void MainWindow::on_screenshot_clicked()
 {
     QDateTime datetime = QDateTime::currentDateTime();
     QString path = "Images/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
-    QString str = QFileDialog::getSaveFileName(this, "Export PNG", path, "*.png");
+    QString str;// = QFileDialog::getSaveFileName(this, "Export PNG", path, "*.png");
+    QFileDialog dialog(this);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setNameFilter("Image Files (*.png)");
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    dialog.setWindowTitle(tr("Export PNG"));
+
+    QString style;
+    style += Style::dialog();
+    style += Style::pushButton();
+    dialog.setStyleSheet(style);
+
+    if (dialog.exec() == QDialog::Accepted) {
+        str = dialog.selectedFiles().first();
+    }
     if(str.isEmpty())
     {
         return;
@@ -6229,9 +6244,9 @@ void MainWindow::on_presssCtrlAltShiftM()
     m_measurements->setFarEndMeasurement(0);
     onFullRange(true);
     m_dotsNumber = 200;
-    // QString style = "QPushButton:checked{"
-    //         "background-color: rgb(255, 1, 52);}";
-    ui->singleStart->setStyleSheet(Style::pushButton(true));
+    QString style = "QPushButton:checked{"
+            "background-color: rgb(255, 1, 52);}";
+    ui->singleStart->setStyleSheet(style);
 
     on_singleStart_clicked();
     QApplication::processEvents();
@@ -6247,9 +6262,9 @@ void MainWindow::autoCalibrate()
             .arg((double)calibr.second, 0, 'f', 8, QLatin1Char(' '));
     m_analyzer->sendCommand(cmd);
 
-    // QString style = "QPushButton:checked{"
-    //         "background-color: rgb(1, 178, 255);}";
-    ui->singleStart->setStyleSheet(Style::pushButton(true));
+    QString style = "QPushButton:checked{"
+            "background-color: rgb(1, 178, 255);}";
+    ui->singleStart->setStyleSheet(style);
     QApplication::restoreOverrideCursor();
 
     QString notify = QString("Autocalibration: CableResistance=%1, CableLength=%2")
@@ -6411,13 +6426,16 @@ void MainWindow::on_presssCtrlAltShiftN()
 
 void MainWindow::changeColorTheme(bool _dark)
 {
+    _dark = true;
     m_darkColorTheme = _dark;
-return;
+
     QString style;
     if (m_darkColorTheme) {
         qApp->setStyle(QStyleFactory::create("fusion"));
         QPalette asPalette;
-        asPalette.setColor(QPalette::WindowText, QColor(1,178,255));
+        //asPalette.setColor(QPalette::WindowText, QColor(1,178,255));
+        asPalette.setColor(QPalette::WindowText, QColor(255,255,255));
+        //asPalette.setColor(QPalette::HighlightedText,QColor(2,2,2));
         asPalette.setColor(QPalette::Button, QColor(89, 89, 89));
         asPalette.setColor(QPalette::ButtonText, QColor(255,255,255));
         asPalette.setColor(QPalette::Highlight, QColor(1,178,255));
@@ -6426,16 +6444,16 @@ return;
         asPalette.setColor(QPalette::Light, QColor(1,178,255));
 
         qApp->setPalette(asPalette);
-
-        style = "QPushButton:checked{"
-                "background-color: rgb(1, 178, 255);}";
+        style = Style::pushButton();
+//                    style = "QPushButton:checked{"
+//                "background-color: rgb(1, 178, 255);}";
 
         ui->limitsBtn->setStyleSheet(style);
         ui->rangeBtn->setStyleSheet(style);
 
-        style = "QPushButton:disabled{"
-                "background-color: rgb(59, 59, 59);"
-                "color: rgb(119, 119, 119);}";
+//        style = "QPushButton:disabled{"
+//                "background-color: rgb(59, 59, 59);"
+//                "color: rgb(119, 119, 119);}";
 
         ui->exportBtn->setStyleSheet(style);
         ui->printBtn->setStyleSheet(style);
@@ -6465,11 +6483,11 @@ return;
                 "padding: 0 3px;}"
                 "QGroupBox::title {color: white;}";
 
-        ui->groupBox_Run->setStyleSheet(style);
+        //ui->groupBox_Run->setStyleSheet(style);
 
         style = "QCheckBox:disabled{"
                 "color: rgb(119, 119, 119);}";
-        ui->checkBoxCalibration->setStyleSheet(style);
+        //ui->checkBoxCalibration->setStyleSheet(style);
     } else {
         qApp->setPalette(m_lightPalette);
 
@@ -6817,29 +6835,12 @@ void MainWindow::closeSettingsDialog()
     //------
     int idx = ui->tabWidget->currentIndex();
     ui->tabWidget->setCurrentIndex(idx == 0 ? 1 : 0);
-    QTimer::singleShot(1, this, [this, idx]() { ui->tabWidget->setCurrentIndex(idx); });
+    QTimer::singleShot(1, this, [this]() { on_tabWidget_currentChanged(ui->tabWidget->currentIndex()); });
 }
 
 void MainWindow::setStyles()
 {
     QString style;
-    style = Style::tabWidget();
-    ui->tabWidget->setStyleSheet(style);
-
-    style = Style::checkBox();
-    ui->checkBoxCalibration->setStyleSheet(style);
-
-    style = Style::pushButton(true);
-    ui->limitsBtn->setStyleSheet(style);
-    ui->rangeBtn->setStyleSheet(style);
-    ui->continuousStartBtn->setStyleSheet(style);
-    ui->singleStart->setStyleSheet(style);
-
-
-    style = Style::lineEdit();
-    ui->lineEdit_fqTo->setStyleSheet(style);
-    ui->lineEdit_fqFrom->setStyleSheet(style);
-
     style = Style::groupBox();
     ui->groupBox_Fq->setStyleSheet(style);
     ui->groupBox_Run->setStyleSheet(style);
@@ -6847,38 +6848,39 @@ void MainWindow::setStyles()
     ui->groupBox_Run->setStyleSheet(style);
     ui->groupBox_Measure->setStyleSheet(style);
 
+    style = Style::lineEdit();
+    ui->lineEdit_fqTo->setStyleSheet(style);
+    ui->lineEdit_fqFrom->setStyleSheet(style);
+
+    style = Style::checkBox();
+    ui->checkBoxCalibration->setStyleSheet(style);
+
     style = Style::label();
     ui->centralWidget->setStyleSheet(style);
 
     style = Style::spinBox();
     ui->spinBoxPoints->setStyleSheet(style);
 
-    style = Style::pushButton();
-    ui->fullBtn->setStyleSheet(style);
+    style += Style::label();
+    qApp->setStyleSheet(style);
 
-    ui->pressetsUpBtn->setStyleSheet(style);
-    ui->presetsDeleteBtn->setStyleSheet(style);
-    ui->presetsAddBtn->setStyleSheet(style);
+    style += Style::lineEdit();
+    qApp->setStyleSheet(style);
 
-    ui->measurementsOpenBtn->setStyleSheet(style);
-    ui->measurmentsSaveBtn->setStyleSheet(style);
-    ui->measurmentsDeleteBtn->setStyleSheet(style);
-    ui->measurmentsClearBtn->setStyleSheet(style);
+    style = Style::groupBox();
+    qApp->setStyleSheet(style);
 
-    ui->settingsBtn->setStyleSheet(style);
-    ui->exportBtn->setStyleSheet(style);
-    ui->importBtn->setStyleSheet(style);
-    ui->printBtn->setStyleSheet(style);
-    ui->screenshot->setStyleSheet(style);
-    ui->screenshotAA->setStyleSheet(style);
-    ui->analyzerDataBtn->setStyleSheet(style);
+    style = Style::pushButton(true);
+    qApp->setStyleSheet(style);
 
     style = Style::headerView();
-    ui->tableWidget_presets->horizontalHeader()->setStyleSheet(style);
     ui->tableWidget_measurments->horizontalHeader()->setStyleSheet(style);
+    ui->tableWidget_presets->horizontalHeader()->setStyleSheet(style);
 
-    style = Style::tableWidget();
-    ui->tableWidget_presets->setStyleSheet(style);
-    ui->tableWidget_measurments->setStyleSheet(style);
+    ui->tableWidget_measurments->setStyleSheet(Style::tableWidget());
+    ui->tableWidget_presets->setStyleSheet(Style::tableWidget());
 
+    ui->spinBoxPoints->setStyleSheet(Style::spinBox());
+
+    setStyleSheet(Style::tabWidget());
 }

@@ -372,6 +372,7 @@ void Screenshot::on_newData(QByteArray data)
             }
             m_inputData.clear();
             m_imageVector.clear();
+            ui->progressBar->hide();
             repaint();
         }
     } else if (model == "Stick 230" || model == "Stick 500") {
@@ -390,6 +391,7 @@ void Screenshot::on_newData(QByteArray data)
             }
             m_inputData.clear();
             m_imageVector.clear();
+            ui->progressBar->hide();
             repaint();
         }
     } else if (model == "Stick Pro" || model == "Stick XPro") {
@@ -408,6 +410,7 @@ void Screenshot::on_newData(QByteArray data)
             }
             m_inputData.clear();
             m_imageVector.clear();
+            ui->progressBar->hide();
             repaint();
         }
     } else if((m_imageVector.length() >= m_lcdHeight*m_lcdWidth)
@@ -446,6 +449,7 @@ void Screenshot::on_newData(QByteArray data)
             //emit screenshotComplete();
             m_inputData.clear();
             m_imageVector.clear();
+            ui->progressBar->hide();
             repaint();
         }
 
@@ -471,11 +475,20 @@ void Screenshot::on_exportToPdfBtn_clicked()
 {
     QDateTime datetime = QDateTime::currentDateTime();
     QString path = "PDFs/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
-    QString str = QFileDialog::getSaveFileName(this, "Export PDF", path, "*.pdf");
-    if(str.isEmpty())
-    {
-        return;
+//    QString str = QFileDialog::getSaveFileName(this, "Export PDF", path, "*.pdf");
+//    if(str.isEmpty())
+//    {
+//        return;
+//    }
+    QString str;
+    QFileDialog dlg(this);
+    dlg.setOption(QFileDialog::DontUseNativeDialog, true);
+    dlg.setStyleSheet(Style::fileDialog());
+    if (dlg.exec() == QDialog::Accepted) {
+        str = dlg.selectedFiles().first();
     }
+    if (str.isEmpty())
+        return;
     if(str.indexOf(".pdf") == -1)
     {
         str += ".pdf";
@@ -521,6 +534,7 @@ void Screenshot::on_refreshBtn_clicked()
 */
     m_inputData.clear();
     m_imageVector.clear();
+    ui->progressBar->show();
     repaint();
     emit newScreenshot();
 }

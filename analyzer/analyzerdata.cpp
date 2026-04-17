@@ -14,6 +14,13 @@ AnalyzerData::AnalyzerData(int _model, QWidget *_parent) :
     progressDialog(nullptr)
 {
     ui->setupUi(this);
+
+
+    QString style = Style::dialog();
+    style += Style::pushButton();
+    style += Style::listWidget();
+
+    setStyleSheet(style);
 }
 
 AnalyzerData::~AnalyzerData()
@@ -85,6 +92,7 @@ void AnalyzerData::on_btnReadAll_clicked()
     style += Style::progressBar();
     style += Style::label();
     style += Style::pushButton();
+    style += Style::listWidget();
 
     progressDialog = new QProgressDialog("Reading data...", "Abort", 0, ui->listWidget->count(), this);
     progressDialog->setStyleSheet(style);

@@ -174,7 +174,7 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
     connect(m_tableWidget, &QTableWidget::cellClicked, [=](int row, int col) {
         if (col == COL_MENU) {
             measurement& mm = m_measurements[row];
-            bool ok=true;
+            bool ok;
             QString prefix;
             QString name = mm.name;
             int pos = name.indexOf("> ");
@@ -5634,7 +5634,7 @@ void Measurements::setBriefHintColor()
         m_settings->endGroup();
 
         QColor color;
-        color.fromString(strColor);
+        color.setNamedColor(strColor);
 #ifndef Q_OS_MACX
         QColor inverse(255-color.red(), 255-color.green(), 255-color.blue());
         m_graphBriefHint->setTextColor(inverse.name());

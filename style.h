@@ -22,6 +22,9 @@ public:
     static QString dialog();
     static QString slider();
     static QString messageBox();
+    static QString listWidget();
+    static QString fileDialog();
+
 };
 
 #endif // STYLE_H

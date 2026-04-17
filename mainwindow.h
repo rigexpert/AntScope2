@@ -219,6 +219,7 @@ private:
     void getEnteredFq(double& start, double& stop);
     void setChartBackground(QColor color);
     void newSoftwareRequest();
+    void setStyles();
 
 signals:
     void measure(qint64,qint64,int);
@@ -351,7 +352,6 @@ protected:
     QMenu& menuMultiTab(QMenu& menu);
     void buildMultiTabLayout();
     void restoreMultitab(const QString& tabs);
-    void setStyles();
 
 public:
     void replot_multiTab();
