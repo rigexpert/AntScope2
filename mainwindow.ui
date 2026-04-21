@@ -294,7 +294,7 @@
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>20</height>
+             <height>24</height>
             </size>
            </property>
            <property name="toolTip">
@@ -322,7 +322,7 @@
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>20</height>
+             <height>24</height>
             </size>
            </property>
            <property name="toolTip">
@@ -473,7 +473,7 @@ process in the settings menu!</string>
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>20</height>
+             <height>24</height>
             </size>
            </property>
            <property name="toolTip">
