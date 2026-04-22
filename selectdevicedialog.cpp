@@ -163,7 +163,9 @@ void SelectDeviceDialog::onApply(ReDeviceInfo::InterfaceType type,
         int prefix = AnalyzerParameters::prefixFromSerial(port_or_serial);
         param = AnalyzerParameters::byPrefix(prefix);
         if (prefix == 0 || param == nullptr) {
-            g_showMessageBox(this, QMessageBox::Warning, tr("Select device"), tr("Serial number does not match the type of device"));
+            QString msg = tr("Serial number does not match the type of device");
+            msg += QString("\nS/N: %1").arg(port_or_serial);
+            g_showMessageBox(this, QMessageBox::Warning, tr("Select device"), msg);
             return;
         }
     } else if (type == (int)ReDeviceInfo::NANO) {

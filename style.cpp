@@ -15,7 +15,7 @@ QString Style::pushButton(bool checkable)
         style = "QPushButton {background-color: rgb(66, 85, 138); color: white; ";
         style += " border-radius: 3px; border: 1px solid rgb(26, 45, 98); padding: 2px;} ";
         style += "QPushButton:disabled {background-color: rgb(2, 9, 12); color: gray;} ";
-        style += "QPushButton:checked {background-color: rgb(26, 45, 240); color: white;} ";
+        style += "QPushButton:checked {background-color: rgb(1, 178, 255); color: white;} ";
     return style;
 }
 

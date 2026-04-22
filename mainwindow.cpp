@@ -6250,9 +6250,9 @@ void MainWindow::on_presssCtrlAltShiftM()
     m_measurements->setFarEndMeasurement(0);
     onFullRange(true);
     m_dotsNumber = 200;
-    QString style = "QPushButton:checked{"
-            "background-color: rgb(255, 1, 52);}";
-    ui->singleStart->setStyleSheet(style);
+    // QString style = "QPushButton:checked{"
+    //         "background-color: rgb(255, 1, 52);}";
+    // ui->singleStart->setStyleSheet(style);
 
     on_singleStart_clicked();
     QApplication::processEvents();
@@ -6268,9 +6268,9 @@ void MainWindow::autoCalibrate()
             .arg((double)calibr.second, 0, 'f', 8, QLatin1Char(' '));
     m_analyzer->sendCommand(cmd);
 
-    QString style = "QPushButton:checked{"
-            "background-color: rgb(1, 178, 255);}";
-    ui->singleStart->setStyleSheet(style);
+    // QString style = "QPushButton:checked{"
+    //         "background-color: rgb(1, 178, 255);}";
+    // ui->singleStart->setStyleSheet(style);
     QApplication::restoreOverrideCursor();
 
     QString notify = QString("Autocalibration: CableResistance=%1, CableLength=%2")
