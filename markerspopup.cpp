@@ -1,5 +1,7 @@
 #include "markerspopup.h"
 #include "mainwindow.h"
+#include "style.h"
+
 
 QMap<int, QString> MarkersHeaderColumn::m_mapHeader;
 
@@ -280,6 +282,7 @@ void MarkersPopUp::on_translate()
 void MarkersPopUp::createMenu(MarkersHeaderColumn &column)
 {
     column.menu = new QMenu(column.button);
+    column.menu->setStyleSheet(Style::menu());
     QMapIterator<int, QString> it(MarkersHeaderColumn::headerMap());
     while (it.hasNext()) {
         it.next();
@@ -367,8 +370,9 @@ void MarkersPopUp::createHeader()
         MarkersHeaderColumn data;
         int type = key.toInt();
         data.index = column;
-        QToolButton* button = new QToolButton(this);
+        QToolButton* button = new QToolButton(this);        
         data.button = button;
+        button->setStyleSheet(Style::toolButton());
         button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         button->setProperty("field_type", type);
         if (type > MarkersHeaderColumn::fieldFQ) {
@@ -412,6 +416,7 @@ void MarkersPopUp::updateMarkers(int markers, int measurements)
     int rowIndex = 1;
     for (int i=0; i<m_markers; i++) {
         QToolButton* button = new QToolButton(this);
+        button->setStyleSheet(Style::toolButton());
         QString str = "RM" + QString::number(i);
         button->setObjectName(str);
         button->setMaximumWidth(20);
@@ -423,6 +428,7 @@ void MarkersPopUp::updateMarkers(int markers, int measurements)
             row << qobject_cast<QLabel*>(button);
             for (int k=1; k<m_headerColumns.size(); k++) {
                 QLabel* label = new QLabel(this);
+                label->setStyleSheet(Style::label());
                 label->setAlignment(Qt::AlignCenter);
                 row << qobject_cast<QLabel*>(label);
                 m_layout.addWidget(label, rowIndex, k);

@@ -24,6 +24,7 @@ public:
     static QString messageBox();
     static QString listWidget();
     static QString fileDialog();
+    static QString menu();
 
 };
 

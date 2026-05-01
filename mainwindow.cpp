@@ -4048,7 +4048,7 @@ void MainWindow::createTabs (QString sequence)
         if (point.isNull())
             return;
         QMenu menu(this);
-
+        menu.setStyleSheet(Style::menu());
         QTabBar* tabBar = ui->tabWidget->tabBar()         ;
         int tabIndex = tabBar->tabAt(point);
         QWidget* tab = ui->tabWidget->widget(tabBar->tabAt(point));
@@ -4062,6 +4062,8 @@ void MainWindow::createTabs (QString sequence)
         } else {
             menuMultiTab(menu);
         }
+        QString style = Style::menu();
+        menu.setStyleSheet(style);
         menu.exec(tabBar->mapToGlobal(point));
     });
 
@@ -4077,6 +4079,8 @@ void MainWindow::createTabs (QString sequence)
         if (point.isNull())
             return;
         QMenu menu(this);
+        QString style = Style::menu();
+        menu.setStyleSheet(style);
         menuMultiTab(menu);
         if (menu.exec(btn->mapToGlobal(point)) != nullptr) {
             if (!m_multiTabData.tabs.isEmpty()) {
@@ -4094,13 +4098,6 @@ void MainWindow::createTabs (QString sequence)
     });
     ui->tabWidget->setCornerWidget(btn, Qt::TopRightCorner);
 #endif
-
-//    qDebug() << "createTabs:";
-//    for (int i=0; i<ui->tabWidget->count(); i++) {
-//        QWidget* plot = ui->tabWidget->widget(i);
-//        QString name = plot->objectName();
-//        qDebug() << name;
-//    }
 }
 
 void MainWindow::on_fqSettingsBtn_clicked()
@@ -6019,7 +6016,7 @@ void MainWindow::onCreateMarker(const QPoint& pos)
 void MainWindow::onCustomContextMenuRequested(const QPoint& pos)
 {
     QMenu *menu=new QMenu(this);
-
+    menu->setStyleSheet(Style::menu());
     QCustomPlot* plot = getCurrentPlot();
     if (!plot->objectName().contains("smith") && !plot->objectName().contains("tdr"))
     {
@@ -6724,6 +6721,7 @@ void MainWindow::buildMultiTabLayout()
 void MainWindow::showMultiTab()
 {
     QMenu menu;
+    menu.setStyleSheet(Style::menu());
     menuMultiTab(menu);
     if (menu.exec(QCursor::pos()) != nullptr) {
         if (!m_multiTabData.tabs.isEmpty()) {

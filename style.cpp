@@ -13,9 +13,10 @@ QString Style::pushButton(bool checkable)
 {
     QString style;
         style = "QPushButton {background-color: rgb(66, 85, 138); color: white; ";
-        style += " border-radius: 3px; border: 1px solid rgb(26, 45, 98); padding: 2px;} ";
+        style += " border-radius: 5px; border: 2px solid rgb(86, 105, 158); padding: 5px;} ";
         style += "QPushButton:disabled {background-color: rgb(2, 9, 12); color: gray;} ";
         style += "QPushButton:checked {background-color: rgb(1, 178, 255); color: white;} ";
+        style += "QPushButton:pressed {background-color: rgb(1, 100, 200); color: white;} ";
     return style;
 }
 
@@ -269,3 +270,12 @@ QString Style::fileDialog()
     return style;
 }
 
+QString Style::menu()
+{
+    QString style;
+    style =  "QMenu {background-color: rgb(66, 85, 138); color: white;} ";
+    style += "QMenu::item {background-color: transparent; color: white; padding: 5px 25px 5px 20px;} ";
+    style += "QMenu::item:selected {background-color: rgb(26, 45, 198); color: white;} ";
+    style += "QMenu::separator {height: 1px; background: gray; margin: 5px 10px;} ";
+    return style;
+}
