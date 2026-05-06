@@ -2,6 +2,7 @@
 #include "ui_screenshot.h"
 #include "analyzer/customanalyzer.h"
 #include"style.h"
+#include "filedialog.h"
 
 extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
                             QString title, QString text,
@@ -185,7 +186,7 @@ void Screenshot::on_lineEdit_returnPressed()
 {
     QDateTime datetime = QDateTime::currentDateTime();
     QString path = "PDFs/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
-    QString str = QFileDialog::getSaveFileName(this, "Export PDF", path, "*.pdf");
+    QString str = FileDialog::getSaveFileName(this, "Export PDF", path, "*.pdf");
     if(str.isEmpty())
     {
         return;
@@ -459,7 +460,7 @@ void Screenshot::on_newData(QByteArray data)
         }
 
 }
-
+/*
 void Screenshot::on_saveAsBtn_clicked()
 {
     QDateTime datetime = QDateTime::currentDateTime();
@@ -475,23 +476,58 @@ void Screenshot::on_saveAsBtn_clicked()
     }
     saveBMP(str);
 }
+*/
+void Screenshot::on_saveAsBtn_clicked()
+{
+    QDateTime datetime = QDateTime::currentDateTime();
+    QString path = "Images/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
+    QString str = FileDialog::getSaveFileName(this, "Save as BMP", path, "*.pdf");
+
+    // QFileDialog dlg(this);
+    // dlg.setOption(QFileDialog::DontUseNativeDialog, true);
+    // dlg.setWindowTitle(tr("Save as BMP"));
+    // //dlg.setStyleSheet(Style::fileDialog());
+    // QString style;
+    // style += Style::dialog();
+    // style += Style::pushButton();
+    // dlg.setStyleSheet(style);
+
+    // if (dlg.exec() == QDialog::Accepted) {
+    //     str = dlg.selectedFiles().first();
+    // }
+    if(str.isEmpty())
+    {
+        return;
+    }
+    if(str.indexOf(".bmp") == -1)
+    {
+        str += ".bmp";
+    }
+    saveBMP(str);
+}
 
 void Screenshot::on_exportToPdfBtn_clicked()
 {
     QDateTime datetime = QDateTime::currentDateTime();
     QString path = "PDFs/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
-//    QString str = QFileDialog::getSaveFileName(this, "Export PDF", path, "*.pdf");
+    QString str = FileDialog::getSaveFileName(this, "Export PDF", path, "*.pdf");
 //    if(str.isEmpty())
 //    {
 //        return;
 //    }
-    QString str;
-    QFileDialog dlg(this);
-    dlg.setOption(QFileDialog::DontUseNativeDialog, true);
-    dlg.setStyleSheet(Style::fileDialog());
-    if (dlg.exec() == QDialog::Accepted) {
-        str = dlg.selectedFiles().first();
-    }
+    // QString str;
+    // QFileDialog dlg(this);
+    // dlg.setWindowTitle(tr("Export to PDF"));
+    // dlg.setOption(QFileDialog::DontUseNativeDialog, true);
+    // //dlg.setStyleSheet(Style::fileDialog());
+    // QString style;
+    // style += Style::dialog();
+    // style += Style::pushButton();
+    // dlg.setStyleSheet(style);
+
+    // if (dlg.exec() == QDialog::Accepted) {
+    //     str = dlg.selectedFiles().first();
+    // }
     if (str.isEmpty())
         return;
     if(str.indexOf(".pdf") == -1)

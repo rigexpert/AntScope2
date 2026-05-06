@@ -6,6 +6,7 @@
 #include <iostream>
 #include "Notification.h"
 #include "style.h"
+#include "filedialog.h"
 
 AnalyzerData::AnalyzerData(int _model, QWidget *_parent) :
     QDialog(_parent),
@@ -77,7 +78,7 @@ void AnalyzerData::on_btnReadAll_clicked()
 {
     QWidget* parent = parentWidget();
     MainWindow* mainWindow = qobject_cast<MainWindow*>(parent);
-    strSaveDir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+    strSaveDir = FileDialog::getExistingDirectory(this, tr("Open Directory"),
                                                  mainWindow->lastSavePath(),
                                                  QFileDialog::ShowDirsOnly
                                                  | QFileDialog::DontResolveSymlinks);

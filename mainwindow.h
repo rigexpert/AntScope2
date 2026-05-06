@@ -39,6 +39,7 @@ enum {
     COL_MENU
 
 };
+#define COL_NAME_WD 150
 
 namespace Ui {
 class MainWindow;
@@ -63,6 +64,19 @@ struct MultiTab {
     QList<QString> tabs;
     bool isVisible() { return !tabs.isEmpty(); }
     bool isFull() { return tabs.size() >= 8; }
+};
+
+class ElideDelegate : public QStyledItemDelegate
+{
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void initStyleOption(QStyleOptionViewItem *option,
+                         const QModelIndex &index) const override
+    {
+        QStyledItemDelegate::initStyleOption(option, index);
+        option->textElideMode = Qt::ElideRight;
+    }
 };
 
 class MainWindow : public QMainWindow

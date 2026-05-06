@@ -72,6 +72,7 @@ SOURCES += main.cpp\
     analyzer/analyzerpro.cpp \
     appregistrationdialog.cpp \
     encodinghelpers.cpp \
+    filedialog.cpp \
     inforequestdialog.cpp \
     licenseagent.cpp \
     mainwindow.cpp \
@@ -131,6 +132,7 @@ HEADERS  += mainwindow.h \
     analyzer/analyzerpro.h \
     appregistrationdialog.h \
     encodinghelpers.h \
+    filedialog.h \
     inforequestdialog.h \
     licenseagent.h \
     modelesspopup.h \

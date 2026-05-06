@@ -8,7 +8,7 @@
 #include "selectdevicedialog.h"
 #include "printmulti.h"
 #include "style.h"
-
+#include "filedialog.h"
 
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
@@ -191,6 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //ui->tableWidget_measurments->setToolTip(tr("Double-click an item to rescale the chart.\nRight-click an item to change color"));
     ui->tableWidget_measurments->setToolTip("");
     ui->tableWidget_measurments->setContextMenuPolicy(Qt::CustomContextMenu);
+    //ui->tableWidget_measurments->setItemDelegateForColumn(COL_NAME, new ElideDelegate(ui->tableWidget_measurments));
     connect(ui->tableWidget_measurments, &QTableWidget::customContextMenuRequested, this, &MainWindow::on_tableWidgetMeasurmentsContextMenu);
     connect(ui->tableWidget_measurments, &QTableWidget::itemChanged, this, [=] (QTableWidgetItem* item) {
         if (item == nullptr)
@@ -5165,21 +5166,21 @@ void MainWindow::on_screenshot_clicked()
 {
     QDateTime datetime = QDateTime::currentDateTime();
     QString path = "Images/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
-    QString str;// = QFileDialog::getSaveFileName(this, "Export PNG", path, "*.png");
-    QFileDialog dialog(this);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    dialog.setNameFilter("Image Files (*.png)");
-    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    dialog.setWindowTitle(tr("Export PNG"));
+    QString str = FileDialog::getSaveFileName(this, "Export PNG", path, "*.png");
+    // QFileDialog dialog(this);
+    // dialog.setAcceptMode(QFileDialog::AcceptSave);
+    // dialog.setNameFilter("Image Files (*.png)");
+    // dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    // dialog.setWindowTitle(tr("Export PNG"));
 
-    QString style;
-    style += Style::dialog();
-    style += Style::pushButton();
-    dialog.setStyleSheet(style);
+    // QString style;
+    // style += Style::dialog();
+    // style += Style::pushButton();
+    // dialog.setStyleSheet(style);
 
-    if (dialog.exec() == QDialog::Accepted) {
-        str = dialog.selectedFiles().first();
-    }
+    // if (dialog.exec() == QDialog::Accepted) {
+    //     str = dialog.selectedFiles().first();
+    // }
     if(str.isEmpty())
     {
         return;
@@ -5434,7 +5435,7 @@ void MainWindow::on_measurmentsSaveBtn_clicked()
             m_lastSaveOpenPath.remove(m_lastSaveOpenPath.indexOf('.'),4);
             m_lastSaveOpenPath.append(".asd");
         }
-        QString path = QFileDialog::getSaveFileName(this, "Save file", m_lastSaveOpenPath, "AntScope2 (*.asd )");
+        QString path = FileDialog::getSaveFileName(this, "Save file", m_lastSaveOpenPath, "AntScope2 (*.asd )");
         if(!path.isEmpty())
         {
             m_lastSaveOpenPath = path;
@@ -5451,14 +5452,23 @@ void MainWindow::on_measurmentsSaveBtn_clicked()
             if (pos != -1)
                 mmName = mmName.left(pos+2);
             mm->name = mmName + fname;
-            ui->tableWidget_measurments->item(row, COL_NAME)->setText(mm->name);
+            //ui->tableWidget_measurments->item(row, COL_NAME)->setText(mm->name);
+            ui->tableWidget_measurments->setColumnWidth(COL_NAME, COL_NAME_WD);
+
+            QTableWidgetItem* itm = ui->tableWidget_measurments->item(row, COL_NAME);
+            QFontMetrics fm(itm->font());
+            int width = COL_NAME_WD;//ui->tableWidget_measurments->columnWidth(COL_NAME);
+            QString elided = fm.elidedText(mm->name, Qt::ElideRight, width);
+            ui->tableWidget_measurments->item(row, COL_NAME)->setText(elided);
+            ui->tableWidget_measurments->resizeColumnToContents(COL_NAME);
+
         }
     }
 }
 
 void MainWindow::on_measurementsOpenBtn_clicked()
 {
-    QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastSaveOpenPath, "AntScope2 (*.asd )");
+    QString path = FileDialog::getOpenFileName(this, "Open file", m_lastSaveOpenPath, "AntScope2 (*.asd )");
     if(!path.isEmpty())
     {
         m_lastSaveOpenPath = path;
@@ -5491,7 +5501,7 @@ void MainWindow::on_importBtn_clicked()
         m_lastExportImportPath = m_lastSaveOpenPath;
     }
 
-    QString path = QFileDialog::getOpenFileName(this, "Open file", m_lastExportImportPath,  "S1p (*.s1p);;"
+    QString path = FileDialog::getOpenFileName(this, "Open file", m_lastExportImportPath,  "S1p (*.s1p);;"
                                                                                     "Csv (*.csv);;"
                                                                                     "Nwl (*.nwl);;"
                                                                                     "AntScope2 (*.asd );;"

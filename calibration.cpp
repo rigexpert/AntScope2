@@ -243,6 +243,7 @@ void Calibration::on_newData(RawData _rawData)
             if(!m_onlyOneCalib)
             {
                 m_OSLCalibrationPerformed = true;
+                PopUpIndicator::hideIndicator();
                 g_showMessageBox(NULL, QMessageBox::Information, tr("Finish"),
                              tr("Calibration finished!"));
             }
@@ -294,7 +295,6 @@ void Calibration::on_startCalibration()
     if((m_state <= CALIB_OPEN)||(m_state >=CALIB_NUM))
     {
         clearCalibration();
-        connect(m_analyzer, &AnalyzerPro::newData, this, &Calibration::on_newData);
         m_state = CALIB_OPEN;
     }
 
@@ -314,7 +314,6 @@ void Calibration::on_startCalibrationOpen()
     PopUpIndicator::showIndicator();
     if(m_analyzer != NULL)
     {
-        connect(m_analyzer, &AnalyzerPro::newData, this, &Calibration::on_newData);
         emit setCalibrationMode(true);
         m_analyzer->on_measureCalib(dotsNumber());
     }
@@ -328,7 +327,6 @@ void Calibration::on_startCalibrationShort()
     m_shortData.clear();
     if(m_analyzer != NULL)
     {
-        connect(m_analyzer, &AnalyzerPro::newData, this, &Calibration::on_newData);
         emit setCalibrationMode(true);
         m_analyzer->on_measureCalib(dotsNumber());
     }
@@ -342,7 +340,6 @@ void Calibration::on_startCalibrationLoad()
     m_loadData.clear();
     if(m_analyzer != NULL)
     {
-        connect(m_analyzer, &AnalyzerPro::newData, this, &Calibration::on_newData);
         emit setCalibrationMode(true);
         m_analyzer->on_measureCalib(dotsNumber());
     }

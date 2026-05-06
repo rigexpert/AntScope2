@@ -149,21 +149,31 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
                               QCustomPlot * rl,    QCustomPlot * tdr,    QCustomPlot * s21,
                               QCustomPlot * smith, QTableWidget * table)
 {
+    QColor color(qRgb(66, 85, 138));
+    QBrush br(color);
     m_swrWidget = swr;
     m_phaseWidget = phase;
     m_rsWidget = rs;
     m_rsWidget->legend->setVisible(true);
     m_rsWidget->legend->removeAt(0);
+    m_rsWidget->legend->setTextColor(Qt::white);
+    m_rsWidget->legend->setBrush(br);
     m_rpWidget = rp;
     m_rpWidget->legend->setVisible(true);
     m_rpWidget->legend->removeAt(0);
+    m_rpWidget->legend->setTextColor(Qt::white);
+    m_rpWidget->legend->setBrush(br);
     m_rlWidget = rl;
     m_s21Widget = s21;
     //m_s21Widget->legend->setVisible(true);
     //m_s21Widget->legend->removeAt(0);
+    //m_s21Widget->legend->setTextColor(Qt::white);
+    //m_s21Widget->legend->setBrush(br);
     m_tdrWidget = tdr;
     m_tdrWidget->legend->setVisible(true);
     m_tdrWidget->legend->removeAt(0);
+    m_tdrWidget->legend->setTextColor(Qt::white);
+    m_tdrWidget->legend->setBrush(br);
     m_smithWidget = smith;
     m_tableWidget = table;
     drawSmithImage();
@@ -178,7 +188,6 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
     connect(m_tableWidget, &QTableWidget::cellClicked, [=](int row, int col) {
         if (col == COL_MENU) {
             measurement& mm = m_measurements[row];
-            bool ok;
             QString prefix;
             QString name = mm.name;
             int pos = name.indexOf("> ");
@@ -199,9 +208,19 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
                 text = dlg.textValue();
             }
 
-            if (ok && !text.isEmpty()) {
+            if (!text.isEmpty()) {
                 mm.name = prefix + text;
-                m_tableWidget->item(row, COL_NAME)->setText(mm.name);
+                //m_tableWidget->item(row, COL_NAME)->setText(mm.name);
+
+                m_tableWidget->setColumnWidth(COL_NAME, COL_NAME_WD);
+                QTableWidgetItem* itm = m_tableWidget->item(row, COL_NAME);
+                QFontMetrics fm(itm->font());
+                int width = COL_NAME_WD;//m_tableWidget->columnWidth(COL_NAME);
+                QString elided = fm.elidedText(mm.name, Qt::ElideRight, width);
+                m_tableWidget->item(row, COL_NAME)->setText(elided);
+
+                //m_tableWidget->resizeColumnToContents(COL_NAME);
+
                 QString str = mm.name + tr("\nDouble-click an item to rescale the chart.\nRight-click an item to change color");
                 m_tableWidget->item(row, COL_NAME)->setToolTip(str);
             }
@@ -213,8 +232,12 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
 void Measurements::setUserWidget(QCustomPlot * user) {
     m_userWidget = user;
     if (m_userWidget != nullptr && m_userWidget->legend != nullptr) {
+        QColor color(qRgb(66, 85, 138));
+        QBrush br(color);
         m_userWidget->legend->setVisible(true);
         m_userWidget->legend->removeAt(0);
+        m_userWidget->legend->setTextColor(Qt::white);
+        m_userWidget->legend->setBrush(br);
     }
 }
 
@@ -475,7 +498,7 @@ void Measurements::on_newMeasurement(QString name)
         m_tableWidget->setColumnCount(MEASUREMENTS_TABLE_COLUMNS);
         m_tableWidget->setIconSize(QSize(16, 16));
         m_tableWidget->horizontalHeader()->setSectionResizeMode(COL_VISIBLE, QHeaderView::Fixed);
-        m_tableWidget->horizontalHeader()->setSectionResizeMode(COL_NAME, QHeaderView::Stretch);
+        m_tableWidget->horizontalHeader()->setSectionResizeMode(COL_NAME, QHeaderView::Fixed);//ResizeToContents);
         m_tableWidget->horizontalHeader()->setSectionResizeMode(COL_MENU, QHeaderView::Fixed);
         m_tableWidget->horizontalHeader()->resizeSection(COL_VISIBLE, cell_side);
         m_tableWidget->horizontalHeader()->resizeSection(COL_MENU, cell_side);
@@ -492,9 +515,17 @@ void Measurements::on_newMeasurement(QString name)
             m_tableWidget->setItem(i,COL_VISIBLE, item);
 
             item = new QTableWidgetItem();
-            QString str = mm.name;
-            item->setText(str);
+            //item->setText(mm.name);
             m_tableWidget->setItem(i,COL_NAME, item);
+            m_tableWidget->setColumnWidth(COL_NAME, COL_NAME_WD);
+            QFontMetrics fm(item->font());
+            int width = COL_NAME_WD;//m_tableWidget->columnWidth(COL_NAME);
+            QString elided = fm.elidedText(mm.name, Qt::ElideRight, width);
+            item->setText(elided);
+            //m_tableWidget->resizeColumnToContents(COL_NAME);
+            // QString str = mm.name;
+            // item->setText(str);
+            // m_tableWidget->setItem(i,COL_NAME, item);
 
             item = new QTableWidgetItem();
             item->setIcon(icon);
