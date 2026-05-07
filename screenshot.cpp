@@ -460,41 +460,12 @@ void Screenshot::on_newData(QByteArray data)
         }
 
 }
-/*
-void Screenshot::on_saveAsBtn_clicked()
-{
-    QDateTime datetime = QDateTime::currentDateTime();
-    QString path = "Images/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
-    QString str = QFileDialog::getSaveFileName(this, "Export BMP", path, "*.bmp");
-    if(str.isEmpty())
-    {
-        return;
-    }
-    if(str.indexOf(".bmp") == -1)
-    {
-        str += ".bmp";
-    }
-    saveBMP(str);
-}
-*/
+
 void Screenshot::on_saveAsBtn_clicked()
 {
     QDateTime datetime = QDateTime::currentDateTime();
     QString path = "Images/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
     QString str = FileDialog::getSaveFileName(this, "Save as BMP", path, "*.pdf");
-
-    // QFileDialog dlg(this);
-    // dlg.setOption(QFileDialog::DontUseNativeDialog, true);
-    // dlg.setWindowTitle(tr("Save as BMP"));
-    // //dlg.setStyleSheet(Style::fileDialog());
-    // QString style;
-    // style += Style::dialog();
-    // style += Style::pushButton();
-    // dlg.setStyleSheet(style);
-
-    // if (dlg.exec() == QDialog::Accepted) {
-    //     str = dlg.selectedFiles().first();
-    // }
     if(str.isEmpty())
     {
         return;
@@ -511,23 +482,6 @@ void Screenshot::on_exportToPdfBtn_clicked()
     QDateTime datetime = QDateTime::currentDateTime();
     QString path = "PDFs/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
     QString str = FileDialog::getSaveFileName(this, "Export PDF", path, "*.pdf");
-//    if(str.isEmpty())
-//    {
-//        return;
-//    }
-    // QString str;
-    // QFileDialog dlg(this);
-    // dlg.setWindowTitle(tr("Export to PDF"));
-    // dlg.setOption(QFileDialog::DontUseNativeDialog, true);
-    // //dlg.setStyleSheet(Style::fileDialog());
-    // QString style;
-    // style += Style::dialog();
-    // style += Style::pushButton();
-    // dlg.setStyleSheet(style);
-
-    // if (dlg.exec() == QDialog::Accepted) {
-    //     str = dlg.selectedFiles().first();
-    // }
     if (str.isEmpty())
         return;
     if(str.indexOf(".pdf") == -1)
@@ -539,40 +493,6 @@ void Screenshot::on_exportToPdfBtn_clicked()
 
 void Screenshot::on_refreshBtn_clicked()
 {
-    /*
-    //{ debug
-    QStringList list = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
-    QDir dir = list[1];
-    QString binFileName = dir.absoluteFilePath("Rigexpert/Antscope2/antscope-screen.bin");
-    QFile binFile(binFileName);
-    if (binFile.open(QIODevice::WriteOnly|QIODevice::Truncate))
-    {
-        QDataStream stream(&binFile);
-        for (int idx=0; idx<m_inputDataDebug.size(); idx++)
-        {
-            stream << m_inputDataDebug[idx];
-        }
-        binFile.close();
-    }
-
-    QString textFileName = dir.absoluteFilePath("Rigexpert/Antscope2/antscope-screen.txt");
-    QFile textFile(textFileName);
-    if (textFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text))
-    {
-        QTextStream  stream(&textFile);
-        for (int idx=0; idx<m_inputDataDebug.size(); idx++)
-        {
-            if (idx > 0 && (idx % 16) == 0)
-                stream << endl;
-            QString str = QString("%1 ").arg(m_inputDataDebug[idx], 2, 16, QLatin1Char('0')).toUpper();
-            stream << str;
-        }
-        stream.flush();
-        textFile.close();
-    }
-    m_inputDataDebug.clear();
-    //} debug
-*/
     m_inputData.clear();
     m_imageVector.clear();
     ui->progressBar->show();

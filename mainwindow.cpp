@@ -83,10 +83,10 @@ MainWindow::MainWindow(QWidget *parent) :
 //    QRegExpValidator *validator = new QRegExpValidator(re, this);
 //    ui->lineEdit_fqFrom->setValidator(validator);
 //    ui->lineEdit_fqTo->setValidator(validator);
-    connect(ui->lineEdit_fqFrom, &QLineEdit::editingFinished, this, [=] {
+    connect(ui->lineEdit_fqFrom, &QLineEdit::editingFinished, this, [=]() {
         changeFqFrom(true);
     });
-    connect(ui->lineEdit_fqTo, &QLineEdit::editingFinished, this, [=] {
+    connect(ui->lineEdit_fqTo, &QLineEdit::editingFinished, this, [=]() {
         changeFqTo(true);
     });
 
@@ -240,7 +240,6 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(m_userWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_user(QMouseEvent*)));
     }
     m_analyzer = new AnalyzerPro(this);
-    //connect(m_analyzer, &AnalyzerPro::analyzerFound, static_cast<void (MainWindow::*)(int)>(&MainWindow::on_analyzerFound));
     connect(m_analyzer, &AnalyzerPro::analyzerFound,this,&MainWindow::on_analyzerFound);
     connect(m_analyzer,&AnalyzerPro::deviceDisconnected,this, &MainWindow::on_deviceDisconnected);
     connect(this,SIGNAL(measure(qint64,qint64,int)),m_analyzer,SLOT(on_measure(qint64,qint64,int)));
@@ -5167,20 +5166,6 @@ void MainWindow::on_screenshot_clicked()
     QDateTime datetime = QDateTime::currentDateTime();
     QString path = "Images/" + datetime.toString("dd.MM.yyyy_hh.mm.ss");
     QString str = FileDialog::getSaveFileName(this, "Export PNG", path, "*.png");
-    // QFileDialog dialog(this);
-    // dialog.setAcceptMode(QFileDialog::AcceptSave);
-    // dialog.setNameFilter("Image Files (*.png)");
-    // dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    // dialog.setWindowTitle(tr("Export PNG"));
-
-    // QString style;
-    // style += Style::dialog();
-    // style += Style::pushButton();
-    // dialog.setStyleSheet(style);
-
-    // if (dialog.exec() == QDialog::Accepted) {
-    //     str = dialog.selectedFiles().first();
-    // }
     if(str.isEmpty())
     {
         return;
@@ -5444,7 +5429,6 @@ void MainWindow::on_measurmentsSaveBtn_clicked()
             m_measurements->saveData(row, path);
             QFileInfo fi(path);
             QString fname = fi.baseName();
-            //item->setText(fname);
 
             measurement* mm = m_measurements->getMeasurement(m_measurements->getMeasurementLength()-row-1);
             QString mmName = mm->name;
@@ -5452,12 +5436,11 @@ void MainWindow::on_measurmentsSaveBtn_clicked()
             if (pos != -1)
                 mmName = mmName.left(pos+2);
             mm->name = mmName + fname;
-            //ui->tableWidget_measurments->item(row, COL_NAME)->setText(mm->name);
             ui->tableWidget_measurments->setColumnWidth(COL_NAME, COL_NAME_WD);
 
             QTableWidgetItem* itm = ui->tableWidget_measurments->item(row, COL_NAME);
             QFontMetrics fm(itm->font());
-            int width = COL_NAME_WD;//ui->tableWidget_measurments->columnWidth(COL_NAME);
+            int width = COL_NAME_WD;
             QString elided = fm.elidedText(mm->name, Qt::ElideRight, width);
             ui->tableWidget_measurments->item(row, COL_NAME)->setText(elided);
             ui->tableWidget_measurments->resizeColumnToContents(COL_NAME);

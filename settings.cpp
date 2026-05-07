@@ -7,6 +7,7 @@
 #include "appregistrationdialog.h"
 #include "inforequestdialog.h"
 #include "style.h"
+#include "filedialog.h"
 
 extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
                             QString title, QString text,
@@ -753,7 +754,7 @@ void Settings::enableButtons(bool enabled)
 void Settings::on_openOpenFileBtn_clicked()
 {
     QString dir = localDataPath("Calibration");
-    QString path = QFileDialog::getOpenFileName(this, tr("Open 'open calibration' file"),
+    QString path = FileDialog::getOpenFileName(this, tr("Open 'open calibration' file"),
                                                 dir,"*.s1p");
     QStringList list;
     list = path.split("/");
@@ -769,7 +770,7 @@ void Settings::on_openOpenFileBtn_clicked()
 void Settings::on_shortOpenFileBtn_clicked()
 {
     QString dir = localDataPath("Calibration");
-    QString path = QFileDialog::getOpenFileName(this, tr("Open 'short calibration' file"),
+    QString path = FileDialog::getOpenFileName(this, tr("Open 'short calibration' file"),
                                              dir,"*.s1p");
     QStringList list;
     list = path.split("/");
@@ -786,7 +787,7 @@ void Settings::on_shortOpenFileBtn_clicked()
 void Settings::on_loadOpenFileBtn_clicked()
 {
     QString dir = localDataPath("Calibration");
-    QString path = QFileDialog::getOpenFileName(this, tr("Open 'load calibration' file"),
+    QString path = FileDialog::getOpenFileName(this, tr("Open 'load calibration' file"),
                                                 dir,"*.s1p");
     QStringList list;
     list = path.split("/");

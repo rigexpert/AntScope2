@@ -62,17 +62,6 @@ void Export::on_csvBtn_clicked()
             m_lastExportPath.append(".csv");
         }
         QString path = FileDialog::getSaveFileName(this, "Export", m_lastExportPath, "Comma Separated Values (*.csv)");
-        // QFileDialog dlg(this);
-        // dlg.setOption(QFileDialog::DontUseNativeDialog, true);
-        // dlg.setWindowTitle(tr("Export to CSV"));
-        // QString style;
-        // style += Style::dialog();
-        // style += Style::pushButton();
-        // dlg.setStyleSheet(style);
-
-        // if (dlg.exec() == QDialog::Accepted) {
-        //     path = dlg.selectedFiles().first();
-        // }
         if(!path.isEmpty())
         {
             m_lastExportPath = path;

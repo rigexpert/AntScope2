@@ -210,16 +210,13 @@ void Measurements::setWidgets(QCustomPlot * swr,   QCustomPlot * phase,
 
             if (!text.isEmpty()) {
                 mm.name = prefix + text;
-                //m_tableWidget->item(row, COL_NAME)->setText(mm.name);
 
                 m_tableWidget->setColumnWidth(COL_NAME, COL_NAME_WD);
                 QTableWidgetItem* itm = m_tableWidget->item(row, COL_NAME);
                 QFontMetrics fm(itm->font());
-                int width = COL_NAME_WD;//m_tableWidget->columnWidth(COL_NAME);
+                int width = COL_NAME_WD;
                 QString elided = fm.elidedText(mm.name, Qt::ElideRight, width);
                 m_tableWidget->item(row, COL_NAME)->setText(elided);
-
-                //m_tableWidget->resizeColumnToContents(COL_NAME);
 
                 QString str = mm.name + tr("\nDouble-click an item to rescale the chart.\nRight-click an item to change color");
                 m_tableWidget->item(row, COL_NAME)->setToolTip(str);
@@ -515,17 +512,12 @@ void Measurements::on_newMeasurement(QString name)
             m_tableWidget->setItem(i,COL_VISIBLE, item);
 
             item = new QTableWidgetItem();
-            //item->setText(mm.name);
             m_tableWidget->setItem(i,COL_NAME, item);
             m_tableWidget->setColumnWidth(COL_NAME, COL_NAME_WD);
             QFontMetrics fm(item->font());
-            int width = COL_NAME_WD;//m_tableWidget->columnWidth(COL_NAME);
+            int width = COL_NAME_WD;
             QString elided = fm.elidedText(mm.name, Qt::ElideRight, width);
             item->setText(elided);
-            //m_tableWidget->resizeColumnToContents(COL_NAME);
-            // QString str = mm.name;
-            // item->setText(str);
-            // m_tableWidget->setItem(i,COL_NAME, item);
 
             item = new QTableWidgetItem();
             item->setIcon(icon);

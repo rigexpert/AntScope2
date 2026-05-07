@@ -297,21 +297,6 @@ void Print::on_printBtn_clicked()
 void Print::on_pdfPrintBtn_clicked()
 {
     QString path = FileDialog::getSaveFileName(this, "Export PDF", m_lastPath, "*.pdf");
-    // QFileDialog dialog(this);
-    // dialog.setAcceptMode(QFileDialog::AcceptSave);
-    // dialog.setNameFilter("PDF Files (*.pdf)");
-    // dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    // dialog.setWindowTitle(tr("Export PDF"));
-    // dialog.setDirectory(m_lastPath);
-
-    // QString style;
-    // style += Style::dialog();
-    // style += Style::pushButton();
-    // dialog.setStyleSheet(style);
-
-    // if (dialog.exec() == QDialog::Accepted) {
-    //     path = dialog.selectedFiles().first();
-    // }
     if(path.isEmpty())
     {
         return;
@@ -362,20 +347,6 @@ void Print::on_pdfPrintBtn_clicked()
 void Print::on_pngPrintBtn_clicked()
 {
     QString path = FileDialog::getSaveFileName(this, "Export PNG", "", "*.png");
-    // QFileDialog dialog(this);
-    // dialog.setAcceptMode(QFileDialog::AcceptSave);
-    // dialog.setNameFilter("Image Files (*.png)");
-    // dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    // dialog.setWindowTitle(tr("Export PNG"));
-
-    // QString style;
-    // style += Style::dialog();
-    // style += Style::pushButton();
-    // dialog.setStyleSheet(style);
-
-    // if (dialog.exec() == QDialog::Accepted) {
-    //     path = dialog.selectedFiles().first();
-    // }
     if(path.isEmpty())
     {
         return;
