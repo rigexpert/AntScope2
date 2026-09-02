@@ -474,6 +474,13 @@ void BleAnalyzer::dataReceived(const QLowEnergyCharacteristic &c, const QByteArr
 {
     if (c.uuid() != QBluetoothUuid(uuidRead))
         return;
+    if (value.size() < BLE_PACKET_SIZE) {
+        // checkCRC()/returnCRC() index data[BLE_PACKET_SIZE-1] with no
+        // bounds check of their own; a malformed or malicious peripheral
+        // sending a short notification would otherwise read out of bounds.
+        qInfo() << "dataReceived: short packet, ignoring" << value.size();
+        return;
+    }
     //qInfo() << trace("dataReceived: ", const_cast<QByteArray&>(value));
     m_lastReadTimeMS = QDateTime::currentMSecsSinceEpoch();
     if (!checkCRC(value)) {

@@ -1,0 +1,6 @@
+Makefile
+.qmake.stash
+*.o
+moc_*.cpp
+moc_*.h
+hid_update_mock

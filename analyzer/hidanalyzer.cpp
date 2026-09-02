@@ -2,6 +2,7 @@
 #include "customanalyzer.h"
 #include <QtConcurrent/QtConcurrentRun>
 #include <QThread>
+#include <QElapsedTimer>
 #include "analyzer.h"
 extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
                             QString title, QString text,
@@ -462,14 +463,20 @@ void hidAnalyzer::hidRead (void)
     {
         return;
     }
-    unsigned char readBuff[64];
+    unsigned char readBuff[64] = {0};
     int read = hid_read(m_hidDevice, readBuff, 64);
     m_mutexRead.lock();
     if(read > 0)
     {
         if(readBuff[0] == ANTSCOPE_REPORT)
         {
-            for(int i = 0; i < readBuff[1]; i++)
+            // readBuff[1] is a payload length supplied by the device
+            // (0-255); clamp it to both the fixed-size buffer and to how
+            // many bytes hid_read() actually returned, so a device
+            // reporting more than 62 payload bytes - or a short read -
+            // cannot walk past the end of readBuff.
+            int len = qMin<int>(readBuff[1], qMax(0, read - 2));
+            for(int i = 0; i < len; i++)
             {
                 m_incomingBuffer.append(readBuff[i+2]);
             }
@@ -755,9 +762,21 @@ bool hidAnalyzer::update (QIODevice *fw)
         QTimer::singleShot(5000, this, [this]() {
             this->preUpdate();
         });
-        while(1)//for(int i = 0; i < 565535; ++i)
+        // m_bootMode is only ever set by the device re-arrival path, which
+        // does not currently work (the feature this belongs to is
+        // incomplete and unreachable from the UI). Previously this was an
+        // unbounded while(1) with no way out but m_bootMode becoming true,
+        // so a call that could never detect the device coming back would
+        // spin forever instead of ever reaching the failure handling right
+        // below. Bound the wait so that path is actually reachable.
+        QElapsedTimer bootModeWait;
+        bootModeWait.start();
+        const qint64 bootModeTimeoutMs = 15000;
+        while(1)
         {
             if(m_bootMode)
+                break;
+            if(bootModeWait.hasExpired(bootModeTimeoutMs))
                 break;
             QCoreApplication::processEvents();
         }

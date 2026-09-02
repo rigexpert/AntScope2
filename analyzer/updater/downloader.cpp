@@ -29,9 +29,6 @@ Downloader::State Downloader::startDownloadInfo(QUrl url)
     QNetworkRequest request(url);
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
 
     m_mng.get(request);
 
@@ -61,9 +58,6 @@ Downloader::State Downloader::startDownloadFw()
     QNetworkReply *reply;
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
 
     reply = m_mng.get(request);
     connect(reply, SIGNAL(downloadProgress(qint64,qint64)),

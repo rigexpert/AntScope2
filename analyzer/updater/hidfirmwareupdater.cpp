@@ -167,7 +167,15 @@ HidFirmwareUpdater::FirmwareInfo HidFirmwareUpdater::firmwareInfo(const ReDevice
     ret = hid_read_timeout(m_handleDev, buff, sizeof(buff), 100);
 
     if (ret > 0) {
-        memcpy((char*)&info, &buff[6], 60);
+        // buff is 65 bytes (valid indices 0-64); copying 60 bytes
+        // starting at offset 6 would read buff[65], one byte past the
+        // end. Clamp to both the buffer's real size and to how many
+        // bytes were actually received.
+        int avail = qMin<int>(ret, sizeof(buff));
+        int len = qMin(60, avail - 6);
+        if (len > 0) {
+            memcpy((char*)&info, &buff[6], len);
+        }
     }
 
     closeDevice();

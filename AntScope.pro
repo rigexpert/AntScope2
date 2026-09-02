@@ -267,6 +267,15 @@ unix:!macx {
     SOURCES += analyzer/usbhid/hidapi/linux/hid.c
     LIBS += -lusb-1.0
     DEFINES += _NO_WINDOWS_
+
+    # Without this, analyzer/usbhid/hidapi/linux/hid.c's
+    # libusb_claim_interface() is called without ever detaching the
+    # kernel's usbhid driver first. usbhid auto-binds normal-mode HID
+    # interfaces on Linux, and while libusb can still open/claim the
+    # interface in that state, an interrupt-OUT hid_write() to it can fail
+    # outright (observed: hid_write() returning -1 for the firmware-update
+    # RESET report on a real device the kernel had already claimed).
+    DEFINES += DETACH_KERNEL_DRIVER
 }
 
 macx {

@@ -62,9 +62,6 @@ void LicenseAgent::requestEmailStatus()
     request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
 
     setState(WaitEmailStatusWeb);
     m_mng.get(request);
@@ -149,9 +146,6 @@ void LicenseAgent::requestLicense(QString key)
     request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
 
     setState(WaitLicense);
     m_canceled = false;
@@ -296,9 +290,6 @@ void LicenseAgent::requestInfo()
     request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
 
     setState(WaitInfoWeb);
     //showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
@@ -362,9 +353,6 @@ void LicenseAgent::requestUnit()
     request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
 
     setState(WaitUnitWeb);
     m_mng.get(request);
@@ -432,9 +420,6 @@ void LicenseAgent::requestStatus_B16(QByteArray data)
     request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
 
     setState(WaitProfileB16);
     m_mng.get(request);
@@ -453,9 +438,6 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
     request.setTransferTimeout(REPLY_TIMEOUT);
 
     m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
 
     setState(WaitInfoB16);
     m_mng.get(request);
