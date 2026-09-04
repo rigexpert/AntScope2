@@ -89,7 +89,7 @@ Measurements::Measurements(QObject *parent) : QObject(parent),
 
     if(m_graphHint == NULL)
     {
-        m_graphHint = new PopUp();
+        m_graphHint = new PopUp(MainWindow::m_mainWindow, true);
         m_graphHint->setHiding(false);
         m_settings->beginGroup("Settings");
         bool darkTheme = m_settings->value("darkColorTheme", true).toBool();
@@ -116,7 +116,7 @@ Measurements::Measurements(QObject *parent) : QObject(parent),
 
     if(m_graphBriefHint == NULL)
     {
-        m_graphBriefHint = new PopUp();
+        m_graphBriefHint = new PopUp(MainWindow::m_mainWindow, true);
         m_graphBriefHint->setHiding(false);
         //m_graphBriefHint->setPopupText("0\n0");
         m_graphBriefHint->setName(tr("BriefHint"));

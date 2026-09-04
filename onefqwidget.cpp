@@ -28,7 +28,7 @@ OneFqWidget::OneFqWidget(int _points, QWidget *parent) :
     setAttribute(Qt::WA_ShowWithoutActivating);
 
     m_label.setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    m_label.setStyleSheet("QLabel { color : " + m_textColor.name() +
+    m_label.setStyleSheet("QLabel { color : " + m_textColor.name() + ";"
                         "margin-top: 6px;"
                         "margin-bottom: 6px;"
                         "margin-left: 10px;"

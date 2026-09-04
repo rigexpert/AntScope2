@@ -43,7 +43,7 @@ class MarkersPopUp : public QWidget
     float getPopupOpacity() const;
 
 public:
-    explicit MarkersPopUp(QWidget *parent = 0);
+    explicit MarkersPopUp(QWidget *parent = 0, bool embedded = false);
     ~MarkersPopUp();
     void setName(QString name);
     int getDurability (void) const {return m_durability;}
@@ -124,6 +124,12 @@ protected:
     int m_mainBiasY;
     int m_parentX;
     int m_parentY;
+
+    // When true, this MarkersPopUp is a plain child widget of its parent
+    // rather than a separate Qt::Tool top-level window - see
+    // markerspopup.cpp for why.
+    bool m_embedded;
+    void applyGeometry();
 
     QColor m_bgColor;
     QColor m_penColor;

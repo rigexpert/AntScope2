@@ -24,7 +24,7 @@ Markers::Markers(QObject *parent) : QObject(parent),
 
     if(m_markersHint == NULL)
     {
-        m_markersHint = new MarkersPopUp();
+        m_markersHint = new MarkersPopUp(MainWindow::m_mainWindow, true);
         m_markersHint->setHiding(false);
         if(m_markersHintEnabled && !m_markersList.isEmpty())
             m_markersHint->focusShow();

@@ -11,7 +11,6 @@
 #include <QDataStream>
 #include <QTimer>
 #include "baseanalyzer.h"
-#include "screeninfo.h"
 
 enum {
     BLE_VER_CMD = (quint8)0xE6,
@@ -194,7 +193,6 @@ signals:
     void measuringChanged();
     void aliveChanged();
     void statsChanged();
-    void setScreenInfo(ScreenInfo& screen);
 
 private:
     QString m_error;
