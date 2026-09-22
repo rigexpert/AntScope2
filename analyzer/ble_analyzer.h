@@ -194,7 +194,6 @@ signals:
     void measuringChanged();
     void aliveChanged();
     void statsChanged();
-    void setScreenInfo(ScreenInfo& screen);
 
 private:
     QString m_error;
@@ -202,7 +201,6 @@ private:
     bool m_serviceFound=false;
     QTimer * m_pingTimer;
     long m_lastReadTimeMS;
-    long m_lastPingTimeMS=0;
     bool m_bWaitingPing = false;
     bool m_reuChip = false;
     bool m_insideWrite = false;

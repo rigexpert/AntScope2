@@ -23,7 +23,11 @@ static double MIN_USER_RANGE = -2000;
 static double MAX_USER_RANGE = 2000;
 
 static int ABSOLUTE_MIN_FQ = 0;
-static int ABSOLUTE_MAX_FQ = 10000000;
+
+//{ 20260921
+//static int ABSOLUTE_MAX_FQ = 10000000;  // 10GHz
+static int ABSOLUTE_MAX_FQ = 15000000;  // 15GHz
+//} 20260921
 
 #define MAX_DOTS 2000
 
@@ -368,8 +372,13 @@ public:
         // 13.09.2024 - supported for all platforms
         m_analyzers << new AnalyzerParameters(idx++, "Zero II", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_ZEROII);
         //
-        m_analyzers << new AnalyzerParameters(idx++, "Touch", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH);
-        m_analyzers << new AnalyzerParameters(idx++, "Touch E-Ink", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH_EINK);
+
+        //{ 20260921
+        // m_analyzers << new AnalyzerParameters(idx++, "Touch", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH);
+        // m_analyzers << new AnalyzerParameters(idx++, "Touch E-Ink", "100", "1000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH_EINK);
+        m_analyzers << new AnalyzerParameters(idx++, "Touch", "100", "15000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH);
+        m_analyzers << new AnalyzerParameters(idx++, "Touch E-Ink", "100", "15000000", 0, 0, PREFIX_SERIAL_NUMBER_TOUCH_EINK);
+        //} 20260921
 
         m_analyzers << new AnalyzerParameters(idx++, "Stick XPro", "100", "1000000", 220, 220, PREFIX_SERIAL_NUMBER_STICK_XPRO);
         m_analyzers << new AnalyzerParameters(idx++, "Stick XPro", "100", "1000000", 232, 240, PREFIX_SERIAL_NUMBER_STICK_XPRO_2);

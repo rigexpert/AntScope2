@@ -569,7 +569,9 @@ void AnalyzerPro::on_checkUpdatesBtn_clicked()
     url += "&sw=" + QString(ANTSCOPE2VER);
     url += "&fw=" + getVersionString();
 
-    m_downloader->startDownloadInfo(QUrl(url));
+    //{ 20260922 Перегляд організації протоколів безпеки в Antscope2
+    //m_downloader->startDownloadInfo(QUrl(url));
+    //}
 }
 
 void AnalyzerPro::on_progress(qint64 downloaded,qint64 total)
@@ -757,7 +759,9 @@ void AnalyzerPro::applyAnalyzer()
     url += "&fw=" + getVersionString();
 
     qDebug() << url;
-    m_downloader->startSendStatistics(QUrl(url));
+    //{ 20260922 Перегляд організації протоколів безпеки в Antscope2
+    //m_downloader->startSendStatistics(QUrl(url));
+    //} 20260922 Перегляд організації протоколів безпеки в Antscope2
 }
 
 

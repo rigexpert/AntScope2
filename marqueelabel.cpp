@@ -306,7 +306,9 @@ void MarqueeLabel::request()
 
     qDebug() << "----> MarqueeLabel::request():" << url;
 
-    m_downloader->startDownloadInfo(QUrl(url));
+    //{ 20260922 Перегляд організації протоколів безпеки в Antscope2
+    //m_downloader->startDownloadInfo(QUrl(url));
+    //} 20260922 Перегляд організації протоколів безпеки в Antscope2
 }
 
 void MarqueeLabel::on_downloadInfoComplete()

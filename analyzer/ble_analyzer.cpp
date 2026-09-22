@@ -381,9 +381,6 @@ void BleAnalyzer::sendPing()
         return;
     }
     long cur = QDateTime::currentMSecsSinceEpoch();
-    long dt = m_lastPingTimeMS == 0 ? 0 : (cur - m_lastPingTimeMS);
-    m_lastPingTimeMS = cur;
-    //qDebug() << "BleAnalyzer::sendPing() " << dt;
     m_bWaitingPing = true;
     QByteArray ping;
     ping.fill(0, BLE_PACKET_SIZE);
@@ -407,43 +404,18 @@ void BleAnalyzer::handlePing() //vnn_05 1sec timer
       emit completeMeasurement();
      }
 
-    // //-----------for ping--------------
-    // if (t_noRx >= PING_TIMEOUT_MS) {
-    //     if ((m_bWaitingPing)&&(t_noRx>(2*PING_TIMEOUT_MS))) {
-    //         // error
-    //         // TODO...
-    //         AnalyzerParameters::setCurrent(nullptr);
-    //         QString err = tr("Analyzer disconnected");
-    //         setError(err);
-    //         emit analyzerDisconnected();
-    //     } else {
-    //         //qDebug() << "handlePing: sendPing()";
-    //         sendPing();// m_bWaitingPing = true;
-    //     }
-    // } else {
-    //     //qDebug() << "handlePing: m_bWaitingPing=false";
-    //     //m_bWaitingPing = false;
-    //     sendPing();
-    // }
-
     if (m_bWaitingPing) {
-         //qDebug() << "handlePing: m_bWaitingPing=true";
          if (t_noRx >= 2*PING_TIMEOUT_MS) {
              //TODO
              //qDebug() << "handlePing: t_noRx >= 2*PING_TIMEOUT_MS";
              //qDebug() << "ERROR";
          } else {
-             if (t_noRx < PING_TIMEOUT_MS)
-                ;//qDebug() << "handlePing: still waiting " << t_noRx;
-             else {
-                 //qDebug() << "handlePing: {ping 1} t_noRx=" << t_noRx;
+             if (t_noRx >= PING_TIMEOUT_MS) {
                  sendPing();
              }
          }
      } else {
         if (t_noRx >= (long)(0.7*PING_TIMEOUT_MS)) {
-             //qDebug() << "handlePing: m_bWaitingPing=false";
-             //qDebug() << "handlePing: {ping 2} t_noRx=" << t_noRx;
              sendPing();
         }
      }
@@ -485,17 +457,14 @@ void BleAnalyzer::dataReceived(const QLowEnergyCharacteristic &c, const QByteArr
     }
     if (value[0] == (quint8)BLE_PING_CMD) {
         returnCRC(value);
+        m_bWaitingPing = false;
+        m_frxGo = false;
         if (!m_postponedCmd.isEmpty()) {
-            //qDebug() << "write FRX postponed";
-            m_bWaitingPing = false;
             QByteArray cmd = m_postponedCmd.takeFirst();
             write(cmd);
             m_frxCur=0;
             m_frxTime= QDateTime::currentMSecsSinceEpoch();
             m_frxGo=true;
-        } else {
-            m_bWaitingPing = false;
-            m_frxGo = false;
         }
         return;
     }
