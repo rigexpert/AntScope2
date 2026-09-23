@@ -63,7 +63,8 @@ void LicenseAgent::requestEmailStatus()
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
     request.setSslConfiguration(conf);
 
     setState(WaitEmailStatusWeb);
@@ -150,7 +151,8 @@ void LicenseAgent::requestLicense(QString key)
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+//    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
     request.setSslConfiguration(conf);
 
     setState(WaitLicense);
@@ -297,7 +299,8 @@ void LicenseAgent::requestInfo()
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
     request.setSslConfiguration(conf);
 
     setState(WaitInfoWeb);
@@ -363,7 +366,8 @@ void LicenseAgent::requestUnit()
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
     request.setSslConfiguration(conf);
 
     setState(WaitUnitWeb);
@@ -433,7 +437,8 @@ void LicenseAgent::requestStatus_B16(QByteArray data)
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
     request.setSslConfiguration(conf);
 
     setState(WaitProfileB16);
@@ -454,7 +459,8 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
     request.setSslConfiguration(conf);
 
     setState(WaitInfoB16);

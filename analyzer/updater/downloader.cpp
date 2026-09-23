@@ -30,7 +30,8 @@ Downloader::State Downloader::startDownloadInfo(QUrl url)
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    //conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
     request.setSslConfiguration(conf);
 
     m_mng.get(request);
@@ -62,7 +63,8 @@ Downloader::State Downloader::startDownloadFw()
 
     m_mng.clearAccessCache();
     QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    //conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
     request.setSslConfiguration(conf);
 
     reply = m_mng.get(request);

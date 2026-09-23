@@ -291,22 +291,22 @@ void MarqueeLabel::request()
         connect(m_downloader, &Downloader::downloadFileComplete, this, &MarqueeLabel::on_downloadFileComplete);
     }
 
-    QString url = "https://www.rigexpert.com/get.php?part=asscroll&model=";
-#ifndef NEW_ANALYZER
-    url += names[m_analyzerModel].toLower().remove(" ").remove("-");
-#else
-    QString name = AnalyzerParameters::getName();
-    url += name.toLower().remove(" ").remove("-");
-#endif
-    url += "&sn=" + AnalyzerParameters::getSerial();
-    url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
-    url += "&cpu=" + QSysInfo::currentCpuArchitecture();
-    url += "&lang=" + QLocale::languageToString(QLocale::system().language());
-    url += "&sw=" + QString(ANTSCOPE2VER);
-
-    qDebug() << "----> MarqueeLabel::request():" << url;
-
     //{ 20260922 Перегляд організації протоколів безпеки в Antscope2
+//     QString url = "https://www.rigexpert.com/get.php?part=asscroll&model=";
+// #ifndef NEW_ANALYZER
+//     url += names[m_analyzerModel].toLower().remove(" ").remove("-");
+// #else
+//     QString name = AnalyzerParameters::getName();
+//     url += name.toLower().remove(" ").remove("-");
+// #endif
+//     url += "&sn=" + AnalyzerParameters::getSerial();
+//     url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
+//     url += "&cpu=" + QSysInfo::currentCpuArchitecture();
+//     url += "&lang=" + QLocale::languageToString(QLocale::system().language());
+//     url += "&sw=" + QString(ANTSCOPE2VER);
+
+//     qDebug() << "----> MarqueeLabel::request():" << url;
+
     //m_downloader->startDownloadInfo(QUrl(url));
     //} 20260922 Перегляд організації протоколів безпеки в Antscope2
 }

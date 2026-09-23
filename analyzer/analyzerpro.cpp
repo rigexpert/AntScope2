@@ -556,20 +556,20 @@ void AnalyzerPro::on_checkUpdatesBtn_clicked()
                 this, SLOT(on_progress(qint64,qint64)));
     }
 
-    QString url = "https://www.rigexpert.com/getfirmware?app=antscope2&model=";
-    QString name = AnalyzerParameters::getName();
-    if (name == "AA-1500 SE")
-        name = "AA-1500 ZOOM SE"; // HUCK short names supprt
-    url += name.toLower().remove(" ").remove("-");
-    url += "&sn=" + getSerialNumber();
-    url += "&revision=" + getRevision();
-    url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
-    url += "&cpu=" + QSysInfo::currentCpuArchitecture();
-    url += "&lang=" + QLocale::languageToString(QLocale::system().language());
-    url += "&sw=" + QString(ANTSCOPE2VER);
-    url += "&fw=" + getVersionString();
-
     //{ 20260922 Перегляд організації протоколів безпеки в Antscope2
+    // QString url = "https://www.rigexpert.com/getfirmware?app=antscope2&model=";
+    // QString name = AnalyzerParameters::getName();
+    // if (name == "AA-1500 SE")
+    //     name = "AA-1500 ZOOM SE"; // HUCK short names supprt
+    // url += name.toLower().remove(" ").remove("-");
+    // url += "&sn=" + getSerialNumber();
+    // url += "&revision=" + getRevision();
+    // url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
+    // url += "&cpu=" + QSysInfo::currentCpuArchitecture();
+    // url += "&lang=" + QLocale::languageToString(QLocale::system().language());
+    // url += "&sw=" + QString(ANTSCOPE2VER);
+    // url += "&fw=" + getVersionString();
+
     //m_downloader->startDownloadInfo(QUrl(url));
     //}
 }
@@ -745,21 +745,21 @@ void AnalyzerPro::applyAnalyzer()
                 this, SLOT(on_progress(qint64,qint64)));
     }
 
-    QString url = "https://www.rigexpert.com/getfirmware?part=antscope2&model=";
-    QString name = AnalyzerParameters::getName();
-    if (name == "AA-1500 SE")
-        name = "AA-1500 ZOOM SE"; // HUCK short names supprt
-    url += name.toLower().remove(" ").remove("-");
-    url += "&sn=" + getSerialNumber();
-    url += "&revision=" + getRevision();
-    url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
-    url += "&cpu=" + QSysInfo::currentCpuArchitecture();
-    url += "&lang=" + QLocale::languageToString(QLocale::system().language());
-    url += "&sw=" + QString(ANTSCOPE2VER);
-    url += "&fw=" + getVersionString();
-
-    qDebug() << url;
     //{ 20260922 Перегляд організації протоколів безпеки в Antscope2
+    // QString url = "https://www.rigexpert.com/getfirmware?part=antscope2&model=";
+    // QString name = AnalyzerParameters::getName();
+    // if (name == "AA-1500 SE")
+    //     name = "AA-1500 ZOOM SE"; // HUCK short names supprt
+    // url += name.toLower().remove(" ").remove("-");
+    // url += "&sn=" + getSerialNumber();
+    // url += "&revision=" + getRevision();
+    // url += "&os=" + QSysInfo::prettyProductName().replace(" ", "-").toLower();
+    // url += "&cpu=" + QSysInfo::currentCpuArchitecture();
+    // url += "&lang=" + QLocale::languageToString(QLocale::system().language());
+    // url += "&sw=" + QString(ANTSCOPE2VER);
+    // url += "&fw=" + getVersionString();
+
+    // qDebug() << url;
     //m_downloader->startSendStatistics(QUrl(url));
     //} 20260922 Перегляд організації протоколів безпеки в Antscope2
 }
