@@ -579,10 +579,12 @@ MainWindow::MainWindow(QWidget *parent) :
             this->ui->tableWidget_presets->horizontalHeaderItem(1)->setText(tr("Stop"));
         }
     });
-
+    //20260922_vn
+    /*
     connect(ui->labelMarquee, &MarqueeLabel::clicked, this, [=] (const QString& link) {
         QDesktopServices::openUrl(QUrl(link));
     });
+    */
     ui->labelMarquee->hide();
 
 #ifdef _DEBUG

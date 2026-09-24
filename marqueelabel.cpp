@@ -317,11 +317,12 @@ void MarqueeLabel::on_downloadInfoComplete()
 }
 
 void MarqueeLabel::on_downloadFileComplete()
-{
+{   return;//20260922_vn
+    /*
     QByteArray arr = m_downloader->file();
     if (load(arr)) {
         show();
-    }
+    }*/
 }
 
 void MarqueeLabel::reset()

@@ -260,6 +260,10 @@ win64{
     INCLUDEPATH += $$PWD/ftdi
     DEPENDPATH += $$PWD/ftdi
     QMAKE_POST_LINK = COPY $$PWD\ftdi\amd64\ftd2xx.dll $$DESTDIR
+    sbom.target = sbom
+    sbom.commands = powershell -ExecutionPolicy Bypass -File "$$PWD/scripts/make-sbom.ps1"
+
+    QMAKE_EXTRA_TARGETS += sbom
 }
 
 # Linux

@@ -166,7 +166,8 @@ bool AnalyzerPro::needCheckForUpdate()
 }
 
 void AnalyzerPro::on_downloadFileComplete()
-{
+{    return;//20260922_vn
+    /*
     *m_pfw = m_downloader->file();
     QBuffer fwdata(m_pfw);
 
@@ -174,6 +175,7 @@ void AnalyzerPro::on_downloadFileComplete()
     fwdata.seek(m_INFOSIZE);
 
     updateFirmware(&fwdata);
+ */
 }
 
 void AnalyzerPro::on_internetUpdate()

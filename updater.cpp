@@ -79,6 +79,8 @@ void Updater::on_progress(qint64 download, qint64 total)
 
 void Updater::openInstaller()
 {
+    return;//20260922_vn
+    /*
     QByteArray arr = m_downloader->file();
 
     QDir dir = QDir::tempPath();
@@ -101,9 +103,10 @@ void Updater::openInstaller()
     system(cmd.toStdString().c_str());
 
     QApplication::quit();
+    */
 }
 
 void Updater::on_startDownload()
-{
-    m_downloader->startDownloadFw();
+{   return;//20260922_vn
+    //m_downloader->startDownloadFw();
 }

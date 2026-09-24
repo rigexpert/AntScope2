@@ -115,7 +115,7 @@ QByteArray EncodingHelpers::decodeString_nRaw1(QString inRaw) {
   str3 = inRaw.mid((poz3 + QString("&raw=").length()),
                    inLen - (poz3 + QString("&raw= ").length()) + 1);
   int len = (str3.length())/2;
-
+  if(len>1998){len=1998;}//20260922_vn
   str_Hi = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "; // 37
   str_Lo = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "; // 37
 

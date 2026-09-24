@@ -8,7 +8,7 @@
 #include "popup.h"
 #include "modelesspopup.h"
 
-#define SERVER_NAME "http://regdev.rigexpert.com/index.php"
+#define SERVER_NAME "https://regdev.rigexpert.com/index.php"
 
 #define EMAIL_TIMEOUT 180*1000
 #define REQUEST_DELAY 5*1000

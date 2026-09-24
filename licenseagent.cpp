@@ -5,6 +5,7 @@
 #include "unitrequestdialog.h"
 #include "encodinghelpers.h"
 #include "style.h"
+#include <QUrlQuery> //20260922_vn
 
 LicenseAgent::LicenseAgent(QObject *parent) :
     QObject(parent),
@@ -48,7 +49,8 @@ void LicenseAgent::registerApllication(QString user, QString email)
     m_dtEmailStatus = QDateTime::currentMSecsSinceEpoch();
     requestEmailStatus();
 }
-
+//20260922_vn
+/*
 void LicenseAgent::requestEmailStatus()
 {
     QString url = SERVER_NAME;
@@ -69,6 +71,42 @@ void LicenseAgent::requestEmailStatus()
 
     setState(WaitEmailStatusWeb);
     m_mng.get(request);
+}
+*/
+void LicenseAgent::requestEmailStatus()
+{
+    QString strRaw  = QString("Name=%1&&&Eml=%2&&&").arg(m_userName, m_email);
+    QString strData = EncodingHelpers::encodeString(strRaw);
+
+    // маршрутизація лишається в URL — серверний роутинг по nGet не чіпаємо
+    QUrl url(SERVER_NAME);
+    QUrlQuery query;
+    query.addQueryItem("nGet", "1");
+    query.addQueryItem("nRaw", "1");
+    url.setQuery(query);
+
+    // приватні дані — у тіло
+    QUrlQuery form;
+    form.addQueryItem("raw", strData);
+    const QByteArray body = form.toString(QUrl::FullyEncoded).toUtf8();
+
+    qInfo() << "    LicenseAgent::requestEmailStatus POST" << url.toString()
+            << "body" << body.size() << "bytes";
+
+    QNetworkRequest request(url);
+    request.setTransferTimeout(REPLY_TIMEOUT);
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QByteArrayLiteral("application/x-www-form-urlencoded"));
+
+    //20260922_vn : VerifyPeer is the default behavior for a client socket: Qt sets AutoVerifyPeer.
+    //QSslConfiguration conf = request.sslConfiguration();
+    //conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
+    //request.setSslConfiguration(conf);
+
+    m_mng.clearAccessCache();
+
+    setState(WaitEmailStatusWeb);
+    m_reply = m_mng.post(request, body);
 }
 
 void LicenseAgent::parseEmailStatus()
@@ -133,7 +171,8 @@ void LicenseAgent::updateLicense()
     requestLicense(key);
 }
 
-
+//20260922_vn
+/*
 void LicenseAgent::requestLicense(QString key)
 {
     QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
@@ -159,6 +198,40 @@ void LicenseAgent::requestLicense(QString key)
     m_canceled = false;
     m_mng.get(request);
 
+}
+*/
+
+void LicenseAgent::requestLicense(QString key)
+{
+    QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
+    QString serial = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
+    QString license = MainWindow::m_mainWindow->analyzer()->getLicense();
+    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcCode=%3&&&lcName=%4&&&").arg(name, serial, key, license);
+    QString strData = EncodingHelpers::encodeString(strRaw);
+
+    QUrl url(SERVER_NAME);
+    QUrlQuery query;
+    query.addQueryItem("nGet", "4");
+    query.addQueryItem("nRaw", "1");
+    url.setQuery(query);
+
+    QUrlQuery form;
+    form.addQueryItem("raw", strData);
+    const QByteArray body = form.toString(QUrl::FullyEncoded).toUtf8();
+
+    qInfo() << "   LicenseAgent::requestLicense POST" << url.toString()
+            << "body" << body.size() << "bytes";
+
+    QNetworkRequest request(url);
+    request.setTransferTimeout(REPLY_TIMEOUT);
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QByteArrayLiteral("application/x-www-form-urlencoded"));
+
+    m_mng.clearAccessCache();
+
+    setState(WaitLicense);
+    m_canceled = false;
+    m_reply = m_mng.post(request, body);
 }
 
 void LicenseAgent::parseLicense()
@@ -277,7 +350,8 @@ void LicenseAgent::requestUserInfo()
     requestInfo();
     setState(WaitUserInfoWeb);
 }
-
+//20260922_vn
+/*
 void LicenseAgent::requestInfo()
 {
     QString url = SERVER_NAME;
@@ -308,6 +382,46 @@ void LicenseAgent::requestInfo()
     m_dtUnit = QDateTime::currentMSecsSinceEpoch();
     m_UnitAttempts = 0;
     m_mng.get(request);
+}
+*/
+
+void LicenseAgent::requestInfo()
+{
+    //    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcName=%3&&&")
+    //                         .arg(m_infoRequest.deviceName, m_infoRequest.serialNumber,
+    //                              m_infoRequest.licenseName);
+    AnalyzerPro& analyzer = *MainWindow::m_mainWindow->analyzer();
+    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcName=%3&&&")
+                         .arg(analyzer.getModelString(), analyzer.getSerialNumber(),
+                              analyzer.getLicense());
+
+    QString strData = EncodingHelpers::encodeString(strRaw);
+
+    QUrl url(SERVER_NAME);
+    QUrlQuery query;
+    query.addQueryItem("nGet", "2");
+    query.addQueryItem("nRaw", "1");
+    url.setQuery(query);
+
+    QUrlQuery form;
+    form.addQueryItem("raw", strData);
+    const QByteArray body = form.toString(QUrl::FullyEncoded).toUtf8();
+
+    qInfo() << "LicenseAgent::requestInfo() POST" << url.toString()
+            << "body" << body.size() << "bytes";
+
+    QNetworkRequest request(url);
+    request.setTransferTimeout(REPLY_TIMEOUT);
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QByteArrayLiteral("application/x-www-form-urlencoded"));
+
+    m_mng.clearAccessCache();
+
+    setState(WaitInfoWeb);
+    //showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
+    m_dtUnit = QDateTime::currentMSecsSinceEpoch();
+    m_UnitAttempts = 0;
+    m_reply = m_mng.post(request, body);
 }
 
 void LicenseAgent::parseInfoWeb()
@@ -348,7 +462,8 @@ bool LicenseAgent::infoWebIsEmpty()
     //return m_infoWeb.serialNumber.isEmpty();
     return m_infoWeb.nRez != 1 ;
 }
-
+//20260922_vn
+/*
 void LicenseAgent::requestUnit()
 {
     QString url = SERVER_NAME;
@@ -373,6 +488,39 @@ void LicenseAgent::requestUnit()
     setState(WaitUnitWeb);
     m_mng.get(request);
 }
+*/
+void LicenseAgent::requestUnit()
+{
+    QString strRaw = QString("dvSN=%1&&&Eml=%2&&&Name=%3&&&dtPur=%4&&&dvName=%5&&&")
+    .arg(m_unitRequest.serialNumber, m_unitRequest.email,
+         m_unitRequest.userName, m_unitRequest.purchargeDate,
+         MainWindow::m_mainWindow->analyzer()->getModelString());
+    QString strData = EncodingHelpers::encodeString(strRaw);
+
+    QUrl url(SERVER_NAME);
+    QUrlQuery query;
+    query.addQueryItem("nGet", "3");
+    query.addQueryItem("nRaw", "1");
+    url.setQuery(query);
+
+    QUrlQuery form;
+    form.addQueryItem("raw", strData);
+    const QByteArray body = form.toString(QUrl::FullyEncoded).toUtf8();
+
+    qInfo() << "LicenseAgent::requestUnit POST" << url.toString()
+            << "body" << body.size() << "bytes";
+
+    QNetworkRequest request(url);
+    request.setTransferTimeout(REPLY_TIMEOUT);
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QByteArrayLiteral("application/x-www-form-urlencoded"));
+
+    m_mng.clearAccessCache();
+
+    setState(WaitUnitWeb);
+    m_reply = m_mng.post(request, body);
+}
+
 
 
 void LicenseAgent::parseUnitWeb()
@@ -414,7 +562,8 @@ bool LicenseAgent::needWaitForEmail()
 {
     return (m_unitWeb.nRez == 2);
 }
-
+//20260922_vn
+/*
 void LicenseAgent::requestStatus_B16(QByteArray data)
 {
 
@@ -444,7 +593,45 @@ void LicenseAgent::requestStatus_B16(QByteArray data)
     setState(WaitProfileB16);
     m_mng.get(request);
 }
+*/
+void LicenseAgent::requestStatus_B16(QByteArray data)
+{
 
+    QString dataStr(data);
+    if (dataStr.contains("Error")) {
+        if (m_modelessPopup != nullptr)
+            m_modelessPopup->close();
+        showModeless(tr("Request status B16"), tr("Something went wrong"), tr("Ok"));
+        return;
+    }
+    QString strData(data.toHex());
+    const QString rawValue = QString("073E%1").arg(strData.toUpper()) + "85";
+
+    QUrl url(SERVER_NAME);
+    QUrlQuery query;
+    query.addQueryItem("nGet", "21");
+    query.addQueryItem("nRaw", "21");
+    url.setQuery(query);
+
+    QUrlQuery form;
+    form.addQueryItem("raw", rawValue);
+    const QByteArray body = form.toString(QUrl::FullyEncoded).toUtf8();
+
+    qInfo() << "LicenseAgent::requestStatus_B16 POST" << url.toString()
+            << "body" << body.size() << "bytes";
+
+    QNetworkRequest request(url);
+    request.setTransferTimeout(REPLY_TIMEOUT);
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QByteArrayLiteral("application/x-www-form-urlencoded"));
+
+    m_mng.clearAccessCache();
+
+    setState(WaitProfileB16);
+    m_reply = m_mng.post(request, body);
+}
+//20260922_vn
+/*
 void LicenseAgent::requestInfo_B16(QByteArray data)
 {
     QString url = SERVER_NAME;
@@ -465,6 +652,37 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
 
     setState(WaitInfoB16);
     m_mng.get(request);
+}
+*/
+
+
+void LicenseAgent::requestInfo_B16(QByteArray data)
+{
+    QString strData(data.toHex());
+    const QString rawValue = QString("073E%1").arg(strData.toUpper()) + "85";
+
+    QUrl url(SERVER_NAME);
+    QUrlQuery query;
+    query.addQueryItem("nGet", "22");
+    query.addQueryItem("nRaw", "21");
+    url.setQuery(query);
+
+    QUrlQuery form;
+    form.addQueryItem("raw", rawValue);
+    const QByteArray body = form.toString(QUrl::FullyEncoded).toUtf8();
+
+    qInfo() << "LicenseAgent::requestInfo_B16 POST" << url.toString()
+            << "body" << body.size() << "bytes";
+
+    QNetworkRequest request(url);
+    request.setTransferTimeout(REPLY_TIMEOUT);
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QByteArrayLiteral("application/x-www-form-urlencoded"));
+
+    m_mng.clearAccessCache();
+
+    setState(WaitInfoB16);
+    m_reply = m_mng.post(request, body);
 }
 
 void LicenseAgent::onReplyFinished(QNetworkReply* reply)

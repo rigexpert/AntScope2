@@ -52,9 +52,9 @@ void Notification::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         if (!m_url.isEmpty())
-        {
-            QDesktopServices::openUrl(QUrl::fromUserInput(m_url));
-            event->accept();
+        {  //20260922_vn
+          /*QDesktopServices::openUrl(QUrl::fromUserInput(m_url));
+            event->accept();*/
         }
     } else {
         QWidget::mouseReleaseEvent(event);
