@@ -55,6 +55,10 @@ else {
     DEFINES += _DEBUG
 }
 
+CONFIG(release, debug|release) {
+    DEFINES += QT_NO_DEBUG_OUTPUT
+    DEFINES += QT_NO_INFO_OUTPUT
+}
 
 OBJECTS_DIR = $$DESTDIR/.obj
 MOC_DIR = $$DESTDIR/.moc

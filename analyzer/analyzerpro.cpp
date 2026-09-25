@@ -179,14 +179,14 @@ void AnalyzerPro::on_downloadFileComplete()
 }
 
 void AnalyzerPro::on_internetUpdate()
-{
-    m_downloader->startDownloadFw();
-    m_updateDialog->setStatusText(tr("Downloading firmware..."));
+{  return;//20260925_vn
+    //m_downloader->startDownloadFw();
+    //m_updateDialog->setStatusText(tr("Downloading firmware..."));
 }
 
 void AnalyzerPro::readFile(QString pathToFw)
-{
-    QFile file(pathToFw);
+{   return;//20260925_vn
+   /* QFile file(pathToFw);
     bool state = true;
 
     if(!file.open(QIODevice::ReadOnly))
@@ -213,6 +213,7 @@ void AnalyzerPro::readFile(QString pathToFw)
         fwdata.seek(m_INFOSIZE);
         updateFirmware(&fwdata);
     }
+    */
 }
 
 QString AnalyzerPro::getModelString( void )

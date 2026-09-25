@@ -11,6 +11,18 @@ Downloader::Downloader(QObject *parent) :
     connect(&m_mng, SIGNAL(finished(QNetworkReply*)),
             this, SLOT(fileDownloaded(QNetworkReply*)));
 
+    //20260925_vn : діагностика збоїв перевірки сертифіката.
+    // ignoreSslErrors() НЕ викликаємо — інакше VerifyPeer втрачає сенс.
+    connect(&m_mng, &QNetworkAccessManager::sslErrors, this,
+            [this](QNetworkReply* reply, const QList<QSslError>& errors) {
+                Q_UNUSED(reply)
+                for (const QSslError& e : errors) {
+                    qCWarning(DOWNLOADER) << "SSL error:" << int(e.error()) << e.errorString();
+                    if (m_lastError.isEmpty())
+                        m_lastError = tr("Certificate problem: ") + e.errorString();
+                }
+            });
+
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(timeout()));
     m_timer.setSingleShot(true);
 }
@@ -25,6 +37,7 @@ Downloader::State Downloader::startDownloadInfo(QUrl url)
     if (m_state == InProgress) {
         return m_state;
     }
+    m_lastError.clear();   //20260925_vn : щоб деталі SSL не тягнулись із попереднього запиту
 
     QNetworkRequest request(url);
 
@@ -50,6 +63,7 @@ Downloader::State Downloader::startDownloadFw()
     if (m_state == InProgress) {
         return m_state;
     }
+    m_lastError.clear();   //20260925_vn : щоб деталі SSL не тягнулись із попереднього запиту
 
     m_isInfo = false;
     m_sendStatisics = false;
@@ -86,6 +100,7 @@ Downloader::State Downloader::startSendStatistics(QUrl url)
     if (m_state == InProgress) {
         return m_state;
     }
+    m_lastError.clear();   //20260925_vn : щоб деталі SSL не тягнулись із попереднього запиту
 
     QNetworkRequest request(url);
     m_mng.get(request);
@@ -116,7 +131,11 @@ void Downloader::fileDownloaded(QNetworkReply *reply)
 
 
     if (reply->error() != QNetworkReply::NoError ) {
-        m_lastError = reply->errorString();
+        //20260925_vn : не затирати деталі SSL, якщо вони вже записані
+        if (m_lastError.isEmpty())
+            m_lastError = reply->errorString();
+        else
+            m_lastError = reply->errorString() + "\n\n" + m_lastError;
         m_info.clear();
         m_link.clear();
     } else if(!m_isInfo && isHTML(m_arr)) {

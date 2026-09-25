@@ -64,6 +64,16 @@ MainWindow::MainWindow(QWidget *parent) :
     qInfo() << "* 3 sslLibraryVersion: " << QSslSocket::sslLibraryVersionString();
     qInfo() << "* 4 Qt version: " << qVersion();
 
+    //20260925_vn : без OpenSSL жодного sslErrors не буде — запит впаде раніше,
+    // тому попереджаємо користувача одразу, а не після невдалої реєстрації.
+    if (!QSslSocket::supportsSsl()) {
+        qCritical() << "*** OpenSSL is not available. Build version:"
+                    << QSslSocket::sslLibraryBuildVersionString();
+        g_showMessageBox(this, QMessageBox::Warning, tr("Network"),
+                         tr("Secure connections are not available on this system.\n"
+                            "Registration, license update and update check will not work."));
+    }
+
     setAbsoluteFqMaximum();
 
     g_mapTabPlotNames["tab_swr"] = "swr_widget";

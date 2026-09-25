@@ -16,6 +16,8 @@ Updater::~Updater()
 
 void Updater::on_checkUpdates()
 {
+     return;//20260925_vn
+
     if(m_downloader == NULL)
     {
         m_downloader = new Downloader();
@@ -38,8 +40,8 @@ void Updater::on_checkUpdates()
     os = "&os=linux";
 #endif
 
-    QString url = "https://rigexpert.com/getsoftware?model=antscope2&revision=1" + os;
-    m_downloader->startDownloadInfo(QUrl(url));
+  //  QString url = "https://rigexpert.com/getsoftware?model=antscope2&revision=1" + os;
+  //   m_downloader->startDownloadInfo(QUrl(url));
 }
 
 void Updater::on_downloadInfoComplete()
@@ -81,17 +83,17 @@ void Updater::openInstaller()
 {
     return;//20260922_vn
     /*
-    QByteArray arr = m_downloader->file();
+    //xQByteArray arr = m_downloader->file();
 
-    QDir dir = QDir::tempPath();
-    QString path = dir.absoluteFilePath("RE.exe");
+    //xQDir dir = QDir::tempPath();
+    //xQString path = dir.absoluteFilePath("RE.exe");
 
-    QFile file(path);
-    file.open(QIODevice::WriteOnly);
-    file.write(arr);
-    file.close();
+    //xQFile file(path);
+    //xfile.open(QIODevice::WriteOnly);
+    //xfile.write(arr);
+    //xfile.close();
 
-    QString program = path;
+    //xQString program = path;
     //QStringList arguments;
     //QProcess *myProcess = new QProcess();
     //myProcess->start(program, arguments);
@@ -99,10 +101,10 @@ void Updater::openInstaller()
     //QProcess::ProcessError err = myProcess->error();
     //QString errString = myProcess->errorString();
 
-    QString cmd = "cmd /c START " + program;
-    system(cmd.toStdString().c_str());
+    //xQString cmd = "cmd /c START " + program;
+    //xsystem(cmd.toStdString().c_str());
 
-    QApplication::quit();
+    //xQApplication::quit();
     */
 }
 

@@ -13,12 +13,23 @@ LicenseAgent::LicenseAgent(QObject *parent) :
     m_reply(NULL)
 {
     connect(&m_mng, &QNetworkAccessManager::finished, this, &LicenseAgent::onReplyFinished);
-    connect(m_reply, &QNetworkReply::errorOccurred, this, [=](QNetworkReply::NetworkError error) {
-        qInfo() << "***       QNetworkReply::errorOccurred" << error;
-        QString str = QString("QNetworkReply::errorOccurred: %1").arg(error);
-        if (state() != Finished && state() != Error)
-            showModeless(QString(tr("Error")), str, "Cancel");
-    });
+
+    //20260925_vn : діагностика збоїв перевірки сертифіката.
+    // ignoreSslErrors() НЕ викликаємо — інакше VerifyPeer втрачає сенс.
+    connect(&m_mng, &QNetworkAccessManager::sslErrors, this,
+            [this](QNetworkReply* reply, const QList<QSslError>& errors) {
+                Q_UNUSED(reply)
+                QStringList details;
+                for (const QSslError& e : errors) {
+                    qWarning() << "*** LicenseAgent SSL error:" << int(e.error()) << e.errorString();
+                    details << e.errorString();
+                }
+                m_lastSslError = details.join("; ");
+            });
+
+    //20260925_vn : старий connect(m_reply, ...) видалено —
+    // у конструкторі m_reply == NULL, тож обробник ніколи не спрацьовував.
+    // Тепер він чіпляється до кожної відповіді у watchReply().
     connect(&m_timer, &QTimer::timeout, this, [=](){
         m_timer.stop();
         timeout();
@@ -31,6 +42,16 @@ LicenseAgent::LicenseAgent(QObject *parent) :
 LicenseAgent::~LicenseAgent()
 {
 
+}
+
+//20260925_vn
+void LicenseAgent::watchReply(QNetworkReply* reply)
+{
+    if (reply == nullptr)
+        return;
+    connect(reply, &QNetworkReply::errorOccurred, this, [this](QNetworkReply::NetworkError error) {
+        qWarning() << "*** LicenseAgent reply error:" << error;
+    });
 }
 
 void LicenseAgent::registerApllication(QString user, QString email)
@@ -50,29 +71,7 @@ void LicenseAgent::registerApllication(QString user, QString email)
     requestEmailStatus();
 }
 //20260922_vn
-/*
-void LicenseAgent::requestEmailStatus()
-{
-    QString url = SERVER_NAME;
-    QString strRaw = QString("Name=%1&&&Eml=%2&&&").arg(m_userName, m_email);
-    QString strData = EncodingHelpers::encodeString(strRaw);
-    url += QString("?nGet=1&nRaw=1&raw=%1").arg(strData);
 
-    qInfo() << "    LicenseAgent::requestEmailStatus" << url;
-
-    QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(REPLY_TIMEOUT);
-
-    m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
-    request.setSslConfiguration(conf);
-
-    setState(WaitEmailStatusWeb);
-    m_mng.get(request);
-}
-*/
 void LicenseAgent::requestEmailStatus()
 {
     QString strRaw  = QString("Name=%1&&&Eml=%2&&&").arg(m_userName, m_email);
@@ -107,6 +106,7 @@ void LicenseAgent::requestEmailStatus()
 
     setState(WaitEmailStatusWeb);
     m_reply = m_mng.post(request, body);
+    watchReply(m_reply);   //20260925_vn
 }
 
 void LicenseAgent::parseEmailStatus()
@@ -172,35 +172,6 @@ void LicenseAgent::updateLicense()
 }
 
 //20260922_vn
-/*
-void LicenseAgent::requestLicense(QString key)
-{
-    QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
-    QString serial = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
-    QString license = MainWindow::m_mainWindow->analyzer()->getLicense();
-    QString url = SERVER_NAME;
-    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcCode=%3&&&lcName=%4&&&").arg(name, serial, key, license);
-    QString strData = EncodingHelpers::encodeString(strRaw);
-    url += QString("?nGet=4&nRaw=1&raw=%1").arg(strData);
-
-    qInfo() << "   LicenseAgent::requestLicense" << url;
-
-    QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(REPLY_TIMEOUT);
-
-    m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-//    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
-    request.setSslConfiguration(conf);
-
-    setState(WaitLicense);
-    m_canceled = false;
-    m_mng.get(request);
-
-}
-*/
-
 void LicenseAgent::requestLicense(QString key)
 {
     QString name = MainWindow::m_mainWindow->analyzer()->getModelString();
@@ -232,6 +203,7 @@ void LicenseAgent::requestLicense(QString key)
     setState(WaitLicense);
     m_canceled = false;
     m_reply = m_mng.post(request, body);
+    watchReply(m_reply);   //20260925_vn
 }
 
 void LicenseAgent::parseLicense()
@@ -351,40 +323,6 @@ void LicenseAgent::requestUserInfo()
     setState(WaitUserInfoWeb);
 }
 //20260922_vn
-/*
-void LicenseAgent::requestInfo()
-{
-    QString url = SERVER_NAME;
-//    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcName=%3&&&")
-//                         .arg(m_infoRequest.deviceName, m_infoRequest.serialNumber,
-//                              m_infoRequest.licenseName);
-    AnalyzerPro& analyzer = *MainWindow::m_mainWindow->analyzer();
-    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcName=%3&&&")
-                         .arg(analyzer.getModelString(), analyzer.getSerialNumber(),
-                              analyzer.getLicense());
-
-    qInfo() << "LicenseAgent::requestInfo() strRaw" << strRaw;
-    QString strData = EncodingHelpers::encodeString(strRaw);
-    url += QString("?nGet=2&nRaw=1&raw=%1").arg(strData);
-    qInfo() << "LicenseAgent::requestInfo() url" << url;
-
-    QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(REPLY_TIMEOUT);
-
-    m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
-    request.setSslConfiguration(conf);
-
-    setState(WaitInfoWeb);
-    //showModeless(tr("Register device"),tr("Registration..."), tr("Cancel"));
-    m_dtUnit = QDateTime::currentMSecsSinceEpoch();
-    m_UnitAttempts = 0;
-    m_mng.get(request);
-}
-*/
-
 void LicenseAgent::requestInfo()
 {
     //    QString strRaw = QString("dvName=%1&&&dvSN=%2&&&lcName=%3&&&")
@@ -422,6 +360,7 @@ void LicenseAgent::requestInfo()
     m_dtUnit = QDateTime::currentMSecsSinceEpoch();
     m_UnitAttempts = 0;
     m_reply = m_mng.post(request, body);
+    watchReply(m_reply);   //20260925_vn
 }
 
 void LicenseAgent::parseInfoWeb()
@@ -463,32 +402,6 @@ bool LicenseAgent::infoWebIsEmpty()
     return m_infoWeb.nRez != 1 ;
 }
 //20260922_vn
-/*
-void LicenseAgent::requestUnit()
-{
-    QString url = SERVER_NAME;
-    QString strRaw = QString("dvSN=%1&&&Eml=%2&&&Name=%3&&&dtPur=%4&&&dvName=%5&&&")
-                         .arg(m_unitRequest.serialNumber, m_unitRequest.email,
-                              m_unitRequest.userName, m_unitRequest.purchargeDate,
-                              MainWindow::m_mainWindow->analyzer()->getModelString());
-    qInfo() << "LicenseAgent::requestUnit" << strRaw;
-    QString strData = EncodingHelpers::encodeString(strRaw);
-    url += QString("?nGet=3&nRaw=1&raw=%1").arg(strData);
-
-    qInfo() << "LicenseAgent::requestUnit" << url;
-    QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(REPLY_TIMEOUT);
-
-    m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
-    request.setSslConfiguration(conf);
-
-    setState(WaitUnitWeb);
-    m_mng.get(request);
-}
-*/
 void LicenseAgent::requestUnit()
 {
     QString strRaw = QString("dvSN=%1&&&Eml=%2&&&Name=%3&&&dtPur=%4&&&dvName=%5&&&")
@@ -519,6 +432,7 @@ void LicenseAgent::requestUnit()
 
     setState(WaitUnitWeb);
     m_reply = m_mng.post(request, body);
+    watchReply(m_reply);   //20260925_vn
 }
 
 
@@ -563,37 +477,6 @@ bool LicenseAgent::needWaitForEmail()
     return (m_unitWeb.nRez == 2);
 }
 //20260922_vn
-/*
-void LicenseAgent::requestStatus_B16(QByteArray data)
-{
-
-    QString dataStr(data);
-    if (dataStr.contains("Error")) {
-        if (m_modelessPopup != nullptr)
-            m_modelessPopup->close();
-        showModeless(tr("Request status B16"), tr("Something went wrong")), tr("Ok");
-        return;
-    }
-    QString url = SERVER_NAME;
-    QString strData(data.toHex());
-    url += QString("?nGet=21&nRaw=21&raw=073E%1").arg(strData.toUpper());
-    url += "85";
-
-    qInfo() << "LicenseAgent::requestStatus_B16" << url;
-
-    QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(REPLY_TIMEOUT);
-
-    m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
-    request.setSslConfiguration(conf);
-
-    setState(WaitProfileB16);
-    m_mng.get(request);
-}
-*/
 void LicenseAgent::requestStatus_B16(QByteArray data)
 {
 
@@ -629,33 +512,9 @@ void LicenseAgent::requestStatus_B16(QByteArray data)
 
     setState(WaitProfileB16);
     m_reply = m_mng.post(request, body);
+    watchReply(m_reply);   //20260925_vn
 }
 //20260922_vn
-/*
-void LicenseAgent::requestInfo_B16(QByteArray data)
-{
-    QString url = SERVER_NAME;
-    QString strData(data.toHex());
-    url += QString("?nGet=22&nRaw=21&raw=073E%1").arg(strData.toUpper());
-    url += "85";
-
-    qInfo() << "LicenseAgent::requestInfo_B16" << url;
-
-    QNetworkRequest request((QUrl)url);
-    request.setTransferTimeout(REPLY_TIMEOUT);
-
-    m_mng.clearAccessCache();
-    QSslConfiguration conf = request.sslConfiguration();
-    //    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    conf.setPeerVerifyMode(QSslSocket::VerifyPeer);
-    request.setSslConfiguration(conf);
-
-    setState(WaitInfoB16);
-    m_mng.get(request);
-}
-*/
-
-
 void LicenseAgent::requestInfo_B16(QByteArray data)
 {
     QString strData(data.toHex());
@@ -683,6 +542,7 @@ void LicenseAgent::requestInfo_B16(QByteArray data)
 
     setState(WaitInfoB16);
     m_reply = m_mng.post(request, body);
+    watchReply(m_reply);   //20260925_vn
 }
 
 void LicenseAgent::onReplyFinished(QNetworkReply* reply)
@@ -693,7 +553,13 @@ void LicenseAgent::onReplyFinished(QNetworkReply* reply)
 
     if (reply->error() != QNetworkReply::NoError) {
         setState(Error);
-        showModeless(tr("Network error."), reply->errorString(), tr("Close"));
+        //20260925_vn : якщо збій спричинила перевірка сертифіката — показати причину
+        QString msg = reply->errorString();
+        if (!m_lastSslError.isEmpty()) {
+            msg += "\n\n" + tr("Certificate problem: ") + m_lastSslError;
+            m_lastSslError.clear();
+        }
+        showModeless(tr("Network error."), msg, tr("Close"));
         return;
     }
     if (m_canceled) {

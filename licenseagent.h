@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QSslError>     //20260925_vn
 #include <QTimer>
 #include "popup.h"
 #include "modelesspopup.h"
@@ -164,6 +165,9 @@ protected:
     void sendProfile_B16(QByteArray data);
     void sendBlocked();
 
+    //20260925_vn : спільна обробка щойно створеної відповіді
+    void watchReply(QNetworkReply* reply);
+
 protected:
     State m_state;
     QNetworkAccessManager m_mng;
@@ -189,6 +193,7 @@ protected:
     int m_UnitAttempts = 0;
     int m_licenseAttempts = 0;
     bool m_canceled = false;
+    QString m_lastSslError;   //20260925_vn : текст останньої помилки перевірки сертифіката
 
 };
 

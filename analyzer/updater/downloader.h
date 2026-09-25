@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QSslError>     //20260925_vn
 #include <QDomDocument>
 #include <QBuffer>
 #include <QLoggingCategory>
