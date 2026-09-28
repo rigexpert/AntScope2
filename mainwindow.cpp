@@ -64,6 +64,17 @@ MainWindow::MainWindow(QWidget *parent) :
     qInfo() << "* 3 sslLibraryVersion: " << QSslSocket::sslLibraryVersionString();
     qInfo() << "* 4 Qt version: " << qVersion();
 
+    //20260928_vn : контроль версії криптобібліотеки. qCritical переживає
+    // QT_NO_INFO_OUTPUT, тож у релізній збірці це єдиний спосіб побачити,
+    // що поруч із .exe опинилась не та OpenSSL.
+    {
+        const QString sslRuntime = QSslSocket::sslLibraryVersionString();
+        if (!sslRuntime.startsWith(QLatin1String("OpenSSL 3"))) {
+            qCritical() << "*** Unexpected OpenSSL runtime:" << sslRuntime
+                        << "build:" << QSslSocket::sslLibraryBuildVersionString();
+        }
+    }
+
     //20260925_vn : без OpenSSL жодного sslErrors не буде — запит впаде раніше,
     // тому попереджаємо користувача одразу, а не після невдалої реєстрації.
     if (!QSslSocket::supportsSsl()) {

@@ -453,14 +453,17 @@ void HidAnalyzer::hidRead (void)
     {
         return;
     }
-    unsigned char readBuff[64];
+    //20260928_vn : readBuff ініціалізовано, щоб короткий звіт не давав сміття
+    unsigned char readBuff[64]  = {0};
     int read = hid_read(m_hidDevice, readBuff, 64);
+    int lenMax =0;
     m_mutexRead.lock();
     if(read > 0)
     {
         if(readBuff[0] == ANTSCOPE_REPORT)
-        {
-            for(int i = 0; i < readBuff[1]; i++)
+        {   lenMax=readBuff[1];
+            if(lenMax>62){lenMax=62;} 
+            for(int i = 0; i < lenMax; i++)
             {
                 m_incomingBuffer.append(readBuff[i+2]);
             }

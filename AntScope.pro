@@ -250,25 +250,38 @@ win32{
     win32:FTDI_DLL ~= s,/,\\,g
     win32:DESTDIR ~= s,/,\\,g
     QMAKE_POST_LINK += $$QMAKE_COPY_DIR $$shell_quote($$FTDI_DLL) $$shell_quote($$DESTDIR) $$escape_expand(\\n\\t)
-    #QMAKE_POST_LINK += $$QMAKE_COPY_DIR "$$PWD/ftdi/amd64/ftd2xx.dll" "$$DESTDIR"
-    #QMAKE_POST_LINK += $$quote(copy $${PWD}/ftdi/amd64/ftd2xx.dll $${DESTDIR}$$escape_expand(\\n\\t))
-}
 
-win64{
-    SOURCES += analyzer/usbhid/hidapi/windows/hid.c
-    LIBS += -lsetupapi
-    RC_ICONS += AntScope2.ico
+    #{ 20260928_vn : OpenSSL 3.x
+    # Qt 6 НЕ лінкується з OpenSSL — бекенд TLS (plugins/tls/qopensslbackend.dll)
+    # завантажує libcrypto/libssl динамічно під час першого TLS-з'єднання.
+    # Тому import-бібліотеки не потрібні; потрібні лише DLL поруч із .exe.
+    # Шлях перевизначається: qmake OPENSSL_DIR=<...> або змінною оточення.
+    isEmpty(OPENSSL_DIR): OPENSSL_DIR = $$(OPENSSL_DIR)
+    isEmpty(OPENSSL_DIR): OPENSSL_DIR = C:/Qt/Tools/OpenSSLv3/Win_x64/bin
 
-    LIBS += -LC:/Qt/Tools/OpenSSLv3/Win_x64/lib/ -llibcrypto.lib
-    LIBS += -LC:/Qt/Tools/OpenSSLv3/Win_x64/lib/ -llibssl.lib
-    INCLUDEPATH += $$PWD/ftdi
-    DEPENDPATH += $$PWD/ftdi
-    QMAKE_POST_LINK = COPY $$PWD\ftdi\amd64\ftd2xx.dll $$DESTDIR
+    contains(QT_ARCH, x86_64) {
+        OPENSSL_DLLS = libcrypto-3-x64.dll libssl-3-x64.dll
+    } else {
+        OPENSSL_DLLS = libcrypto-3.dll libssl-3.dll
+    }
+
+    for(dll, OPENSSL_DLLS) {
+        OPENSSL_SRC = $$OPENSSL_DIR/$$dll
+        !exists($$OPENSSL_SRC): error("OpenSSL 3 runtime not found: $$OPENSSL_SRC — install the OpenSSL 3.x Toolkit via the Qt Maintenance Tool or pass OPENSSL_DIR=<path to OpenSSL 3 bin>")
+        OPENSSL_SRC ~= s,/,\\,g
+        QMAKE_POST_LINK += $$QMAKE_COPY $$shell_quote($$OPENSSL_SRC) $$shell_quote($$DESTDIR) $$escape_expand(\\n\\t)
+    }
+    #}
+
     sbom.target = sbom
     sbom.commands = powershell -ExecutionPolicy Bypass -File "$$PWD/scripts/make-sbom.ps1"
-
     QMAKE_EXTRA_TARGETS += sbom
 }
+
+# 20260928_vn : блок win64{} видалено — такого scope у qmake не існує,
+# на 64-бітних збірках Windows істинним є win32. Увесь вміст блоку
+# (LIBS для OpenSSL, копіювання ftd2xx.dll, ціль sbom) ніколи не виконувався
+# і перенесений до win32{} вище.
 
 # Linux
 unix:!macx {

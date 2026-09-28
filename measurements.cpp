@@ -2885,7 +2885,7 @@ void Measurements::importData(QString _name)
         int iFormat = 1; // Default is MA
 
         QString line;//char str[1000]; // Whole string
-        char strn[5][100]; // Substrings
+        char strn[5][100] = {{0}}; // Substrings
 
         double f, param1, param2; // for reading S11 data lines
 
@@ -2903,7 +2903,10 @@ void Measurements::importData(QString _name)
             if ( (line.length() > 2) && (line[0] == '#')) // Option line
             {
                 line.remove(0,1);
-                int ns = sscanf(line.toLocal8Bit(), "%s %s %s %s %s", strn[0], strn[1], strn[2], strn[3], strn[4]);
+//                int ns = sscanf(line.toLocal8Bit(), "%s %s %s %s %s", strn[0], strn[1], strn[2], strn[3], strn[4]);
+                //20260928_vn :
+                int ns = sscanf(line.toLocal8Bit(), "%99s %99s %99s %99s %99s",
+                                strn[0], strn[1], strn[2], strn[3], strn[4]);
                 for (int i=0; i<ns; i++)
                 {
                     // Frequency unit
