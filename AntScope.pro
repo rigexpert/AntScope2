@@ -83,9 +83,6 @@ SOURCES += main.cpp\
     modelesspopup.cpp \
     printmulti.cpp \
     qcustomplot.cpp \
-    #analyzer/analyzer.cpp \
-    analyzer/hidanalyzer.cpp \
-    analyzer/comanalyzer.cpp \
     analyzer/ble_analyzer.cpp \
     presets.cpp \
     measurements.cpp \
@@ -115,10 +112,8 @@ SOURCES += main.cpp\
     analyzer/updater/firmwareupdater.cpp \
     analyzer/updater/hidfirmwareupdater.cpp \
     ProgressDlg.cpp \
-    #iprof.cpp \
     onefqwidget.cpp \
     Notification.cpp \
-    #licensesdialog.cpp \
     glwidget.cpp \
     CustomPlot.cpp \
     customgraph.cpp \
@@ -142,9 +137,6 @@ HEADERS  += mainwindow.h \
     modelesspopup.h \
     printmulti.h \
     qcustomplot.h \
-    #analyzer/analyzer.h \
-    analyzer/hidanalyzer.h \
-    analyzer/comanalyzer.h \
     analyzer/analyzerparameters.h \
     analyzer/usbhid/hidapi/hidapi.h \
     analyzer/ble_analyzer.h \
@@ -178,11 +170,9 @@ HEADERS  += mainwindow.h \
     analyzer/updater/firmwareupdater.h \
     analyzer/updater/hidfirmwareupdater.h \
     ProgressDlg.h \
-    #iprof.h \
     htime.h \
     onefqwidget.h \
     Notification.h \
-    #licensesdialog.h \
     glwidget.h \
     CustomPlot.h \
     customgraph.h \
@@ -227,13 +217,8 @@ INCLUDEPATH +=  $$PWD/analyzer \
             $$PWD/analyzer/updater
 
 contains(DEFINES, NEW_CONNECTION) {
-SOURCES -= analyzer/hidanalyzer.cpp
-HEADERS -= analyzer/hidanalyzer.h
 SOURCES += analyzer/hid_analyzer.cpp
 HEADERS += analyzer/hid_analyzer.h
-
-SOURCES -= analyzer/comanalyzer.cpp
-HEADERS -= analyzer/comanalyzer.h
 SOURCES += analyzer/com_analyzer.cpp
 HEADERS += analyzer/com_analyzer.h
 }

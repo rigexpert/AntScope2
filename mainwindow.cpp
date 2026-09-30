@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "popupindicator.h"
 #include "analyzer/customanalyzer.h"
+#include "analyzer/nanovna_analyzer.h"
 #include "Notification.h"
 #include "glwidget.h"
 #include "CustomPlot.h"

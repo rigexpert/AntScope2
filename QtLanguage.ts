@@ -2029,33 +2029,4 @@ You should restart %1 and update firmware.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
-<context>
-    <name>hidAnalyzer</name>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="1068"/>
-        <source>Finish</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="1068"/>
-        <source>Successfully updated!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="990"/>
-        <location filename="analyzer/hidanalyzer.cpp" line="1071"/>
-        <source>Warning</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="990"/>
-        <source>Can&apos;t enter to boot mode!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="1071"/>
-        <source>Update failed!</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
 </TS>

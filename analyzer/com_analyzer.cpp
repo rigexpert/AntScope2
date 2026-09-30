@@ -1,7 +1,6 @@
 #include "com_analyzer.h"
 #include "customanalyzer.h"
 #include <qserialport.h>
-#include "analyzer.h"
 #include "AA55BTPacket.h"
 
 extern bool g_bAA55modeNewProtocol;

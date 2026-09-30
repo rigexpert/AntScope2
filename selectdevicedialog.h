@@ -3,7 +3,6 @@
 
 #include <QDialog>
 #include "devinfo/redeviceinfo.h"
-#include "analyzer.h"
 #include "analyzerparameters.h"
 #include "baseanalyzer.h"
 

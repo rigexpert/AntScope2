@@ -2113,33 +2113,4 @@ You should restart %1 and update firmware.</source>
         <translation>Стоп</translation>
     </message>
 </context>
-<context>
-    <name>hidAnalyzer</name>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="1068"/>
-        <source>Finish</source>
-        <translation>Фініш</translation>
-    </message>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="1068"/>
-        <source>Successfully updated!</source>
-        <translation>Успішно оновлено!</translation>
-    </message>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="990"/>
-        <location filename="analyzer/hidanalyzer.cpp" line="1071"/>
-        <source>Warning</source>
-        <translation>Увага</translation>
-    </message>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="990"/>
-        <source>Can&apos;t enter to boot mode!</source>
-        <translation>Не вдається перейти до режиму завантаження!</translation>
-    </message>
-    <message>
-        <location filename="analyzer/hidanalyzer.cpp" line="1071"/>
-        <source>Update failed!</source>
-        <translation>Оновлення не вдалося!</translation>
-    </message>
-</context>
 </TS>
