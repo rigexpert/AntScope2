@@ -1,6 +1,7 @@
                                                                                                                                     #include "mainwindow.h"
 #include <QApplication>
 #include <QMessageBox>
+#include <QSslSocket>     //20260929_vn
 #include <QAbstractNativeEventFilter>
 #include "analyzer/customanalyzer.h"
 #include "style.h"
@@ -136,6 +137,19 @@ int main(int argc, char *argv[])
 #endif
 
     QStringList args = a.arguments();
+
+#ifdef ANTSCOPE_FORCE_OPENSSL
+    //20260929_vn : вибір TLS-бекенда має відбутись ДО першого QSslSocket
+    // чи QNetworkAccessManager, інакше Qt зафіксує бекенд за замовчуванням.
+    if (QSslSocket::availableBackends().contains(QStringLiteral("openssl"))) {
+        if (!QSslSocket::setActiveBackend(QStringLiteral("openssl")))
+            qCritical() << "*** Failed to activate the OpenSSL TLS backend";
+    } else {
+        qCritical() << "*** OpenSSL TLS backend is not available, falling back to"
+                    << QSslSocket::activeBackend()
+                    << "| available:" << QSslSocket::availableBackends();
+    }
+#endif
 
 #ifdef LOG_TO_FILE
     qInstallMessageHandler(customMessageOutput);

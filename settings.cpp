@@ -1107,7 +1107,7 @@ void Settings::on_updateGraphsBtn_clicked()
 
 QString Settings::setIniFile()
 {
-    return localDataPath("antscope2.ini");
+    return localDataPath("AntScope2.ini");
 }
 
 QString Settings::localDataPath(QString _fileName)

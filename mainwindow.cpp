@@ -64,13 +64,21 @@ MainWindow::MainWindow(QWidget *parent) :
     qInfo() << "* 3 sslLibraryVersion: " << QSslSocket::sslLibraryVersionString();
     qInfo() << "* 4 Qt version: " << qVersion();
 
-    //20260928_vn : контроль версії криптобібліотеки. qCritical переживає
+    //20260929_vn : фіксація TLS-провайдера (замінює перевірку 20260928_vn). qCritical переживає
     // QT_NO_INFO_OUTPUT, тож у релізній збірці це єдиний спосіб побачити,
-    // що поруч із .exe опинилась не та OpenSSL.
+    // який бекенд реально працює. На Windows це Schannel (криптопровайдер ОС);
+    // бекенд OpenSSL у постачанні відсутній, тому перевіряємо версію
+    // бібліотеки лише тоді, коли він справді активний.
     {
+        const QString backend = QSslSocket::activeBackend();
         const QString sslRuntime = QSslSocket::sslLibraryVersionString();
-        if (!sslRuntime.startsWith(QLatin1String("OpenSSL 3"))) {
-            qCritical() << "*** Unexpected OpenSSL runtime:" << sslRuntime
+        qCritical() << "*** TLS backend:" << backend
+                    << "| library:" << sslRuntime
+                    << "| available:" << QSslSocket::availableBackends();
+
+        if (backend == QLatin1String("openssl")
+                && !sslRuntime.startsWith(QLatin1String("OpenSSL 3"))) {
+            qCritical() << "*** Outdated OpenSSL runtime:" << sslRuntime
                         << "build:" << QSslSocket::sslLibraryBuildVersionString();
         }
     }

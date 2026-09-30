@@ -453,16 +453,21 @@ void HidAnalyzer::hidRead (void)
     {
         return;
     }
-    //20260928_vn : readBuff �������������, ��� �������� ��� �� ����� �����
-    unsigned char readBuff[64]  = {0};
-    int read = hid_read(m_hidDevice, readBuff, 64);
-    int lenMax =0;
+    //20260929_vn : readBuff ініціалізовано (коментар 20260928_vn перезбережено в UTF-8), щоб короткий звіт не давав сміття
+    unsigned char readBuff[REPORT_SIZE] = {0};
+    int read = hid_read(m_hidDevice, readBuff, sizeof(readBuff));
+    int lenMax = 0;
     m_mutexRead.lock();
-    if(read > 0)
+    //20260929_vn : мінімальний кадр — [0] тип звіту + [1] довжина
+    if(read > 2)
     {
         if(readBuff[0] == ANTSCOPE_REPORT)
-        {   lenMax=readBuff[1];
-            if(lenMax>62){lenMax=62;} 
+        {   lenMax = readBuff[1];
+            //20260929_vn : довжину задає пристрій, тож обмежуємо її не лише
+            // розміром буфера, а й фактично прочитаним обсягом — інакше в
+            // m_incomingBuffer потрапляють байти, яких пристрій не надсилав.
+            const int maxPayload = qMin(read, static_cast<int>(sizeof(readBuff))) - 2;
+            if(lenMax > maxPayload){lenMax = maxPayload;}
             for(int i = 0; i < lenMax; i++)
             {
                 m_incomingBuffer.append(readBuff[i+2]);

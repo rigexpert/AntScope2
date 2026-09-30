@@ -251,10 +251,16 @@ win32{
     win32:DESTDIR ~= s,/,\\,g
     QMAKE_POST_LINK += $$QMAKE_COPY_DIR $$shell_quote($$FTDI_DLL) $$shell_quote($$DESTDIR) $$escape_expand(\\n\\t)
 
-    #{ 20260928_vn : OpenSSL 3.x
-    # Qt 6 НЕ лінкується з OpenSSL — бекенд TLS (plugins/tls/qopensslbackend.dll)
-    # завантажує libcrypto/libssl динамічно під час першого TLS-з'єднання.
-    # Тому import-бібліотеки не потрібні; потрібні лише DLL поруч із .exe.
+    #{ 20260929_vn : TLS на Windows — блок 20260928_vn перероблено на опційний
+    # Перевірено на розгорнутій збірці: у plugins/tls присутні лише
+    # qschannelbackend.dll і qcertonlybackend.dll, бекенда qopensslbackend.dll
+    # немає. Отже TLS забезпечує Schannel — криптопровайдер Windows,
+    # і жодних криптобібліотек застосунок не постачає.
+    #
+    # Якщо потрібен саме OpenSSL — збирати з CONFIG+=use_openssl. Тоді
+    # постачаються і плагін бекенда, і libcrypto/libssl, а застосунок
+    # примусово активує цей бекенд у main(). Qt не лінкується з OpenSSL —
+    # бібліотеки завантажуються динамічно, тож потрібні лише DLL поруч із .exe.
     # Шлях перевизначається: qmake OPENSSL_DIR=<...> або змінною оточення.
     isEmpty(OPENSSL_DIR): OPENSSL_DIR = $$(OPENSSL_DIR)
     isEmpty(OPENSSL_DIR): OPENSSL_DIR = C:/Qt/Tools/OpenSSLv3/Win_x64/bin
@@ -265,11 +271,32 @@ win32{
         OPENSSL_DLLS = libcrypto-3.dll libssl-3.dll
     }
 
-    for(dll, OPENSSL_DLLS) {
-        OPENSSL_SRC = $$OPENSSL_DIR/$$dll
-        !exists($$OPENSSL_SRC): error("OpenSSL 3 runtime not found: $$OPENSSL_SRC — install the OpenSSL 3.x Toolkit via the Qt Maintenance Tool or pass OPENSSL_DIR=<path to OpenSSL 3 bin>")
-        OPENSSL_SRC ~= s,/,\\,g
-        QMAKE_POST_LINK += $$QMAKE_COPY $$shell_quote($$OPENSSL_SRC) $$shell_quote($$DESTDIR) $$escape_expand(\\n\\t)
+    # 20260929_vn : Варіант A (типовий) — Schannel, нічого постачати не потрібно.
+    # Варіант B: qmake CONFIG+=use_openssl — примусово збирати з OpenSSL.
+    # До 20260929 блок копіювання libcrypto/libssl виконувався безумовно:
+    # бібліотеки потрапляли в постачання, але без qopensslbackend.dll ніколи
+    # не завантажувались, а збірка падала на машині без OpenSSL 3.
+    use_openssl {
+        DEFINES += ANTSCOPE_FORCE_OPENSSL
+
+        # 20260929_vn : 1) плагін бекенда — windeployqt копіює його не завжди,
+        #    тому беремо явно з каталогу плагінів Qt
+        OPENSSL_PLUGIN = $$[QT_INSTALL_PLUGINS]/tls/qopensslbackend.dll
+        !exists($$OPENSSL_PLUGIN): error("qopensslbackend.dll not found in $$[QT_INSTALL_PLUGINS]/tls — this Qt build has no OpenSSL TLS backend; use the Schannel variant or install a Qt build with OpenSSL support")
+        TLS_DIR = $$DESTDIR/tls
+        OPENSSL_PLUGIN ~= s,/,\\,g
+        TLS_DIR ~= s,/,\\,g
+        # 20260929_vn : каталог tls створює windeployqt, але post-link виконується раніше
+        QMAKE_POST_LINK += if not exist $$shell_quote($$TLS_DIR) $$QMAKE_MKDIR $$shell_quote($$TLS_DIR) $$escape_expand(\\n\\t)
+        QMAKE_POST_LINK += $$QMAKE_COPY $$shell_quote($$OPENSSL_PLUGIN) $$shell_quote($$TLS_DIR) $$escape_expand(\\n\\t)
+
+        # 20260929_vn : 2) самі бібліотеки — поруч із .exe
+        for(dll, OPENSSL_DLLS) {
+            OPENSSL_SRC = $$OPENSSL_DIR/$$dll
+            !exists($$OPENSSL_SRC): error("OpenSSL 3 runtime not found: $$OPENSSL_SRC — install the OpenSSL 3.x Toolkit via the Qt Maintenance Tool or pass OPENSSL_DIR=<path to OpenSSL 3 bin>")
+            OPENSSL_SRC ~= s,/,\\,g
+            QMAKE_POST_LINK += $$QMAKE_COPY $$shell_quote($$OPENSSL_SRC) $$shell_quote($$DESTDIR) $$escape_expand(\\n\\t)
+        }
     }
     #}
 
