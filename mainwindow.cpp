@@ -13,6 +13,7 @@
 extern QString appendSpaces(const QString& number);
 extern bool g_developerMode; // see main.cpp
 extern bool g_usbOnly;
+extern bool g_tlsAvailable;  //20260930_vn : see main.cpp
 extern int g_maxMeasurements; // see measurements.cpp
 extern int g_maxDots;// see main.cpp
 extern void setAbsoluteFqMaximum();
@@ -83,14 +84,18 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
 
-    //20260925_vn : без OpenSSL жодного sslErrors не буде — запит впаде раніше,
-    // тому попереджаємо користувача одразу, а не після невдалої реєстрації.
+    //20260930_vn : при старті лише запис у журнал (замінює діалог 20260925_vn).
+    // Той діалог лякав користувача, у якого вимірювання, калібрування та робота
+    // з приладом працюють повністю — недоступна лише необов'язкова реєстрація.
+    // Пояснення тепер показується в момент спроби нею скористатися (settings.cpp).
+    // Два рядки нижче одразу показують суть у журналі підтримки: під яку версію
+    // криптобібліотеки зібрано бекенд і яка фактично є в системі.
     if (!QSslSocket::supportsSsl()) {
-        qCritical() << "*** OpenSSL is not available. Build version:"
-                    << QSslSocket::sslLibraryBuildVersionString();
-        g_showMessageBox(this, QMessageBox::Warning, tr("Network"),
-                         tr("Secure connections are not available on this system.\n"
-                            "Registration, license update and update check will not work."));
+        qCritical() << "*** TLS is not available. Registration, license update"
+                    << "and update check are disabled."
+                    << "| built against:" << QSslSocket::sslLibraryBuildVersionString()
+                    << "| runtime:" << QSslSocket::sslLibraryVersionString()
+                    << "| backends:" << QSslSocket::availableBackends();
     }
 
     setAbsoluteFqMaximum();

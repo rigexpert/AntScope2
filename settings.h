@@ -62,6 +62,9 @@ public:
     static QString localDataFolder();
     static QString languageDataFolder();
     static QString setIniFile();
+    //20260930_vn : одноразовий перенос antscope2.ini -> AntScope2.ini,
+    // викликати з main() до створення MainWindow
+    static void migrateLegacyIniFile();
 
     void setFirmwareAutoUpdate(bool checked);
     void setAntScopeAutoUpdate(bool checked);

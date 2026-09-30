@@ -8,6 +8,7 @@
 #include "inforequestdialog.h"
 #include "style.h"
 #include "filedialog.h"
+#include <QFile>          //20260930_vn : для migrateLegacyIniFile()
 
 extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
                             QString title, QString text,
@@ -16,8 +17,33 @@ extern int g_showMessageBox(QWidget* parent, QMessageBox::Icon icon,
 extern bool g_developerMode;
 extern int g_maxMeasurements; // see measurements.cpp
 extern QString appendSpaces(const QString& number);
+extern bool g_tlsAvailable;   //20260930_vn : see main.cpp
 int Settings::m_serialIndex = 0;
 bool Settings::m_licenseUpdateBlocked = false;
+
+//20260930_vn : єдине місце з поясненням, чому мережеві функції недоступні.
+// Повертає true, якщо виклик треба перервати. Іконка Information, а не Warning:
+// це не помилка, а недоступна необов'язкова функція — усе інше працює.
+static bool tlsUnavailableNotice(QWidget *parent)
+{
+    if (g_tlsAvailable)
+        return false;
+
+    QString text = QObject::tr(
+        "Registration and license update require a secure connection, "
+        "which is not available on this system.\n\n"
+        "All measurement, calibration, file and device functions "
+        "work normally and are not affected.");
+#ifdef Q_OS_LINUX
+    text += QObject::tr(
+        "\n\nThe Linux build of this version requires an older system "
+        "cryptographic library than the one installed. Support for current "
+        "distributions will be added in a future release.");
+#endif
+    g_showMessageBox(parent, QMessageBox::Information,
+                     QObject::tr("Registration unavailable"), text);
+    return true;
+}
 
 void showPortInfo(const QSerialPortInfo& info)
 {
@@ -256,7 +282,16 @@ Settings::Settings(QWidget *parent) :
     if (!email.isEmpty()) {
         ui->pushButtonAntscope->setText(tr("Change application registration"));
     }
+    //20260930_vn : кнопку не вимикаємо — вимкнена не дає кліку, а отже й пояснення
+    if (!g_tlsAvailable) {
+        ui->pushButtonAntscope->setToolTip(
+            tr("Requires a secure connection, not available on this system"));
+    }
     connect(ui->pushButtonAntscope, &QPushButton::clicked, this, [email,user, this]() {
+        //20260930_vn : перевірка ПЕРЕД питанням про реєстрацію, інакше користувач
+        // відповість «так» і лише потім дізнається, що це неможливо
+        if (tlsUnavailableNotice(this))
+            return;
         m_settings->beginGroup("Mainwindow");
         QString _mail = m_settings->value("eMail", "").toString();
         QString _user = m_settings->value("userName", "").toString();
@@ -294,6 +329,8 @@ Settings::Settings(QWidget *parent) :
             ui->pushButtonUpdate->setEnabled(false);
         });
         connect(ui->pushButtonDevice, &QPushButton::clicked, this, [=]() {
+            if (tlsUnavailableNotice(this))   //20260930_vn
+                return;
             QString serial_number = MainWindow::m_mainWindow->analyzer()->getSerialNumber();
             QString device_name = MainWindow::m_mainWindow->analyzer()->getModelString();
             QString license = MainWindow::m_mainWindow->analyzer()->getLicense();
@@ -304,9 +341,13 @@ Settings::Settings(QWidget *parent) :
             m_licenseAgent.registerDevice(device_name, serial_number, dlg.license());
         });
         connect(ui->pushButtonUpdate, &QPushButton::clicked, this, [=]() {
+            if (tlsUnavailableNotice(this))   //20260930_vn
+                return;
             m_licenseAgent.updateLicense();
         });
         connect(ui->pushButtonUserData, &QPushButton::clicked, this, [=]() {
+            if (tlsUnavailableNotice(this))   //20260930_vn
+                return;
             m_licenseAgent.updateUserData();
         });
         ui->pushButtonUpdate->setEnabled(!m_licenseUpdateBlocked);
@@ -1110,6 +1151,32 @@ QString Settings::setIniFile()
     return localDataPath("AntScope2.ini");
 }
 
+//20260930_vn : до 221a00f файл налаштувань називався antscope2.ini, а
+// calibration.cpp читав AntScope2.ini. Розбіжність усунули на користь
+// AntScope2.ini — але на чутливих до регістру файлових системах (Linux, macOS)
+// це два різні файли, тож без переносу оновлення мовчки втрачає налаштування,
+// посилання на калібрування та реєстраційні дані (група Mainwindow: userName,
+// eMail). На Windows регістр не має значення: QFile::exists(newPath) знайде
+// той самий файл, умова не спрацює, перейменування не відбудеться.
+void Settings::migrateLegacyIniFile()
+{
+    const QString newPath = localDataPath("AntScope2.ini");
+    const QString oldPath = localDataPath("antscope2.ini");
+
+    if (oldPath == newPath)
+        return;                       // шлях не залежить від регістру
+    if (QFile::exists(newPath))
+        return;                       // уже є актуальний файл — нічого не чіпаємо
+    if (!QFile::exists(oldPath))
+        return;                       // нема що переносити
+
+    if (QFile::rename(oldPath, newPath))
+        qInfo() << "Migrated settings file:" << oldPath << "->" << newPath;
+    else
+        qWarning() << "Failed to migrate settings file from" << oldPath
+                   << "to" << newPath << "- settings will be recreated";
+}
+
 QString Settings::localDataPath(QString _fileName)
 {
 // Mac OS X and iOS
@@ -1613,6 +1680,9 @@ bool Settings::getRestrictFq()
 
 void Settings::on_registerApplication(QString user, QString mail)
 {
+    //20260930_vn : другий рубіж — слот викликається і напряму, не лише з кнопки
+    if (tlsUnavailableNotice(this))
+        return;
     AppRegistrationDialog dlg(user, mail, m_licenseAgent, this);
     if (dlg.exec() == QDialogButtonBox::Cancel)
         return;
