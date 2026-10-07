@@ -5,7 +5,7 @@
 #include <QDebug>
 #include <mainwindow.h>
 
-PopUp::PopUp(QWidget *parent) : QWidget(parent),
+PopUp::PopUp(QWidget *parent, bool embedded) : QWidget(parent),
     m_bgColor(0,0,0,180),
     m_penColor(255,155,255,180),
     m_textColor("white"),
@@ -19,12 +19,13 @@ PopUp::PopUp(QWidget *parent) : QWidget(parent),
     m_mainX(177),
     m_mainY(131),
     m_mainBiasX(0),
-    m_mainBiasY(0)
+    m_mainBiasY(0),
+    m_embedded(embedded)
 {
     init();
 }
 
-PopUp::PopUp(QString buttonName, QWidget *parent) : QWidget(parent),
+PopUp::PopUp(QString buttonName, QWidget *parent, bool embedded) : QWidget(parent),
     m_bgColor(0,0,0,180),
     m_penColor(255,155,255,180),
     m_textColor("white"),
@@ -40,25 +41,35 @@ PopUp::PopUp(QString buttonName, QWidget *parent) : QWidget(parent),
     m_mainBiasX(0),
     m_mainBiasY(0),
     m_buttonName(buttonName),
-    m_showButton(true)
+    m_showButton(true),
+    m_embedded(embedded)
 {
     init();
 }
 
 void PopUp::init()
 {
-    setWindowFlags(Qt::FramelessWindowHint |
-                   Qt::Tool |
-                   Qt::WindowStaysOnTopHint);
+    if (m_embedded) {
+        // A plain child widget of its parent, not a separate top-level
+        // window: there is no window for a window manager/compositor to
+        // ever see, so this cannot perturb the parent's activation state
+        // (see focusShow()/focusHide()) and it cannot show up in any
+        // window/task list either.
+    } else {
+        setWindowFlags(Qt::FramelessWindowHint |
+                       Qt::Tool |
+                       Qt::WindowStaysOnTopHint |
+                       Qt::WindowDoesNotAcceptFocus);
+        setAttribute(Qt::WA_ShowWithoutActivating);
+    }
     setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_ShowWithoutActivating);
 
     animation.setTargetObject(this);
     animation.setPropertyName("popupOpacity");
     connect(&animation, &QAbstractAnimation::finished, this, &PopUp::hide);
 
     label.setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    label.setStyleSheet("QLabel { color : " + m_textColor +
+    label.setStyleSheet("QLabel { color : " + m_textColor + ";"
                         "margin-top: 6px;"
                         "margin-bottom: 6px;"
                         "margin-left: 10px;"
@@ -119,7 +130,23 @@ void PopUp::setName(QString name)
 
     m_settings->endGroup();
 
-    setGeometry(m_x,m_y,width(),height());
+    applyGeometry();
+}
+
+void PopUp::applyGeometry()
+{
+    // m_x/m_y are tracked as global screen coordinates throughout this
+    // class (MainWindowPos(), mouseMoveEvent() and every caller of
+    // setPosition() all compute them that way, matching the original
+    // Qt::Tool top-level design). When embedded as a child widget,
+    // translate to parent-relative coordinates right here instead of
+    // touching that positioning math anywhere else.
+    if (m_embedded && parentWidget()) {
+        QPoint local = parentWidget()->mapFromGlobal(QPoint(m_x, m_y));
+        setGeometry(local.x(), local.y(), width(), height());
+    } else {
+        setGeometry(m_x, m_y, width(), height());
+    }
 }
 
 PopUp::~PopUp()
@@ -185,12 +212,33 @@ void PopUp::show()
 
 void PopUp::focusShow()
 {
-    QWidget::show();
+    applyGeometry();
+    if (!isVisible()) {
+        QWidget::show();
+    }
+    if (m_embedded) {
+        raise();
+    }
 }
 
 void PopUp::focusHide()
 {
-    QWidget::hide();
+    if (m_embedded) {
+        // A plain child widget: hiding it does not touch any top-level
+        // window, so there is no compositor feedback-loop risk here -
+        // see the Qt::Tool branch below for what that risk was.
+        QWidget::hide();
+        return;
+    }
+    // Park off-screen instead of QWidget::hide(): unmapping this
+    // Qt::Tool top-level surface causes some Wayland compositors
+    // (observed on COSMIC/cosmic-comp) to send a spurious
+    // WindowActivate/WindowDeactivate event to the parent window. Since
+    // that event drives this same show/hide logic (via MainWindow::event
+    // -> focus() -> showHideHints()), unmapping creates a self-sustaining
+    // feedback loop ("flickering popups"). Moving off-screen is visually
+    // equivalent while keeping the surface continuously mapped.
+    move(-32000, -32000);
 }
 
 void PopUp::hideAnimation()

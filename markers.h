@@ -103,7 +103,7 @@ private:
 
     Measurements *m_measurements;
 
-    bool m_focus;
+    bool m_focus = true;
 
     double interpolate(double fq1, double fq2, double fq3, double param1, double param2);
 

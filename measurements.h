@@ -216,7 +216,7 @@ private:
     qint32 m_farEndMeasurement;
     QCPItemEllipse * m_smithTracer;
 
-    bool m_focus;
+    bool m_focus = true;
 
     bool m_oneFqMode = false;
     qint64 m_oneFqStartTime;

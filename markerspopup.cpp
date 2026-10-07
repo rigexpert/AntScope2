@@ -5,7 +5,7 @@
 
 QMap<int, QString> MarkersHeaderColumn::m_mapHeader;
 
-MarkersPopUp::MarkersPopUp(QWidget *parent) : QWidget(parent),
+MarkersPopUp::MarkersPopUp(QWidget *parent, bool embedded) : QWidget(parent),
       m_durability(2000),
       m_hiding(true),
       m_x(0),
@@ -16,15 +16,23 @@ MarkersPopUp::MarkersPopUp(QWidget *parent) : QWidget(parent),
       m_mainY(0),
       m_mainBiasX(0),
       m_mainBiasY(0),
+      m_embedded(embedded),
       m_bgColor(0,0,0,180),
       m_penColor(255,255,255,180),
       m_textColor("white")
 {
-      setWindowFlags(Qt::FramelessWindowHint |        // Отключаем оформление окна
-                     Qt::Tool |                       // Отменяем показ в качестве отдельного окна
-                     Qt::WindowStaysOnTopHint);       // Устанавливаем поверх всех окон
+      if (m_embedded) {
+          // A plain child widget of its parent, not a separate top-level
+          // window - see PopUp::init() in popup.cpp for the full
+          // rationale (same fix, same class of bug).
+      } else {
+          setWindowFlags(Qt::FramelessWindowHint |        // Отключаем оформление окна
+                         Qt::Tool |                       // Отменяем показ в качестве отдельного окна
+                         Qt::WindowStaysOnTopHint |       // Устанавливаем поверх всех окон
+                         Qt::WindowDoesNotAcceptFocus);   // Никогда не становится активным окном
+          setAttribute(Qt::WA_ShowWithoutActivating);     // При показе, виджет не получается фокуса автоматически
+      }
       setAttribute(Qt::WA_TranslucentBackground);     // Указываем, что фон будет прозрачным
-      setAttribute(Qt::WA_ShowWithoutActivating);     // При показе, виджет не получается фокуса автоматически
 
       animation.setTargetObject(this);                // Устанавливаем целевой объект анимации
       animation.setPropertyName("popupOpacity");      // Устанавливаем анимируемое свойство
@@ -69,7 +77,20 @@ void MarkersPopUp::setName(QString name)
 
     m_settings->endGroup();
 
-    setGeometry(m_x,m_y,width(),height());
+    applyGeometry();
+}
+
+void MarkersPopUp::applyGeometry()
+{
+    // m_x/m_y are tracked as global screen coordinates throughout this
+    // class (mirrors PopUp::applyGeometry() in popup.cpp - see there for
+    // the full rationale).
+    if (m_embedded && parentWidget()) {
+        QPoint local = parentWidget()->mapFromGlobal(QPoint(m_x, m_y));
+        setGeometry(local.x(), local.y(), width(), height());
+    } else {
+        setGeometry(m_x, m_y, width(), height());
+    }
 }
 
 MarkersPopUp::~MarkersPopUp()
@@ -177,18 +198,31 @@ void MarkersPopUp::show()
 
 void MarkersPopUp::focusShow()
 {
-    //qDebug() << "MarkersPopUp::focusShow()" << m_menuVisible;
-    QWidget::show();
+    applyGeometry();
+    if (!isVisible()) {
+        QWidget::show();
+    }
+    if (m_embedded) {
+        raise();
+    }
 }
 
 void MarkersPopUp::focusHide()
 {
-    //qDebug() << "MarkersPopUp::focusHide()" << m_menuVisible;
     if (m_menuVisible) {
         setVisible(true);
         return;
     }
-    QWidget::hide();
+    if (m_embedded) {
+        // A plain child widget: hiding it does not touch any top-level
+        // window, so there is no compositor feedback-loop risk here.
+        QWidget::hide();
+        return;
+    }
+    // Park off-screen instead of QWidget::hide(): see PopUp::focusHide()
+    // for why unmapping this Qt::Tool surface causes a feedback loop on
+    // some Wayland compositors.
+    move(-32000, -32000);
 }
 
 void MarkersPopUp::hideAnimation()
@@ -230,10 +264,7 @@ void MarkersPopUp::mouseMoveEvent(QMouseEvent * )
 {
     m_x = QCursor::pos().x() - m_biasX;
     m_y = QCursor::pos().y() - m_biasY;
-    setGeometry(m_x,
-                m_y,
-                width(),
-                height());
+    applyGeometry();
     m_mainBiasX = m_x - m_mainX;
     m_mainBiasY = m_y - m_mainY;
 }
@@ -245,20 +276,14 @@ void MarkersPopUp::MainWindowPos(int x, int y)
 
     m_x = x + m_mainBiasX;
     m_y = y + m_mainBiasY;
-    setGeometry(m_x,
-                m_y,
-                width(),
-                height());
+    applyGeometry();
 }
 
 void MarkersPopUp::setPosition(int x, int y)
 {
     m_x = x;
     m_y = y;
-    setGeometry(m_x,
-                m_y,
-                width(),
-                height());
+    applyGeometry();
 }
 
 void MarkersPopUp::setTextColor(QString color)
