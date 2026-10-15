@@ -836,9 +836,15 @@ void AnalyzerPro::on_disconnectDevice()
 
 void AnalyzerPro::slotFullInfo(const QString& _info)
 {
+    if (m_baseAnalyzer == nullptr)
+        return;
+    AnalyzerParameters* par = AnalyzerParameters::byName(getModelString());
+    if (par == nullptr)
+        return;
+    if ( ! par->name().contains("Match", Qt::CaseSensitive))
+        return;
     int index = _info.indexOf("LIC");
     if (index != -1) {
-        AnalyzerParameters* par = AnalyzerParameters::byName(getModelString());
         QString _name = _info.mid(index, 4);
         qInfo() << "AnalyzerPro::slotFullInfo" << _name;
         if (_name == "LIC1") {

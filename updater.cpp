@@ -18,30 +18,30 @@ void Updater::on_checkUpdates()
 {
      return;//20260925_vn
 
-    if(m_downloader == NULL)
-    {
-        m_downloader = new Downloader();
-        connect(m_downloader, SIGNAL(downloadInfoComplete()),
-                this, SLOT(on_downloadInfoComplete()));
-        connect(m_downloader, SIGNAL(downloadFileComplete()),
-                this, SLOT(on_downloadFileComplete()));
-        connect(m_downloader, SIGNAL(progress(qint64,qint64)),
-                this, SLOT(on_progress(qint64,qint64)));
-    }
+    // if(m_downloader == NULL)
+    // {
+    //     m_downloader = new Downloader();
+    //     connect(m_downloader, SIGNAL(downloadInfoComplete()),
+    //             this, SLOT(on_downloadInfoComplete()));
+    //     connect(m_downloader, SIGNAL(downloadFileComplete()),
+    //             this, SLOT(on_downloadFileComplete()));
+    //     connect(m_downloader, SIGNAL(progress(qint64,qint64)),
+    //             this, SLOT(on_progress(qint64,qint64)));
+    // }
 
-    QString os;
-#ifdef Q_OS_WIN
-    os = "&os=win";
-#endif
-#ifdef Q_OS_MAC
-    os = "&os=mac";
-#endif
-#ifdef Q_OS_LINUX
-    os = "&os=linux";
-#endif
+//     QString os;
+// #ifdef Q_OS_WIN
+//     os = "&os=win";
+// #endif
+// #ifdef Q_OS_MAC
+//     os = "&os=mac";
+// #endif
+// #ifdef Q_OS_LINUX
+//     os = "&os=linux";
+// #endif
 
-  //  QString url = "https://rigexpert.com/getsoftware?model=antscope2&revision=1" + os;
-  //   m_downloader->startDownloadInfo(QUrl(url));
+//    QString url = "https://rigexpert.com/getsoftware?model=antscope2&revision=1" + os;
+//    m_downloader->startDownloadInfo(QUrl(url));
 }
 
 void Updater::on_downloadInfoComplete()
