@@ -11,7 +11,7 @@
 #include <QDataStream>
 #include <QTimer>
 #include "baseanalyzer.h"
-#include "screeninfo.h"
+//#include "screeninfo.h"
 
 enum {
     BLE_VER_CMD = (quint8)0xE6,
