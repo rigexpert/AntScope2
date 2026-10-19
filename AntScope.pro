@@ -18,7 +18,7 @@ QT       += bluetooth
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += ANTSCOPE2VER='\\"2.0.5\\"'
+DEFINES += ANTSCOPE2VER='\\"2.0.6\\"'
 DEFINES += OLD_TDR
 
 #{ debug
