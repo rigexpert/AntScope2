@@ -406,6 +406,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_measurements, &Measurements::oneFqCanceled, this, &MainWindow::on_pressEsc);
     connect(m_measurements, &Measurements::selectMeasurement, this, &MainWindow::on_tableWidget_measurments_cellClicked);
 
+
     QString name = "AntScope2 v." + QString(ANTSCOPE2VER);
     name += tr(" - Analyzer not connected");
     setWindowTitle(name);

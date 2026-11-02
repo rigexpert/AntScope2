@@ -20,8 +20,10 @@
 	<string>AntScope2</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundleVersion</key>
+        <string>@FULL_VERSION@</string>
 	<key>CFBundleShortVersionString</key>
-        <string>1.4.11</string>
+        <string>@SHORT_VERSION@</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>LSApplicationCategoryType</key>
