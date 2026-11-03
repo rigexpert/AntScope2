@@ -1683,6 +1683,12 @@ void Settings::on_registerApplication(QString user, QString mail)
     //20260930_vn : другий рубіж — слот викликається і напряму, не лише з кнопки
     if (tlsUnavailableNotice(this))
         return;
+    if (g_showMessageBox(this, QMessageBox::Question,
+                         tr("Privacy"),
+                         tr("Do you consent to the processing of your personal data?"),
+                         QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        return;
+    }
     AppRegistrationDialog dlg(user, mail, m_licenseAgent, this);
     if (dlg.exec() == QDialogButtonBox::Cancel)
         return;

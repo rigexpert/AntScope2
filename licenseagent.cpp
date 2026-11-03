@@ -892,10 +892,19 @@ void LicenseAgent::finishWaitInfoB16()
         QString reboot = "REBOOT\r";
         MainWindow::m_mainWindow->analyzer()->sendCommand(reboot);
         MainWindow::m_mainWindow->analyzer()->on_disconnectDevice();
-        showModeless(tr("License renewal"), tr("The license update was successful\n\nYou should reconnect analyzer."), tr("Ok"));
+        //showModeless(tr("License renewal"), tr("The license update was successful\n\nYou should reconnect analyzer."), tr("Ok"));
+        QString msg =  "The license update was successful<br><br>"
+                      "<span style='color:red; font-weight:bold; font-size:12pt'>"
+                      "You should reconnect analyzer."
+                      "</span>";
+        showModeless(tr("License renewal"), msg, tr("Ok"));
         emit registered();
     } else {
-        showModeless(tr("License renewal"), tr("The license is not updated"), tr("Close"));
+        //showModeless(tr("License renewal"), tr("The license is not updated"), tr("Close"));
+        QString msg = "<span style='color:red; font-weight:bold; font-size:12pt'>"
+                      "The license is not updated"
+                      "</span>";
+        showModeless(tr("License renewal"), msg, tr("Close"));
         emit canceled();
     }
 }
