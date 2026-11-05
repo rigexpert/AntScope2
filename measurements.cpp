@@ -277,7 +277,7 @@ void Measurements::deleteRow(int row)
         m_tdrWidget->removeGraph(1+row*3);
         m_tdrWidget->removeGraph(1+row*3);
         m_tdrWidget->removeGraph(1+row*3);
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             int index = getBaseUserGraphIndex(row);
             int cnt = mm.userGraphs.size();
             for (int i=0; i<cnt; i++)
@@ -5083,7 +5083,7 @@ void Measurements::on_impedanceChanged(double _z0)
         }
 
         // restore user data
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             int count = mm.userGraphs.size();
             for (int i=0; i<count; i++)
                 m_userWidget->removeGraph(1);

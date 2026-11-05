@@ -271,7 +271,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_s21Widget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_s21(QWheelEvent*)));
 
     connect(m_smithWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_smith(QMouseEvent*)));
-    if (g_developerMode) {
+    if (g_developerMode && m_userWidget != nullptr) {
         connect(m_userWidget,SIGNAL(mouseWheel(QWheelEvent*)),this, SLOT(on_mouseWheel_user(QWheelEvent*)));
         connect(m_userWidget,SIGNAL(mouseMove(QMouseEvent*)),this, SLOT(on_mouseMove_user(QMouseEvent*)));
     }
@@ -383,7 +383,7 @@ MainWindow::MainWindow(QWidget *parent) :
                                m_s21Widget,
                                m_smithWidget,
                                ui->tableWidget_measurments);
-    if (g_developerMode)
+    if (g_developerMode && m_userWidget != nullptr)
         m_measurements->setUserWidget(m_userWidget);
 
     connect(m_analyzer, &AnalyzerPro::newData, m_measurements, &Measurements::on_newDataRedraw);
@@ -493,7 +493,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_rsWidget->xAxis->setRange(range);
     m_rpWidget->xAxis->setRange(range);
     m_rlWidget->xAxis->setRange(range);
-    if (g_developerMode) {
+    if (g_developerMode && m_userWidget != nullptr) {
         m_userWidget->xAxis->setRange(range);
     }
     m_isRange = m_settings->value("isRange", false).toBool();
@@ -1010,7 +1010,7 @@ void MainWindow::setWidgetsSettings()
     m_smithWidget->replot();
 
     //---------User defined
-    if (g_developerMode) {
+    if (g_developerMode && m_userWidget != nullptr) {
         m_userWidget->setAutoAddPlottableToLegend(false);
         qobject_cast<CustomPlot*>(m_userWidget)->addGraph();//graph(0)
         setBands(m_userWidget, bands, MIN_USER_RANGE, MAX_USER_RANGE);
@@ -1283,7 +1283,7 @@ void MainWindow::on_pressPlus ()
         m_rpWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         m_s21Widget->xAxis->setRange(m_phaseWidget->xAxis->range());
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             m_userWidget->xAxis->setRange(m_phaseWidget->xAxis->range());
         }
         m_phaseWidget->replot();
@@ -1328,7 +1328,7 @@ void MainWindow::on_pressPlus ()
         m_rpWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         m_s21Widget->xAxis->setRange(m_rsWidget->xAxis->range());
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             m_userWidget->xAxis->setRange(m_rsWidget->xAxis->range());
         }
         m_rsWidget->replot();
@@ -1373,7 +1373,7 @@ void MainWindow::on_pressPlus ()
         m_rsWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         m_s21Widget->xAxis->setRange(m_rpWidget->xAxis->range());
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             m_userWidget->xAxis->setRange(m_rpWidget->xAxis->range());
         }
         m_rpWidget->replot();
@@ -1418,7 +1418,7 @@ void MainWindow::on_pressPlus ()
         m_rsWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_userWidget->xAxis->range());
         m_s21Widget->xAxis->setRange(m_userWidget->xAxis->range());
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             m_userWidget->xAxis->setRange(m_rlWidget->xAxis->range());
         }
         m_rlWidget->replot();
@@ -1480,7 +1480,7 @@ void MainWindow::on_pressPlus ()
         m_rsWidget->xAxis->setRange(m_s21Widget->xAxis->range());
         m_rpWidget->xAxis->setRange(m_s21Widget->xAxis->range());
         m_rlWidget->xAxis->setRange(m_s21Widget->xAxis->range());
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             m_userWidget->xAxis->setRange(m_s21Widget->xAxis->range());
         }
         m_s21Widget->replot();
@@ -3755,9 +3755,11 @@ void MainWindow::on_mouseWheel_user(QWheelEvent * e)
             {
                 ++state;
                 val = state*80;
-                m_userWidget->yAxis->setRangeLower(-val);
-                m_userWidget->yAxis->setRangeUpper(val);
-                m_userWidget->replot();
+                if (m_userWidget != nullptr) {
+                    m_userWidget->yAxis->setRangeLower(-val);
+                    m_userWidget->yAxis->setRangeUpper(val);
+                    m_userWidget->replot();
+                }
                 if(m_markers)
                 {
                     QTimer::singleShot(5, m_markers, SLOT(redraw()));
@@ -3773,9 +3775,11 @@ void MainWindow::on_mouseWheel_user(QWheelEvent * e)
             {
                 --state;
                 val = state*80;
-                m_userWidget->yAxis->setRangeLower(-val);
-                m_userWidget->yAxis->setRangeUpper(val);
-                m_userWidget->replot();
+                if (m_userWidget != nullptr) {
+                    m_userWidget->yAxis->setRangeLower(-val);
+                    m_userWidget->yAxis->setRangeUpper(val);
+                    m_userWidget->replot();
+                }
                 if(m_markers)
                 {
                     QTimer::singleShot(5, m_markers, SLOT(redraw()));
@@ -4021,29 +4025,6 @@ void MainWindow::createTabs (QString sequence)
             m_smithWidget->yAxis->setVisible(false);
             m_mapWidgets.insert(QStringLiteral("smith_widget"), m_smithWidget);
         }
-        if (tab == "tab_user") {
-            //createUserTab();
-            m_tab_user = new GLWidget();
-            m_tab_user->setObjectName(QStringLiteral("tab_user"));
-
-            QHBoxLayout* layout = new QHBoxLayout(m_tab_user);
-            layout->setSpacing(6);
-            layout->setContentsMargins(11, 11, 11, 11);
-            layout->setObjectName(QStringLiteral("horizontalLayout_8"));
-            m_userWidget = new CustomPlot(1, m_tab_user);
-            qobject_cast<GLWidget*>(m_tab_user)->setPlotter(m_userWidget);
-            m_userWidget->setObjectName(QStringLiteral("user_widget"));
-
-            sizePolicy.setHorizontalStretch(0);
-            sizePolicy.setVerticalStretch(2);
-            sizePolicy.setHeightForWidth(m_userWidget->sizePolicy().hasHeightForWidth());
-            m_userWidget->setSizePolicy(sizePolicy);
-            layout->addWidget(m_userWidget);
-
-            ui->tabWidget->addTab(m_tab_user, QString());
-            ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_user), QApplication::translate("MainWindow", "User defined", 0));
-            m_mapWidgets.insert(QStringLiteral("user_widget"), m_userWidget);
-        }
 #ifndef NO_MULTITAB
         if (tab == "tab_multi") {
             m_tab_multi = new GLWidget();
@@ -4060,6 +4041,29 @@ void MainWindow::createTabs (QString sequence)
             //ui->tabWidget->widget(ui->tabWidget->indexOf(m_tab_multi))->setVisible(false);
         }
 #endif
+    }
+    if (g_developerMode)  {
+            //createUserTab();
+        m_tab_user = new GLWidget();
+        m_tab_user->setObjectName(QStringLiteral("tab_user"));
+
+        QHBoxLayout* layout = new QHBoxLayout(m_tab_user);
+        layout->setSpacing(6);
+        layout->setContentsMargins(11, 11, 11, 11);
+        layout->setObjectName(QStringLiteral("horizontalLayout_8"));
+        m_userWidget = new CustomPlot(1, m_tab_user);
+        qobject_cast<GLWidget*>(m_tab_user)->setPlotter(m_userWidget);
+        m_userWidget->setObjectName(QStringLiteral("user_widget"));
+
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(2);
+        sizePolicy.setHeightForWidth(m_userWidget->sizePolicy().hasHeightForWidth());
+        m_userWidget->setSizePolicy(sizePolicy);
+        layout->addWidget(m_userWidget);
+
+        ui->tabWidget->addTab(m_tab_user, QString());
+        ui->tabWidget->setTabText(ui->tabWidget->indexOf(m_tab_user), QApplication::translate("MainWindow", "User defined", 0));
+        m_mapWidgets.insert(QStringLiteral("user_widget"), m_userWidget);
     }
 
 #ifndef NO_MULTITAB
@@ -4182,7 +4186,7 @@ void MainWindow::on_tableWidget_presets_cellDoubleClicked(int row, int column)
     m_rsWidget->xAxis->setRange(range);
     m_rpWidget->xAxis->setRange(range);
     m_rlWidget->xAxis->setRange(range);
-    if (g_developerMode)
+    if (g_developerMode && m_userWidget != nullptr)
         m_userWidget->xAxis->setRange(range);
     updateGraph();
 }
@@ -4402,7 +4406,7 @@ void MainWindow::on_singleStart_clicked()
     m_rpWidget->xAxis->setRange(range);
     m_rlWidget->xAxis->setRange(range);
     m_s21Widget->xAxis->setRange(range);
-    if (g_developerMode) {
+    if (g_developerMode && m_userWidget != nullptr) {
         m_userWidget->xAxis->setRange(range);
     }
     m_settings->beginGroup("MainWindow");
@@ -4566,7 +4570,7 @@ void MainWindow::on_continuousStartBtn_clicked(bool checked)
         m_rpWidget->xAxis->setRange(range);
         m_rlWidget->xAxis->setRange(range);
         m_s21Widget->xAxis->setRange(range);
-        if (g_developerMode)
+        if (g_developerMode && m_userWidget != nullptr)
             m_userWidget->xAxis->setRange(range);
 
         m_settings->beginGroup("MainWindow");
@@ -4705,7 +4709,7 @@ void MainWindow::on_measurementComplete()
         m_rpWidget->xAxis->setRange(range);
         m_rlWidget->xAxis->setRange(range);
         m_s21Widget->xAxis->setRange(range);
-        if (g_developerMode)
+        if (g_developerMode && m_userWidget != nullptr)
             m_userWidget->xAxis->setRange(range);
         if (!m_bInterrupted)
         {
@@ -5145,7 +5149,7 @@ void MainWindow::on_tableWidget_measurments_cellClicked(int row, int column)
                     m_tdrWidget->graph(j+ii)->setPen(pen);
                 }
 
-                if (g_developerMode) {
+                if (g_developerMode && m_userWidget != nullptr) {
                     measurement* mm = m_measurements->getMeasurement(count - i-1);
                     int index = m_measurements->getBaseUserGraphIndex(i-1);
                     int cnt = mm->userGraphs.size();
@@ -5194,7 +5198,7 @@ void MainWindow::on_tableWidget_measurments_cellDoubleClicked(int row, int colum
     m_rpWidget->xAxis->setRange(range);
     m_rlWidget->xAxis->setRange(range);
     m_s21Widget->xAxis->setRange(range);
-    if (g_developerMode)
+    if (g_developerMode && m_userWidget != nullptr)
         m_userWidget->xAxis->setRange(range);
 
     QString str = ui->tabWidget->currentWidget()->objectName();
@@ -5785,7 +5789,7 @@ void MainWindow::changeFqFrom(bool _backupValue)
             m_rsWidget->xAxis->setRangeUpper(upper);
             m_rpWidget->xAxis->setRangeUpper(upper);
             m_rlWidget->xAxis->setRangeUpper(upper);
-            if (g_developerMode)
+            if (g_developerMode && m_userWidget != nullptr)
                 m_userWidget->xAxis->setRangeUpper(upper);
         }
         if(lower < 0)
@@ -5798,7 +5802,7 @@ void MainWindow::changeFqFrom(bool _backupValue)
         m_rsWidget->xAxis->setRangeLower(lower);
         m_rpWidget->xAxis->setRangeLower(lower);
         m_rlWidget->xAxis->setRangeLower(lower);
-        if (g_developerMode)
+        if (g_developerMode && m_userWidget != nullptr)
             m_userWidget->xAxis->setRangeLower(lower);
     }else
     {
@@ -5814,7 +5818,7 @@ void MainWindow::changeFqFrom(bool _backupValue)
             m_rsWidget->xAxis->setRangeUpper(upper);
             m_rpWidget->xAxis->setRangeUpper(upper);
             m_rlWidget->xAxis->setRangeUpper(upper);
-            if (g_developerMode)
+            if (g_developerMode && m_userWidget != nullptr)
                 m_userWidget->xAxis->setRangeUpper(upper);
         }
         if(lower < 0)
@@ -5835,7 +5839,7 @@ void MainWindow::changeFqFrom(bool _backupValue)
 
         m_rlWidget->xAxis->setRangeUpper(lower+ui->lineEdit_fqTo->text().remove(' ').toDouble()*2);
         m_rlWidget->xAxis->setRangeLower(lower);
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             m_userWidget->xAxis->setRangeUpper(lower+ui->lineEdit_fqTo->text().remove(' ').toDouble()*2);
             m_userWidget->xAxis->setRangeLower(lower);
         }
@@ -5872,7 +5876,7 @@ void MainWindow::changeFqTo(bool _backupValue)
         m_rsWidget->xAxis->setRangeUpper(upper);
         m_rpWidget->xAxis->setRangeUpper(upper);
         m_rlWidget->xAxis->setRangeUpper(upper);
-        if (g_developerMode)
+        if (g_developerMode && m_userWidget != nullptr)
             m_userWidget->xAxis->setRangeUpper(upper);
     }else
     {
@@ -5886,7 +5890,7 @@ void MainWindow::changeFqTo(bool _backupValue)
             m_rsWidget->xAxis->setRangeLower(lower);
             m_rpWidget->xAxis->setRangeLower(lower);
             m_rlWidget->xAxis->setRangeLower(lower);
-            if (g_developerMode)
+            if (g_developerMode && m_userWidget != nullptr)
                 m_userWidget->xAxis->setRangeLower(lower);
         }
         if(lower < 0)
@@ -5907,7 +5911,7 @@ void MainWindow::changeFqTo(bool _backupValue)
 
         m_rlWidget->xAxis->setRangeUpper(upper);
         m_rlWidget->xAxis->setRangeLower(lower);
-        if (g_developerMode) {
+        if (g_developerMode && m_userWidget != nullptr) {
             m_userWidget->xAxis->setRangeUpper(upper);
             m_userWidget->xAxis->setRangeLower(lower);
         }
@@ -6145,7 +6149,7 @@ void MainWindow::on_bandChanged(QString band)
         setBands(m_rsWidget, bands, -2000, 2000);
         setBands(m_rpWidget, bands, -2000, 2000);
         setBands(m_rlWidget, bands, 0, 50);
-        if (g_developerMode)
+        if (g_developerMode && m_userWidget != nullptr)
             setBands(m_userWidget, bands, MIN_USER_RANGE, MAX_USER_RANGE);
     }
 }
