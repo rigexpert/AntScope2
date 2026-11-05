@@ -21,8 +21,8 @@ class PopUp : public QWidget
     float getPopupOpacity() const;
 
 public:
-    explicit PopUp(QWidget *parent = 0);
-    explicit PopUp(QString button, QWidget *parent = 0);
+    explicit PopUp(QWidget *parent = 0, bool embedded = false);
+    explicit PopUp(QString button, QWidget *parent = 0, bool embedded = false);
     ~PopUp();
     void init();
     void setName(QString name);
@@ -104,6 +104,10 @@ protected:
     int m_parentX;
     int m_parentY;
 
+    // When true, this PopUp is a plain child widget of its parent rather
+    // than a separate Qt::Tool top-level window - see popup.cpp for why.
+    bool m_embedded;
+    void applyGeometry();
 
     QString m_name;
 
