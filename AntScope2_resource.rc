@@ -3,8 +3,8 @@
 IDI_ICON1	ICON	"C:\\Projects\\AntScope2\\AntScope2.ico"
 
 VS_VERSION_INFO VERSIONINFO
-	FILEVERSION 0,0,0,0
-	PRODUCTVERSION 0,0,0,0
+	FILEVERSION 2,0,6,0
+	PRODUCTVERSION 2,0,6,0
 	FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
 	FILEFLAGS VS_FF_DEBUG
@@ -21,11 +21,11 @@ VS_VERSION_INFO VERSIONINFO
 			BEGIN
 				VALUE "CompanyName", "\0"
 				VALUE "FileDescription", "\0"
-				VALUE "FileVersion", "0.0.0.0\0"
+				VALUE "FileVersion", "2.0.6.0\0"
 				VALUE "LegalCopyright", "\0"
 				VALUE "OriginalFilename", "AntScope2.exe\0"
 				VALUE "ProductName", "AntScope2\0"
-				VALUE "ProductVersion", "0.0.0.0\0"
+				VALUE "ProductVersion", "2.0.6.0\0"
 				VALUE "InternalName", "\0"
 				VALUE "Comments", "\0"
 				VALUE "LegalTrademarks", "\0"
