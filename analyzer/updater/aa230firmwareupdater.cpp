@@ -124,7 +124,11 @@ AA230FirmwareUpdater::FirmwareInfo AA230FirmwareUpdater::firmwareInfo(const ReDe
         arr = m_port.readAll();
     }
 
-    if (arr.isEmpty()) {
+    // pull request #30
+    // The probe loop above gives up after 10 timeouts and falls through
+    // regardless of how many bytes actually arrived, so arr can be
+    // shorter than FirmwareInfo on a slow/short/malicious response.
+    if (arr.size() < static_cast<int>(sizeof(FirmwareInfo))) {
         return info;
     }
 

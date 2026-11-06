@@ -61,6 +61,20 @@ public:
 
     bool update(QIODevice *fw);
 
+#ifdef ANTSCOPE2_UNIT_TEST
+    // Test-only seam: inject an already-open device handle and serial
+    // number, bypassing the normal UI-dialog-driven connection
+    // establishment (SelectDeviceDialog / AnalyzerPro::createDevice),
+    // so update() can be exercised in isolation against a mock hidapi
+    // backend. Compiled out entirely unless ANTSCOPE2_UNIT_TEST is
+    // defined; has no effect on and is not reachable from the real app.
+    void setTestHidDevice(hid_device* dev, const QString& serial)
+    {
+        m_hidDevice = dev;
+        m_serialNumber = serial;
+    }
+#endif
+
     void nonblocking (int nonblock);
     void preUpdate();
     QString hidError(hid_device* _device);
@@ -104,6 +118,7 @@ private:
     bool disconnectHid(void);
     qint32 parse (QByteArray arr);
     bool waitAnswer();
+    bool waitForBootDevice(qint64 timeoutMs);
     QFuture<struct hid_device_info*> *m_futureRefresh;
     QFutureWatcher<struct hid_device_info*> *m_watcherRefresh;
 };

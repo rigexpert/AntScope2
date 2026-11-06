@@ -2,6 +2,7 @@
 #include "customanalyzer.h"
 #include <QtConcurrent/QtConcurrentRun>
 #include <QThread>
+#include <QElapsedTimer>
 #include "analyzerpro.h"
 
 extern bool g_usbOnly;
@@ -462,7 +463,8 @@ void HidAnalyzer::hidRead (void)
     if(read > 2)
     {
         if(readBuff[0] == ANTSCOPE_REPORT)
-        {   lenMax = readBuff[1];
+        {
+            lenMax = readBuff[1];
             //20260929_vn : довжину задає пристрій, тож обмежуємо її не лише
             // розміром буфера, а й фактично прочитаним обсягом — інакше в
             // m_incomingBuffer потрапляють байти, яких пристрій не надсилав.
@@ -688,7 +690,57 @@ void HidAnalyzer::preUpdate ()
 {
     hid_close(m_hidDevice);
     m_hidDevice = nullptr;
+    // Leaving boot mode (whichever way update() ended, success or
+    // failure) - without this, a second update() call would skip the
+    // boot-mode entry block above and immediately try to write firmware
+    // commands to the now-null m_hidDevice.
+    m_bootMode = false;
     searchAnalyzer(true);
+}
+
+bool HidAnalyzer::waitForBootDevice(qint64 timeoutMs)
+{
+    QElapsedTimer elapsed;
+    elapsed.start();
+    while (!elapsed.hasExpired(timeoutMs))
+    {
+        struct hid_device_info* devs = hid_enumerate(RE_BOOT_VID, RE_BOOT_PID);
+        hid_device* newDevice = nullptr;
+        for (struct hid_device_info* cur = devs; cur != nullptr; cur = cur->next)
+        {
+            // The serial number is preserved across the mode switch
+            // (verified against a real capture). If for some reason it's
+            // not known (m_serialNumber empty), fall back to matching on
+            // VID:PID alone rather than refusing to proceed.
+            QString serial = QString::fromWCharArray(cur->serial_number);
+            if (!m_serialNumber.isEmpty() && serial != m_serialNumber)
+            {
+                continue;
+            }
+            newDevice = hid_open(RE_BOOT_VID, RE_BOOT_PID, cur->serial_number);
+            if (newDevice != nullptr)
+            {
+                break;
+            }
+        }
+        hid_free_enumeration(devs);
+
+        if (newDevice != nullptr)
+        {
+            if (m_hidDevice != nullptr)
+            {
+                hid_close(m_hidDevice);
+            }
+            m_hidDevice = newDevice;
+            hid_set_nonblocking(m_hidDevice, 1);
+            m_bootMode = true;
+            return true;
+        }
+
+        QCoreApplication::processEvents();
+        QThread::msleep(100);
+    }
+    return false;
 }
 
 bool HidAnalyzer::update (QIODevice *fw)
@@ -705,17 +757,17 @@ bool HidAnalyzer::update (QIODevice *fw)
         hid_write(m_hidDevice, buff, sizeof(buff));
         qDebug() << "RESET: " << hidError(m_hidDevice);
 
-        QTimer::singleShot(5000, this, [this]() {
-            this->preUpdate();
-        });
-        while(1)//for(int i = 0; i < 565535; ++i)
-        {
-            if(m_bootMode)
-                break;
-            QCoreApplication::processEvents();
-        }
-        if(!m_bootMode)
-        {
+        // The device closes its normal-mode connection and re-enumerates
+        // under RE_BOOT_VID:RE_BOOT_PID as its DFU bootloader, keeping the
+        // same USB serial number (verified against a real capture of a
+        // successful update - see docs/firmware-update-protocol-findings.md
+        // in this tree). The app's normal hot-plug detection
+        // (searchAnalyzer()/m_devices) is gated behind g_usbOnly and, even
+        // if it were reachable, only ever looks for the application-mode
+        // VID:PID - it can never find the device in this state. Poll for it
+        // directly instead. 15s is a generous bound; the one real session
+        // this was verified against re-enumerated within about 1.3s.
+        if (!waitForBootDevice(15000))        {
             g_showMessageBox(nullptr, QMessageBox::Warning,tr("Warning"),tr("Can't enter to boot mode!"));
             return false;
         }
@@ -760,16 +812,33 @@ bool HidAnalyzer::update (QIODevice *fw)
         emit updatePercentChanged(i*100/totsize);
         QCoreApplication::processEvents();
 
-        if (firstWrite)
-        {
-            res = waitAnswer();
-            firstWrite = false;
-            if (!res)
-            {
-                emit updatePercentChanged(100);
-                return false;
-                break;
-            }
+        // Read and check the response to every chunk, not just the first.
+        // hidapi's background read thread queues unread reports and drops
+        // the oldest once the queue is full (see
+        // docs/firmware-update-protocol-findings.md); previously only the
+        // first chunk's response was ever consumed, so by the time the
+        // final BL_CMD_CHECK was sent, the queue held nothing but stale
+        // BL_CMD_OK reports left over from earlier chunks - the "checksum
+        // verification" was reading one of those, not a real answer to
+        // CHECK, and so reported success unconditionally. Reading (and
+        // pacing on) every response fixes that as a side effect, and
+        // means a real BL_CMD_ERROR from the device is no longer silently
+        // ignored.
+        firstWrite = false;
+        res = waitAnswer();
+        if (!res)        {
+        //{ pull request #30
+            // res = waitAnswer();
+            // firstWrite = false;
+            // if (!res)
+            // {
+            //     emit updatePercentChanged(100);
+            //     return false;
+            //     break;
+            // }
+            emit updatePercentChanged(100);
+            return false;
+        //}
         }
     }
     emit updatePercentChanged(100);
